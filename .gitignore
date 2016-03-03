@@ -1,6 +1,7 @@
 # игнорировать все файлы в каталоге bitrix/
 bitrix/
-
+frontEnd/bower_components/
+frontEnd/node_modules/
 
 
 # комментарий Ч эта строка игнорируетс€

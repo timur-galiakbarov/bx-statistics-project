@@ -1,0 +1,51 @@
+<div id="cl-wrapper" class="login-container">
+
+    <div class="middle-login">
+        <div class="block-flat">
+            <div class="header">
+                <h3 class="text-center">
+                    <!--<img class="logo-img" src="images/logo.png"
+                         tppabs="http://www.condorthemes.com/flatdream/images/logo.png" alt="logo"/>-->
+                </h3>
+            </div>
+            <div>
+                <form style="margin-bottom: 0px !important;" class="form-horizontal" ng-submit="auth()">
+                    <div class="content">
+                        <h4 class="title">Авторизация</h4>
+
+                        <div class="form-group">
+                            <div class="col-sm-12">
+                                <div class="input-group">
+                                    <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                                    <input type="text" placeholder="Введите e-mail" ng-model="auth.login"
+                                           class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-12">
+                                <div class="input-group">
+                                    <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+                                    <input type="password" placeholder="Введите пароль" ng-model="auth.password"
+                                           class="form-control">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="foot">
+                        <button class="btn btn-default" data-dismiss="modal" type="button">Зарегистрироваться</button>
+                        <button class="btn btn-primary" data-dismiss="modal" type="submit">Войти</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+    $(function () {
+        $("#cl-wrapper").css({opacity: 1, 'margin-left': 0});
+    });
+</script>

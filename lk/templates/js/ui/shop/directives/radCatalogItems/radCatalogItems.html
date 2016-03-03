@@ -1,0 +1,45 @@
+<div class="row" rad-loader="isLoading">
+    <div class="col-lg-6 col-sm-6 col-md-6 col-xs-12" ng-repeat="(key, item) in shop.items">
+        <div class="block-flat shop-tovar-item">
+            <div class="header">
+                <div class="actions">
+                    <a class="minimize" href="#"><i class="fa fa-chevron-down"></i></a>
+                    <a class="refresh" ng-click="editItem(item.id)" style="cursor:pointer;"><i class="fa fa-pencil"></i></a>
+                    <a class="close-down" ng-click="removeItem(item.id)" style="cursor:pointer;"><i
+                            class="fa fa-times"></i></a>
+                </div>
+                <h4>{{item.name}}</h4>
+            </div>
+            <div class="content row">
+                <div class="leftBlock col-xs-12">
+                    <div class="itemImage">
+                        <img class="itemPicture{{key}}" src="{{item.images[0]}}" ng-if="item.images&&item.images.length>0">
+                    </div>
+                </div>
+                <div class="clear"></div>
+                <div class="rightBlock col-sx-12">
+                    <p class="itemCost" ng-show="item.cost">{{item.cost | radAmountFilter}} ₽</p>
+
+                    <div class="itemImages owl-carousel" id="carousel{{item.id}}">
+                        <div class="item" ng-repeat="imageUrl in item.images" id="smallPictures{{key}}"
+                             rad-on-finish-render-ng-repeat="onFinishRenderImages" item-id="{{item.id}}">
+
+                            <div class="smallImage smallImageItem{{$index}}" ng-class="{active: $index==0}"
+                                 ng-click="showPicture(imageUrl, key, $index)">
+                                <img src="{{imageUrl}}">
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="description">
+                    <div ng-bind-html="item.description" class="descText" id="desc{{key}}"></div>
+                    <button ng-click="openItem(item.id)" type="button" id="showDesc{{key}}" class="btn btn-xs showDesc">
+                        <i class="fa fa-sort-amount-asc"></i> <span>Подробно</span>
+                    </button>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>

@@ -1,5 +1,6 @@
 # игнорировать все файлы в каталоге bitrix/
 bitrix/
+!bitrix/templates/
 front/bower_components/
 front/node_modules/
 

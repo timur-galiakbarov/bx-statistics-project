@@ -1,0 +1,50 @@
+.vk-auth-block {
+    background: #54769a;
+    position: relative;
+    height:100px;
+}
+
+.vk-auth-block .soc-action {
+    color: #fff;
+    font-weight: normal !important;
+    font-size: 16px;
+    padding-top: 10px;
+    float: left;
+    width:100%;
+    cursor: pointer;
+}
+
+.vk-auth-block .soc-state{
+    color: #fff;
+    font-weight: normal !important;
+    font-size: 16px;
+    padding-top: 0px;
+    float: left;
+    width:100%;
+}
+
+.vk-auth-block .vk-logout{
+    color: #eee;
+    font-size: 12px;
+    cursor: pointer;
+}
+.vk-auth-block .vk-logout:hover{
+    text-decoration: underline;
+}
+
+.vk-auth-block .soc-action:hover{
+    text-decoration: underline;
+}
+
+.vk-auth-block .soc-title{
+    color: #fff;
+    font-size: 12px;
+}
+
+.vk-auth-block .vk-icon{
+    font-size: 54px;
+    color: #fff;
+    position: absolute;
+    right: 20px;
+    top:20px;
+}

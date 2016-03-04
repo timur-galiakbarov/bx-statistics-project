@@ -29,6 +29,7 @@ bower_components/
 bower_components/*
 node_modules/
 node_modules/*
+lk/
 
 # комментарий Ч эта строка игнорируетс€
 # не обрабатывать файлы, им€ которых заканчиваетс€ на .a

@@ -5,15 +5,6 @@
     <file url="file://$PROJECT_DIR$/bitrix/templates/login/description.php" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/controllers/shop/addItem.php" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/controllers/shop/shopItems.php" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/frontEnd/src/js/bl/account/appState.js" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/frontEnd/src/js/ui/settings/controllers/settingsController.html" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/frontEnd/src/js/ui/settings/directives/radUserSettings/radUserSettings.html" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/frontEnd/src/js/ui/settings/directives/radUserSettings/radUserSettings.js" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/frontEnd/src/js/ui/settings/directives/radVkAuth/radVkAuth.html" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/frontEnd/src/js/ui/settings/directives/radVkAuth/radVkAuth.js" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/frontEnd/src/js/ui/shop/directives/radCatalogItems/radCatalogItems.html" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/frontEnd/src/js/ui/shop/directives/radCatalogItems/radCatalogItems.js" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/frontEnd/src/js/ui/shop/services/shopPopupsFactory/views/openItemPopup.html" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/login/index.php" charset="UTF-8" />
     <file url="file://D:/Учусь/electre/index.html" charset="windows-1251" />
     <file url="file://D:/Учусь/electre/js/electre.js" charset="windows-1251" />

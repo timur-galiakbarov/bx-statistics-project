@@ -25,10 +25,11 @@ bitrix/tools/
 bitrix/updates/
 bitrix/wizards/
 bitrix/*
-!bitrix/templates/
-front/bower_components/
-front/node_modules/
-
+bower_components/
+bower_components/*
+gulp/
+node_modules/
+node_modules/*
 
 # комментарий Ч эта строка игнорируетс€
 # не обрабатывать файлы, им€ которых заканчиваетс€ на .a

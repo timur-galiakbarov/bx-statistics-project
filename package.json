@@ -9,7 +9,7 @@
     "gulp-concat": "^2.6.0"
   },
   "browser": {
-    "core": "./src/js/bl/core/module.js",
+    "core": "./front/src/js/bl/core/module.js",
     "lodash": "./node_modules/lodash/index.js",
     "postal.request-response": "./bower_components/postal.request-response/lib/postal.request-response.js",
     "promise": "./node_modules/q/q.js"
@@ -36,6 +36,7 @@
     "lodash": "^3.10.1",
     "main-bower-files": "^2.11.1",
     "ng-sanitize": "0.0.2",
+    "q": "^1.4.1",
     "require-dir": "^0.3.0",
     "rigger": "git://github.com/buildjs/rigger",
     "rimraf": "^2.4.3",

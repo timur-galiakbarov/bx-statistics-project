@@ -14,22 +14,18 @@ var config = require('./config.js');
 var path = require('./path.js');
 
 gulp.task('ftpFront:deploy', function () {
-    if (!config.uploadData.needUpload)
-        return;
 
     return gulp.src('./lk/**/*')
         .pipe(ftp({
             host: '77.222.56.183',
             user: 'usatuhelru_timur',
-            pass: 'N6FRTws0p',
+            pass: 'XSW@zaq1',
             remotePath: '/socstat/public_html/lk/'
         }))
         .pipe(gutil.noop());
 });
 
 gulp.task('ftpControllers:deploy', function () {
-    if (!config.uploadData.needUpload)
-        return;
 
     return gulp.src('./controllers/**/*')
         .pipe(ftp({

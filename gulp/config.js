@@ -11,7 +11,7 @@ var config = {
         needUpload: false,
         host: '77.222.56.183',
         user: 'usatuhelru_timur',
-        pass: 'N6FRTws0p',
+        pass: 'XSW@zaq1',
         remotePath: '/'
     }
 };

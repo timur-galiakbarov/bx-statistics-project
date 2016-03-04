@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/bitrix" />
+      <excludeFolder url="file://$MODULE_DIR$/bower_components" />
       <excludeFolder url="file://$MODULE_DIR$/frontEnd/bower_components" />
       <excludeFolder url="file://$MODULE_DIR$/frontEnd/gulp" />
       <excludeFolder url="file://$MODULE_DIR$/frontEnd/node_modules" />

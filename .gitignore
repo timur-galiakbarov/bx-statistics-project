@@ -27,7 +27,6 @@ bitrix/wizards/
 bitrix/*
 bower_components/
 bower_components/*
-gulp/
 node_modules/
 node_modules/*
 

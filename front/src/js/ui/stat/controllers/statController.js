@@ -1,9 +1,9 @@
 import {enums} from './../../../bl/module.js';
 
 angular
-    .module('rad.shop')
-    .controller('shopController', ['$rootScope', '$scope', '$state', 'bus', 'shopPopupsFactory', 'appState',
-    function($rootScope, $scope, $state, bus, shopPopupsFactory, appState) {
+    .module('rad.stat')
+    .controller('statController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState',
+    function($rootScope, $scope, $state, bus, statPopupsFactory, appState) {
         $scope.currentTab = 'catalog';
         $rootScope.page.sectionTitle = 'Магазин';
         $scope.catalogPages = {
@@ -18,7 +18,7 @@ angular
 
         /*Диалоговые окна*/
         $scope.popupAddItem = function(){//Открытие попапа добавленния нового товара
-            shopPopupsFactory.openAddItemPopup();
+            statPopupsFactory.openAddItemPopup();
         };
 
     }]);

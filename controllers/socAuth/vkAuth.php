@@ -36,7 +36,7 @@ if ($_GET["user_id"]!=NULL){//Если получен Uid пользователя ВК
             );
             $user->Update($USER->GetId(), $fieldsLName);
         }
-        header("Location: /lk/#/settings/");//переходим на страницу пользователя, после проведенных операций
+        header("Location: /lk/#/dashboard/");//переходим на страницу пользователя, после проведенных операций
     }
     ?>
 <?}?>

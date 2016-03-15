@@ -13,26 +13,42 @@ var gutil = require('gulp-util');
 var config = require('./config.js');
 var path = require('./path.js');
 
-gulp.task('ftpFront:deploy', function () {
+var ftpFrontConfig = {
+    host: '77.222.56.183',
+    user: 'usatuhelru_timur',
+    pass: 'XSW@zaq1',
+    remotePath: '/socstat/public_html/lk/'
+};
 
-    return gulp.src('./lk/**/*')
-        .pipe(ftp({
-            host: '77.222.56.183',
-            user: 'usatuhelru_timur',
-            pass: 'XSW@zaq1',
-            remotePath: '/socstat/public_html/lk/'
-        }))
-        .pipe(gutil.noop());
+var ftpControllersConfig = {
+    host: '77.222.56.183',
+    user: 'usatuhelru_timur',
+    pass: 'XSW@zaq1',
+    remotePath: '/socstat/public_html/controllers/'
+};
+
+gulp.task('ftpFront:deploy', function () {
+        runSequence(
+            'ftpFront:bowerComponents',
+            'ftpFront:lk'
+        );
 });
 
 gulp.task('ftpControllers:deploy', function () {
 
     return gulp.src('./controllers/**/*')
-        .pipe(ftp({
-            host: '77.222.56.183',
-            user: 'usatuhelru_timur',
-            pass: 'XSW@zaq1',
-            remotePath: '/socstat/public_html/controllers/'
-        }))
+        .pipe(ftp(ftpControllersConfig))
+        .pipe(gutil.noop());
+});
+
+gulp.task('ftpFront:bowerComponents', function () {
+    return gulp.src('./lk/bower_components/**/*')
+        .pipe(ftp(ftpFrontConfig))
+        .pipe(gutil.noop());
+});
+
+gulp.task('ftpFront:lk', function () {
+    return gulp.src(['./lk/**/*', '!./lk/bower_components/**/*'])
+        .pipe(ftp(ftpFrontConfig))
         .pipe(gutil.noop());
 });

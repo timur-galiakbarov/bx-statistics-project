@@ -1,15 +1,15 @@
 import {enums} from './../../../../bl/module.js';
 
 angular
-    .module('rad.shop')
-    .directive('radShopPopups', radShopPopups);
+    .module('rad.stat')
+    .directive('radstatPopups', radstatPopups);
 
-radShopPopups.$inject = ['$templateCache'];
+radstatPopups.$inject = ['$templateCache'];
 
-function radShopPopups($templateCache) {
+function radstatPopups($templateCache) {
     return {
         restrict: 'EA',
-        templateUrl: './templates/js/ui/shop/directives/radShopPopups/radShopPopups.html',
+        templateUrl: './templates/js/ui/stat/directives/radStatPopups/radStatPopups.html',
         controller: radShopPopupsController,
         link: link,
         scope: {

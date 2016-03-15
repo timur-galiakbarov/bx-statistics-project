@@ -1,1 +1,31 @@
-11
+<div class="row">
+    <div class="col-sm-8">
+
+        <div class="block-flat">
+            <div class="header">
+                <h3>Мои группы</h3>
+            </div>
+            <div class="content" ng-if="isAnySocIncluded">
+                <div class="table-responsive">
+                    <table class="no-border hover list">
+                        <tbody class="no-border-y">
+                        <tr class="items" ng-repeat="item in vkGroupList">
+                            <td style="width: 10%;">
+                                <span class="soc-label soc-label-vk">
+                                    <i class="fa fa-vk vk-icon"></i>
+                                </span>
+                            </td>
+                            <td><p><strong>{{item}}</strong><span>description</span></p></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-sm-4">
+        <rad-vk-auth vk-info="vkInfo"></rad-vk-auth>
+    </div>
+</div>

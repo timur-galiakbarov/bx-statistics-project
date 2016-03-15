@@ -3,17 +3,17 @@ import events from './../../../../bl/events.js';
 
 (function (module, angular) {
 
-    module.factory('shopPopupsFactory', shopPopupsFactory);
+    module.factory('statPopupsFactory', statPopupsFactory);
 
-    shopPopupsFactory.$inject = ['$modal', 'bus', 'appState'];
+    statPopupsFactory.$inject = ['$modal', 'bus', 'appState'];
 
-    function shopPopupsFactory($modal, bus, appState) {
+    function statPopupsFactory($modal, bus, appState) {
 
         var openAddItemPopup = function () {
 
             $modal.open({
                 animation: true,
-                templateUrl: './templates/js/ui/shop/services/shopPopupsFactory/views/addItemPopup.html',
+                templateUrl: './templates/js/ui/stat/services/statPopupsFactory/views/addItemPopup.html',
                 controller: function ($scope, $modalInstance, FileUploader) {
                     var uploader = $scope.uploader = new FileUploader({
                         url: '/controllers/shop/uploadImages.php'
@@ -117,7 +117,7 @@ import events from './../../../../bl/events.js';
         var openItemPopup = function (id) {
             $modal.open({
                 animation: true,
-                templateUrl: './templates/js/ui/shop/services/shopPopupsFactory/views/openItemPopup.html',
+                templateUrl: './templates/js/ui/stat/services/statPopupsFactory/views/openItemPopup.html',
                 controller: function ($scope, $modalInstance) {
                     $scope.isLoading = true;
 
@@ -163,7 +163,7 @@ import events from './../../../../bl/events.js';
         var openRemoveItemPopup = function (options) {
             $modal.open({
                 animation: true,
-                templateUrl: './templates/js/ui/shop/services/shopPopupsFactory/views/removeItemPopup.html',
+                templateUrl: './templates/js/ui/stat/services/statPopupsFactory/views/removeItemPopup.html',
                 controller: function ($scope, $modalInstance) {
                     $scope.item = {
                         name: options.name,
@@ -199,4 +199,4 @@ import events from './../../../../bl/events.js';
 
     }
 
-})(angular.module("rad.shop"), angular);
+})(angular.module("rad.stat"), angular);

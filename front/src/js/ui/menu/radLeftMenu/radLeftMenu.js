@@ -2,7 +2,6 @@ angular
     .module('rad.menu')
     .directive('radLeftMenu', radLeftMenu);
 
-//radLeftMenu.inject = ['rad.orders'];
 //import bus from 'core';
 
 function radLeftMenu() {

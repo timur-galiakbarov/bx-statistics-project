@@ -7,9 +7,8 @@ var app = angular.module('app', [
     'ngSanitize',
     'ui.router',
     'rad.menu',
-    'rad.shop',
+    'rad.stat',
     'rad.dashboard',
-    'rad.orders',
     'rad.settings',
     'ui.bootstrap'
 ]);

@@ -19,25 +19,14 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Раздел "Магазин"
-            .state('index.shop', {
-                url: 'shop/',
+            //Раздел "Статистика"
+            .state('index.stat', {
+                url: 'stat/',
                 views: {
                     'content': {
-                        url: 'shop/',
-                        templateUrl: './templates/js/ui/shop/controllers/shopController.html',
-                        controller: 'shopController'
-                    }
-                },
-                parent: 'index'
-            })
-            //Раздел "Заказы"
-            .state('index.orders', {
-                url: 'orders/',
-                views: {
-                    'content': {
-                        templateUrl: './templates/js/ui/orders/controllers/ordersController.html',
-                        controller: 'ordersController'
+                        url: 'stat/',
+                        templateUrl: './templates/js/ui/stat/controllers/statController.html',
+                        controller: 'statController'
                     }
                 },
                 parent: 'index'

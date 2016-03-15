@@ -17,5 +17,5 @@ gulp.task('default', ['clean'], function (done) {
 });
 
 function done() {
-    runSequence('ftpFront:deploy');
+    //runSequence('ftpFront:deploy');
 }

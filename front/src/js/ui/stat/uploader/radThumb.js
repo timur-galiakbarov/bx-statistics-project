@@ -1,5 +1,5 @@
 angular
-    .module('rad.shop')
+    .module('rad.stat')
     .directive('ngThumb', ['$window', function($window) {
         var helper = {
             support: !!($window.FileReader && $window.CanvasRenderingContext2D),

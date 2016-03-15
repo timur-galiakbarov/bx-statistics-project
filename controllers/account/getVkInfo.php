@@ -15,7 +15,8 @@ if (CModule::IncludeModule("iblock")) {
         'user' => Array(
             'id' => $auth_data["response"][0]["uid"],
             'firstName' => $auth_data["response"][0]["first_name"],
-            'lastName' => $auth_data["response"][0]["last_name"]
+            'lastName' => $auth_data["response"][0]["last_name"],
+            'token' => $arUser["UF_TOKEN_VK"]
         )
     );
 

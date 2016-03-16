@@ -10,49 +10,53 @@ import events from './../../../bl/events.js';
     function radVkFactory($modal, bus, appState) {
 
         var getGroupsList = function (login, token) {
-            return $.ajax({
-                type: "GET",
-                url: "https://api.vk.com/method/groups.get?access_token=" + token,
-                dataType: 'jsonp',
-                data: {
-                    login: login,//Передаем логин Вк
-                    token: token,//Токен
-                    filter: 'admin,editor,moder',
-                    extended: 1
+            var Q = $.Deferred(),
+                model = {
+                    groupsList: []
                 },
-                success: function (res) {
-                    return res;
-                    /*if (res && res.response) {
-                        iteration++;
+                iteration = 0,
+                maxIteration = 3;
 
-                        model.subscribed += res.response.subscribed;
-                        model.unsubscribed += res.response.unsubscribed;
-                        model.views += res.response.views;
-                        model.visitors += res.response.visitors;
-                        model.subscribedSumm += res.response.subscribedSumm;
-                        model.reachSubscribers += res.response.reachSubscribers;
-                        model.reach += res.response.reach;
+            getScriptData();
 
-                        if (res.response.flagNext) {
-                            flagNext = res.response.flagNext;
-                            getVKScriptData();//Замыкаем рекурсивно функцию
-                        } else {
-                            Q.resolve(model);
-                        }
-                    } else {
-                        if (res && res.error) {
-                            setTimeout(function () {//Через 0,5 секунды
-                                getVKScriptData();//Замыкаем рекурсивно функцию
-                            }, 500);
-                        } else {
-                            Q.reject();
-                        }
-                    }*/
-                },
-                error: function (result_info) {
-                    console.log(result_info);
+            return Q.promise();
+
+            function getScriptData() {
+                if (iteration >= maxIteration) {
+                    Q.reject();
+                    return;
                 }
-            });
+                $.ajax({
+                    type: "GET",
+                    url: "https://api.vk.com/method/groups.get?access_token=" + token,
+                    dataType: 'jsonp',
+                    data: {
+                        login: login,//Передаем логин Вк
+                        token: token,//Токен
+                        filter: 'admin,editor,moder',
+                        extended: 1
+                    },
+                    success: function (res) {
+                        if (res && res.response) {
+                            res = res.response;
+
+                            res.forEach(function (item) {
+                                if (typeof item == "object")
+                                    model.groupsList.push(item);
+                            });
+
+                            return Q.resolve(model);
+                        } else {
+                            errorProcess(res, getScriptData);
+                        }
+                    },
+                    error: function (result_info) {
+                        console.log(result_info);
+                        errorProcess(res, getScriptData);
+                    }
+                });
+                iteration++;
+            }
         };
 
         var getGroupInfo = function () {
@@ -62,6 +66,13 @@ import events from './../../../bl/events.js';
         var getWallData = function () {
 
         };
+
+        function errorProcess(res, callbackFunc){
+            if (res && res.error)
+                setTimeout(function () {//Через 0,5 секунды
+                    callbackFunc();//Замыкаем рекурсивно функцию
+                }, 500);
+        }
 
         return {
             getGroupInfo: getGroupInfo,

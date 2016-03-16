@@ -2,8 +2,8 @@ import events from './../../../bl/events.js';
 
 angular
     .module('rad.dashboard')
-    .controller('dashboardController', ['$rootScope', '$scope', 'bus', 'appState', 'radVkFactory',
-        function($rootScope, $scope, bus, appState, radVkFactory) {
+    .controller('dashboardController', ['$rootScope', '$scope', 'bus', 'appState', 'radVkFactory', '$timeout',
+        function ($rootScope, $scope, bus, appState, radVkFactory, $timeout) {
 
             $rootScope.page.sectionTitle = 'Главная';
 
@@ -11,7 +11,7 @@ angular
             vkData.user = vkData.user ? vkData.user : {};
 
             $scope.isAnySocIncluded = vkData && vkData.isAuth;
-            $scope.vkGroupList =
+            $scope.vkGroupList = {};
 
             $scope.vkInfo = {
                 isAuth: vkData.isAuth,
@@ -20,20 +20,20 @@ angular
                 id: vkData.user.id || ''
             };
 
-            bus.subscribe(events.ACCOUNT.VK.INFO_READY, function(){
+            bus.subscribe(events.ACCOUNT.VK.INFO_READY, function () {
                 vkData = appState.socAuthInfo.getVk();
                 setVkInfo();
             });
 
-            bus.subscribe(events.ACCOUNT.VK.LOGOUT, function(){
-                $scope.$apply(function(){
+            bus.subscribe(events.ACCOUNT.VK.LOGOUT, function () {
+                $scope.$apply(function () {
                     vkData.isAuth = false;
                 });
                 setVkInfo();
             });
 
-            function setVkInfo(){
-                $scope.$apply(function(){
+            function setVkInfo() {
+                $scope.$apply(function () {
                     $scope.vkInfo = {
                         isAuth: vkData.isAuth,
                         firstName: vkData.user.firstName || '',
@@ -41,13 +41,19 @@ angular
                         id: vkData.user.id || '',
                         token: vkData.user.token
                     };
-                    radVkFactory.getGroupsList($scope.vkInfo.id, $scope.vkInfo.token).then(function(res){
-                        console.log(res);
-                        $scope.vkGroupList = res;
-                    });
                     $scope.isAnySocIncluded = $scope.vkInfo && $scope.vkInfo.isAuth;
                 });
+                radVkFactory.getGroupsList($scope.vkInfo.id, $scope.vkInfo.token).then(function (res) {
+                    console.log(res);
+                    $scope.$apply(function () {
+                        $scope.vkGroupList = res.groupsList;
+                    });
+                });
             }
+
+            $timeout(function(){
+                setVkInfo();
+            });
 
             $(".nano").nanoScroller();
         }]);

@@ -7,53 +7,5 @@ angular
 
             $rootScope.page.sectionTitle = 'Главная';
 
-            var vkData = appState.socAuthInfo.getVk();
-            vkData.user = vkData.user ? vkData.user : {};
-
-            $scope.isAnySocIncluded = vkData && vkData.isAuth;
-            $scope.vkGroupList = {};
-
-            $scope.vkInfo = {
-                isAuth: vkData.isAuth,
-                firstName: vkData.user.firstName || '',
-                lastName: vkData.user.lastName || '',
-                id: vkData.user.id || ''
-            };
-
-            bus.subscribe(events.ACCOUNT.VK.INFO_READY, function () {
-                vkData = appState.socAuthInfo.getVk();
-                setVkInfo();
-            });
-
-            bus.subscribe(events.ACCOUNT.VK.LOGOUT, function () {
-                $scope.$apply(function () {
-                    vkData.isAuth = false;
-                });
-                setVkInfo();
-            });
-
-            function setVkInfo() {
-                $scope.$apply(function () {
-                    $scope.vkInfo = {
-                        isAuth: vkData.isAuth,
-                        firstName: vkData.user.firstName || '',
-                        lastName: vkData.user.lastName || '',
-                        id: vkData.user.id || '',
-                        token: vkData.user.token
-                    };
-                    $scope.isAnySocIncluded = $scope.vkInfo && $scope.vkInfo.isAuth;
-                });
-                radVkFactory.getGroupsList($scope.vkInfo.id, $scope.vkInfo.token).then(function (res) {
-                    console.log(res);
-                    $scope.$apply(function () {
-                        $scope.vkGroupList = res.groupsList;
-                    });
-                });
-            }
-
-            $timeout(function(){
-                setVkInfo();
-            });
-
             $(".nano").nanoScroller();
         }]);

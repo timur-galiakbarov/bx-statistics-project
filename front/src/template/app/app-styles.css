@@ -4,6 +4,30 @@ h2.main-title{
     font-size: 28px;
 }
 
+/*template styles--------------------*/
+.sidebar-logo{
+    background: #456a94 !important;
+}
+
+.cl-vnavigation .active > a {
+    border-left: 3px solid #456a94 !important;
+}
+
+.logo-title{
+    font-size: 18px !important;
+    font-family: "Roboto" !important;
+    padding-top: 2px;
+    color: #fff !important;
+}
+
+@media (max-width: 991px){
+    .logo-title{
+        text-align: center;
+        padding-top: 13px;
+    }
+}
+/*-----------------------------------*/
+
 .shop-menu-head{
     border-bottom: 1px solid #ccc;
     margin-bottom: 7px;

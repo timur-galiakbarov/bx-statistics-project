@@ -4,10 +4,17 @@
         <a ui-sref="index.dashboard"><i class="fa fa-desktop"></i><span>Главная</span></a>
     </li>
     <li ng-class="currentState('index.stat')?'active':''">
-        <a ui-sref="index.stat"><i class="fa fa-shopping-cart"></i><span>Статистика</span></a>
+        <a ui-sref="index.stat"><i class="fa fa-bar-chart"></i><span>Статистика</span></a>
+        <ul class="sub-menu" style="display: block">
+            <li><a><i class="fa fa-arrow-right"></i>Общая статистика</a></li>
+            <li><a><i class="fa fa-arrow-right"></i>Анализ публикаций</a></li>
+            <li><a><i class="fa fa-arrow-right"></i>Сравнение аудиторий</a></li>
+            <li><a><i class="fa fa-arrow-right"></i>Активность участников</a></li>
+            <li><a><i class="fa fa-arrow-right"></i>Поиск "мертвых" участников</a></li>
+        </ul>
     </li>
     <li ng-class="currentState('index.settings')?'active':''">
-        <a ui-sref="index.settings"><i class="fa fa-wrench"></i><span>Настройки</span></a>
+        <a ui-sref="index.settings"><i class="fa fa-book"></i><span>Проекты</span></a>
     </li>
 
 </ul>

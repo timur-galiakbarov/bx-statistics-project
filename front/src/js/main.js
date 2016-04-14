@@ -11,7 +11,7 @@ import radOnFinishRenderNgRepeat from './ui/base/radOnFinishRenderNgRepeat.js';
 
 /*Dashboard controller*/
 import dashboardController from './ui/dashboard/controllers/dashboardController.js';
-import radVkAuth from './ui/dashboard/directives/radVkAuth/radVkAuth.js';
+
 /*UI------------------------------------------------------------------------------------------------------------------*/
 import radAmountFilter from './ui/base/radAmountFilter.js';
 

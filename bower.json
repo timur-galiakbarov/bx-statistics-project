@@ -26,6 +26,7 @@
     "nanoscroller": "~0.8.7",
     "postal.js": "postal#~1.0.7",
     "postal.request-response": "~0.3.1",
-    "spin.js": "~2.3.2"
+    "spin.js": "~2.3.2",
+    "iCheck": "icheck#^1.0.2"
   }
 }

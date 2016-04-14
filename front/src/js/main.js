@@ -17,6 +17,8 @@ import radAmountFilter from './ui/base/radAmountFilter.js';
 
 /*statController------------------------------------------------------------------------------------------------------*/
 import statController from './ui/stat/controllers/statController.js';
+import statMainController from './ui/stat/controllers/statMainController/statMainController.js';
+
 /*statDirectives*/
 import ngThumb from './ui/stat/uploader/radThumb.js';
 /*statServices*/

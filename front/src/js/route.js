@@ -31,6 +31,30 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
+            //Общая статистика
+            .state('index.stat.main', {
+                url: 'main/',
+                views: {
+                    'stat': {
+                        url: 'stat/main',
+                        templateUrl: './templates/js/ui/stat/controllers/statMainController/statMainController.html',
+                        controller: 'statMainController'
+                    }
+                },
+                parent: 'index.stat'
+            })
+            //Анализ публикаций
+            .state('index.stat.publishAnalisys', {
+                url: 'publishAnalisys/',
+                views: {
+                    'stat': {
+                        url: 'stat/publishAnalisys',
+                        templateUrl: './templates/js/ui/stat/controllers/statController.html',
+                        controller: 'statController'
+                    }
+                },
+                parent: 'index.stat'
+            })
             //Раздел "Настройки"
             .state('index.settings', {
                 url: 'settings/',

@@ -19,5 +19,17 @@ function radLeftMenu() {
 }
 
 function link($scope) {
+    $scope.showStatsMenu = function (elemClass) {
 
+        var currItem = $("#leftMenu " + elemClass + " ul.sub-menu");
+        var parentLi = $("#leftMenu " + elemClass);
+        if (currItem.css("display") == "block") {
+            currItem.slideUp('fast');
+            parentLi.removeClass("open");
+        } else {
+            currItem.slideDown('fast');
+            parentLi.addClass("open");
+        }
+
+    };
 }

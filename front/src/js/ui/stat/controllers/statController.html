@@ -1,34 +1,5 @@
-<div class="row">
-    <div class="col-sm-8 col-md-8">
-        <div class="shop-menu-head">
-            <button type="button"
-                    class="btn btn-prusia btn-rad"
-                    ng-class="currentTab==catalogPages.catalog?'':'btn-trans'"
-                    ng-click="viewTab(catalogPages.catalog)">Каталог товаров
-            </button>
-            <button type="button"
-                    class="btn btn-prusia btn-rad"
-                    ng-class="currentTab==catalogPages.publish?'':'btn-trans'"
-                    ng-click="viewTab(catalogPages.publish)">Опубликованные
-            </button>
-        </div>
+<div ui-view="stat">
 
-        <div ng-show="currentTab==catalogPages.catalog">
-
-            <rad-catalog-items></rad-catalog-items>
-
-        </div>
-        <div ng-show="currentTab==catalogPages.publish">
-
-        </div>
-    </div>
-    <div class="col-sm-4 col-md-4">
-        <div class="block-flat">
-            <div class="shop-btn-add-area">
-                <button type="button" class="btn btn-warning btn-rad btn-block" ng-click="popupAddItem()"><i class="fa fa-plus-circle"></i> Добавить товар</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 

@@ -5,7 +5,7 @@ angular
     .controller('statController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState',
     function($rootScope, $scope, $state, bus, statPopupsFactory, appState) {
         $scope.currentTab = 'catalog';
-        $rootScope.page.sectionTitle = 'Магазин';
+        $rootScope.page.sectionTitle = 'Статистика сообществ';
         $scope.catalogPages = {
             publish: 'publish',
             catalog: 'catalog'

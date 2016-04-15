@@ -35,3 +35,13 @@ h2.main-title{
 .statDateFilters{
     width:100%;
 }
+
+/*Общая статистика
+-------------------------------------*/
+.main-stat .top-block .item{
+    margin-top: -20px;
+}
+
+.main-stat .top-block .item .fd-tile{
+    border-radius: 3px !important;
+}

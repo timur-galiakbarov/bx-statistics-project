@@ -193,5 +193,75 @@ angular
                 }
             });
 
+            $.plot($("#graphPeopleStat2"), [{
+                data: [
+                    [1, 100],
+                    [2, 105],
+                    [3, 109],
+                    [4, 150],
+                    [5, 250],
+                    [6, 220],
+                    [7, 200],
+                    [8, 188],
+                    [9, 230],
+                    [10, 130],
+                    [11, 140],
+                    [12, 105],
+                    [13, 190],
+                    [14, 200],
+                    [15, 220],
+                    [16, 210],
+                    [17, 205],
+                    [18, 187],
+                    [19, 210],
+                    [20, 140],
+                    [21, 145],
+                    [22, 189],
+                    [23, 190]
+                ],
+                label: "Sales"
+            }
+            ], {
+                series: {
+                    lines: {
+                        show: true,
+                        lineWidth: 2,
+                        fill: true,
+                        fillColor: {
+                            colors: [{
+                                opacity: 0.25
+                            }, {
+                                opacity: 0.25
+                            }
+                            ]
+                        }
+                    },
+                    points: {
+                        show: true
+                    },
+                    shadowSize: 2
+                },
+                legend:{
+                    show: false
+                },
+                grid: {
+                    labelMargin: 10,
+                    axisMargin: 500,
+                    hoverable: true,
+                    clickable: true,
+                    tickColor: "rgba(0,0,0,0.15)",
+                    borderWidth: 0
+                },
+                colors: ["#3d566d", "#4A8CF7", "#52e136"],
+                xaxis: {
+                    ticks: 11,
+                    tickDecimals: 0
+                },
+                yaxis: {
+                    ticks: 5,
+                    tickDecimals: 0
+                }
+            });
+
 
         }]);

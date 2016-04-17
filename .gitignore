@@ -30,6 +30,7 @@ bower_components/*
 node_modules/
 node_modules/*
 lk/
+upload/
 
 # комментарий Ч эта строка игнорируетс€
 # не обрабатывать файлы, им€ которых заканчиваетс€ на .a

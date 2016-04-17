@@ -6,9 +6,9 @@
                 <div class="fd-tile detail clean tile-prusia">
                     <div class="content"><h1 class="text-left">24</h1>
 
-                        <p>Участники</p></div>
+                        <p></p></div>
                     <div class="icon"><i class="fa fa-users"></i></div>
-                    <a class="details" href="#">Details <span><i class="fa fa-arrow-circle-right pull-right"></i></span></a>
+                    <div class="details" href="#">Участники <span></span></div>
                 </div>
             </div>
 
@@ -17,9 +17,9 @@
                 <div class="fd-tile detail clean tile-prusia">
                     <div class="content"><h1 class="text-left">25</h1>
 
-                        <p>Посещаемость</p></div>
+                        <p></p></div>
                     <div class="icon"><i class="fa fa-signal"></i></div>
-                    <a class="details" href="#">Details <span><i class="fa fa-arrow-circle-right pull-right"></i></span></a>
+                    <div class="details" href="#">Посещаемость <span></span></div>
                 </div>
             </div>
 
@@ -27,9 +27,9 @@
                 <div class="fd-tile detail clean tile-prusia">
                     <div class="content"><h1 class="text-left">72</h1>
 
-                        <p>Просмотры</p></div>
+                        <p></p></div>
                     <div class="icon"><i class="fa fa-eye"></i></div>
-                    <a class="details" href="#">Details <span><i class="fa fa-arrow-circle-right pull-right"></i></span></a>
+                    <div class="details" href="#">Просмотры <span></span></div>
                 </div>
             </div>
         </div>
@@ -61,6 +61,14 @@
         </div>
         <div class="block-flat">
             <div class="header">
+                <h3>Динамика количества участников</h3>
+            </div>
+            <div class="content">
+                <div id="graphPeopleStat2" style="height: 220px; padding: 0px; position: relative;"></div>
+            </div>
+        </div>
+        <div class="block-flat">
+            <div class="header">
                 <h3>Посещаемость</h3>
             </div>
             <div class="content">
@@ -87,81 +95,84 @@
         </div>
         <div class="block-flat">
             <div class="header">
+                <h3>Активность пользователей</h3>
+            </div>
+            <div class="content">
+                <table class="no-border hover">
+                    <thead class="no-border">
+                    <tr>
+                        <th>Тип действия</th>
+                        <th class="text-center">Количество</th>
+                    </tr>
+                    </thead>
+                    <tbody class="no-border-y">
+                    <tr>
+                        <td>Отметки "Мне нравится" на стене</td>
+                        <td class="text-center">430</td>
+                    </tr>
+                    <tr>
+                        <td>Отметки "Мне нравится" в фотографиях</td>
+                        <td class="text-center">430</td>
+                    </tr>
+                    <tr>
+                        <td>"Репосты" постов со стены</td>
+                        <td class="text-center">430</td>
+                    </tr>
+                    <tr>
+                        <td>Комментариев на стене</td>
+                        <td class="text-center">430</td>
+                    </tr>
+                    <tr>
+                        <td>Комментариев в фотографиях</td>
+                        <td class="text-center">430</td>
+                    </tr>
+                    <tr>
+                        <td>Комментариев в топиках</td>
+                        <td class="text-center">430</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="block-flat">
+            <div class="header">
                 <h3>Контент</h3>
             </div>
             <div class="content">
                 <div class="table-responsive">
-                    <table class="no-border hover list">
+                    <table class="no-border hover">
+                        <thead class="no-border">
+                        <tr>
+                            <th>Тип контента</th>
+                            <th class="text-center">Новых</th>
+                            <th class="text-center">Всего</th>
+                        </tr>
+                        </thead>
                         <tbody class="no-border-y">
-                        <tr class="items">
-                            <td style="width: 10%;"><span class="label label-warning">Стена</span></td>
-                            <td><p><strong>Новых постов</strong><span>description</span></p></td>
-                            <td>
-                                140
-                            </td>
+                        <tr>
+                            <td>Посты стене</td>
+                            <td class="text-center">430</td>
+                            <td class="text-center">430</td>
                         </tr>
-                        <tr class="items">
-                            <td style="width: 10%;"><span class="label label-warning">Стена</span></td>
-                            <td><p><strong>Всего постов</strong><span>description</span></p></td>
-                            <td>
-                                26058
-                            </td>
+                        <tr>
+                            <td>Фотографии</td>
+                            <td class="text-center">430</td>
+                            <td class="text-center">430</td>
                         </tr>
-                        <tr class="items">
-                            <td><span class="label label-danger">Фотографии</span></td>
-                            <td><p><strong>Новых фотографий</strong><span>description</span></p></td>
-                            <td>
-                                6950
-                            </td>
+                        <tr>
+                            <td>Фотоальбомы</td>
+                            <td class="text-center">430</td>
+                            <td class="text-center">430</td>
                         </tr>
-                        <tr class="items">
-                            <td><span class="label label-danger">Фотографии</span></td>
-                            <td><p><strong>Новых Фотоальбомов</strong><span>description</span></p></td>
-                            <td>
-                                4
-                            </td>
+                        <tr>
+                            <td>Видеозаписи</td>
+                            <td class="text-center">430</td>
+                            <td class="text-center">430</td>
                         </tr>
-                        <tr class="items">
-                            <td><span class="label label-danger">Фотографии</span></td>
-                            <td><p><strong>Всего фотографий</strong><span>description</span></p></td>
-                            <td>
-                                89561
-                            </td>
-                        </tr>
-                        <tr class="items">
-                            <td><span class="label label-danger">Фотографии</span></td>
-                            <td><p><strong>Всего фотоальбомов</strong><span>description</span></p></td>
-                            <td>
-                                189
-                            </td>
-                        </tr>
-                        <tr class="items">
-                            <td><span class="label label-success">Видеозаписи</span></td>
-                            <td><p><strong>Новых видеозаписей</strong><span>description</span></p></td>
-                            <td>
-                                23
-                            </td>
-                        </tr>
-                        <tr class="items">
-                            <td><span class="label label-success">Видеозаписи</span></td>
-                            <td><p><strong>Всего видеозаписей</strong><span>description</span></p></td>
-                            <td>
-                                23
-                            </td>
-                        </tr>
-                        <tr class="items">
-                            <td><span class="label label-info">Топики</span></td>
-                            <td><p><strong>Новых топиков</strong><span>description</span></p></td>
-                            <td>
-                                2
-                            </td>
-                        </tr>
-                        <tr class="items">
-                            <td><span class="label label-info">Топики</span></td>
-                            <td><p><strong>Всего топиков</strong><span>description</span></p></td>
-                            <td>
-                                25
-                            </td>
+                        <tr>
+                            <td>Топики</td>
+                            <td class="text-center">430</td>
+                            <td class="text-center">430</td>
                         </tr>
                         </tbody>
                     </table>

@@ -29,15 +29,6 @@ var appState = {
     getUserId() {
         return userInfo ? userInfo.id : null;
     },
-    getUserShopList() {
-        return userInfo ? userInfo.shopIds : null;
-    },
-    getCurrentShopId() {
-        return currentShop.id ? currentShop.id : null;
-    },
-    getCurrentShopName() {
-        return currentShop.name ? currentShop.name : null;
-    },
     getEmail() {
         return userInfo ? userInfo.email : null;
     },
@@ -50,10 +41,11 @@ var appState = {
     getUserFullName() {
         return userInfo ? userInfo.userFullName : null;
     },
-    socAuthInfo: {
-        getVk: function(){
-            return userInfo.vkInfo || {};
-        }
+    getUserVkToken() {
+        return userInfo ? userInfo.tokenVk : null;
+    },
+    getUserVkLogin() {
+        return userInfo ? userInfo.loginVk : null;
     },
     user() {
         return userInfo

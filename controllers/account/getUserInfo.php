@@ -6,17 +6,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.ph
 global $USER;
 if (CModule::IncludeModule("iblock")) {
     $userId = $USER->GetID();
-    $i = 0;
-    $arSelect = Array("ID", "NAME", "PROPERTY_USER_ID");
-    $arFilter = Array("IBLOCK_ID" => 16, "ACTIVE" => "Y", "PROPERTY_USER_ID_VALUE" => $userId);
-    $res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
-
-    while ($ob = $res->GetNextElement()) {
-        $arFields = $ob->GetFields();
-        $shopIds[$i]["id"] = $arFields["ID"];
-        $shopIds[$i]["name"] = $arFields["NAME"];
-        $i++;
-    }
+    $arUser = CUser::GetByID($USER->GetID())->GetNext();
 
     $data = Array(
         'user' => Array(
@@ -25,8 +15,9 @@ if (CModule::IncludeModule("iblock")) {
             'userLastName' => $USER->GetLastName(),
             'userFullName' => $USER->GetFullName(),
             'email' => $USER->GetEmail(),
-            ),
-        'shopIds' => $shopIds
+            'loginVk' => $arUser["UF_VK_LOGIN"],
+            'tokenVk' => $arUser["UF_VK_TOKEN"]
+            )
     );
 
     print_r(json_encode(Array("data"=>$data)));

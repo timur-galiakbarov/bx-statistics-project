@@ -8,8 +8,6 @@ var serverApi = server;
 bus.subscribe(topics.ACCOUNT.IS_AUTH, dataContext.isAuth);//Возвращает статус авторизации пользователя
 bus.subscribe(topics.ACCOUNT.GET_USER_INFO, dataContext.getUserInfo);//Получение данных о пользователе
 bus.subscribe(topics.ACCOUNT.LOGOUT, logout);//Получение данных о пользователе
-bus.subscribe(topics.ACCOUNT.GET_VK_INFO, dataContext.getVkInfo);//Получение данных об авторизации Вконтакте
-bus.subscribe(topics.ACCOUNT.LOGOUT_VK, dataContext.logoutVk);//Выход из Вконтакте
 
 function logout(){
     serverApi.request({

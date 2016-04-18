@@ -25,6 +25,7 @@ import statAuditoryCompareController from './ui/stat/controllers/statAuditoryCom
 import ngThumb from './ui/stat/uploader/radThumb.js';
 /*statServices*/
 import statPopupsFactory from './ui/stat/services/statPopupsFactory/statPopupsFactory.js';
+import vkApiFactory from './ui/stat/services/vkApiFactory/vkApiFactory.js';
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 import settingsController from './ui/settings/controllers/settingsController.js';

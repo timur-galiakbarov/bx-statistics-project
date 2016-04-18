@@ -2,11 +2,97 @@ import {enums} from './../../../../bl/module.js';
 
 angular
     .module('rad.stat')
-    .controller('statMainController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState',
-        function ($rootScope, $scope, $state, bus, statPopupsFactory, appState) {
+    .controller('statMainController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState', 'vkApiFactory',
+        function ($rootScope, $scope, $state, bus, statPopupsFactory, appState, vkApiFactory) {
             $scope.currentTab = 'catalog';
             $rootScope.page.sectionTitle = 'Общая статистика сообществ';
 
+            $scope.getStat = getStat;
+            $scope.model = {
+                groupAddress: ''
+            };
+            $scope.stat = {};
+
+
+            function getStat() {
+                $scope.model.groupAddress = "https://vk.com/detsad02";
+                if (!$scope.model.groupAddress) {
+                    return;
+                }
+
+                var parseDate = getCheckedDate();
+
+                var vkGroupId = $scope.model.groupAddress.replace("https://vk.com/", "");
+                var vkGid;
+                var authData = {
+                    token: appState.getUserVkToken()
+                };
+
+                vkApiFactory.getGroupInfo(authData, {
+                    groupId: vkGroupId
+                }).then(function (res) {
+                    $scope.$apply(function () {
+                        $scope.stat.membersCount = res.members_count;
+                        vkGid = res.gid;
+                    });
+                    getPeopleStat();
+                });
+
+                //Получение статистики по численности
+                function getPeopleStat(){
+                    vkApiFactory.getStat(authData, {
+                        groupId: vkGid,
+                        dateFrom: parseDate.from,
+                        dateTo: parseDate.to
+                    }).then(function (res) {
+                        var stat = {
+                            views: 0,
+                            visitors: 0,
+                            subscribed: 0,
+                            unsubscribed: 0,
+                            subscribedSumm: 0
+                        };
+                        res.forEach(function(dateStat){
+                            stat.views += dateStat.views ? dateStat.views : 0;
+                            stat.visitors += dateStat.visitors ? dateStat.visitors : 0;
+                            stat.subscribed += dateStat.subscribed ? dateStat.subscribed : 0;
+                            stat.unsubscribed += dateStat.unsubscribed ? dateStat.unsubscribed : 0;
+                        });
+
+                        $scope.$apply(function () {
+                            $scope.stat.views = stat.views;
+                            $scope.stat.visitors = stat.visitors;
+                            $scope.stat.subscribed = stat.subscribed;
+                            $scope.stat.unsubscribed = stat.unsubscribed;
+                            $scope.stat.subscribedSumm = stat.subscribed - stat.unsubscribed;
+                        });
+                    });
+                }
+            }
+
+            function getCheckedDate() {
+                var checkDate = $('input[name=checkDate]:checked').val();
+                var currDate = new Date();
+                var dateTo = new Date();
+                var dateFrom;
+
+                switch (checkDate) {
+                    case "week":
+                        dateFrom = currDate.setDate(currDate.getDate() - 6);
+                        break;
+                    case "twoWeek":
+                        dateFrom = currDate.setDate(currDate.getDate() - 13);
+                        break;
+                    case "month":
+                        dateFrom = currDate.setDate(currDate.getDate() - 29);
+                        break;
+                }
+
+                return {
+                    from: moment(dateFrom).format("YYYY-MM-DD"),
+                    to: moment(dateTo).format("YYYY-MM-DD")
+                };
+            }
 
             $('.icheck').iCheck({
                 checkboxClass: 'icheckbox_flat-blue',
@@ -171,7 +257,7 @@ angular
                     },
                     shadowSize: 2
                 },
-                legend:{
+                legend: {
                     show: false
                 },
                 grid: {
@@ -241,7 +327,7 @@ angular
                     },
                     shadowSize: 2
                 },
-                legend:{
+                legend: {
                     show: false
                 },
                 grid: {

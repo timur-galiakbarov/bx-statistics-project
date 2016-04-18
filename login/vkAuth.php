@@ -22,6 +22,7 @@ if ($_GET["user_id"] != NULL) {//Если получен Uid пользоват�
             "NAME"              => $auth_data["response"][0]["first_name"],
             "LAST_NAME"         => $auth_data["response"][0]["last_name"],
             "PERSONAL_PHOTO"    => CFile::MakeFileArray($auth_data["response"][0]["photo_200"]),
+            "UF_VK_TOKEN"       => $_GET["access_token"]
         );
         $user->Update($userId, $fields);
         $USER->Authorize($userId);

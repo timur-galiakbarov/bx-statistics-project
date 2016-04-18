@@ -21,23 +21,5 @@ export default {
                 return res.data;
             }
         );
-    },
-    getVkInfo(options){
-        return serverApi.request({
-            url: '/controllers/account/getVkInfo.php',
-            type: 'GET'
-        }).then((res)=> {
-                return res.data;
-            }
-        );
-    },
-    logoutVk(){
-        return serverApi.request({
-            url: '/controllers/account/logoutVk.php',
-            type: 'POST'
-        }).then((res)=> {
-                return res.data;
-            }
-        );
     }
 }

@@ -50,13 +50,17 @@ angular
                             visitors: 0,
                             subscribed: 0,
                             unsubscribed: 0,
-                            subscribedSumm: 0
+                            subscribedSumm: 0,
+                            reach: 0,
+                            reachSubscribers: 0
                         };
                         res.forEach(function(dateStat){
                             stat.views += dateStat.views ? dateStat.views : 0;
                             stat.visitors += dateStat.visitors ? dateStat.visitors : 0;
                             stat.subscribed += dateStat.subscribed ? dateStat.subscribed : 0;
                             stat.unsubscribed += dateStat.unsubscribed ? dateStat.unsubscribed : 0;
+                            stat.reach += dateStat.reach ? dateStat.reach : 0;
+                            stat.reachSubscribers += dateStat.reach_subscribers ? dateStat.reach_subscribers : 0;
                         });
 
                         $scope.$apply(function () {
@@ -65,6 +69,8 @@ angular
                             $scope.stat.subscribed = stat.subscribed;
                             $scope.stat.unsubscribed = stat.unsubscribed;
                             $scope.stat.subscribedSumm = stat.subscribed - stat.unsubscribed;
+                            $scope.stat.reachSubscribers = stat.reachSubscribers;
+                            $scope.stat.reach = stat.reach;
                         });
                     });
                 }
@@ -98,6 +104,47 @@ angular
                 checkboxClass: 'icheckbox_flat-blue',
                 radioClass: 'iradio_flat-blue'
             });
+
+            var lineChartData = {
+                animation: false,
+                labels: [
+                    //getMonthName(res.periods[6].month),
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                ],
+                customTooltips: false,
+                tooltipFillColor: "rgba(255,0,0,0.8)",
+                datasets: [
+                    {
+                        label: "My First dataset",
+                        fillColor: "rgba(151,187,205,0.2)",
+                        strokeColor: "rgba(151,187,205,1)",
+                        pointColor: "rgba(151,187,205,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(151,187,205,1)",
+                        data: [
+                            //res.periods[6].countStartPeriod,
+                            "8",
+                            "2",
+                            "5",
+                            "3",
+                            "4",
+                            "5",
+                            "6"
+                        ]
+                    }
+                ]
+            };
+            var ctx = $("#graphPeopleStat1").get(0).getContext("2d");
+            window.myLine = new Chart(ctx).Line(lineChartData, {
+                responsive: true
+            });
+
             $.plot($("#graphPeopleStat"), [{
                 data: [
                     [1, 23],

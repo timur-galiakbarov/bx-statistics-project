@@ -38,6 +38,7 @@
                 <h3>Участники</h3>
             </div>
             <div class="content">
+                <canvas id="graphPeopleStat1" height="350" width="450"></canvas>
                 <div id="graphPeopleStat" style="height: 220px; padding: 0px; position: relative;"></div>
                 <table class="no-border hover">
                     <thead class="no-border">
@@ -88,10 +89,10 @@
                     </thead>
                     <tbody class="no-border-y">
                     <tr>
-                        <td>560</td>
-                        <td class="text-center">430</td>
-                        <td class="text-center">430</td>
-                        <td class="text-right">430</td>
+                        <td ng-bind="stat.visitors">560</td>
+                        <td class="text-center" ng-bind="stat.views">430</td>
+                        <td class="text-center" ng-bind="stat.reachSubscribers">430</td>
+                        <td class="text-right" ng-bind="stat.reach">430</td>
                     </tr>
                     </tbody>
                 </table>

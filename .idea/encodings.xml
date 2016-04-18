@@ -6,10 +6,12 @@
     <file url="file://$PROJECT_DIR$/controllers/shop/addItem.php" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/controllers/shop/shopItems.php" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.html" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.js" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.html" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.js" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/login/index.php" charset="UTF-8" />
-    <file url="file://D:/Учусь/electre/index.html" charset="windows-1251" />
-    <file url="file://D:/Учусь/electre/js/electre.js" charset="windows-1251" />
   </component>
 </project>

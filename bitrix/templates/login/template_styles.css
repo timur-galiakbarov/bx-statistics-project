@@ -24,3 +24,9 @@
 .block-flat .header {
     background: #456a94 !important;
 }
+
+.logo-title{
+    font-size: 18px !important;
+    font-family: "Roboto" !important;
+    padding-top: 2px;
+}

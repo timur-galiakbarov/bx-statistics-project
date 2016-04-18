@@ -49,8 +49,20 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 views: {
                     'stat': {
                         url: 'stat/publishAnalisys',
-                        templateUrl: './templates/js/ui/stat/controllers/statController.html',
-                        controller: 'statController'
+                        templateUrl: './templates/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.html',
+                        controller: 'statPublishAnalisysController'
+                    }
+                },
+                parent: 'index.stat'
+            })
+            //Сравнение аудиторий
+            .state('index.stat.auditoryCompare', {
+                url: 'auditoryCompare/',
+                views: {
+                    'stat': {
+                        url: 'stat/auditoryCompare',
+                        templateUrl: './templates/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.html',
+                        controller: 'statAuditoryCompareController'
                     }
                 },
                 parent: 'index.stat'

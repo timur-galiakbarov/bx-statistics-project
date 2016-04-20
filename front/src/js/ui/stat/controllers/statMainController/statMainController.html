@@ -38,8 +38,7 @@
                 <h3>Участники</h3>
             </div>
             <div class="content">
-                <canvas id="graphPeopleStat1" height="350" width="450"></canvas>
-                <div id="graphPeopleStat" style="height: 220px; padding: 0px; position: relative;"></div>
+                <canvas id="graphPeopleStat"></canvas>
                 <table class="no-border hover">
                     <thead class="no-border">
                     <tr>
@@ -55,8 +54,7 @@
                         <td class="text-center" ng-bind="stat.unsubscribed">430</td>
                         <td class="text-center"
                             ng-class="{'color-success': stat.subscribedSumm > 0, 'color-error': stat.subscribedSumm <= 0}">
-                            <i class="fa" ng-class="{'fa-angle-up': stat.subscribedSumm > 0, 'fa-angle-down': stat.subscribedSumm <= 0}"></i>
-                            {{stat.subscribedSumm}}
+                            <i class="fa" ng-class="{'fa-angle-up': stat.subscribedSumm > 0, 'fa-angle-down': stat.subscribedSumm <= 0}"></i>&nbsp;{{stat.subscribedSumm}}
                         </td>
                         <td class="text-right" ng-bind="stat.membersCount">560 000</td>
                     </tr>

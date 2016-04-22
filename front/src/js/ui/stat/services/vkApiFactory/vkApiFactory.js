@@ -21,7 +21,7 @@ import events from './../../../../bl/events.js';
                 data: {
                     access_token: authData.token,//Токен
                     group_id: params.groupId,//Список групп
-                    fields: ["members_count"]
+                    fields: ["members_count", "counters"]
                 }
             }).then (function (res){
                 return res.response[0];

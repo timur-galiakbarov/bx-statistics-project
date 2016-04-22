@@ -13,84 +13,56 @@ angular
             };
             $scope.stat = {};
 
-
-            function getStat() {
-                $scope.model.groupAddress = "https://vk.com/detsad02";
-                if (!$scope.model.groupAddress) {
-                    return;
-                }
-
-                var parseDate = getCheckedDate();
-
-                var vkGroupId = $scope.model.groupAddress.replace("https://vk.com/", "");
-                var vkGid;
-                var authData = {
-                    token: appState.getUserVkToken()
+            var peopleStatGraph = (function () {
+                var startRender = false,
+                    currgraph,
+                    chart;
+                var showGraph = function (data) {
+                    currgraph = data;
+                    renderGraph(data);
+                    initHandlers();
                 };
+                var renderGraph = function (data) {
+                    if (chart)
+                        chart.destroy();
 
-                vkApiFactory.getGroupInfo(authData, {
-                    groupId: vkGroupId
-                }).then(function (res) {
-                    $scope.$apply(function () {
-                        $scope.stat.membersCount = res.members_count;
-                        vkGid = res.gid;
+                    var config = peopleStatGraphConfig(data);
+                    var ctx = document.getElementById("graphPeopleStat").getContext("2d");
+                    ctx.clearRect(0, 0, document.getElementById("graphPeopleStat").width, document.getElementById("graphPeopleStat").height);
+                    ctx.canvas.height = 300;
+                    ctx.canvas.width = $("#graphPeopleStat").parent().width();
+
+                    chart = new Chart(ctx, config);
+
+                    startRender = false;
+                };
+                var initHandlers = function () {
+                    $(window).resize(function () {
+                        if (startRender)
+                            return;
+
+                        startRender = true;
+                        setTimeout(function () {
+                            renderGraph(currgraph);
+                        }, 200);
                     });
-                    getPeopleStat();
-                });
-
-                //Получение статистики по численности
-                function getPeopleStat() {
-                    vkApiFactory.getStat(authData, {
-                        groupId: vkGid,
-                        dateFrom: parseDate.from,
-                        dateTo: parseDate.to
-                    }).then(function (res) {
-                        var stat = {
-                            views: 0,
-                            visitors: 0,
-                            subscribed: 0,
-                            unsubscribed: 0,
-                            subscribedSumm: 0,
-                            reach: 0,
-                            reachSubscribers: 0
-                        };
-                        res.forEach(function (dateStat) {
-                            stat.views += dateStat.views ? dateStat.views : 0;
-                            stat.visitors += dateStat.visitors ? dateStat.visitors : 0;
-                            stat.subscribed += dateStat.subscribed ? dateStat.subscribed : 0;
-                            stat.unsubscribed += dateStat.unsubscribed ? dateStat.unsubscribed : 0;
-                            stat.reach += dateStat.reach ? dateStat.reach : 0;
-                            stat.reachSubscribers += dateStat.reach_subscribers ? dateStat.reach_subscribers : 0;
-                        });
-
-                        $scope.$apply(function () {
-                            $scope.stat.views = stat.views;
-                            $scope.stat.visitors = stat.visitors;
-                            $scope.stat.subscribed = stat.subscribed;
-                            $scope.stat.unsubscribed = stat.unsubscribed;
-                            $scope.stat.subscribedSumm = stat.subscribed - stat.unsubscribed;
-                            $scope.stat.reachSubscribers = stat.reachSubscribers;
-                            $scope.stat.reach = stat.reach;
-                        });
-                    });
-                }
-
-                var startRender = false;
-                function renderGraph() {
-                    console.log("render!");
-                    var config = {
+                };
+                var peopleStatGraphConfig = function (data) {
+                    return {
                         type: 'line',
                         data: {
-                            labels: ["January", "February", "March", "April", "May", "June", "July", "2", "2", "2", "2", "2"],
+                            labels: data.labels,
                             datasets: [{
                                 label: "Новых участников",
-                                data: [2, 1, 5, 3, 5, 5, 2, 7, 6, 5, 8, 2],
+                                data: data.subscribedDataSet,
                                 fill: false,
                                 borderColor: '#597da3',
-                                backgroundColor: '#597da3'
+                                backgroundColor: '#597da3',
+                                pointBorderWidth: 2,
+                                pointHoverRadius: 3
                             }, {
                                 label: "Вышедших участников",
-                                data: [1, 0, 0, 3, 2, 0, 1, 2, 1, 0, 2, 1],
+                                data: data.unsubscribedDataSet,
                                 fill: false,
                                 borderColor: '#b05c91',
                                 backgroundColor: '#b05c91'
@@ -123,27 +95,210 @@ angular
                                         labelString: 'Значение'
                                     }
                                 }]
+                            },
+                            legend: {
+                                display: false,
+                                labelspadding: 0
                             }
                         }
-                    };
-                    var ctx = document.getElementById("graphPeopleStat").getContext("2d");
+                    }
+                };
+
+                return {
+                    showGraph: showGraph
+                }
+            })();
+
+            var subscribersStatGraph = (function () {
+                var startRender = false,
+                    currgraph,
+                    chart;
+                var showGraph = function (data) {
+                    currgraph = data;
+                    renderGraph(data);
+                    initHandlers();
+                };
+                var renderGraph = function (data) {
+                    if (chart)
+                        chart.destroy();
+
+                    var config = peopleStatGraphConfig(data);
+                    var ctx = document.getElementById("subscribersStatGraph").getContext("2d");
+                    ctx.clearRect(0, 0, document.getElementById("subscribersStatGraph").width, document.getElementById("subscribersStatGraph").height);
                     ctx.canvas.height = 300;
-                    ctx.canvas.width = $("#graphPeopleStat").parent().width();
-                    new Chart(ctx, config);
+                    ctx.canvas.width = $("#subscribersStatGraph").parent().width();
+
+                    chart = new Chart(ctx, config);
 
                     startRender = false;
+                };
+                var initHandlers = function () {
+                    $(window).resize(function () {
+                        if (startRender)
+                            return;
+
+                        startRender = true;
+                        setTimeout(function () {
+                            renderGraph(currgraph);
+                        }, 200);
+                    });
+                };
+                var peopleStatGraphConfig = function (data) {
+                    return {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: "Количество участников",
+                                data: data.membersCount,
+                                fill: false,
+                                borderColor: '#597da3',
+                                backgroundColor: '#597da3',
+                                pointBorderWidth: 2,
+                                pointHoverRadius: 3
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            title: {
+                                display: true,
+                                text: ''
+                            },
+                            tooltips: {
+                                mode: 'label',
+                            },
+                            hover: {
+                                mode: 'dataset'
+                            },
+                            scales: {
+                                xAxes: [{
+                                    display: true,
+                                    scaleLabel: {
+                                        show: true,
+                                        labelString: 'Дата'
+                                    }
+                                }],
+                                yAxes: [{
+                                    display: true,
+                                    scaleLabel: {
+                                        show: true,
+                                        labelString: 'Значение'
+                                    }
+                                }]
+                            },
+                            legend: {
+                                display: false,
+                                labelspadding: 0
+                            }
+                        }
+                    }
+                };
+
+                return {
+                    showGraph: showGraph
                 }
+            })();
 
-                $(window).resize(function () {
-                    if (startRender)
-                        return;
+            var attendanceStatGraph = (function () {
+                var startRender = false,
+                    currgraph,
+                    chart;
+                var showGraph = function (data) {
+                    currgraph = data;
+                    renderGraph(data);
+                    initHandlers();
+                };
+                var renderGraph = function (data) {
+                    if (chart)
+                        chart.destroy();
 
-                    startRender = true;
-                    setTimeout(renderGraph, 200);
-                });
+                    var config = peopleStatGraphConfig(data);
+                    var ctx = document.getElementById("attendanceStatGraph").getContext("2d");
+                    ctx.clearRect(0, 0, document.getElementById("attendanceStatGraph").width, document.getElementById("attendanceStatGraph").height);
+                    ctx.canvas.height = 300;
+                    ctx.canvas.width = $("#attendanceStatGraph").parent().width();
 
-                renderGraph();
-            }
+                    chart = new Chart(ctx, config);
+
+                    startRender = false;
+                };
+                var initHandlers = function () {
+                    $(window).resize(function () {
+                        if (startRender)
+                            return;
+
+                        startRender = true;
+                        setTimeout(function () {
+                            renderGraph(currgraph);
+                        }, 200);
+                    });
+                };
+                var peopleStatGraphConfig = function (data) {
+                    return {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: "Просмотров",
+                                data: data.viewsData,
+                                fill: false,
+                                borderColor: '#597da3',
+                                backgroundColor: '#597da3',
+                                pointBorderWidth: 2,
+                                pointHoverRadius: 3
+                            }, {
+                                label: "Посещений",
+                                data: data.visitorsData,
+                                fill: false,
+                                borderColor: '#b05c91',
+                                backgroundColor: '#b05c91'
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            title: {
+                                display: true,
+                                text: ''
+                            },
+                            tooltips: {
+                                mode: 'label',
+                            },
+                            hover: {
+                                mode: 'dataset'
+                            },
+                            scales: {
+                                xAxes: [{
+                                    display: true,
+                                    scaleLabel: {
+                                        show: true,
+                                        labelString: 'Дата'
+                                    }
+                                }],
+                                yAxes: [{
+                                    display: true,
+                                    scaleLabel: {
+                                        show: true,
+                                        labelString: 'Значение'
+                                    }
+                                }]
+                            },
+                            legend: {
+                                display: false,
+                                labelspadding: 0
+                            }
+                        }
+                    }
+                };
+
+                return {
+                    showGraph: showGraph
+                }
+            })();
+
+            $('.icheck').iCheck({
+                checkboxClass: 'icheckbox_flat-blue',
+                radioClass: 'iradio_flat-blue'
+            });
 
             function getCheckedDate() {
                 var checkDate = $('input[name=checkDate]:checked').val();
@@ -169,150 +324,115 @@ angular
                 };
             }
 
-            $('.icheck').iCheck({
-                checkboxClass: 'icheckbox_flat-blue',
-                radioClass: 'iradio_flat-blue'
-            });
+            function getStat() {
+                $scope.model.groupAddress = "https://vk.com/detsad02";
+                if (!$scope.model.groupAddress) {
+                    return;
+                }
 
-            /* $.plot($("#graphPeopleAttendance"), [{
-             data: [
-             [1, 100],
-             [2, 105],
-             [3, 109],
-             [4, 150],
-             [5, 250],
-             [6, 220],
-             [7, 200],
-             [8, 188],
-             [9, 230],
-             [10, 130],
-             [11, 140],
-             [12, 105],
-             [13, 190],
-             [14, 200],
-             [15, 220],
-             [16, 210],
-             [17, 205],
-             [18, 187],
-             [19, 210],
-             [20, 140],
-             [21, 145],
-             [22, 189],
-             [23, 190]
-             ],
-             label: "Sales"
-             }
-             ], {
-             series: {
-             lines: {
-             show: true,
-             lineWidth: 2,
-             fill: true,
-             fillColor: {
-             colors: [{
-             opacity: 0.25
-             }, {
-             opacity: 0.25
-             }
-             ]
-             }
-             },
-             points: {
-             show: true
-             },
-             shadowSize: 2
-             },
-             legend: {
-             show: false
-             },
-             grid: {
-             labelMargin: 10,
-             axisMargin: 500,
-             hoverable: true,
-             clickable: true,
-             tickColor: "rgba(0,0,0,0.15)",
-             borderWidth: 0
-             },
-             colors: ["#3d566d", "#4A8CF7", "#52e136"],
-             xaxis: {
-             ticks: 11,
-             tickDecimals: 0
-             },
-             yaxis: {
-             ticks: 5,
-             tickDecimals: 0
-             }
-             });*/
+                var parseDate = getCheckedDate();
 
-            /*$.plot($("#graphPeopleStat2"), [{
-             data: [
-             [1, 100],
-             [2, 105],
-             [3, 109],
-             [4, 150],
-             [5, 250],
-             [6, 220],
-             [7, 200],
-             [8, 188],
-             [9, 230],
-             [10, 130],
-             [11, 140],
-             [12, 105],
-             [13, 190],
-             [14, 200],
-             [15, 220],
-             [16, 210],
-             [17, 205],
-             [18, 187],
-             [19, 210],
-             [20, 140],
-             [21, 145],
-             [22, 189],
-             [23, 190]
-             ],
-             label: "Sales"
-             }
-             ], {
-             series: {
-             lines: {
-             show: true,
-             lineWidth: 2,
-             fill: true,
-             fillColor: {
-             colors: [{
-             opacity: 0.25
-             }, {
-             opacity: 0.25
-             }
-             ]
-             }
-             },
-             points: {
-             show: true
-             },
-             shadowSize: 2
-             },
-             legend: {
-             show: false
-             },
-             grid: {
-             labelMargin: 10,
-             axisMargin: 500,
-             hoverable: true,
-             clickable: true,
-             tickColor: "rgba(0,0,0,0.15)",
-             borderWidth: 0
-             },
-             colors: ["#3d566d", "#4A8CF7", "#52e136"],
-             xaxis: {
-             ticks: 11,
-             tickDecimals: 0
-             },
-             yaxis: {
-             ticks: 5,
-             tickDecimals: 0
-             }
-             });*/
+                var vkGroupId = $scope.model.groupAddress.replace("https://vk.com/", "");
+                var vkGid;
+                var authData = {
+                    token: appState.getUserVkToken()
+                };
+                var groupInfo;
 
+                vkApiFactory.getGroupInfo(authData, {
+                    groupId: vkGroupId
+                }).then(function (res) {
+                    $scope.$apply(function () {
+                        $scope.stat.membersCount = res.members_count;
+                        vkGid = res.gid;
+                    });
+                    groupInfo = res;
+                    getPeopleStat();
+                });
+
+                //Получение статистики по численности
+                function getPeopleStat() {
+                    vkApiFactory.getStat(authData, {
+                        groupId: vkGid,
+                        dateFrom: parseDate.from,
+                        dateTo: parseDate.to
+                    }).then(function (res) {
+                        var stat = {
+                            views: 0,
+                            visitors: 0,
+                            subscribed: 0,
+                            unsubscribed: 0,
+                            subscribedSumm: 0,
+                            reach: 0,
+                            reachSubscribers: 0
+                        };
+                        var graphPeopleStatData = {
+                            labels: [],
+                            subscribedDataSet: [],
+                            unsubscribedDataSet: [],
+                        };
+                        var subscribersStatData = {
+                            labels: [],
+                            membersCount: []
+                        };
+                        var attendanceStatData = {
+                            labels: [],
+                            viewsData: [],
+                            visitorsData: []
+                        };
+                        var currMembersCount = groupInfo.members_count;
+                        res.forEach(function (dateStat, i) {
+                            stat.views += dateStat.views ? dateStat.views : 0;
+                            stat.visitors += dateStat.visitors ? dateStat.visitors : 0;
+                            stat.subscribed += dateStat.subscribed ? dateStat.subscribed : 0;
+                            stat.unsubscribed += dateStat.unsubscribed ? dateStat.unsubscribed : 0;
+                            stat.reach += dateStat.reach ? dateStat.reach : 0;
+                            stat.reachSubscribers += dateStat.reach_subscribers ? dateStat.reach_subscribers : 0;
+                            //Сбор данных для графика участников
+                            graphPeopleStatData.labels.unshift(getDateFromVk(dateStat.day));
+                            graphPeopleStatData.subscribedDataSet.unshift(dateStat.subscribed);
+                            graphPeopleStatData.unsubscribedDataSet.unshift(dateStat.unsubscribed);
+                            //График посещаемости/просмотров группы
+                            attendanceStatData.labels.unshift(getDateFromVk(dateStat.day));
+                            attendanceStatData.viewsData.unshift(dateStat.views);
+                            attendanceStatData.visitorsData.unshift(dateStat.visitors);
+
+                            subscribersStatData.labels.unshift(getDateFromVk(dateStat.day));
+                            if (i != 0)
+                                currMembersCount -= (dateStat.subscribed - dateStat.unsubscribed);
+
+                            subscribersStatData.membersCount.unshift(currMembersCount);
+                        });
+
+                        var summSubscribers = 0,
+                            subscribersForStartPeriod;
+                        graphPeopleStatData.subscribedDataSet.forEach(function (item) {
+                            summSubscribers += item;
+                        });
+                        graphPeopleStatData.unsubscribedDataSet.forEach(function (item) {
+                            summSubscribers -= item;
+                        });
+
+                        $scope.$apply(function () {
+                            $scope.stat.views = stat.views;
+                            $scope.stat.visitors = stat.visitors;
+                            $scope.stat.subscribed = stat.subscribed;
+                            $scope.stat.unsubscribed = stat.unsubscribed;
+                            $scope.stat.subscribedSumm = stat.subscribed - stat.unsubscribed;
+                            $scope.stat.reachSubscribers = stat.reachSubscribers;
+                            $scope.stat.reach = stat.reach;
+                        });
+
+                        peopleStatGraph.showGraph(graphPeopleStatData);
+                        subscribersStatGraph.showGraph(subscribersStatData);
+                        attendanceStatGraph.showGraph(attendanceStatData);
+
+                        function getDateFromVk(dateVk) {
+                            var normilizedDate = new Date(dateVk);
+                            return ('0' + normilizedDate.getDate()).slice(-2) + "." + ('0' + (normilizedDate.getMonth() + 1)).slice(-2);
+                        }
+                    });
+                }
+            }
 
         }]);

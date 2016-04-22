@@ -45,3 +45,7 @@ h2.main-title{
 .main-stat .top-block .item .fd-tile{
     border-radius: 3px !important;
 }
+
+.main-stat canvas{
+    margin-top: -15px;
+}

@@ -320,7 +320,9 @@ angular
 
                 return {
                     from: moment(dateFrom).format("YYYY-MM-DD"),
-                    to: moment(dateTo).format("YYYY-MM-DD")
+                    to: moment(dateTo).format("YYYY-MM-DD"),
+                    unixFrom: dateFrom/1000,
+                    unixTo: dateTo/1000
                 };
             }
 
@@ -344,10 +346,18 @@ angular
                 }).then(function (res) {
                     $scope.$apply(function () {
                         $scope.stat.membersCount = res.members_count;
+                        $scope.stat.groupCounters = {
+                            albums: res.counters.albums || 0,
+                            docs: res.counters.docs || 0,
+                            photos: res.counters.photos|| 0,
+                            topics: res.counters.topics || 0,
+                            videos: res.counters.videos || 0
+                        };
                         vkGid = res.gid;
                     });
                     groupInfo = res;
                     getPeopleStat();
+                    getWallStat();
                 });
 
                 //Получение статистики по численности
@@ -432,6 +442,65 @@ angular
                             return ('0' + normilizedDate.getDate()).slice(-2) + "." + ('0' + (normilizedDate.getMonth() + 1)).slice(-2);
                         }
                     });
+                }
+
+                //Получение статистик по стене группы
+                function getWallStat(){
+                    var iteration = 0;
+                    var wallStat = {
+                        activity: {},
+                        counters: {
+                            wallPostsPeriodCount: 0
+                        }
+                    };
+
+                    getWall();
+
+                    function getWall(){
+                        if (iteration >= 10)
+                            return;
+
+                        vkApiFactory.getWall(authData, {
+                            groupId: vkGid,
+                            offset: iteration*100,
+                            count: 100
+                        }).then(function (res) {
+                            var flagStop = false;
+                            if (!res || res.error && res.error && res.error.error_code==6){
+                                setTimeout(function(){
+                                    getWall();
+                                }, 400);
+                                return;
+                            }
+
+                            if (res && res.length>0){
+                                wallStat.counters.allWallPostsCount = res[0];//Количество постов за период
+
+                                res.forEach(function (post){
+                                    if (post.date > parseDate.unixFrom && post.date < parseDate.unixTo){
+                                        wallStat.counters.wallPostsPeriodCount++;//Количество постов за период
+                                    } else if (post.date <= parseDate.unixFrom && !post.is_pinned){
+                                        flagStop = true;
+                                    }
+                                });
+                            } else {
+                                flagStop = true;
+                            }
+
+                            if (!flagStop){
+                                iteration++;
+                                getWall();
+                            } else {
+                                console.log(wallStat);
+                                $scope.$apply(function (){
+                                    $scope.stat.wall = {
+                                        allPosts: wallStat.counters.allWallPostsCount,
+                                        postsPeriod: wallStat.counters.wallPostsPeriodCount
+                                    };
+                                });
+                            }
+                        });
+                    }
                 }
             }
 

@@ -45,9 +45,26 @@ import events from './../../../../bl/events.js';
             });
         };
 
+        var getWall = function (authData, params){
+            return $.ajax({
+                type: "GET",
+                url: "https://api.vk.com/method/wall.get",
+                dataType: 'jsonp',
+                data: {
+                    access_token: authData.token,//Токен
+                    owner_id: "-"+params.groupId,//Список групп
+                    offset: params.offset,
+                    count: params.count
+                }
+            }).then(function (res){
+                return res.response;
+            });
+        };
+
         return {
             getGroupInfo: getGroupInfo,
-            getStat: getStat
+            getStat: getStat,
+            getWall: getWall
         }
 
     }

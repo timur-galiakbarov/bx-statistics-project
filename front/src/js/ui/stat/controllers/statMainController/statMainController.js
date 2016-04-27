@@ -321,8 +321,8 @@ angular
                 return {
                     from: moment(dateFrom).format("YYYY-MM-DD"),
                     to: moment(dateTo).format("YYYY-MM-DD"),
-                    unixFrom: dateFrom/1000,
-                    unixTo: dateTo/1000
+                    unixFrom: dateFrom / 1000,
+                    unixTo: dateTo / 1000
                 };
             }
 
@@ -349,7 +349,7 @@ angular
                         $scope.stat.groupCounters = {
                             albums: res.counters.albums || 0,
                             docs: res.counters.docs || 0,
-                            photos: res.counters.photos|| 0,
+                            photos: res.counters.photos || 0,
                             topics: res.counters.topics || 0,
                             videos: res.counters.videos || 0
                         };
@@ -445,10 +445,13 @@ angular
                 }
 
                 //Получение статистик по стене группы
-                function getWallStat(){
+                function getWallStat() {
                     var iteration = 0;
                     var wallStat = {
-                        activity: {},
+                        activity: {
+                            likesPeriodCount: 0,
+                            repostsPeriodCount: 0
+                        },
                         counters: {
                             wallPostsPeriodCount: 0
                         }
@@ -456,30 +459,32 @@ angular
 
                     getWall();
 
-                    function getWall(){
+                    function getWall() {
                         if (iteration >= 10)
                             return;
 
                         vkApiFactory.getWall(authData, {
                             groupId: vkGid,
-                            offset: iteration*100,
+                            offset: iteration * 100,
                             count: 100
                         }).then(function (res) {
                             var flagStop = false;
-                            if (!res || res.error && res.error && res.error.error_code==6){
-                                setTimeout(function(){
+                            if (!res || res.error && res.error && res.error.error_code == 6) {
+                                setTimeout(function () {
                                     getWall();
                                 }, 400);
                                 return;
                             }
 
-                            if (res && res.length>0){
+                            if (res && res.length > 0) {
                                 wallStat.counters.allWallPostsCount = res[0];//Количество постов за период
 
-                                res.forEach(function (post){
-                                    if (post.date > parseDate.unixFrom && post.date < parseDate.unixTo){
+                                res.forEach(function (post) {
+                                    if (post.date > parseDate.unixFrom && post.date < parseDate.unixTo) {
                                         wallStat.counters.wallPostsPeriodCount++;//Количество постов за период
-                                    } else if (post.date <= parseDate.unixFrom && !post.is_pinned){
+                                        wallStat.activity.likesPeriodCount += post.likes.count;//Количество постов за период
+                                        wallStat.activity.repostsPeriodCount += post.reposts.count;//Количество постов за период
+                                    } else if (post.date <= parseDate.unixFrom && !post.is_pinned) {
                                         flagStop = true;
                                     }
                                 });
@@ -487,15 +492,17 @@ angular
                                 flagStop = true;
                             }
 
-                            if (!flagStop){
+                            if (!flagStop) {
                                 iteration++;
                                 getWall();
                             } else {
                                 console.log(wallStat);
-                                $scope.$apply(function (){
+                                $scope.$apply(function () {
                                     $scope.stat.wall = {
                                         allPosts: wallStat.counters.allWallPostsCount,
-                                        postsPeriod: wallStat.counters.wallPostsPeriodCount
+                                        postsPeriod: wallStat.counters.wallPostsPeriodCount,
+                                        likesPeriod: wallStat.activity.likesPeriodCount,
+                                        repostsPeriod: wallStat.activity.repostsPeriodCount
                                     };
                                 });
                             }

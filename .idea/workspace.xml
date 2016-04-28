@@ -2,8 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="111a26ba-efcb-4616-9187-2d27a653c905" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/template/app/app-styles.css" afterPath="$PROJECT_DIR$/front/src/template/app/app-styles.css" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/bower_components/bootstrap/bower.json" afterPath="$PROJECT_DIR$/bower_components/bootstrap/bower.json" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.js" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="www.iws" />
@@ -35,8 +39,18 @@
       <file leaf-file-name="statMainController.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-8.236363">
-              <caret line="121" column="71" selection-start-line="121" selection-start-column="71" selection-end-line="121" selection-end-column="71" />
+            <state vertical-scroll-proportion="-9.615385">
+              <caret line="205" column="101" selection-start-line="205" selection-start-column="101" selection-end-line="205" selection-end-column="101" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="app-styles.css" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/template/app/app-styles.css">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="61" column="21" selection-start-line="61" selection-start-column="21" selection-end-line="61" selection-end-column="21" />
               <folding />
             </state>
           </provider>
@@ -45,15 +59,69 @@
       <file leaf-file-name="statMainController.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.14858097">
-              <caret line="452" column="49" selection-start-line="452" selection-start-column="49" selection-end-line="452" selection-end-column="49" />
+            <state vertical-scroll-proportion="0.5824561">
+              <caret line="534" column="50" selection-start-line="534" selection-start-column="50" selection-end-line="534" selection-end-column="50" />
               <folding>
-                <element signature="e#618#4505#0" expanded="false" />
-                <element signature="e#4563#8151#0" expanded="false" />
-                <element signature="e#5983#8051#0" expanded="false" />
-                <element signature="e#9624#11980#0" expanded="false" />
-                <element signature="e#12118#12234#0" expanded="false" />
+                <element signature="e#940#4827#0" expanded="false" />
+                <element signature="e#4885#8473#0" expanded="false" />
+                <element signature="e#6305#8373#0" expanded="false" />
+                <element signature="e#8530#12402#0" expanded="false" />
+                <element signature="e#9946#12302#0" expanded="false" />
+                <element signature="e#12446#13394#0" expanded="false" />
+                <element signature="e#13427#22393#0" expanded="false" />
+                <element signature="e#22433#22896#0" expanded="false" />
+                <element signature="e#23260#23376#0" expanded="false" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ui-elements.html" pinned="false" current-in-tab="false">
+        <entry file="file://F:/flatdream/ui-elements.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-7.309091">
+              <caret line="318" column="38" selection-start-line="309" selection-start-column="32" selection-end-line="318" selection-end-column="38" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="vkApiFactory.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="71" column="28" selection-start-line="71" selection-start-column="20" selection-end-line="71" selection-end-column="28" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="bower.json" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bower_components/bootstrap/bower.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-9.153846">
+              <caret line="17" column="33" selection-start-line="17" selection-start-column="33" selection-end-line="17" selection-end-column="33" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="statController.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="23" column="8" selection-start-line="23" selection-start-column="8" selection-end-line="23" selection-end-column="8" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ui-alerts.html" pinned="false" current-in-tab="false">
+        <entry file="file://F:/flatdream/ui-alerts.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-108.181816">
+              <caret line="350" column="35" selection-start-line="347" selection-start-column="29" selection-end-line="350" selection-end-column="35" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -62,7 +130,7 @@
         <entry file="file://$PROJECT_DIR$/front/src/js/bl/account/appState.js">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="11" column="35" selection-start-line="11" selection-start-column="21" selection-end-line="11" selection-end-column="35" />
+              <caret line="46" column="18" selection-start-line="46" selection-start-column="4" selection-end-line="46" selection-end-column="18" />
               <folding />
             </state>
           </provider>
@@ -78,36 +146,6 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="getUserInfo.php" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/controllers/account/getUserInfo.php">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="7" column="29" selection-start-line="7" selection-start-column="29" selection-end-line="7" selection-end-column="29" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="vkApiFactory.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="56" column="39" selection-start-line="56" selection-start-column="39" selection-end-line="56" selection-end-column="39" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="index.php" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/login/index.php">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="27" column="48" selection-start-line="27" selection-start-column="48" selection-end-line="27" selection-end-column="48" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
     </leaf>
   </component>
   <component name="Git.Settings">
@@ -116,7 +154,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/front/temp/radShopPopups/views/radShopPopupsViewsAdd/radShopPopupsViewsAdd.js" />
         <option value="$PROJECT_DIR$/front/src/js/app.js" />
         <option value="$PROJECT_DIR$/front/src/js/ui/settings/controllers/settingsController.html" />
         <option value="$PROJECT_DIR$/front/src/template/app/settings/settings.css" />
@@ -129,13 +166,11 @@
         <option value="$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.js" />
         <option value="$PROJECT_DIR$/front/src/template/app/dashboard/dashboard.css" />
         <option value="$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.js" />
         <option value="$PROJECT_DIR$/front/src/template/app/style.css" />
         <option value="$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.js" />
         <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.html" />
         <option value="$PROJECT_DIR$/bitrix/php_interface/dbconn.php" />
         <option value="$PROJECT_DIR$/login/getCode.php" />
-        <option value="$PROJECT_DIR$/bower_components/bootstrap/bower.json" />
         <option value="$PROJECT_DIR$/front/src/index.html" />
         <option value="$PROJECT_DIR$/bower_components/font-awesome/bower.json" />
         <option value="$PROJECT_DIR$/bower_components/iCheck/bower.json" />
@@ -156,16 +191,19 @@
         <option value="$PROJECT_DIR$/login/vkAuth.php" />
         <option value="$PROJECT_DIR$/front/src/js/bl/account/appState.js" />
         <option value="&lt;dacc3443-a446-4388-8468-7724da885803&gt;/engine/js/statisticApp/statisticVk.js" />
-        <option value="$PROJECT_DIR$/lk/index.html" />
         <option value="$PROJECT_DIR$/bower_components/Chart.js/bower.json" />
         <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/utilits/electre/index.php" />
-        <option value="$PROJECT_DIR$/front/src/template/app/app-styles.css" />
         <option value="$PROJECT_DIR$/login/index.php" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" />
         <option value="&lt;34664565-3fd4-449e-95f8-1ed39329581f&gt;/www/tmp.wptt.su/eskd/index.html" />
         <option value="&lt;34664565-3fd4-449e-95f8-1ed39329581f&gt;/www/tmp.wptt.su/eskd/css/row-menu-slider.css" />
         <option value="&lt;34664565-3fd4-449e-95f8-1ed39329581f&gt;/www/tmp.wptt.su/eskd/js/scripts.js" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.js" />
+        <option value="$PROJECT_DIR$/lk/index.html" />
+        <option value="$PROJECT_DIR$/lk/bower_components/bootstrap/bower.json" />
+        <option value="$PROJECT_DIR$/bower_components/bootstrap/bower.json" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" />
         <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" />
+        <option value="$PROJECT_DIR$/front/src/template/app/app-styles.css" />
         <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" />
       </list>
     </option>
@@ -295,6 +333,8 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -324,6 +364,34 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="login" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lk" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="gulp" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -661,10 +729,40 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="bower_components" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="bower_components" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="bootstrap" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -685,11 +783,11 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Bitrix\socstat\front\src\template\app" />
       <recent name="C:\Bitrix\socstat\front\src\js\ui\stat\controllers" />
       <recent name="C:\Bitrix\www\frontEnd\src\js\ui\base\lib" />
       <recent name="C:\Bitrix\www\frontEnd\src\js\ui\base" />
       <recent name="C:\Bitrix\www\frontEnd\src\js\ui\shop\services\shopPopupsFactory\views" />
-      <recent name="C:\Bitrix\www\frontEnd\src\js\template" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Bitrix\socstat\front\src\js\ui\dashboard\directives" />
@@ -759,10 +857,11 @@
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32972974" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32216215" sideWeight="0.4969743" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3589189" sideWeight="0.49626866" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Gulp" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2489339" sideWeight="0.476874" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Gulp" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25159913" sideWeight="0.4832536" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.20522387" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2489339" sideWeight="0.523126" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25159913" sideWeight="0.5167464" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32980332" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32540542" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -772,7 +871,6 @@
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32972974" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32540542" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
@@ -816,27 +914,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/login/vkAuth.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="27" column="34" selection-start-line="27" selection-start-column="34" selection-end-line="27" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/template/app/dashboard/dashboard.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="67" column="20" selection-start-line="67" selection-start-column="20" selection-end-line="67" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-1.3076923">
-          <caret line="2" column="6" selection-start-line="2" selection-start-column="6" selection-end-line="2" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -865,31 +942,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/template/app/style.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.80458015">
-          <caret line="52" column="18" selection-start-line="52" selection-start-column="18" selection-end-line="52" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="3" column="0" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.39766082">
-          <caret line="16" column="49" selection-start-line="0" selection-start-column="0" selection-end-line="23" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/template/app/template.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.87841946">
-          <caret line="76" column="26" selection-start-line="74" selection-start-column="20" selection-end-line="76" selection-end-column="26" />
         </state>
       </provider>
     </entry>
@@ -921,13 +977,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bower_components/bootstrap/bower.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-2.6153846">
-          <caret line="4" column="10" selection-start-line="4" selection-start-column="10" selection-end-line="4" selection-end-column="10" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/bower_components/font-awesome/bower.json">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-7.8461537">
@@ -953,13 +1002,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="1.1966102">
           <caret line="26" column="8" selection-start-line="26" selection-start-column="8" selection-end-line="26" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/gulp/build.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="72" column="15" selection-start-line="72" selection-start-column="15" selection-end-line="72" selection-end-column="15" />
         </state>
       </provider>
     </entry>
@@ -1075,24 +1117,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lk/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="52" column="19" selection-start-line="52" selection-start-column="19" selection-end-line="52" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/bower_components/Chart.js/bower.json">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="7" column="26" selection-start-line="7" selection-start-column="26" selection-end-line="7" selection-end-column="26" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/template/app/app-styles.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="44" column="26" selection-start-line="44" selection-start-column="26" selection-end-line="44" selection-end-column="26" />
         </state>
       </provider>
     </entry>
@@ -1149,10 +1177,74 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="23" column="8" selection-start-line="23" selection-start-column="8" selection-end-line="23" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/template/app/template.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.5340314">
+          <caret line="63" column="18" selection-start-line="63" selection-start-column="18" selection-end-line="63" selection-end-column="18" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/template/app/style.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.34056762">
+          <caret line="12" column="13" selection-start-line="12" selection-start-column="13" selection-end-line="12" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://F:/flatdream/ui-alerts.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-108.181816">
+          <caret line="350" column="35" selection-start-line="347" selection-start-column="29" selection-end-line="350" selection-end-column="35" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lk/bower_components/bootstrap/bower.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.504363">
+          <caret line="17" column="33" selection-start-line="17" selection-start-column="33" selection-end-line="17" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lk/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.35602096">
+          <caret line="12" column="92" selection-start-line="12" selection-start-column="92" selection-end-line="12" selection-end-column="92" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/gulp/build.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.3472454">
+          <caret line="30" column="39" selection-start-line="30" selection-start-column="39" selection-end-line="30" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bower_components/bootstrap/bower.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-9.153846">
+          <caret line="17" column="33" selection-start-line="17" selection-start-column="33" selection-end-line="17" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/bl/account/appState.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="11" column="35" selection-start-line="11" selection-start-column="21" selection-end-line="11" selection-end-column="35" />
+          <caret line="46" column="18" selection-start-line="46" selection-start-column="4" selection-end-line="46" selection-end-column="18" />
           <folding />
         </state>
       </provider>
@@ -1160,29 +1252,49 @@
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="56" column="39" selection-start-line="56" selection-start-column="39" selection-end-line="56" selection-end-column="39" />
+          <caret line="71" column="28" selection-start-line="71" selection-start-column="20" selection-end-line="71" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://F:/flatdream/ui-elements.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-7.309091">
+          <caret line="318" column="38" selection-start-line="309" selection-start-column="32" selection-end-line="318" selection-end-column="38" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-8.236363">
-          <caret line="121" column="71" selection-start-line="121" selection-start-column="71" selection-end-line="121" selection-end-column="71" />
+        <state vertical-scroll-proportion="-9.615385">
+          <caret line="205" column="101" selection-start-line="205" selection-start-column="101" selection-end-line="205" selection-end-column="101" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/template/app/app-styles.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="61" column="21" selection-start-line="61" selection-start-column="21" selection-end-line="61" selection-end-column="21" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.14858097">
-          <caret line="452" column="49" selection-start-line="452" selection-start-column="49" selection-end-line="452" selection-end-column="49" />
+        <state vertical-scroll-proportion="0.5824561">
+          <caret line="534" column="50" selection-start-line="534" selection-start-column="50" selection-end-line="534" selection-end-column="50" />
           <folding>
-            <element signature="e#618#4505#0" expanded="false" />
-            <element signature="e#4563#8151#0" expanded="false" />
-            <element signature="e#5983#8051#0" expanded="false" />
-            <element signature="e#9624#11980#0" expanded="false" />
-            <element signature="e#12118#12234#0" expanded="false" />
+            <element signature="e#940#4827#0" expanded="false" />
+            <element signature="e#4885#8473#0" expanded="false" />
+            <element signature="e#6305#8373#0" expanded="false" />
+            <element signature="e#8530#12402#0" expanded="false" />
+            <element signature="e#9946#12302#0" expanded="false" />
+            <element signature="e#12446#13394#0" expanded="false" />
+            <element signature="e#13427#22393#0" expanded="false" />
+            <element signature="e#22433#22896#0" expanded="false" />
+            <element signature="e#23260#23376#0" expanded="false" />
           </folding>
         </state>
       </provider>

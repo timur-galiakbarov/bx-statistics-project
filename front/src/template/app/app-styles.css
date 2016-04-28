@@ -1,11 +1,11 @@
 /*h2*/
-h2.main-title{
+h2.main-title {
     font-weight: normal;
     font-size: 28px;
 }
 
 /*template styles--------------------*/
-.sidebar-logo{
+.sidebar-logo {
     background: #456a94 !important;
 }
 
@@ -13,39 +13,60 @@ h2.main-title{
     border-left: 3px solid #456a94 !important;
 }
 
-.cl-vnavigation a{
+.cl-vnavigation a {
     cursor: pointer;
 }
 
-.logo-title{
+.logo-title {
     font-size: 18px !important;
     font-family: "Roboto" !important;
     padding-top: 2px;
     color: #fff !important;
 }
 
-@media (max-width: 991px){
-    .logo-title{
+@media (max-width: 991px) {
+    .logo-title {
         text-align: center;
         padding-top: 13px;
     }
 }
+
 /*-----------------------------------*/
 /*StatFilter*/
-.statDateFilters{
-    width:100%;
+.statDateFilters {
+    width: 100%;
 }
 
 /*Общая статистика
 -------------------------------------*/
-.main-stat .top-block .item{
+.main-stat .top-block .item {
     margin-top: -20px;
 }
 
-.main-stat .top-block .item .fd-tile{
+.main-stat .top-block .item .fd-tile {
     border-radius: 3px !important;
 }
 
-.main-stat canvas{
+.main-stat canvas {
     margin-top: -15px;
+}
+
+.admin-groups-dropdown {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.admin-groups-dropdown li{
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden;
+}
+
+.choose-group-link{
+    border-bottom: 1px dashed;
+    cursor: pointer;
+}
+
+.choose-group-link:hover{
+    border-bottom: 0px dashed;
 }

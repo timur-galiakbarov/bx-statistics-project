@@ -1,5 +1,16 @@
 <div class="row main-stat">
     <div class="col-md-8">
+
+        <div class="row top-block">
+            <div class="col-sm-12 item">
+                <div class="alert alert-info">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <i class="fa fa-info-circle sign"></i>Выберите группу для анализа из списка управляемых вами групп.
+                    Также вы можете указать любую группу, однако вся статистика выгружена не будет.
+                </div>
+            </div>
+        </div>
+
         <div class="row top-block">
 
             <div class="col-md-4 col-sm-6 item">
@@ -54,7 +65,8 @@
                         <td class="text-center" ng-bind="stat.unsubscribed">430</td>
                         <td class="text-center"
                             ng-class="{'color-success': stat.subscribedSumm > 0, 'color-error': stat.subscribedSumm <= 0}">
-                            <i class="fa" ng-class="{'fa-angle-up': stat.subscribedSumm > 0, 'fa-angle-down': stat.subscribedSumm <= 0}"></i>&nbsp;{{stat.subscribedSumm}}
+                            <i class="fa"
+                               ng-class="{'fa-angle-up': stat.subscribedSumm > 0, 'fa-angle-down': stat.subscribedSumm <= 0}"></i>&nbsp;{{stat.subscribedSumm}}
                         </td>
                         <td class="text-right" ng-bind="stat.membersCount">560 000</td>
                     </tr>
@@ -188,7 +200,17 @@
             <form role="form">
                 <div class="form-group">
                     <label>Группа для анализа:</label>
-                    <input type="text" id="groupAdress" placeholder="Введите адрес группы вконтакте" class="form-control" ng-model="model.groupAddress">
+                    <input type="text" id="groupAdress" placeholder="Введите адрес группы вконтакте"
+                           class="form-control" ng-model="model.groupAddress">
+
+                    <a class="choose-group-link" ng-click="showGroupsMenu()">Выбрать группу из списка</a>
+                    <div class="dropdown clearfix" ng-class="{'hidden': isHiddenMenu}">
+                        <ul class="dropdown-menu static-mn spacer admin-groups-dropdown">
+                            <li ng-repeat="item in adminGroups">
+                                <a tabindex="-1" ng-click="setGroupLink(item)" ng-bind="item.name"></a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Период выгрузки</label>
@@ -196,20 +218,24 @@
 
                     <div class="statDateFilters">
                         <div class="radio">
-                            <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate" value="week">
+                            <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate"
+                                                                value="week">
                                 Неделя</label>
                         </div>
                         <div class="radio">
-                            <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate" value="twoWeek"> Две
+                            <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate"
+                                                                value="twoWeek"> Две
                                 недели</label>
                         </div>
                         <div class="radio">
-                            <label class="radio-inline"> <input class="icheck" type="radio" checked="" name="checkDate" value="month">
+                            <label class="radio-inline"> <input class="icheck" type="radio" checked="" name="checkDate"
+                                                                value="month">
                                 Месяц</label>
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-block btn-info btn-rad" ng-click="getStat()">Показать статистику</button>
+                <button type="button" class="btn btn-block btn-info btn-rad" ng-click="getStat()">Показать статистику
+                </button>
             </form>
         </div>
     </div>

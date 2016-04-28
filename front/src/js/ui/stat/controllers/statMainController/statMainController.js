@@ -5,13 +5,22 @@ angular
     .controller('statMainController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState', 'vkApiFactory',
         function ($rootScope, $scope, $state, bus, statPopupsFactory, appState, vkApiFactory) {
             $scope.currentTab = 'catalog';
-            $rootScope.page.sectionTitle = 'Общая статистика сообществ';
+            $rootScope.page.sectionTitle = 'Общая статистика сообщества';
 
             $scope.getStat = getStat;
             $scope.model = {
                 groupAddress: ''
             };
             $scope.stat = {};
+            $scope.isHiddenMenu = true;
+            $scope.showGroupsMenu = showGroupsMenu;
+            $scope.adminGroups = [];
+            $scope.setGroupLink = setGroupLink;
+
+            var authData = {
+                token: appState.getUserVkToken(),
+                login: appState.getUserVkLogin()
+            };
 
             var peopleStatGraph = (function () {
                 var startRender = false,
@@ -295,11 +304,6 @@ angular
                 }
             })();
 
-            $('.icheck').iCheck({
-                checkboxClass: 'icheckbox_flat-blue',
-                radioClass: 'iradio_flat-blue'
-            });
-
             function getCheckedDate() {
                 var checkDate = $('input[name=checkDate]:checked').val();
                 var currDate = new Date();
@@ -327,7 +331,7 @@ angular
             }
 
             function getStat() {
-                $scope.model.groupAddress = "https://vk.com/detsad02";
+                //$scope.model.groupAddress = "https://vk.com/detsad02";
                 if (!$scope.model.groupAddress) {
                     return;
                 }
@@ -336,9 +340,6 @@ angular
 
                 var vkGroupId = $scope.model.groupAddress.replace("https://vk.com/", "");
                 var vkGid;
-                var authData = {
-                    token: appState.getUserVkToken()
-                };
                 var groupInfo;
 
                 vkApiFactory.getGroupInfo(authData, {
@@ -510,5 +511,36 @@ angular
                     }
                 }
             }
+
+            function getAdminGroups() {
+                vkApiFactory.getUserGroups(authData, {
+                    extended: 1,
+                    filter: "moder",
+                    count: 1000,
+                    fields: ""
+                }).then(function (res) {
+                    console.log(res);
+                    if (res && res[0] > 0){
+                        res = res.slice(1);
+                        $scope.adminGroups = res;
+                    }
+                });
+            }
+
+            function showGroupsMenu() {
+                $scope.isHiddenMenu = !$scope.isHiddenMenu;
+            }
+
+            function setGroupLink(group){
+                $scope.model.groupAddress = "https://vk.com/" + group.screen_name;
+                $scope.isHiddenMenu = true;
+            }
+
+            getAdminGroups();
+
+            $('.icheck').iCheck({
+                checkboxClass: 'icheckbox_flat-blue',
+                radioClass: 'iradio_flat-blue'
+            });
 
         }]);

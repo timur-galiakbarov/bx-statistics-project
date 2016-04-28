@@ -13,7 +13,7 @@ import events from './../../../../bl/events.js';
             appId: "5358505"
         };
 
-        var getGroupInfo = function (authData, params){
+        var getGroupInfo = function (authData, params) {
             return $.ajax({
                 type: "GET",
                 url: "https://api.vk.com/method/groups.getById?access_token=" + authData.token,
@@ -23,13 +23,13 @@ import events from './../../../../bl/events.js';
                     group_id: params.groupId,//Список групп
                     fields: ["members_count", "counters"]
                 }
-            }).then (function (res){
+            }).then(function (res) {
                 return res.response[0];
             });
 
         };
 
-        var getStat = function (authData, params){
+        var getStat = function (authData, params) {
             return $.ajax({
                 type: "GET",
                 url: "https://api.vk.com/method/stats.get",
@@ -40,23 +40,41 @@ import events from './../../../../bl/events.js';
                     date_from: params.dateFrom,
                     date_to: params.dateTo
                 }
-            }).then(function (res){
+            }).then(function (res) {
                 return res.response;
             });
         };
 
-        var getWall = function (authData, params){
+        var getWall = function (authData, params) {
             return $.ajax({
                 type: "GET",
                 url: "https://api.vk.com/method/wall.get",
                 dataType: 'jsonp',
                 data: {
                     access_token: authData.token,//Токен
-                    owner_id: "-"+params.groupId,//Список групп
+                    owner_id: "-" + params.groupId,//Список групп
                     offset: params.offset,
                     count: params.count
                 }
-            }).then(function (res){
+            }).then(function (res) {
+                return res.response;
+            });
+        };
+
+        var getUserGroups = function (authData, params) {
+            return $.ajax({
+                type: "GET",
+                url: "https://api.vk.com/method/groups.get",
+                dataType: 'jsonp',
+                data: {
+                    access_token: authData.token,//Токен
+                    user_id: authData.login,
+                    extended: params.extended,
+                    filter: params.filter,
+                    fields: params.fields,
+                    count: params.count
+                }
+            }).then(function (res) {
                 return res.response;
             });
         };
@@ -64,7 +82,8 @@ import events from './../../../../bl/events.js';
         return {
             getGroupInfo: getGroupInfo,
             getStat: getStat,
-            getWall: getWall
+            getWall: getWall,
+            getUserGroups: getUserGroups
         }
 
     }

@@ -79,11 +79,28 @@ import events from './../../../../bl/events.js';
             });
         };
 
+        var getAlbums = function (authData, params){
+            return $.ajax({
+                type: "GET",
+                url: "https://api.vk.com/method/photos.getAlbums",
+                dataType: 'jsonp',
+                data: {
+                    access_token: authData.token,//Токен
+                    owner_id: params.groupId,
+                    count: params.count,
+                    offset: params.offset
+                }
+            }).then(function (res) {
+                return res.response;
+            });
+        };
+
         return {
             getGroupInfo: getGroupInfo,
             getStat: getStat,
             getWall: getWall,
-            getUserGroups: getUserGroups
+            getUserGroups: getUserGroups,
+            getAlbums: getAlbums
         }
 
     }

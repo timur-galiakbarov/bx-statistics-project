@@ -331,13 +331,11 @@ angular
             }
 
             function getStat() {
-                //$scope.model.groupAddress = "https://vk.com/detsad02";
                 if (!$scope.model.groupAddress) {
                     return;
                 }
 
                 var parseDate = getCheckedDate();
-
                 var vkGroupId = $scope.model.groupAddress.replace("https://vk.com/", "");
                 var vkGid;
                 var groupInfo;
@@ -359,6 +357,7 @@ angular
                     groupInfo = res;
                     getPeopleStat();
                     getWallStat();
+                    getAlbumsStat();
                 });
 
                 //Получение статистики по численности
@@ -510,6 +509,44 @@ angular
                         });
                     }
                 }
+
+                function getAlbumsStat() {
+                    var maxIterations = 5,
+                        iteration = 0,
+                        newAlbums = 0;
+
+                    getAlbums();
+
+                    function getAlbums() {
+                        if (iteration >= maxIterations) {
+                            newAlbums = 0;
+                            return;
+                        }
+                        iteration++;
+                        vkApiFactory.getAlbums(authData, {
+                            groupId: "-" + vkGid
+                        }).then(function (res) {
+                            if (!res || res.error && res.error && res.error.error_code == 6) {
+                                setTimeout(function () {
+                                    getAlbums();
+                                }, 400);
+                                return;
+                            }
+                            if (res && res.length > 0) {
+                                res.forEach(function (item) {
+                                    if (item.created > parseDate.unixFrom && item.created < parseDate.unixTo) {
+                                        newAlbums++;
+                                    }
+                                });
+                                $scope.$apply(function () {
+                                    $scope.stat.albums = {
+                                        albumsPeriod: newAlbums
+                                    };
+                                });
+                            }
+                        });
+                    }
+                }
             }
 
             function getAdminGroups() {
@@ -520,7 +557,7 @@ angular
                     fields: ""
                 }).then(function (res) {
                     console.log(res);
-                    if (res && res[0] > 0){
+                    if (res && res[0] > 0) {
                         res = res.slice(1);
                         $scope.adminGroups = res;
                     }
@@ -531,7 +568,7 @@ angular
                 $scope.isHiddenMenu = !$scope.isHiddenMenu;
             }
 
-            function setGroupLink(group){
+            function setGroupLink(group) {
                 $scope.model.groupAddress = "https://vk.com/" + group.screen_name;
                 $scope.isHiddenMenu = true;
             }

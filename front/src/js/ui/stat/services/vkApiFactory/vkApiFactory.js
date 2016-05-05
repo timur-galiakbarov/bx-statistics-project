@@ -95,12 +95,30 @@ import events from './../../../../bl/events.js';
             });
         };
 
+        var getAllPhoto = function (authData, params){
+            return $.ajax({
+                type: "GET",
+                url: "https://api.vk.com/method/photos.getAll",
+                dataType: 'jsonp',
+                data: {
+                    access_token: authData.token,//Токен
+                    owner_id: params.groupId,
+                    count: params.count,
+                    offset: params.offset,
+                    extended: params.extended
+                }
+            }).then(function (res) {
+                return res.response;
+            });
+        };
+
         return {
             getGroupInfo: getGroupInfo,
             getStat: getStat,
             getWall: getWall,
             getUserGroups: getUserGroups,
-            getAlbums: getAlbums
+            getAlbums: getAlbums,
+            getAllPhoto: getAllPhoto
         }
 
     }

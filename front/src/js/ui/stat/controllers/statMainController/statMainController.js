@@ -358,6 +358,7 @@ angular
                     getPeopleStat();
                     getWallStat();
                     getAlbumsStat();
+                    getPhotoStat();
                 });
 
                 //Получение статистики по численности
@@ -400,12 +401,12 @@ angular
                             stat.reachSubscribers += dateStat.reach_subscribers ? dateStat.reach_subscribers : 0;
                             //Сбор данных для графика участников
                             graphPeopleStatData.labels.unshift(getDateFromVk(dateStat.day));
-                            graphPeopleStatData.subscribedDataSet.unshift(dateStat.subscribed);
-                            graphPeopleStatData.unsubscribedDataSet.unshift(dateStat.unsubscribed);
+                            graphPeopleStatData.subscribedDataSet.unshift(dateStat.subscribed || 0);
+                            graphPeopleStatData.unsubscribedDataSet.unshift(dateStat.unsubscribed || 0);
                             //График посещаемости/просмотров группы
                             attendanceStatData.labels.unshift(getDateFromVk(dateStat.day));
-                            attendanceStatData.viewsData.unshift(dateStat.views);
-                            attendanceStatData.visitorsData.unshift(dateStat.visitors);
+                            attendanceStatData.viewsData.unshift(dateStat.views || 0);
+                            attendanceStatData.visitorsData.unshift(dateStat.visitors || 0);
 
                             subscribersStatData.labels.unshift(getDateFromVk(dateStat.day));
                             if (i != 0)
@@ -482,8 +483,8 @@ angular
                                 res.forEach(function (post) {
                                     if (post.date > parseDate.unixFrom && post.date < parseDate.unixTo) {
                                         wallStat.counters.wallPostsPeriodCount++;//Количество постов за период
-                                        wallStat.activity.likesPeriodCount += post.likes.count;//Количество постов за период
-                                        wallStat.activity.repostsPeriodCount += post.reposts.count;//Количество постов за период
+                                        wallStat.activity.likesPeriodCount += post.likes.count || 0;//Количество постов за период
+                                        wallStat.activity.repostsPeriodCount += post.reposts.count || 0;//Количество постов за период
                                     } else if (post.date <= parseDate.unixFrom && !post.is_pinned) {
                                         flagStop = true;
                                     }
@@ -545,6 +546,74 @@ angular
                                 });
                             }
                         });
+                    }
+                }
+
+                function getPhotoStat() {
+                    var maxIterations = 30,
+                        iteration = 0,
+                        photosStat = {
+                            allCount: 0,
+                            photoPeriodCount: 0,
+                            repostsPeriodCount: 0,
+                            likesPeriodCount: 0
+                        },
+                        flagStop = false;
+
+                    getPhotos();
+
+                    function getPhotos() {
+                        if (iteration >= maxIterations) {
+                            //newAlbums = 0;
+                            return;
+                        }
+                        vkApiFactory.getAllPhoto(authData, {
+                            groupId: "-" + vkGid,
+                            count: 200,
+                            offset: iteration * 200,
+                            extended: 1
+                        }).then(function (res) {
+                            console.log(res);
+                            if (!res || res.error && res.error && res.error.error_code == 6) {
+                                setTimeout(function () {
+                                    getPhotos();
+                                }, 400);
+                                return;
+                            }
+                            if (res && res.length > 0) {
+                                photosStat.allCount = res[0];//Количество постов за период
+                                if (res.length <= photosStat.allCount){
+                                    flagStop = true;
+                                }
+
+                                res.forEach(function (photo) {
+                                    if (photo.created > parseDate.unixFrom && photo.created < parseDate.unixTo) {
+                                        photosStat.photoPeriodCount++;//Количество фото за период
+                                        photosStat.likesPeriodCount += photo.likes.count || 0;//Количество фото за период
+                                        photosStat.repostsPeriodCount += photo.reposts.count || 0;
+                                    } else if (photo.date <= parseDate.unixFrom) {
+                                        flagStop = true;
+                                    }
+                                });
+                            } else {
+                                flagStop = true;
+                            }
+
+                            if (!flagStop) {
+                                iteration++;
+                                getPhotos();
+                            } else {
+                                $scope.$apply(function () {
+                                    $scope.stat.photos = {
+                                        allCount: photosStat.allCount,
+                                        likesPeriodCount: photosStat.likesPeriodCount,
+                                        repostsPeriodCount: photosStat.repostsPeriodCount,
+                                        photoPeriodCount: photosStat.photoPeriodCount
+                                    };
+                                });
+                            }
+                        });
+
                     }
                 }
             }

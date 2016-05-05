@@ -127,11 +127,15 @@
                     </tr>
                     <tr>
                         <td>Отметки "Мне нравится" в фотографиях</td>
-                        <td class="text-center">430</td>
+                        <td class="text-center" ng-bind="stat.photos.likesPeriodCount">430</td>
                     </tr>
                     <tr>
                         <td>"Репосты" постов со стены</td>
                         <td class="text-center" ng-bind="stat.wall.repostsPeriod"></td>
+                    </tr>
+                    <tr>
+                        <td>"Репосты" фотографий</td>
+                        <td class="text-center" ng-bind="stat.photos.repostsPeriodCount"></td>
                     </tr>
                     <tr>
                         <td>Комментариев на стене</td>
@@ -171,7 +175,7 @@
                         </tr>
                         <tr>
                             <td>Фотографии</td>
-                            <td class="text-center">430</td>
+                            <td class="text-center" ng-bind="stat.photos.photoPeriodCount"></td>
                             <td class="text-center" ng-bind="stat.groupCounters.photos"></td>
                         </tr>
                         <tr>

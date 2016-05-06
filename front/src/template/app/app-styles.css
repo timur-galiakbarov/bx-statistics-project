@@ -54,12 +54,14 @@ h2.main-title {
 .admin-groups-dropdown {
     width: 100% !important;
     max-width: 100% !important;
+    background: #f5f1fc;
 }
 
 .admin-groups-dropdown li{
     width: 100% !important;
     max-width: 100% !important;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .choose-group-link{

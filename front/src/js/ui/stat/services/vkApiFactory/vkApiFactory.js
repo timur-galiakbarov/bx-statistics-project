@@ -79,7 +79,7 @@ import events from './../../../../bl/events.js';
             });
         };
 
-        var getAlbums = function (authData, params){
+        var getAlbums = function (authData, params) {
             return $.ajax({
                 type: "GET",
                 url: "https://api.vk.com/method/photos.getAlbums",
@@ -95,10 +95,43 @@ import events from './../../../../bl/events.js';
             });
         };
 
-        var getAllPhoto = function (authData, params){
+        var getAllPhoto = function (authData, params) {
             return $.ajax({
                 type: "GET",
                 url: "https://api.vk.com/method/photos.getAll",
+                dataType: 'jsonp',
+                data: {
+                    access_token: authData.token,//Токен
+                    owner_id: params.groupId,
+                    count: params.count,
+                    offset: params.offset,
+                    extended: params.extended
+                }
+            }).then(function (res) {
+                return res.response;
+            });
+        };
+
+        var getAllCommentsPhoto = function (authData, params) {
+            return $.ajax({
+                type: "GET",
+                url: "https://api.vk.com/method/photos.getAllComments",
+                dataType: 'jsonp',
+                data: {
+                    access_token: authData.token,//Токен
+                    owner_id: params.groupId,
+                    count: params.count,
+                    offset: params.offset
+                }
+            }).then(function (res) {
+                return res.response;
+            });
+        };
+
+        var getVideos = function (authData, params) {
+            return $.ajax({
+                type: "GET",
+                url: "https://api.vk.com/method/video.get",
                 dataType: 'jsonp',
                 data: {
                     access_token: authData.token,//Токен
@@ -118,7 +151,9 @@ import events from './../../../../bl/events.js';
             getWall: getWall,
             getUserGroups: getUserGroups,
             getAlbums: getAlbums,
-            getAllPhoto: getAllPhoto
+            getAllPhoto: getAllPhoto,
+            getAllCommentsPhoto: getAllCommentsPhoto,
+            getVideos: getVideos
         }
 
     }

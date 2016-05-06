@@ -1,3 +1,4 @@
+import events from './../../../../bl/events.js';
 import {enums} from './../../../../bl/module.js';
 
 angular
@@ -11,7 +12,10 @@ angular
             $scope.model = {
                 groupAddress: ''
             };
-            $scope.stat = {};
+            $scope.stat = {
+                photos: {},
+                videos: {}
+            };
             $scope.isHiddenMenu = true;
             $scope.showGroupsMenu = showGroupsMenu;
             $scope.adminGroups = [];
@@ -355,14 +359,23 @@ angular
                         vkGid = res.gid;
                     });
                     groupInfo = res;
-                    getPeopleStat();
-                    getWallStat();
-                    getAlbumsStat();
-                    getPhotoStat();
+
+                    $.when(
+                        getPeopleStat(),
+                        getWallStat(),
+                        getAlbumsStat(),
+                        getPhotoStat(),
+                        getPhotoCommentsStat(),
+                        getVideoStat()
+                    )
+                        .then(function () {
+                            bus.publish(events.STAT.MAIN.FINISHED, $scope.stat);
+                        });
                 });
 
                 //Получение статистики по численности
                 function getPeopleStat() {
+                    var deferr = $.Deferred();
                     vkApiFactory.getStat(authData, {
                         groupId: vkGid,
                         dateFrom: parseDate.from,
@@ -438,20 +451,27 @@ angular
                         subscribersStatGraph.showGraph(subscribersStatData);
                         attendanceStatGraph.showGraph(attendanceStatData);
 
+                        deferr.resolve();
+
                         function getDateFromVk(dateVk) {
                             var normilizedDate = new Date(dateVk);
                             return ('0' + normilizedDate.getDate()).slice(-2) + "." + ('0' + (normilizedDate.getMonth() + 1)).slice(-2);
                         }
+                    }).fail(function () {
+                        deferr.reject();
                     });
+                    return deferr.promise();
                 }
 
                 //Получение статистик по стене группы
                 function getWallStat() {
+                    var deferr = $.Deferred();
                     var iteration = 0;
                     var wallStat = {
                         activity: {
                             likesPeriodCount: 0,
-                            repostsPeriodCount: 0
+                            repostsPeriodCount: 0,
+                            commentsPeriodCount: 0
                         },
                         counters: {
                             wallPostsPeriodCount: 0
@@ -483,8 +503,9 @@ angular
                                 res.forEach(function (post) {
                                     if (post.date > parseDate.unixFrom && post.date < parseDate.unixTo) {
                                         wallStat.counters.wallPostsPeriodCount++;//Количество постов за период
-                                        wallStat.activity.likesPeriodCount += post.likes.count || 0;//Количество постов за период
-                                        wallStat.activity.repostsPeriodCount += post.reposts.count || 0;//Количество постов за период
+                                        wallStat.activity.likesPeriodCount += post.likes.count || 0;
+                                        wallStat.activity.repostsPeriodCount += post.reposts.count || 0;
+                                        wallStat.activity.commentsPeriodCount += post.comments.count || 0;
                                     } else if (post.date <= parseDate.unixFrom && !post.is_pinned) {
                                         flagStop = true;
                                     }
@@ -503,15 +524,21 @@ angular
                                         allPosts: wallStat.counters.allWallPostsCount,
                                         postsPeriod: wallStat.counters.wallPostsPeriodCount,
                                         likesPeriod: wallStat.activity.likesPeriodCount,
-                                        repostsPeriod: wallStat.activity.repostsPeriodCount
+                                        repostsPeriod: wallStat.activity.repostsPeriodCount,
+                                        commentsPeriod: wallStat.activity.commentsPeriodCount
                                     };
                                 });
+                                deferr.resolve();
                             }
+                        }).fail(function () {
+                            deferr.reject();
                         });
                     }
+                    return deferr.promise();
                 }
 
                 function getAlbumsStat() {
+                    var deferr = $.Deferred();
                     var maxIterations = 5,
                         iteration = 0,
                         newAlbums = 0;
@@ -544,12 +571,17 @@ angular
                                         albumsPeriod: newAlbums
                                     };
                                 });
+                                deferr.resolve();
                             }
+                        }).fail(function () {
+                            deferr.reject();
                         });
                     }
+                    return deferr.promise();
                 }
 
                 function getPhotoStat() {
+                    var deferr = $.Deferred();
                     var maxIterations = 30,
                         iteration = 0,
                         photosStat = {
@@ -582,7 +614,7 @@ angular
                             }
                             if (res && res.length > 0) {
                                 photosStat.allCount = res[0];//Количество постов за период
-                                if (res.length <= photosStat.allCount){
+                                if (res.length <= photosStat.allCount) {
                                     flagStop = true;
                                 }
 
@@ -604,17 +636,147 @@ angular
                                 getPhotos();
                             } else {
                                 $scope.$apply(function () {
-                                    $scope.stat.photos = {
-                                        allCount: photosStat.allCount,
-                                        likesPeriodCount: photosStat.likesPeriodCount,
-                                        repostsPeriodCount: photosStat.repostsPeriodCount,
-                                        photoPeriodCount: photosStat.photoPeriodCount
-                                    };
+                                    $scope.stat.photos.allCount = photosStat.allCount;
+                                    $scope.stat.photos.likesPeriodCount = photosStat.likesPeriodCount;
+                                    $scope.stat.photos.repostsPeriodCount = photosStat.repostsPeriodCount;
+                                    $scope.stat.photos.photoPeriodCount = photosStat.photoPeriodCount;
                                 });
+                                deferr.resolve();
                             }
+                        }).fail(function () {
+                            deferr.reject();
                         });
 
                     }
+                    return deferr.promise();
+                }
+
+                function getPhotoCommentsStat() {
+                    var deferr = $.Deferred();
+                    var maxIterations = 30,
+                        iteration = 0,
+                        photosStat = {
+                            commentsPeriodCount: 0
+                        },
+                        flagStop = false;
+
+                    getPhotosComments();
+
+                    function getPhotosComments() {
+                        if (iteration >= maxIterations) {
+                            //newAlbums = 0;
+                            return;
+                        }
+                        vkApiFactory.getAllCommentsPhoto(authData, {
+                            groupId: "-" + vkGid,
+                            count: 100,
+                            offset: iteration * 100
+                        }).then(function (res) {
+                            console.log(res);
+                            if (!res || res.error && res.error && res.error.error_code == 6) {
+                                setTimeout(function () {
+                                    getPhotosComments();
+                                }, 400);
+                                return;
+                            }
+                            if (res && res.length > 0) {
+                                res.forEach(function (comment) {
+                                    if (comment.date > parseDate.unixFrom && comment.date < parseDate.unixTo) {
+                                        photosStat.commentsPeriodCount++;//Количество комментариев за период
+                                    } else if (comment.date <= parseDate.unixFrom) {
+                                        flagStop = true;
+                                    }
+                                });
+                            } else {
+                                flagStop = true;
+                            }
+
+                            if (!flagStop) {
+                                iteration++;
+                                getPhotosComments();
+                            } else {
+                                $scope.$apply(function () {
+                                    $scope.stat.photos.commentsPeriodCount = photosStat.commentsPeriodCount
+                                });
+                                deferr.resolve();
+                            }
+                        }).fail(function () {
+                            deferr.reject();
+                        });
+
+                    }
+                    return deferr.promise();
+                }
+
+                function getVideoStat() {
+                    var deferr = $.Deferred();
+                    var maxIterations = 30,
+                        iteration = 0,
+                        videoStat = {
+                            allCount: 0,
+                            videoPeriodCount: 0,
+                            repostsPeriodCount: 0,
+                            likesPeriodCount: 0
+                        },
+                        flagStop = false;
+
+                    getVideo();
+
+                    function getVideo() {
+                        if (iteration >= maxIterations) {
+                            //newAlbums = 0;
+                            return;
+                        }
+                        vkApiFactory.getVideos(authData, {
+                            groupId: "-" + vkGid,
+                            count: 200,
+                            offset: iteration * 200,
+                            extended: 1
+                        }).then(function (res) {
+                            console.log(res);
+                            if (!res || res.error && res.error && res.error.error_code == 6) {
+                                setTimeout(function () {
+                                    getVideo();
+                                }, 400);
+                                return;
+                            }
+                            if (res && res.length > 0) {
+                                videoStat.allCount = res[0];//Количество постов за период
+                                if (res.length <= videoStat.allCount) {
+                                    flagStop = true;
+                                }
+
+                                res.forEach(function (video) {
+                                    if (video.date > parseDate.unixFrom && video.date < parseDate.unixTo) {
+                                        videoStat.photoPeriodCount++;//Количество фото за период
+                                        videoStat.likesPeriodCount += video.likes.count || 0;//Количество фото за период
+                                        videoStat.repostsPeriodCount += video.reposts.count || 0;
+                                    } else if (video.date <= parseDate.unixFrom) {
+                                        flagStop = true;
+                                    }
+                                });
+                            } else {
+                                flagStop = true;
+                            }
+
+                            if (!flagStop) {
+                                iteration++;
+                                getVideo();
+                            } else {
+                                $scope.$apply(function () {
+                                    $scope.stat.videos.allCount = videoStat.allCount;
+                                    $scope.stat.videos.likesPeriodCount = videoStat.likesPeriodCount;
+                                    $scope.stat.videos.repostsPeriodCount = videoStat.repostsPeriodCount;
+                                    $scope.stat.videos.videoPeriodCount = videoStat.videoPeriodCount;
+                                });
+                                deferr.resolve();
+                            }
+                        }).fail(function () {
+                            deferr.reject();
+                        });
+
+                    }
+                    return deferr.promise();
                 }
             }
 
@@ -642,7 +804,15 @@ angular
                 $scope.isHiddenMenu = true;
             }
 
+            function checkMainStatIsSaved() {
+                var stat = appState.getMainStat();
+                if (stat) {
+                    $scope.stat = stat;
+                }
+            }
+
             getAdminGroups();
+            checkMainStatIsSaved();
 
             $('.icheck').iCheck({
                 checkboxClass: 'icheckbox_flat-blue',

@@ -2,6 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="111a26ba-efcb-4616-9187-2d27a653c905" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/template/app/app-styles.css" afterPath="$PROJECT_DIR$/front/src/template/app/app-styles.css" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/bl/account/appState.js" afterPath="$PROJECT_DIR$/front/src/js/bl/account/appState.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/bl/events.js" afterPath="$PROJECT_DIR$/front/src/js/bl/events.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" />
@@ -36,8 +39,18 @@
       <file leaf-file-name="statMainController.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-6.690909">
-              <caret line="132" column="39" selection-start-line="132" selection-start-column="39" selection-end-line="132" selection-end-column="39" />
+            <state vertical-scroll-proportion="-7.6181817">
+              <caret line="145" column="81" selection-start-line="145" selection-start-column="81" selection-end-line="145" selection-end-column="81" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="app-styles.css" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/template/app/app-styles.css">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-7.3448277">
+              <caret line="56" column="23" selection-start-line="56" selection-start-column="23" selection-end-line="56" selection-end-column="23" />
               <folding />
             </state>
           </provider>
@@ -57,7 +70,7 @@
         <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="107" column="45" selection-start-line="107" selection-start-column="45" selection-end-line="107" selection-end-column="45" />
+              <caret line="155" column="32" selection-start-line="155" selection-start-column="32" selection-end-line="155" selection-end-column="32" />
               <folding />
             </state>
           </provider>
@@ -66,23 +79,57 @@
       <file leaf-file-name="statMainController.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.79122806">
-              <caret line="412" column="70" selection-start-line="412" selection-start-column="70" selection-end-line="412" selection-end-column="70" />
+            <state vertical-scroll-proportion="0.522807">
+              <caret line="808" column="27" selection-start-line="808" selection-start-column="27" selection-end-line="808" selection-end-column="27" />
               <folding>
-                <element signature="e#940#4827#0" expanded="false" />
-                <element signature="e#4885#8473#0" expanded="false" />
-                <element signature="e#6305#8373#0" expanded="false" />
-                <element signature="e#8530#12402#0" expanded="false" />
-                <element signature="e#9946#12302#0" expanded="false" />
-                <element signature="e#12446#13394#0" expanded="false" />
-                <element signature="e#19340#22408#0" expanded="false" />
-                <element signature="e#22451#24034#0" expanded="false" />
-                <element signature="e#24534#27268#0" expanded="false" />
-                <element signature="e#27340#27804#0" expanded="false" />
-                <element signature="e#27844#27919#0" expanded="false" />
-                <element signature="e#27962#28104#0" expanded="false" />
-                <element signature="e#28169#28285#0" expanded="false" />
+                <element signature="e#1057#4944#0" expanded="false" />
+                <element signature="e#5002#8590#0" expanded="false" />
+                <element signature="e#6422#8490#0" expanded="false" />
+                <element signature="e#8647#12519#0" expanded="false" />
+                <element signature="e#10063#12419#0" expanded="false" />
+                <element signature="e#12563#13511#0" expanded="false" />
+                <element signature="e#13544#34806#0" expanded="false" />
+                <element signature="e#15150#19887#0" expanded="false" />
+                <element signature="e#19982#23479#0" expanded="false" />
+                <element signature="e#23522#25338#0" expanded="false" />
+                <element signature="e#25380#28791#0" expanded="false" />
+                <element signature="e#28841#31361#0" expanded="false" />
+                <element signature="e#31403#34792#0" expanded="false" />
+                <element signature="e#34846#35310#0" expanded="false" />
+                <element signature="e#35350#35425#0" expanded="false" />
+                <element signature="e#35468#35610#0" expanded="false" />
+                <element signature="e#35909#36025#0" expanded="false" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="appState.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/bl/account/appState.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-12.896552">
+              <caret line="24" column="8" selection-start-line="24" selection-start-column="8" selection-end-line="24" selection-end-column="8" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="events.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/bl/events.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="21" column="41" selection-start-line="21" selection-start-column="23" selection-end-line="21" selection-end-column="41" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="settingsController.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/ui/settings/controllers/settingsController.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="25" column="41" selection-start-line="25" selection-start-column="41" selection-end-line="25" selection-end-column="41" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -95,7 +142,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/front/src/js/ui/dashboard/directives/radVkAuth/radVkAuth.js" />
         <option value="$PROJECT_DIR$/controllers/account/getVkInfo.php" />
         <option value="$PROJECT_DIR$/front/src/js/ui/dashboard/directives/radVkAuth/radVkAuth.html" />
         <option value="$PROJECT_DIR$/front/src/js/ui/app/factories/radVkFactory.js" />
@@ -123,7 +169,6 @@
         <option value="$PROJECT_DIR$/front/src/js/bl/account/accountLogic.js" />
         <option value="$PROJECT_DIR$/controllers/account/getUserInfo.php" />
         <option value="$PROJECT_DIR$/login/vkAuth.php" />
-        <option value="$PROJECT_DIR$/front/src/js/bl/account/appState.js" />
         <option value="&lt;dacc3443-a446-4388-8468-7724da885803&gt;/engine/js/statisticApp/statisticVk.js" />
         <option value="$PROJECT_DIR$/bower_components/Chart.js/bower.json" />
         <option value="$PROJECT_DIR$/login/index.php" />
@@ -134,7 +179,6 @@
         <option value="$PROJECT_DIR$/lk/index.html" />
         <option value="$PROJECT_DIR$/lk/bower_components/bootstrap/bower.json" />
         <option value="$PROJECT_DIR$/bower_components/bootstrap/bower.json" />
-        <option value="$PROJECT_DIR$/front/src/template/app/app-styles.css" />
         <option value="$PROJECT_DIR$/gulp/build.js" />
         <option value="$PROJECT_DIR$/package.json" />
         <option value="$PROJECT_DIR$/front/src/js/main.js" />
@@ -143,8 +187,11 @@
         <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/index.php" />
         <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/bitrix/templates/unauthorize/header.php" />
         <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/bitrix/templates/unauthorize/footer.php" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" />
+        <option value="$PROJECT_DIR$/front/src/template/app/app-styles.css" />
         <option value="$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" />
+        <option value="$PROJECT_DIR$/front/src/js/bl/events.js" />
+        <option value="$PROJECT_DIR$/front/src/js/bl/account/appState.js" />
         <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" />
       </list>
     </option>
@@ -274,6 +321,8 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -321,6 +370,54 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="front" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="template" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="front" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="template" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -514,8 +611,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -606,48 +701,26 @@
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32972974" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32181427" sideWeight="0.50373137" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32972974" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32972974" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32216215" sideWeight="0.4969743" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.35783783" sideWeight="0.49626866" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Gulp" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2595949" sideWeight="0.3891547" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3574514" sideWeight="0.49626866" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Gulp" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.26226014" sideWeight="0.40350878" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.20522387" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2595949" sideWeight="0.61084527" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32980332" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32972974" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32540542" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-    </layout>
-    <layout-to-restore>
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23529412" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32843137" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Gulp" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2473525" sideWeight="0.16025642" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2473525" sideWeight="0.8397436" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.26226014" sideWeight="0.5964912" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32980332" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32843137" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32540542" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-    </layout-to-restore>
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32972974" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+    </layout>
   </component>
   <component name="Vcs.Log.UiProperties">
     <option name="RECENTLY_FILTERED_USER_GROUPS">
@@ -674,32 +747,28 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="87" column="42" selection-start-line="87" selection-start-column="42" selection-end-line="87" selection-end-column="42" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#940#4827#0" expanded="false" />
-            <element signature="e#4885#8473#0" expanded="false" />
-            <element signature="e#6305#8373#0" expanded="false" />
-            <element signature="e#8530#12402#0" expanded="false" />
-            <element signature="e#9946#12302#0" expanded="false" />
-            <element signature="e#12446#13394#0" expanded="false" />
-            <element signature="e#19340#22408#0" expanded="false" />
-            <element signature="e#22451#24034#0" expanded="false" />
-            <element signature="e#24534#27268#0" expanded="false" />
-            <element signature="e#27340#27804#0" expanded="false" />
-            <element signature="e#27844#27919#0" expanded="false" />
-            <element signature="e#27962#28104#0" expanded="false" />
-            <element signature="e#28169#28285#0" expanded="false" />
+            <element signature="e#1057#4944#0" expanded="false" />
+            <element signature="e#5002#8590#0" expanded="false" />
+            <element signature="e#6422#8490#0" expanded="false" />
+            <element signature="e#8647#12519#0" expanded="false" />
+            <element signature="e#10063#12419#0" expanded="false" />
+            <element signature="e#12563#13511#0" expanded="false" />
+            <element signature="e#13544#34806#0" expanded="false" />
+            <element signature="e#15150#19887#0" expanded="false" />
+            <element signature="e#19982#23479#0" expanded="false" />
+            <element signature="e#23522#25338#0" expanded="false" />
+            <element signature="e#25380#28791#0" expanded="false" />
+            <element signature="e#28841#31361#0" expanded="false" />
+            <element signature="e#31403#34792#0" expanded="false" />
+            <element signature="e#34846#35310#0" expanded="false" />
+            <element signature="e#35350#35425#0" expanded="false" />
+            <element signature="e#35468#35610#0" expanded="false" />
+            <element signature="e#35909#36025#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -810,38 +879,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/template/app/style.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.34056762">
-          <caret line="12" column="13" selection-start-line="12" selection-start-column="13" selection-end-line="12" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/bower_components/bootstrap/bower.json">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="17" column="33" selection-start-line="17" selection-start-column="33" selection-end-line="17" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/bl/account/appState.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="46" column="18" selection-start-line="46" selection-start-column="4" selection-end-line="46" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/settings/controllers/settingsController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="3" column="27" selection-start-line="3" selection-start-column="27" selection-end-line="3" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/template/app/app-styles.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="61" column="21" selection-start-line="61" selection-start-column="21" selection-end-line="61" selection-end-column="21" />
         </state>
       </provider>
     </entry>
@@ -1020,6 +1061,38 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/template/app/style.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.54561406">
+          <caret line="20" column="39" selection-start-line="20" selection-start-column="39" selection-end-line="20" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/template/app/app-styles.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-7.3448277">
+          <caret line="56" column="23" selection-start-line="56" selection-start-column="23" selection-end-line="56" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="155" column="32" selection-start-line="155" selection-start-column="32" selection-end-line="155" selection-end-column="32" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-7.6181817">
+          <caret line="145" column="81" selection-start-line="145" selection-start-column="81" selection-end-line="145" selection-end-column="81" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/settings/directives/radUserSettings/radUserSettings.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -1028,40 +1101,52 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/settings/controllers/settingsController.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-6.690909">
-          <caret line="132" column="39" selection-start-line="132" selection-start-column="39" selection-end-line="132" selection-end-column="39" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="25" column="41" selection-start-line="25" selection-start-column="41" selection-end-line="25" selection-end-column="41" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js">
+    <entry file="file://$PROJECT_DIR$/front/src/js/bl/events.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="107" column="45" selection-start-line="107" selection-start-column="45" selection-end-line="107" selection-end-column="45" />
+          <caret line="21" column="41" selection-start-line="21" selection-start-column="23" selection-end-line="21" selection-end-column="41" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/bl/account/appState.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-12.896552">
+          <caret line="24" column="8" selection-start-line="24" selection-start-column="8" selection-end-line="24" selection-end-column="8" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.79122806">
-          <caret line="412" column="70" selection-start-line="412" selection-start-column="70" selection-end-line="412" selection-end-column="70" />
+        <state vertical-scroll-proportion="0.522807">
+          <caret line="808" column="27" selection-start-line="808" selection-start-column="27" selection-end-line="808" selection-end-column="27" />
           <folding>
-            <element signature="e#940#4827#0" expanded="false" />
-            <element signature="e#4885#8473#0" expanded="false" />
-            <element signature="e#6305#8373#0" expanded="false" />
-            <element signature="e#8530#12402#0" expanded="false" />
-            <element signature="e#9946#12302#0" expanded="false" />
-            <element signature="e#12446#13394#0" expanded="false" />
-            <element signature="e#19340#22408#0" expanded="false" />
-            <element signature="e#22451#24034#0" expanded="false" />
-            <element signature="e#24534#27268#0" expanded="false" />
-            <element signature="e#27340#27804#0" expanded="false" />
-            <element signature="e#27844#27919#0" expanded="false" />
-            <element signature="e#27962#28104#0" expanded="false" />
-            <element signature="e#28169#28285#0" expanded="false" />
+            <element signature="e#1057#4944#0" expanded="false" />
+            <element signature="e#5002#8590#0" expanded="false" />
+            <element signature="e#6422#8490#0" expanded="false" />
+            <element signature="e#8647#12519#0" expanded="false" />
+            <element signature="e#10063#12419#0" expanded="false" />
+            <element signature="e#12563#13511#0" expanded="false" />
+            <element signature="e#13544#34806#0" expanded="false" />
+            <element signature="e#15150#19887#0" expanded="false" />
+            <element signature="e#19982#23479#0" expanded="false" />
+            <element signature="e#23522#25338#0" expanded="false" />
+            <element signature="e#25380#28791#0" expanded="false" />
+            <element signature="e#28841#31361#0" expanded="false" />
+            <element signature="e#31403#34792#0" expanded="false" />
+            <element signature="e#34846#35310#0" expanded="false" />
+            <element signature="e#35350#35425#0" expanded="false" />
+            <element signature="e#35468#35610#0" expanded="false" />
+            <element signature="e#35909#36025#0" expanded="false" />
           </folding>
         </state>
       </provider>

@@ -8,9 +8,11 @@ import topics from '../topics.js';
 
 var userInfo = null;
 var currentShop = null;
+var mainStat = null;
 
 bus.subscribe(events.ACCOUNT.STATED, saveUserProfile);
 bus.subscribe(events.ACCOUNT.VK.AUTH, saveVkAuthInfo);
+bus.subscribe(events.STAT.MAIN.FINISHED, saveMainStat);
 
 function saveUserProfile(user) {
     userInfo = user.user ? user.user : null;
@@ -19,8 +21,12 @@ function saveUserProfile(user) {
     bus.publish(events.APP.READY);
 }
 
+function saveMainStat(res) {
+    mainStat = res;
+}
+
 function saveVkAuthInfo(vkInfo) {
-    userInfo.vkInfo =  vkInfo || {};
+    userInfo.vkInfo = vkInfo || {};
 
     bus.publish(events.ACCOUNT.VK.INFO_READY);
 }
@@ -49,6 +55,9 @@ var appState = {
     },
     user() {
         return userInfo
+    },
+    getMainStat(){
+        return mainStat ? mainStat : ''
     }
 };
 

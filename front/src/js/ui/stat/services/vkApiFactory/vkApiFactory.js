@@ -54,7 +54,8 @@ import events from './../../../../bl/events.js';
                     access_token: authData.token,//Токен
                     owner_id: "-" + params.groupId,//Список групп
                     offset: params.offset,
-                    count: params.count
+                    count: params.count,
+                    fileds: params.fields
                 }
             }).then(function (res) {
                 return res.response;

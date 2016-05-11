@@ -160,15 +160,6 @@ angular
                         else
                             return 0;
                     }).reverse();
-                    $scope.wallListView = [];
-                    $scope.wallPage = 1;
-                    for (var i = 0; i < 10; i++) {
-                        if ($scope.wallList[i])
-                            $scope.wallListView.push($scope.wallList[i]);
-                        else i = 10;
-                    }
-
-                    return;
                 }
                 if (filter == 'reposts') {//Фильтр по лайкам
                     $scope.wallList = _.sortBy($scope.wallList, function (o) {
@@ -177,15 +168,6 @@ angular
                         else
                             return 0;
                     }).reverse();
-                    $scope.wallListView = [];
-                    $scope.wallPage = 1;
-                    for (var i = 0; i < 10; i++) {
-                        if ($scope.wallList[i])
-                            $scope.wallListView.push($scope.wallList[i]);
-                        else i = 10;
-                    }
-
-                    return;
                 }
                 if (filter == 'comments') {//Фильтр по лайкам
                     $scope.wallList = _.sortBy($scope.wallList, function (o) {
@@ -194,16 +176,16 @@ angular
                         else
                             return 0;
                     }).reverse();
-                    $scope.wallListView = [];
-                    $scope.wallPage = 1;
-                    for (var i = 0; i < 10; i++) {
-                        if ($scope.wallList[i])
-                            $scope.wallListView.push($scope.wallList[i]);
-                        else i = 10;
-                    }
-
-                    return;
                 }
+
+                $scope.wallListView = [];
+                $scope.wallPage = 1;
+                for (var i = 0; i < 10; i++) {
+                    if ($scope.wallList[i])
+                        $scope.wallListView.push($scope.wallList[i]);
+                    else i = 10;
+                }
+                $scope.$apply($scope.wallListView);
             }
 
             function showNextPosts() {

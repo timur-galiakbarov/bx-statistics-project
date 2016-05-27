@@ -23,11 +23,15 @@ angular
             $scope.wallList = [];
             $scope.wallListView = [];
             $scope.wallPage = 1;
+            $scope.isLoading = false;
 
             var authData = {
                 token: appState.getUserVkToken(),
                 login: appState.getUserVkLogin()
             };
+
+            $scope.$watch('wallList');
+            $scope.$watch('isLoading');
 
             function getAdminGroups() {
                 vkApiFactory.getUserGroups(authData, {
@@ -58,6 +62,8 @@ angular
                     return;
                 }
 
+                $scope.isLoading = true;
+
                 var parseDate = getCheckedDate();
                 var vkGroupId = $scope.model.groupAddress.replace("https://vk.com/", "");
                 var vkGid;
@@ -77,6 +83,11 @@ angular
                     )
                         .then(function () {
                             bus.publish(events.STAT.PUBLISH_ANALISYS.FINISHED, $scope.stat);
+                        })
+                        .always(function () {
+                            $scope.$apply(function(){
+                                $scope.isLoading = false;
+                            });
                         });
                 });
                 //Получение статистик по стене группы
@@ -236,6 +247,12 @@ angular
             $('.icheck').iCheck({
                 checkboxClass: 'icheckbox_flat-blue',
                 radioClass: 'iradio_flat-blue'
+            });
+
+            $("#listSort input").on("ifChanged", function (res) {
+                if (res.currentTarget.checked == true) {
+                    wallFilter();
+                }
             });
 
         }]);

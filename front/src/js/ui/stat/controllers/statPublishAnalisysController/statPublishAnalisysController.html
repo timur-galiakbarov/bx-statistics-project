@@ -5,21 +5,25 @@
             <div class="header">
                 <h4>Фильтр топ-публикаций</h4>
             </div>
-            <div class="content">
+            <div class="content" id="listSort">
 
-                <label class="radio-inline"> <input class="icheck" type="radio" ng-model="filterPosts" checked="" name="filterPosts" value="likes">
+                <label class="radio-inline"> <input class="icheck" type="radio" checked="" name="filterPosts" value="likes">
                     По лайкам</label>
 
-                <label class="radio-inline"> <input class="icheck" type="radio" ng-model="filterPosts" name="filterPosts" value="reposts">
+                <label class="radio-inline"> <input class="icheck" type="radio" name="filterPosts" value="reposts">
                     По репостам</label>
 
-                <label class="radio-inline"> <input class="icheck" type="radio" ng-model="filterPosts" name="filterPosts" value="comments">
+                <label class="radio-inline"> <input class="icheck" type="radio" name="filterPosts" value="comments">
                     По комментариям</label>
 
             </div>
         </div>
 
-        <div class="block-flat" ng-repeat="wallPost in wallListView">
+        <div class="block-flat" rad-loader="isLoading" ng-show="isLoading" style="height: 150px;">
+
+        </div>
+
+        <div class="block-flat" ng-repeat="wallPost in wallListView" ng-hide="isLoading">
             <div class="header">
                 <h4>Men's Health</h4>
             </div>
@@ -67,7 +71,7 @@
         </div>
 
         <button type="button"
-                ng-show="wallPage*10 < wallList.length"
+                ng-show="wallPage*10 < wallList.length && !isLoading"
                 class="btn btn-block btn-info btn-rad" ng-click="showNextPosts()">Показать еще
         </button>
     </div>

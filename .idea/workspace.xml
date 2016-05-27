@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="111a26ba-efcb-4616-9187-2d27a653c905" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/base/radLoader.js" afterPath="$PROJECT_DIR$/front/src/js/ui/base/radLoader.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.html" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.js" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
@@ -31,107 +33,46 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="statMainController.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="235" column="46" selection-start-line="235" selection-start-column="46" selection-end-line="235" selection-end-column="46" />
-              <folding>
-                <element signature="n#div#0;n#div#0;n#!!top" expanded="false" />
-                <element signature="n#div#1;n#div#0;n#div#0;n#!!top" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="statMainController.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="10" column="37" selection-start-line="10" selection-start-column="37" selection-end-line="10" selection-end-column="37" />
-              <folding>
-                <element signature="e#1057#4944#0" expanded="false" />
-                <element signature="e#5002#8590#0" expanded="false" />
-                <element signature="e#6422#8490#0" expanded="false" />
-                <element signature="e#8647#12519#0" expanded="false" />
-                <element signature="e#10063#12419#0" expanded="false" />
-                <element signature="e#12563#13511#0" expanded="false" />
-                <element signature="e#15150#19887#0" expanded="false" />
-                <element signature="e#19982#23479#0" expanded="false" />
-                <element signature="e#23522#25338#0" expanded="false" />
-                <element signature="e#25380#28791#0" expanded="false" />
-                <element signature="e#28841#31361#0" expanded="false" />
-                <element signature="e#31403#34792#0" expanded="false" />
-                <element signature="e#35909#36025#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="statPublishAnalisysController.html" pinned="false" current-in-tab="false">
+      <file leaf-file-name="statPublishAnalisysController.html" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-5.8846154">
-              <caret line="9" column="101" selection-start-line="9" selection-start-column="90" selection-end-line="9" selection-end-column="101" />
+            <state vertical-scroll-proportion="0.69244933">
+              <caret line="73" column="59" selection-start-line="73" selection-start-column="59" selection-end-line="73" selection-end-column="59" />
               <folding>
-                <element signature="n#style#0;n#img#0;n#div#1;n#div#2;n#div#1;n#div#0;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#div#1;n#div#0;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#div#2;n#div#0;n#div#0;n#!!top" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="statPublishAnalisysController.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="template_styles.css" pinned="true" current-in-tab="false">
+        <entry file="REMOTE_DEPLOYMENT_FS://&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/bitrix/templates/unauthorize/template_styles.css">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-3.560606">
+              <caret line="89" column="19" selection-start-line="89" selection-start-column="19" selection-end-line="89" selection-end-column="19" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="statPublishAnalisysController.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.3877193">
-              <caret line="161" column="33" selection-start-line="161" selection-start-column="33" selection-end-line="161" selection-end-column="33" />
+            <state vertical-scroll-proportion="-19.344828">
+              <caret line="78" column="60" selection-start-line="78" selection-start-column="60" selection-end-line="78" selection-end-column="60" />
               <folding>
-                <element signature="e#1182#1646#0" expanded="false" />
-                <element signature="e#1686#1761#0" expanded="false" />
-                <element signature="e#1804#1946#0" expanded="false" />
-                <element signature="e#7774#8103#0" expanded="false" />
-                <element signature="e#8143#9237#0" expanded="false" />
-                <element signature="e#9274#9359#0" expanded="false" />
+                <element signature="e#3380#6477#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="app-styles.css" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/template/app/app-styles.css">
+      <file leaf-file-name="radLoader.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/ui/base/radLoader.js">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="56" column="23" selection-start-line="56" selection-start-column="23" selection-end-line="56" selection-end-column="23" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="radUserSettings.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/ui/settings/directives/radUserSettings/radUserSettings.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="16" column="25" selection-start-line="16" selection-start-column="25" selection-end-line="16" selection-end-column="25" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="appState.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/bl/account/appState.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="24" column="8" selection-start-line="24" selection-start-column="8" selection-end-line="24" selection-end-column="8" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="settingsController.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/ui/settings/controllers/settingsController.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="23" column="14" selection-start-line="23" selection-start-column="14" selection-end-line="23" selection-end-column="14" />
+              <caret line="44" column="55" selection-start-line="44" selection-start-column="55" selection-end-line="44" selection-end-column="55" />
               <folding />
             </state>
           </provider>
@@ -145,32 +86,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/controllers/account/getVkInfo.php" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/dashboard/directives/radVkAuth/radVkAuth.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/app/factories/radVkFactory.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.js" />
-        <option value="$PROJECT_DIR$/front/src/template/app/dashboard/dashboard.css" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html" />
-        <option value="$PROJECT_DIR$/front/src/template/app/style.css" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.html" />
-        <option value="$PROJECT_DIR$/bitrix/php_interface/dbconn.php" />
-        <option value="$PROJECT_DIR$/login/getCode.php" />
-        <option value="$PROJECT_DIR$/front/src/index.html" />
-        <option value="$PROJECT_DIR$/bower_components/font-awesome/bower.json" />
-        <option value="$PROJECT_DIR$/bower_components/iCheck/bower.json" />
-        <option value="$PROJECT_DIR$/gulpfile.js" />
-        <option value="$PROJECT_DIR$/test.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.js" />
-        <option value="$PROJECT_DIR$/front/src/js/route.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.html" />
-        <option value="$PROJECT_DIR$/.gitignore" />
-        <option value="$PROJECT_DIR$/front/src/js/bl/account/accountDataContext.js" />
-        <option value="$PROJECT_DIR$/front/src/js/bl/account/accountLogic.js" />
-        <option value="$PROJECT_DIR$/controllers/account/getUserInfo.php" />
-        <option value="$PROJECT_DIR$/login/vkAuth.php" />
-        <option value="&lt;dacc3443-a446-4388-8468-7724da885803&gt;/engine/js/statisticApp/statisticVk.js" />
         <option value="$PROJECT_DIR$/bower_components/Chart.js/bower.json" />
         <option value="$PROJECT_DIR$/login/index.php" />
         <option value="&lt;34664565-3fd4-449e-95f8-1ed39329581f&gt;/www/tmp.wptt.su/eskd/index.html" />
@@ -194,8 +109,34 @@
         <option value="$PROJECT_DIR$/front/src/js/bl/events.js" />
         <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" />
         <option value="$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.html" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/js/staticTemplates/sidebar.html" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/js/app/appState.js" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/controllers/ok/checkToken.php" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/js/app/controllers/dashboardController/dashboardController.js" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/.htaccess" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/bitrix/.settings.php" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/structure/tree.php" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/bitrix/templates/catalog/components/bitrix/catalog.element/values.detail/template.php" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/bitrix/templates/catalog/components/bitrix/catalog.section/list.gradients/template.php" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/engine/controllers/saveGradients.php" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/engine/controllers/getGradients.php" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/engine/scripts/vm/vmGradients.js" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/engine/controllers/getGradientsParams.php" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/bitrix/templates/catalog/components/bitrix/catalog.section/list.gradientsParams/template.php" />
+        <option value="&lt;914563e4-9d2f-4994-99eb-046443425026&gt;/public_html/engine/scripts/vm/vmGradientsParams.js" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/controllers/shop/getList.php" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/controllers/user/getData.php" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/styles/app.css" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/js/staticTemplates/header.html" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/controllers/twitter/getReplies.php" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/controllers/twitter/getLikesReposts.php" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/controllers/ok/getLikesReposts.php" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/js/app/controllers/appController/appController.js" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/lk/controllers/saveFullBalls.php" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/base/radLoader.js" />
         <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.js" />
+        <option value="&lt;004dc3e2-dc29-41f9-95b1-f0a945e070e0&gt;/www/like.bcsb-realty.ru/bitrix/templates/unauthorize/template_styles.css" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.html" />
       </list>
     </option>
   </component>
@@ -324,7 +265,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -397,8 +337,189 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="front" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="js" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="front" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="js" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="front" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="js" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="stat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="front" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="js" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="stat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="controllers" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="front" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="js" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="stat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="controllers" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="statPublishAnalisysController" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="www" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="socstat" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="front" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="js" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ui" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
+      <pane id="Scratches" />
       <pane id="Scope" />
     </panes>
   </component>
@@ -486,17 +607,17 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32972974" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32181427" sideWeight="0.50373137" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32972974" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32216215" sideWeight="0.4969743" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3563715" sideWeight="0.49626866" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Gulp" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2675906" sideWeight="0.41945773" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.20522387" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2675906" sideWeight="0.58054227" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32216215" sideWeight="0.4969743" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3545946" sideWeight="0.49626866" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Gulp" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.29211086" sideWeight="0.22110553" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.20522387" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.29211086" sideWeight="0.7788945" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32980332" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
@@ -531,18 +652,11 @@
           <option name="timeStamp" value="6" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="8" />
+      <option name="time" value="9" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-9.807693">
-          <caret line="19" column="64" selection-start-line="19" selection-start-column="64" selection-end-line="19" selection-end-column="64" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/services/statPopupsFactory/statPopupsFactory.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="4.2619047">
@@ -725,13 +839,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.6527546">
-          <caret line="23" column="8" selection-start-line="23" selection-start-column="8" selection-end-line="23" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.12615955">
@@ -813,7 +920,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="23" column="14" selection-start-line="23" selection-start-column="14" selection-end-line="23" selection-end-column="14" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -821,7 +927,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.68113524">
           <caret line="24" column="105" selection-start-line="24" selection-start-column="105" selection-end-line="24" selection-end-column="105" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -829,18 +934,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="24" column="8" selection-start-line="24" selection-start-column="8" selection-end-line="24" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="235" column="46" selection-start-line="235" selection-start-column="46" selection-end-line="235" selection-end-column="46" />
-          <folding>
-            <element signature="n#div#0;n#div#0;n#!!top" expanded="false" />
-            <element signature="n#div#1;n#div#0;n#div#0;n#!!top" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -869,29 +962,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="16" column="25" selection-start-line="16" selection-start-column="25" selection-end-line="16" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="10" column="37" selection-start-line="10" selection-start-column="37" selection-end-line="10" selection-end-column="37" />
-          <folding>
-            <element signature="e#1057#4944#0" expanded="false" />
-            <element signature="e#5002#8590#0" expanded="false" />
-            <element signature="e#6422#8490#0" expanded="false" />
-            <element signature="e#8647#12519#0" expanded="false" />
-            <element signature="e#10063#12419#0" expanded="false" />
-            <element signature="e#12563#13511#0" expanded="false" />
-            <element signature="e#15150#19887#0" expanded="false" />
-            <element signature="e#19982#23479#0" expanded="false" />
-            <element signature="e#23522#25338#0" expanded="false" />
-            <element signature="e#25380#28791#0" expanded="false" />
-            <element signature="e#28841#31361#0" expanded="false" />
-            <element signature="e#31403#34792#0" expanded="false" />
-            <element signature="e#35909#36025#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -899,31 +969,56 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="56" column="23" selection-start-line="56" selection-start-column="23" selection-end-line="56" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="10" column="37" selection-start-line="10" selection-start-column="37" selection-end-line="10" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.15614237">
+          <caret line="211" column="20" selection-start-line="211" selection-start-column="20" selection-end-line="211" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.68717045">
+          <caret line="23" column="8" selection-start-line="23" selection-start-column="8" selection-end-line="23" selection-end-column="8" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.html">
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/base/radLoader.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-5.8846154">
-          <caret line="9" column="101" selection-start-line="9" selection-start-column="90" selection-end-line="9" selection-end-column="101" />
-          <folding>
-            <element signature="n#style#0;n#img#0;n#div#1;n#div#2;n#div#1;n#div#0;n#div#0;n#!!top" expanded="true" />
-          </folding>
+        <state vertical-scroll-proportion="0.0">
+          <caret line="44" column="55" selection-start-line="44" selection-start-column="55" selection-end-line="44" selection-end-column="55" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3877193">
-          <caret line="161" column="33" selection-start-line="161" selection-start-column="33" selection-end-line="161" selection-end-column="33" />
+        <state vertical-scroll-proportion="-19.344828">
+          <caret line="78" column="60" selection-start-line="78" selection-start-column="60" selection-end-line="78" selection-end-column="60" />
           <folding>
-            <element signature="e#1182#1646#0" expanded="false" />
-            <element signature="e#1686#1761#0" expanded="false" />
-            <element signature="e#1804#1946#0" expanded="false" />
-            <element signature="e#7774#8103#0" expanded="false" />
-            <element signature="e#8143#9237#0" expanded="false" />
-            <element signature="e#9274#9359#0" expanded="false" />
+            <element signature="e#3380#6477#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.69244933">
+          <caret line="73" column="59" selection-start-line="73" selection-start-column="59" selection-end-line="73" selection-end-column="59" />
+          <folding>
+            <element signature="n#style#0;n#div#1;n#div#0;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#div#2;n#div#0;n#div#0;n#!!top" expanded="false" />
           </folding>
         </state>
       </provider>

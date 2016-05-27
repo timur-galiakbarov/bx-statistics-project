@@ -33,16 +33,17 @@
             }],
             link: function (scope, element, attr, ctrls) {
                 var className = 'loader';
-                if (attr.radLoader){
+                if (attr.radLoader) {
                     scope.$watch(attr.radLoader, function (loading) {
                         element.toggleClass(className, !!loading);
-                        if (loading){
+                        if (loading) {
                             element.append('<div class="loader_block"></div>');
                             spinner = new Spinner(opts).spin();
                             element.append(spinner.el);
                         } else {
                             element.children('.loader_block').remove();
-                            spinner.stop();
+                            if (spinner && spinner.stop)
+                                spinner.stop();
                         }
                     });
                 }

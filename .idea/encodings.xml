@@ -12,6 +12,5 @@
     <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.html" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.js" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/login/index.php" charset="UTF-8" />
   </component>
 </project>

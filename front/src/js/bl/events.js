@@ -20,6 +20,9 @@ export default {
     STAT: {
         MAIN: {
             FINISHED: 'STAT.MAIN.FINISHED',//Событие о завершении сбора основной статистики
+        },
+        PUBLISH_ANALISYS: {
+            FINISHED: 'PUBLISH_ANALISYS.MAIN.FINISHED',//Событие о завершении сбора статистики публикаций
         }
     }
 };

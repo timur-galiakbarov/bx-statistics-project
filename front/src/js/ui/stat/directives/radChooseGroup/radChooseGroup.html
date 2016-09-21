@@ -1,0 +1,105 @@
+<div class="panel-group accordion changeGroupAccordion">
+
+    <div class="tab-container">
+        <ul class="nav nav-tabs">
+            <li ng-class="{active: currentState == 'admin'}"><a ng-click="showList('admin')">Администрируемые</a></li>
+            <li ng-class="{active: currentState == 'isMy'}"><a ng-click="showList('isMy')">Мои группы</a></li>
+            <li ng-class="{active: currentState == 'bookmark'}"><a ng-click="showList('bookmark')">Закладки</a></li>
+        </ul>
+
+        <div class="tab-pane cont" ng-show="currentState == 'admin'">
+            <table class="table table-responsive no-border">
+                <tbody class="table-hover">
+                <tr ng-repeat="item in adminGroups" class="groupLink" ng-click="setLink(item)">
+                    <td>
+                        <a tabindex="-1" ng-bind="item.name"></a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="tab-pane cont" ng-show="currentState == 'isMy'">
+            <table class="table table-responsive no-border">
+                <tbody class="table-hover">
+                <tr ng-repeat="item in myGroups" class="groupLink" ng-click="setLink(item)">
+                    <td>
+                        <a tabindex="-1" ng-bind="item.name"></a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="tab-pane cont" ng-show="currentState == 'admin'">
+            <table class="table table-responsive no-border">
+                <tbody class="table-hover">
+                <tr ng-repeat="item in adminGroups" class="groupLink" ng-click="setLink(item)">
+                    <td>
+                        <a tabindex="-1" ng-bind="item.name"></a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tab-pane cont" ng-show="currentState == 'bookmark'">
+            <table class="table table-responsive no-border">
+                <tbody class="table-hover">
+                <tr ng-repeat="bookmark in bookmarksList" class="groupLink" ng-click="setLink(bookmark)">
+                    <td>
+                        <a tabindex="-1" ng-bind="bookmark.name"></a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!--<div class="panel panel-default">
+
+
+
+        <div class="panel-heading" ng-class="{active: currentState == 'admin'}" ng-click="showList('admin')">
+            <h4 class="panel-title">
+                <a ng-class="{collapsed: currentState != 'admin'}">
+                    <i class="fa fa-angle-right"></i> Администрируемые
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse" ng-class="{in: currentState == 'admin'}">
+            <div class="panel-body">
+                <table class="table table-responsive no-border">
+                    <tbody class="table-hover">
+                    <tr ng-repeat="item in adminGroups" class="groupLink" ng-click="setLink(item)">
+                        <td>
+                            <a tabindex="-1" ng-bind="item.name"></a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading" ng-class="{active: currentState == 'bookmark'}" ng-click="showList('bookmark')">
+            <h4 class="panel-title">
+                <a ng-class="{collapsed: currentState != 'bookmark'}">
+                    <i class="fa fa-angle-right"></i> Закладки
+                </a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse" ng-class="{in: currentState == 'bookmark'}">
+            <div class="panel-body">
+                <table class="table table-responsive no-border">
+                    <tbody class="table-hover">
+                    <tr ng-repeat="bookmark in bookmarksList" class="groupLink" ng-click="setLink(bookmark)">
+                        <td>
+                            <a tabindex="-1" ng-bind="bookmark.name"></a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>-->
+</div>

@@ -1,14 +1,14 @@
 /*
- Р¤РѕСЂРјР°С‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ.
- <div radValidationTooltip for="name РїРѕР»СЏ РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ РІС‹РІРѕРґРёС‚СЃСЏ СЃРѕРѕР±С‰РµРЅРёРµ" invalid-css="class"  >
- <div rad-validation-message="С‚РµРєСЃС‚ СЃРѕРѕР±С‰РµРЅРёСЏ 1" condition="СѓСЃР»РѕРІРёРµ 1"><div>
- <div rad-validation-message="С‚РµРєСЃС‚ СЃРѕРѕР±С‰РµРЅРёСЏ 2" condition="СѓСЃР»РѕРІРёРµ 2"><div>
+ Формат использования.
+ <div radValidationTooltip for="name поля для которого выводится сообщение" invalid-css="class"  >
+ <div rad-validation-message="текст сообщения 1" condition="условие 1"><div>
+ <div rad-validation-message="текст сообщения 2" condition="условие 2"><div>
  .....
- <div rad-validation-message="С‚РµРєСЃС‚ СЃРѕРѕР±С‰РµРЅРёСЏ n" condition="СѓСЃР»РѕРІРёРµ n"><div>
+ <div rad-validation-message="текст сообщения n" condition="условие n"><div>
  </div>
 
- 1. Р’ Р°С‚СЂРёР±СѓС‚Рµ for  СѓРєР°Р·С‹РІР°РµС‚cСЏ Р·РЅР°С‡РµРЅРёРµ Р°С‚С‚СЂРёР±СѓС‚Р° "name" РїРѕР»СЏ РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ Р±СѓРґРµС‚ РІС‹РІРѕРґРёС‚СЃСЏ СЃРѕРѕР±С‰РµРЅРёРµ
- 2. Р’  invalid-css СѓРєР°Р·С‹РІР°РµС‚СЃСЏ РєР»Р°СЃСЃ РґР»СЏ РґРѕРї. РїРѕРґСЃРІРµС‚РєРё РїРѕР»СЏ РїСЂРё РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕРј  СѓСЃР»РѕРІРёРё  condition
+ 1. В атрибуте for  указываетcя значение аттрибута "name" поля для которого будет выводится сообщение
+ 2. В  invalid-css указывается класс для доп. подсветки поля при отрицательном  условии  condition
  */
 
 
@@ -37,7 +37,7 @@
 					for (var i = 0; i <= messages.length - 1; i++) {
 						if ($scope.$eval(messages[i].condition)) {
 							message = messages[i];
-							if (message.condition.indexOf('isShowError')>=0) message.isError=true; //СЌС‚Рѕ РІСЂРµРјРµРЅРЅС‹Р№ РєРѕСЃС‚С‹Р»СЊ
+							if (message.condition.indexOf('isShowError')>=0) message.isError=true; //это временный костыль
 							break;
 						}
 					}

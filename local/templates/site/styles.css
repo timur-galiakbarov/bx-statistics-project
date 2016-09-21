@@ -1,0 +1,466 @@
+.productName {
+    float: left;
+    width: 100%;
+    text-align: center;
+    height: 70px;
+    overflow: hidden;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.productName1 {
+    float: left;
+    width: 100%;
+    text-align: center;
+    height: 90px;
+    overflow: hidden;
+    font-size: 16px;
+    margin-top: 10px;
+    padding-top: 20px;
+}
+
+.tovarImg {
+
+}
+
+.tovarImgArea {
+    width: 100%;
+    text-align: center;
+    float: left;
+    margin-top: 20px;
+    margin-bottom: 0px;
+}
+
+.costBlock {
+    float: left;
+    width: 100%;
+}
+
+.costBlock .buyBtn {
+    float: right;
+    width: 50%;
+    height: 30px;
+    line-height: 30px;
+    border-radius: 3px;
+    background: #e74c3c;
+    text-align: center;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.costBlock .buyBtn:hover {
+    background: #ee6d5f;
+}
+
+.costBlock .cost {
+    float: left;
+    width: 50%;
+    text-align: center;
+    line-height: 30px;
+    height: 30px;
+    font-size: 16px;
+}
+
+.costBlock .cost span {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.modal-dialog .cost {
+
+    font-size: 16px;
+}
+
+.modal-dialog .cost span {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.tovarInfo {
+    margin-top: 20px;
+    float: left;
+    width: 100%;
+}
+
+.buyBtnNone {
+    float: right;
+    width: 50%;
+    height: 30px;
+    line-height: 30px;
+    border-radius: 3px;
+    background: #9c9c9c;
+    text-align: center;
+    color: #fff;
+    font-weight: bold;
+}
+
+span.noneBalls {
+    color: #e74c3c;
+}
+
+.tovarDesc {
+    float: left;
+    width: 100%;
+    font-size: 12px;
+    height: 53px;
+    overflow: hidden;
+}
+
+.tovarDesc1 {
+    float: left;
+    width: 100%;
+    font-size: 12px;
+    height: 73px;
+    overflow: hidden;
+    font-size: 14px;
+    padding-top: 20px;
+}
+
+.logob {
+    float: left;
+    margin-left: 10px;
+    margin-top: 2px;
+}
+
+.news-date-time {
+    color: #0099CC;
+}
+
+#vkCommentsCount {
+    position: relative;
+}
+
+.loadComment1 {
+    width: 31px;
+    height: 31px;
+    position: relative;
+    left: 50%;
+    margin-top: -53px;
+    margin-left: 20px;
+}
+
+#loadComment {
+    width: 100%;
+    height: 31px;
+    font-size: 10px;
+    color: #999999;
+    position: relative;
+    margin-top: -3px;
+    margin-bottom: -28px;
+}
+
+.loadComment2 {
+    width: 100%;
+    height: 31px;
+    font-size: 10px;
+    color: #999999;
+    position: relative;
+    margin-top: -3px;
+    margin-bottom: -28px;
+    text-align: right;
+}
+
+.productBuyInfo {
+    float: left;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 12px;
+    display: none;
+}
+
+.profile-table {
+    border: 1px solid #eee;
+}
+
+.profile-table td {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-top: 10px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+}
+
+.auth_networks {
+    width: 100%;
+    margin-top: 10px;
+    height: 100px;
+}
+
+.auth_networks a {
+    font-weight: bold;
+}
+
+.auth_networks a:hover {
+
+}
+
+.auth_networks li {
+    list-style: none;
+    float: left;
+    margin-right: 15px;
+    height: 100px;
+    width: 100px;
+}
+
+.auth_networks li img {
+    border-radius: 5px;
+}
+
+#SocStatus {
+    margin-bottom: 50px;
+}
+
+a.reconnect {
+    color: #ccc;
+    text-decoration: none;
+}
+
+a.reconnect:hover {
+    text-decoration: none;
+    color: #fff;
+}
+
+.messageWithoutConnected {
+    float: left;
+    width: 90%;
+    margin-left: 5%;
+    margin-right: 5%;
+    text-align: center;
+    font-size: 10px;
+    color: #999999;
+    height: 22px;
+}
+
+.OKName a {
+    color: #ccc;
+}
+
+.OKName a:hover {
+    color: #fff;
+    text-decoration: none;
+}
+
+/*���������*/
+#indicatorBody {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    background: url('img/indibg.png');
+    z-index: 999;
+    display: none;
+}
+
+#indicatorBody #indicator {
+    width: 280px;
+    height: 120px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-left: -140px;
+    margin-top: -60px;
+    background: #fff;
+    border-radius: 5px;
+}
+
+#indicatorBody #indicator img {
+    width: 31px;
+    height: 31px;
+    position: relative;
+    left: 50%;
+    margin-left: -15px;
+    margin-top: 20px;
+}
+
+#indicatorText {
+    font-size: 12px;
+    width: 100%;
+    text-align: center;
+    margin-top: 15px;
+    color: #333
+}
+
+.connectId {
+    font-size: 10px;
+    float: left;
+    height: 30px;
+    margin-bottom: -55px;
+    margin-top: 25px;
+}
+
+.groupIsMember {
+    color: #fff;
+    font-size: 11px;
+    margin-top: 5px;
+    height: 15px;
+    margin-bottom: -20px;
+}
+
+@media (max-width: 768px) {
+    .btnReCalc {
+        margin-left: 20px;
+    }
+}
+
+.socGroupLink {
+    position: absolute;
+    right: 12px;
+    top: 10px;
+    width: 55px;
+    height: 70px;
+    background: transparent;
+    border: 0;
+}
+
+.date-start-end {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    width: 100%;
+    float: left;
+    font-size: 16px;
+}
+
+#totalBallsAll {
+    margin-top: -60px !important;;
+}
+
+.graph-legend-row-inner {
+    font-size: 13px !important;
+}
+
+@media (max-width: 1200px) {
+    .graph-legend-row-inner {
+        font-size: 12px !important;
+    }
+}
+
+@media (max-width: 997px) {
+    #totalBallsAll {
+        margin-top: 30px !important;
+    }
+
+}
+
+/*����*/
+.view-child {
+    cursor: pointer;
+}
+
+.activeStructureItem > tbody > tr {
+    background-color: #333 !important;
+}
+
+.m-top-15 {
+    margin-top: 15px;
+}
+
+label.error {
+    color: #CC0000;
+}
+
+/*Spinner*/
+.spinShadow {
+    position: fixed;
+    z-index: 1800;
+    left: 0px;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    background: #000;
+    opacity: 0.1;
+    display: none;
+}
+
+.spinArea {
+    position: fixed;
+    z-index: 1810;
+    width: 280px;
+    height: 140px;
+    background: #fff;
+    border-radius: 5px;
+    top: 50%;
+    left: 50%;
+    margin-top: -70px;
+    margin-left: -140px;
+    display: none;
+    opacity: 0.9;
+}
+
+.spinPlace {
+    height: 80px;
+    width: 80px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.spinTitle {
+    color: #555;
+    font-size: 14px;
+    font-weight: bold;
+    width: 100%;
+    text-align: center;
+}
+
+.spinMessage {
+    color: #555;
+    font-size: 12px;
+    width: 100%;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.param-table {
+    border-top: 1px !important;
+    margin-top: 10px;
+}
+
+#errorLogs span {
+    font-size: 12px;
+    width: 100%;
+    float: left;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    color: #660000;
+}
+
+.people-subtable {
+    border: 1px solid #eee;
+    padding: 0px !important;
+    margin-top: 10px;
+}
+
+.people-subtable th {
+    font-size: 12px;
+    color: #555;
+}
+
+.people-subtable td {
+    font-size: 12px;
+}
+
+.no-hover-str:hover, .no-hover-str td:hover, .no-hover-str > td:hover {
+    background: #fff !important;
+}
+
+.user-btn-add {
+    margin-top: -32px;
+}
+
+.append-td {
+    border-top: 1px solid #e7ebee;
+}
+
+.append-td td {
+    padding: 8px;
+}
+
+.activityselect {
+
+}
+
+li {
+    font-weight: 300;
+}

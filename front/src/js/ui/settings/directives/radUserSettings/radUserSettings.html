@@ -1,18 +1,18 @@
 <div>
     <form role="form" class="form-horizontal">
         <div class="form-group">
-            <label class="col-sm-3 control-label" for="firstName">Р¤Р°РјРёР»РёСЏ</label>
+            <label class="col-sm-3 control-label" for="firstName">Фамилия</label>
 
             <div class="col-sm-9">
-                <input type="text" placeholder="РџРѕ Р¶РµР»Р°РЅРёСЋ РјРѕР¶РЅРѕ СѓРєР°Р·Р°С‚СЊ РІР°С€Сѓ С„Р°РјРёР»РёСЋ" id="firstName"
+                <input type="text" placeholder="По желанию можно указать вашу фамилию" id="firstName"
                        class="form-control" value="{{userInfo.lastName}}">
             </div>
         </div>
         <div class="form-group">
-            <label class="col-sm-3 control-label" for="name">РРјСЏ</label>
+            <label class="col-sm-3 control-label" for="name">Имя</label>
 
             <div class="col-sm-9">
-                <input type="text" placeholder="РџРѕ Р¶РµР»Р°РЅРёСЋ РјРѕР¶РЅРѕ СѓРєР°Р·Р°С‚СЊ РІР°С€Рµ РёРјСЏ" id="name" class="form-control"
+                <input type="text" placeholder="По желанию можно указать ваше имя" id="name" class="form-control"
                        value="{{userInfo.firstName}}">
             </div>
         </div>
@@ -20,17 +20,17 @@
             <label class="col-sm-3 control-label" for="userEmail">E-mail</label>
 
             <div class="col-sm-9">
-                <input type="text" placeholder="Email - РѕР±СЏР·Р°С‚РµР»СЊРЅРѕРµ РїРѕР»Рµ" id="userEmail"
+                <input type="text" placeholder="Email - обязательное поле" id="userEmail"
                        class="form-control" value="{{userInfo.userMail}}">
             </div>
         </div>
         <div class="form-group spacer2">
             <div class="col-sm-3"></div>
-            <label class="col-sm-9" for="currentPassword">РЎРјРµРЅР° РїР°СЂРѕР»СЏ</label>
+            <label class="col-sm-9" for="currentPassword">Смена пароля</label>
 
         </div>
         <div class="form-group">
-            <label class="col-sm-3 control-label" for="currentPassword">РўРµРєСѓС‰РёР№ РїР°СЂРѕР»СЊ</label>
+            <label class="col-sm-3 control-label" for="currentPassword">Текущий пароль</label>
 
             <div class="col-sm-9">
                 <input type="password" placeholder="" id="currentPassword"
@@ -38,7 +38,7 @@
             </div>
         </div>
         <div class="form-group">
-            <label class="col-sm-3 control-label" for="newPassword">РќРѕРІС‹Р№ РїР°СЂРѕР»СЊ</label>
+            <label class="col-sm-3 control-label" for="newPassword">Новый пароль</label>
 
             <div class="col-sm-9">
                 <input type="password" placeholder="" id="newPassword"
@@ -46,7 +46,7 @@
             </div>
         </div>
         <div class="form-group">
-            <label class="col-sm-3 control-label" for="newPasswordRepeat">РќРѕРІС‹Р№ РїР°СЂРѕР»СЊ (РїРѕРІС‚РѕСЂРЅРѕ)</label>
+            <label class="col-sm-3 control-label" for="newPasswordRepeat">Новый пароль (повторно)</label>
 
             <div class="col-sm-9">
                 <input type="password" placeholder="" id="newPasswordRepeat"
@@ -55,8 +55,8 @@
         </div>
         <div class="form-group">
             <div class="col-sm-offset-3 col-sm-9">
-                <button class="btn btn-primary" type="submit">РћР±РЅРѕРІРёС‚СЊ РїСЂРѕС„РёР»СЊ</button>
-                <button class="btn btn-default">РЎР±СЂРѕСЃРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ</button>
+                <button class="btn btn-primary" type="submit">Обновить профиль</button>
+                <button class="btn btn-default">Сбросить изменения</button>
             </div>
         </div>
     </form>

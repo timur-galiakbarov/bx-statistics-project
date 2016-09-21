@@ -11,12 +11,12 @@
                 <div class="detailItemInfo" rad-loader="isLoading">
                     <div class="col-xs-12">
                         <div class="main-image">
-                            <img class="itemPicture{{key}}" src="{{model.images[0]}}" ng-if="model.images&&model.images.length>0">
+                            <img class="itemPicture{{key}}" ng-src="{{model.images[0]}}" ng-if="model.images&&model.images.length>0">
                         </div>
                     </div>
 
                     <div class="col-sx-12">
-                        <p class="itemCost" ng-show="model.cost">{{model.cost | radAmountFilter}} ₽</p>
+                        <p class="itemCost" ng-show="model.cost">{{model.cost | radAmountFilter}} ?</p>
 
                         <div class="itemImages owl-carousel" id="carousel{{model.id}}">
                             <div class="item" ng-repeat="imageUrl in model.images" id="smallPictures{{key}}"
@@ -24,7 +24,7 @@
 
                                 <div class="smallImage smallImageItem{{$index}}" ng-class="{active: $index==0}"
                                      ng-click="showPicture(imageUrl, key, $index)">
-                                    <img src="{{imageUrl}}">
+                                    <img ng-src="{{imageUrl}}">
                                 </div>
 
                             </div>

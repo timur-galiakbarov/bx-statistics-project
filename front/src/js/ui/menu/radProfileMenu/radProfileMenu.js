@@ -21,7 +21,6 @@ function radProfileMenu(appState) {
 
             $scope.userFullName = appState.getUserFullName();
 
-
         }
     };
 }

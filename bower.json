@@ -27,9 +27,9 @@
     "postal.js": "postal#~1.0.7",
     "postal.request-response": "~0.3.1",
     "spin.js": "~2.3.2",
-    "iCheck": "icheck#^1.0.2",
+    "iCheck": "icheck#1.0.2",
     "Flot": "https://github.com/flot/flot.git#^0.8.3",
     "moment": "https://github.com/moment/moment.git#^2.13.0",
-    "Chart.js": "^2.0.2"
+    "toastr": "^2.1.3"
   }
 }

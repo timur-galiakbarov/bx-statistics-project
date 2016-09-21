@@ -16,9 +16,9 @@ angular
                         password: $scope.auth.password,
                     }
                 }).then((res)=>{
-                    console.log(res);
+                    /*console.log(res);*/
                 })
 
             };
-            //$rootScope.page.sectionTitle = 'Настройки';
+            //$rootScope.page.sectionTitle = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ';
         }]);

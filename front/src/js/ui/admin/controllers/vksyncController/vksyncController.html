@@ -1,0 +1,50 @@
+<div class="row">
+    <div class="col-lg-8">
+        <div class="row" style="margin-top: 0px">
+            <div class="col-md-4">
+                <div class="block-flat">
+                    <div class="header">
+                        <h3>Категории</h3>
+                    </div>
+
+                    <div class="panel-group accordion changeGroupAccordion">
+
+                        <div class="tab-container">
+
+                            <div class="tab-pane cont">
+                                <table class="table table-responsive no-border">
+                                    <tbody class="table-hover">
+                                    <tr ng-repeat="category in categories" class="groupLink"
+                                        ng-click="loadGroupsList(category)">
+                                        <td>
+                                            <a tabindex="-1" ng-bind="category.name"></a>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="block-flat">
+                    <div class="header">
+                        <h3>Группы</h3>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="block-flat block-info">
+            <div class="header">
+                <h3></h3>
+            </div>
+            <br>
+
+        </div>
+    </div>
+</div>

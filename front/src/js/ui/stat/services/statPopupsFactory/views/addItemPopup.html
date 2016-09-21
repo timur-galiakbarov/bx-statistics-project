@@ -32,39 +32,39 @@
 
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Р”РѕР±Р°РІР»РµРЅРёРµ С‚РѕРІР°СЂР°</h3>
+            <h3>Добавление товара</h3>
             <button type="button" class="close md-close" aria-hidden="true" ng-click="close()">&times;</button>
         </div>
         <form name="api.form" novalidate rad-form>
             <div class="modal-body form">
                 <div class="form-group">
-                    <label>РќР°Р·РІР°РЅРёРµ</label> <input name="itemName" type="text" class="form-control name"
-                                                   placeholder="Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ С‚РѕРІР°СЂР°" ng-model="item.name"
+                    <label>Название</label> <input name="itemName" type="text" class="form-control name"
+                                                   placeholder="Введите название товара" ng-model="item.name"
                                                    rad-validate required>
 
                     <div rad-validation-tooltip for="itemName" placement="top">
                         <!--<div
-                                rad-validation-message="РћС€РёР±СѓР»РёРЅР° 1."
+                                rad-validation-message="Ошибулина 1."
                                 condition="api.form.itemName.isShowHint()"></div>-->
                         <div
-                                rad-validation-message="РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РІРІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ С‚РѕРІР°СЂР° РёР»Рё СѓСЃР»СѓРіРё"
+                                rad-validation-message="Пожалуйста, введите название товара или услуги"
                                 condition="api.form.itemName.isShowError() && api.form.itemName.$error.required"></div>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Р¦РµРЅР°</label> <input type="text" class="form-control cost" placeholder="РЈРєР°Р¶РёС‚Рµ С†РµРЅСѓ (СЂСѓР±.)"
+                    <label>Цена</label> <input type="text" class="form-control cost" placeholder="Укажите цену (руб.)"
                                                ng-model="item.cost">
                 </div>
                 <div class="form-group">
-                    <label>РћРїРёСЃР°РЅРёРµ</label> <textarea class="form-control description"
-                                                      placeholder="РћРїРёСЃР°РЅРёРµ С‚РѕРІР°СЂР° (СЂР°Р·СЂРµС€РµРЅРѕ РІРІРѕРґРёС‚СЊ html)"
+                    <label>Описание</label> <textarea class="form-control description"
+                                                      placeholder="Описание товара (разрешено вводить html)"
                                                       ng-model="item.description"></textarea>
                 </div>
                 <div class="form-group" uploader="uploader">
-                    <label>РР·РѕР±СЂР°Р¶РµРЅРёСЏ</label>
+                    <label>Изображения</label>
                     <br />
                     <div class="uploadImage btn btn-default" onclick="$('.uploadImageBtn').click()">
-                        Р”РѕР±Р°РІРёС‚СЊ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
+                        Добавить изображения
                     </div>
                     <input type="file" nv-file-select="" class="uploadImageBtn hidden" ng-model="item.images"
                            uploader="uploader"
@@ -91,9 +91,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default btn-flat md-close" data-dismiss="modal" ng-click="close()">
-                    РћС‚РјРµРЅРёС‚СЊ
+                    Отменить
                 </button>
-                <button type="button" class="btn btn-primary btn-flat md-close" ng-click="add()">Р”РѕР±Р°РІРёС‚СЊ С‚РѕРІР°СЂ</button>
+                <button type="button" class="btn btn-primary btn-flat md-close" ng-click="add()">Добавить товар</button>
             </div>
         </form>
     </div>

@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head lang="ru">
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <title>Личный кабинет</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+    <script type="text/javascript" src="//vk.com/js/api/openapi.js?125"></script>
+    <script src="/../lk/bower_components/jquery/dist/jquery.js"></script>
     <script src="/../lk/bower_components/jquery/dist/jquery.js"></script>
     <!-- bower:css -->
     <!-- endinject -->
@@ -35,6 +40,37 @@
 
 <!-- inject:js -->
 <!-- endinject -->
+
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function (d, w, c) {
+        (w[c] = w[c] || []).push(function() {
+            try {
+                w.yaCounter38791285 = new Ya.Metrika({
+                    id:38791285,
+                    clickmap:true,
+                    trackLinks:true,
+                    accurateTrackBounce:true,
+                    webvisor:true,
+                    trackHash:true
+                });
+            } catch(e) { }
+        });
+
+        var n = d.getElementsByTagName("script")[0],
+                s = d.createElement("script"),
+                f = function () { n.parentNode.insertBefore(s, n); };
+        s.type = "text/javascript";
+        s.async = true;
+        s.src = "https://mc.yandex.ru/metrika/watch.js";
+
+        if (w.opera == "[object Opera]") {
+            d.addEventListener("DOMContentLoaded", f, false);
+        } else { f(); }
+    })(document, window, "yandex_metrika_callbacks");
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/38791285" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
 
 </body>
 </html>

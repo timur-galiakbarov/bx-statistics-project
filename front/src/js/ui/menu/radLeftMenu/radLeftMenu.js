@@ -2,9 +2,9 @@ angular
     .module('rad.menu')
     .directive('radLeftMenu', radLeftMenu);
 
-//import bus from 'core';
+radLeftMenu.$inject = ['$state', '$rootScope', 'notify', 'appState'];
 
-function radLeftMenu() {
+function radLeftMenu($state, $rootScope, notify, appState) {
     return {
         restrict: 'EA',
         templateUrl: './templates/js/ui/menu/radLeftMenu/radLeftMenu.html',
@@ -14,22 +14,30 @@ function radLeftMenu() {
                     return true;
             }
         }],
-        link: link
-    };
-}
+        link: function ($scope) {
+            $scope.showStatsMenu = function (elemClass) {
 
-function link($scope) {
-    $scope.showStatsMenu = function (elemClass) {
+                var currItem = $("#leftMenu " + elemClass + " ul.sub-menu");
+                var parentLi = $("#leftMenu " + elemClass);
+                if (currItem.css("display") == "block") {
+                    currItem.slideUp('fast');
+                    parentLi.removeClass("open");
+                } else {
+                    currItem.slideDown('fast');
+                    parentLi.addClass("open");
+                }
+            };
 
-        var currItem = $("#leftMenu " + elemClass + " ul.sub-menu");
-        var parentLi = $("#leftMenu " + elemClass);
-        if (currItem.css("display") == "block") {
-            currItem.slideUp('fast');
-            parentLi.removeClass("open");
-        } else {
-            currItem.slideDown('fast');
-            parentLi.addClass("open");
+            $scope.isAdmin = appState.isAdmin();
+
+            $scope.openState = function (state) {
+                if ($rootScope.globalLoading){
+                    notify.info("Пожалуйста, дождитесь загрузки данных.");
+                    return;
+                }
+
+                $state.go(state);
+            }
         }
-
     };
 }

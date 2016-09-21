@@ -1,0 +1,135 @@
+<div class="row main-stat">
+    <div class="col-md-8">
+
+        <div class="row" ng-show="isLoading && groupIsFinded">
+            <div class="col-xs-12">
+                <div class="progress progress-striped active">
+                    <div class="progress-bar progress-bar-info" style="width: {{progressPercent}}%">
+                        {{progressPercent}}%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row top-block" ng-show="!statIsLoaded && !isLoading">
+            <div class="col-sm-12 item">
+                <div class="alert alert-info">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <i class="fa fa-info-circle sign"></i>Выберите группу для поиска "мертвых" подписчиков.
+                    "Мертвыми" подписчиками являются подписчики, страницы которых удалены, либо "забанены" вконтакте.
+                </div>
+            </div>
+        </div>
+
+        <div class="block-flat">
+            <form role="form">
+                <div class="form-group">
+                    <label>Группа для анализа:</label>
+                    <input type="text" id="groupAdress1" placeholder="Введите адрес группы или выберите из списка"
+                           class="form-control" ng-model="model.groupAddress" ng-class="{'parsley-error': urlError}">
+                    <ul class="parsley-errors-list filled">
+                        <li class="parsley-required" ng-bind="urlError"></li>
+                    </ul>
+
+                    <a class="choose-group-link" ng-click="showGroupsMenu()">Выбрать группу из списка</a>
+
+                    <rad-choose-group ng-show="!isHiddenMenu" on-action="setGroupLink"></rad-choose-group>
+                </div>
+                <button type="button" class="btn btn-block btn-info btn-rad" ng-click="find()"
+                        ng-disabled="isLoading">Начать поиск
+                </button>
+            </form>
+        </div>
+
+        <div rad-loader="isLoading">
+            <div ng-show="statIsLoaded || isLoading">
+                <div class="row top-block">
+
+                    <div class="col-md-6">
+                        <div class="fd-tile detail clean tile-prusia">
+                            <div class="content"><h2 class="text-left">{{model.membersCount}}</h2>
+
+                                <p></p></div>
+                            <div class="icon"><i class="fa fa-users"></i></div>
+                            <div class="details" href="#">Всего подписчиков <span></span></div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="fd-tile detail clean tile-prusia">
+                            <div class="content"><h2 class="text-left">{{model.deactivatedCount}}</h2>
+
+                                <p></p></div>
+                            <div class="icon"><i class="fa fa-users"></i></div>
+                            <div class="details" href="#">Из них "мертвые" <span></span></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row" ng-show="model.deactivatedCount">
+                    <div class="col-xs-12">
+                        <div class="block-flat">
+                            <div class="header">
+                                <h3>График отношения участников</h3>
+                            </div>
+                            <div class="panel-body">
+                                <canvas id="bannedChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="block-flat">
+                            <div class="header">
+                                <h3>Список &laquo;мертвых&raquo; подписчиков</h3>
+                            </div>
+                            <div class="panel-body" ng-show="model.deactivatedCount">
+                                <div class="row">
+                                    <div class="download-buttons">
+                                        <button class="btn btn-prusia" ng-click="getXlsReport()">
+                                            <i class="fa fa-file-excel-o"></i>
+                                            Скачать в Excel
+                                        </button>
+                                    </div>
+                                    <div ng-show="model.deactivatedCount >= 200">
+                                        В таблице приведены только 200 "мертвых" подписчиков. Вы можете загрузить
+                                        полный
+                                        список
+                                        нажав на "Скачать в Excel"
+                                    </div>
+                                    <table class="table table-responsive">
+                                        <tr>
+                                            <th></th>
+                                            <th>Id</th>
+                                            <th>Имя</th>
+                                            <th>Тип блокировки</th>
+                                        </tr>
+                                        <tr ng-repeat="user in model.deactivatedListView">
+                                            <td>{{$index+1}}</td>
+                                            <td>{{user.uid}}</td>
+                                            <td>{{user.first_name}} {{user.last_name}}</td>
+                                            <td>{{user.deactivated}}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="panel-body" ng-show="model.deactivatedCount == 0">
+                                Все пользователи в этой группе существуют.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <div class="col-md-4">
+
+        <vk-group-widget></vk-group-widget>
+
+    </div>
+</div>

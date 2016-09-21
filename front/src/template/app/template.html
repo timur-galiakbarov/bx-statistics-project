@@ -1,86 +1,61 @@
-<div id="cl-wrapper" ng-if="isAuth">
+<div ng-if="isAuth">
+    <div id="cl-wrapper">
 
-    <div class="cl-sidebar">
-        <div class="cl-toggle" ng-click="toggleMenu($event)"><i class="fa fa-bars"></i></div>
-        <div class="cl-navblock">
-            <div class="menu-space">
-                <div class="content">
-                    <div class="sidebar-logo">
-                        <div class="logo-title">
-                            <img src="/bitrix/templates/.default/images/logoIcon.png" alt="socstat.ru"/>
-                            <span class="hidden-sm">socstat.ru</span>
+        <div class="cl-sidebar">
+            <div class="cl-toggle" ng-click="toggleMenu($event)"><i class="fa fa-bars"></i></div>
+            <div class="cl-navblock">
+                <div class="menu-space">
+                    <div class="content">
+                        <div class="sidebar-logo">
+                            <div class="logo-title">
+                                <!--<img src="/bitrix/templates/.default/images/logoIcon.png" alt="socstat.ru"/>-->
+                                <span class="">socstat.ru</span>
+                            </div>
                         </div>
+
+                        <rad-left-menu></rad-left-menu>
+
                     </div>
-
-                    <rad-left-menu></rad-left-menu>
-
                 </div>
             </div>
         </div>
+        <div class="container-fluid" id="pcont">
+
+            <div class="nano">
+                <div class="nano-content">
+                    <div class="cl-mcont">
+
+
+                        <div class="page-head">
+                            <h2 class="main-title" ng-if="page.sectionTitle">{{page.sectionTitle}}</h2>
+                        </div>
+                        <div ui-view="content">
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
-    <div class="container-fluid" id="pcont">
-        <!-- TOP NAVBAR -->
-        <div id="head-nav" class="navbar navbar-default">
-            <div class="container-fluid">
-                <div class="navbar-collapse">
-                    <rad-profile-menu></rad-profile-menu>
 
-                    <ul class="nav navbar-nav not-nav">
-                        <li class="button dropdown">
-                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown"><i
-                                    class=" fa fa-inbox"></i></a>
-                        </li>
-                        <li class="button dropdown">
-                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown"><i
-                                    class="fa fa-globe"></i><span class="bubble">2</span></a>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <div class="">
-                                        <div class="content">
-                                            <ul>
-                                                <li><a href="#"><i class="fa fa-cloud-upload info"></i><b>Daniel</b> is
-                                                    now following you <span class="date">2 minutes ago.</span></a></li>
-                                                <li><a href="#"><i class="fa fa-male success"></i> <b>Michael</b>
-                                                    commented on your link <span class="date">15 minutes ago.</span></a>
-                                                </li>
-                                                <li><a href="#"><i class="fa fa-bug warning"></i> <b>Mia</b> commented
-                                                    on post <span class="date">30 minutes ago.</span></a></li>
-                                                <li><a href="#"><i class="fa fa-credit-card danger"></i> <b>Andrew</b>
-                                                    sent you a request <span class="date">1 hour ago.</span></a></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <ul class="foot">
-                                        <li><a href="#">View all activity </a></li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </li>
-                        <li class="button"><a class="toggle-menu" href="#"><i class="fa fa-microphone"></i></a></li>
-                    </ul>
-
+    <div class="modal" id="finishedPeriodModal" tabindex="-1" role="dialog" aria-hidden="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button " class="close" data-dismiss="modal" aria-hidden="true">×</button>
                 </div>
-                <!--/.nav-collapse animate-collapse -->
-            </div>
-        </div>
-
-        <div class="nano">
-            <div class="nano-content">
-                <div class="cl-mcont">
-
-
-                    <div class="page-head">
-                        <h2 class="main-title" ng-if="page.sectionTitle">{{page.sectionTitle}}</h2>
-                    </div>
-                    <div ui-view="content">
-
-                    </div>
-
+                <div class="modal-body">
+                    <rad-tariff view="'popup'"></rad-tariff>
                 </div>
+
             </div>
-
+            <!-- /.modal-content -->
         </div>
-
+        <!-- /.modal-dialog -->
     </div>
 
 </div>

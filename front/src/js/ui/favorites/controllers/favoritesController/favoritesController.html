@@ -1,0 +1,99 @@
+<div class="row">
+    <div class="col-md-8">
+
+        <div class="block-flat" rad-loader="isLoading" ng-show="isLoading" style="height: 150px;">
+
+        </div>
+
+        <div class="block-flat" ng-show="(favoriteList.length == 0 || !favoriteList) && !isLoading">
+            Любимых записей пока нет. <a ui-sref="index.publishAnalisys">Добавьте их</a>!
+        </div>
+
+        <div class="row" ng-hide="isLoading || !favoriteList">
+            <div ng-repeat="wallPost in favoriteList" ng-if="!wallPost.isRemoved">
+                <div class="col-lg-6 col-md-12 m-top-m-15">
+
+                    <div class="block-flat">
+                        <div class="header">
+                            <div class="publish-left-block">
+                                <strong>Дата: </strong> {{getDate(wallPost.date)}}
+                                <br/>
+                                <i class="fa fa-heart"></i> <strong> {{wallPost.likes.count}}</strong>
+                                <i class="fa fa-share-alt"></i> <strong> {{wallPost.reposts.count}}</strong>
+                                <i class="fa fa-comments"></i> <strong> {{wallPost.comments.count}}</strong>
+                            </div>
+                            <div class="publish-right-block">
+                                <button class="btn btn-prusia addToFavoritePost"
+                                        ng-click="removeFavorite(wallPost, $index)">
+                                    <i class="fa fa-close"></i>
+                                </button>
+                            </div>
+                            <div class="clear"></div>
+                        </div>
+                        <div class="block-publish publishItem{{$index}}" data="{{currentIndex = $index}}">
+                            <div class="text">
+                                <span ng-bind-html="wallPost.text"></span>
+                                <!--<a href="http://www.mhealth.ru/diet/ration/425723/">http://www.mhealth.ru/diet/ration/425723/</a>-->
+                            </div>
+                            <div ng-if="wallPost.attachments && wallPost.attachments.length>0">
+                                <div ng-repeat="attachment in wallPost.attachments">
+                                    <div class="video text-center"
+                                         ng-if="attachment.type == 'video'">
+
+                                        <div class="video-preview" ng-show="!attachment.video.url" ng-click="getVideoUrl(attachment)">
+                                            <img ng-src="{{attachment.video.image}}"
+                                                 style="max-width: 100%;">
+                                            <img class="play-icon" src="./images/video_play.png">
+                                        </div>
+
+                                        <iframe ng-if="attachment.video.url" ng-src="{{trustSrc(attachment.video.url)}}"
+                                                width="100%"
+                                                height="250"
+                                                allowfullscreen frameborder="0">
+                                        </iframe>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="image text-center" ng-if="wallPost.attachment && wallPost.attachment.photo">
+                                <img ng-src="{{wallPost.attachment.photo.src_big}}" style="max-width: 100%;"/>
+                            </div>
+                            <div ng-if="isShowAnotherPictures(wallPost.attachments)">
+                                <hr>
+
+                                <div class="col-sm-4 text-center publish-photo-link"
+                                     ng-repeat="anotherImage in wallPost.attachments"
+                                     ng-if="anotherImage.type == 'photo'"
+                                     ng-click="showCurrentPicture(anotherImage.photo.src_big, currentIndex)">
+                                    <img ng-src="{{anotherImage.photo.src_big}}" height="50">
+                                </div>
+
+                            </div>
+                            <div ng-if="isShowGif(wallPost.attachments)">
+                                <div ng-repeat="gif in wallPost.attachments" ng-if="gif.doc && gif.doc.ext == 'gif'">
+                                    <img ng-src="{{gif.doc.url}}" style="max-width: 100%;"/>
+                                </div>
+                            </div>
+                            <div class="clear"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="clear" ng-if="($index+1) % 2 == 0"></div>
+
+            </div>
+
+            <div ng-show="isShowNext && !isLoading">
+                <button type="button"
+                        class="btn btn-block btn-info btn-rad" ng-click="showGetNext()">Показать еще
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+        <vk-group-widget></vk-group-widget>
+    </div>
+</div>

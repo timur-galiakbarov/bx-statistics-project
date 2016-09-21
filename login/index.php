@@ -6,7 +6,7 @@ $APPLICATION->SetTitle("Авторизация");
 
 global $USER;
 //$redirectUrl = "http://localhost:6450";
-$redirectUrl = "http://localhost:6449";
+$redirectUrl = "http://socstat.local";
 //$redirectUrl = "http://socstat.ru";
 if ($USER->IsAuthorized())
     header("location: /lk");
@@ -16,7 +16,7 @@ if ($USER->IsAuthorized())
             <div class="block-flat">
                 <div class="header">
                     <h3 class="text-center logo-title">
-                        <img src="/bitrix/templates/.default/images/logoIcon.png" alt="socstat.ru"/>
+                        <!--<img src="/bitrix/templates/.default/images/logoIcon.png" alt="socstat.ru"/>-->
                         socstat.ru
                     </h3>
                 </div>
@@ -27,8 +27,8 @@ if ($USER->IsAuthorized())
                         <div class="form-group">
                             <div class="col-sm-12">
                                 <div class="vk-auth-icon text-center">
-                                    <a href="https://oauth.vk.com/authorize?client_id=5358505&scope=wall,photos,stats,friends,groups,video,notifications&redirect_uri=<?=$redirectUrl;?>/login/getCode.php?site=auth&response_type=token">
-                                        <img src="<?= SITE_TEMPLATE_PATH ?>/images/vk64.png">
+                                    <a href="https://oauth.vk.com/authorize?client_id=5358505&scope=wall,photos,stats,friends,groups,video,notifications,email&redirect_uri=<?= $redirectUrl; ?>/login/getCode.php?site=auth&response_type=token">
+                                        <img src="<?= SITE_TEMPLATE_PATH ?>/images/vk64.png" width="48">
                                         <span>Войти через VK</span>
                                     </a>
                                 </div>
@@ -50,9 +50,12 @@ if ($USER->IsAuthorized())
 				);*/ ?>
                 </div>
             </div>
+            <div class="text-center out-links"><a href="/">Вернуться на промо-сайт</a></div>
             <!--<div class="text-center out-links">
                 <a href="#">Забыли пароль?</a>
             </div>-->
         </div>
     </div>
-    <br><? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php"); ?>
+
+    <br>
+<? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php"); ?>

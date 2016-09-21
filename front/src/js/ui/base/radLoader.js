@@ -23,7 +23,7 @@
         , position: 'absolute' // Element positioning
     };
 
-    var spinner = false;
+    var spinner = [];
 
     module.directive("radLoader", [function () {
         return {
@@ -33,18 +33,19 @@
             }],
             link: function (scope, element, attr, ctrls) {
                 var className = 'loader';
+                var index = attr.radLoader;
                 if (attr.radLoader) {
                     scope.$watch(attr.radLoader, function (loading) {
-                        element.toggleClass(className, !!loading);
                         if (loading) {
                             element.append('<div class="loader_block"></div>');
-                            spinner = new Spinner(opts).spin();
-                            element.append(spinner.el);
+                            spinner[index] = new Spinner(opts).spin();
+                            element.append(spinner[index].el);
                         } else {
                             element.children('.loader_block').remove();
-                            if (spinner && spinner.stop)
-                                spinner.stop();
+                            if (spinner[index] && spinner[index].stop)
+                                spinner[index].stop();
                         }
+                        element.toggleClass(className, !!loading);
                     });
                 }
             }

@@ -3,13 +3,34 @@ export default {
         IS_AUTH: 'ACCOUNT.IS_AUTH',
         GET_USER_INFO: 'ACCOUNT.GET_USER_INFO',
         LOGOUT: 'ACCOUNT.LOGOUT_SYSTEM',
-        GET_VK_INFO: 'ACCOUNT.GET_VK_INFO',//Запросить данные об авторизации Вконтакте
-        LOGOUT_VK: 'ACCOUNT.LOGOUT_VK',//Выйти из сети Вконтакте
+        GET_VK_INFO: 'ACCOUNT.GET_VK_INFO',//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+        LOGOUT_VK: 'ACCOUNT.LOGOUT_VK',//пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     },
     SHOP: {
-        GET_ITEMS: 'SHOP.GET_ITEMS',//Получение списка товаров
-        ADD_ITEM: 'SHOP.ADD_ITEM',//Добавление товара в БД
-        GET_ITEM: 'SHOP.GET_ITEM',//Получение товара по id
-        REMOVE_ITEM: 'SHOP.REMOVE_ITEM',//Удаление товара из БД
+        GET_ITEMS: 'SHOP.GET_ITEMS',//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+        ADD_ITEM: 'SHOP.ADD_ITEM',//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅ
+        GET_ITEM: 'SHOP.GET_ITEM',//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ id
+        REMOVE_ITEM: 'SHOP.REMOVE_ITEM',//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ
+    },
+    NEWS: {
+        GET_LIST: 'NEWS.GET_LIST'//РџРѕР»СѓС‡РёС‚СЊ СЃРїРёСЃРѕРє РЅРѕРІРѕСЃС‚РµР№
+    },
+    BOOKMARK: {
+        ADD: 'BOOKMARK.ADD',//Р”РѕР±Р°РІРёС‚СЊ РіСЂСѓРїРїСѓ РІ Р·Р°РєР»Р°РґРєРё
+        GET_LIST: 'BOOKMARK.GET_LIST', //РЎРїРёСЃРѕРє Р·Р°РєР»Р°РґРѕРє
+        REMOVE: 'BOOKMARK.REMOVE' //РЈРґР°Р»РёС‚СЊ Р·Р°РєР»Р°РґРєСѓ
+    },
+    FAVORITE: {
+        ADD: 'FAVORITE.ADD',//Р”РѕР±Р°РІРёС‚СЊ РІ Р»СЋР±РёРјС‹Рµ
+        GET_LIST: 'FAVORITE.GET_LIST', //РџРѕР»СѓС‡РёС‚СЊ РЎРїРёСЃРѕРє Р»СЋР±РёРјС‹С… РїРѕСЃС‚РѕРІ
+        REMOVE: 'FAVORITE.REMOVE' //РЈРґР°Р»РёС‚СЊ Р·Р°РєР»Р°РґРєСѓ
+    },
+    REPORTS: {
+        GET_BANNED_LIST: 'REPORTS.GET_BANNED_LIST', //РџРѕР»СѓС‡РёС‚СЊ XLSX РѕС‚С‡РµС‚ РґР»СЏ РјРµСЂС‚РІС‹С… СѓС‡Р°СЃС‚РЅРёРєРѕРІ
+        GET_COMPARE_LIST: 'REPORTS.GET_COMPARE_LIST', //РџРѕР»СѓС‡РёС‚СЊ XLSX РѕС‚С‡РµС‚ РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ Р°СѓРґРёС‚РѕСЂРёРё
+        GET_FIND_ANALOG_LIST: 'REPORTS.GET_FIND_ANALOG_LIST',
+    },
+    ADMIN: {
+        GET_STAT: 'ADMIN.GET_STAT' //РћР±С‰Р°СЏ Р°РґРјРёРЅСЃРєР°СЏ СЃС‚Р°С‚РёСЃС‚РёРєР°
     }
 };

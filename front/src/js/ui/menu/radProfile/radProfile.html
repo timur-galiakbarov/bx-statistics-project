@@ -1,0 +1,14 @@
+<div class="profile-block" >
+    <div class="avatar"><img ng-src="{{model.photoUrl}}" width="100%"/></div>
+    <div class="info" rad-loader="isLoadingUser">
+        <p>{{model.userName}}<br>
+            {{model.userLastName}}</p>
+        <p class="uid">
+            <span>uid:</span> {{model.uid}}<br>
+            <a class="logoutLink" ng-click="logout()">Выйти</a>
+        </p>
+    </div>
+
+    <!-- VK Widget -->
+    <div id="vk_subscribe" class="subscribeVkBtn"></div>
+</div>

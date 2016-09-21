@@ -21,5 +21,85 @@ export default {
                 return res.data;
             }
         );
+    },
+    getVkInfo(options){
+
+    },
+    getNewsList(options){
+        return serverApi.request({
+            url: '/controllers/account/getNewsList.php',
+            type: 'GET'
+        }).then((res)=> {
+                return res.data;
+            }
+        );
+    },
+    addBookmark(options){
+        return serverApi.request({
+            url: '/controllers/account/bookmarks/addBookmark.php',
+            type: 'POST',
+            data: options
+        }).then((res)=> {
+                return res;
+            }
+        );
+    },
+    getBookmarkList(options){
+        return serverApi.request({
+            url: '/controllers/account/bookmarks/getBookmarksList.php',
+            type: 'GET'
+        }).then((res)=> {
+                return res.data;
+            }
+        );
+    },
+    removeBookmark(options){
+        return serverApi.request({
+            url: '/controllers/account/bookmarks/removeBookmark.php',
+            type: 'POST',
+            data: options
+        }).then((res)=> {
+                return res;
+            }
+        );
+    },
+    addFavorite(options){
+        return serverApi.request({
+            url: '/controllers/account/favorites/add.php',
+            type: 'POST',
+            data: options
+        }).then((res)=> {
+                return res;
+            }
+        );
+    },
+    getFavoriteList(options){
+        return serverApi.request({
+            url: '/controllers/account/favorites/getList.php',
+            type: 'POST',
+            data: options
+        }).then((res)=> {
+                return res;
+            }
+        );
+    },
+    removeFavorite(options){
+        return serverApi.request({
+            url: '/controllers/account/favorites/remove.php',
+            type: 'POST',
+            data: options
+        }).then((res)=> {
+                return res;
+            }
+        );
+    },
+    getAdminStat(){
+        return serverApi.request({
+            url: '/controllers/account/admin/getStat.php',
+            type: 'GET'
+        }).then((res)=> {
+                return res;
+            }
+        );
     }
 }

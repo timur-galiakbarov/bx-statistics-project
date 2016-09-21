@@ -1,0 +1,116 @@
+<div class="row main-stat">
+    <div class="col-md-8">
+
+        <div class="row" ng-show="isLoading && groupIsFinded">
+            <div class="col-xs-12">
+                <div class="progress progress-striped active">
+                    <div class="progress-bar progress-bar-info" style="width: {{progressPercent}}%">
+                        {{progressPercent}}%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row top-block" ng-show="!statIsLoaded && !isLoading">
+            <div class="col-sm-12 item">
+                <div class="alert alert-info">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <i class="fa fa-info-circle sign"></i>Где еще сидят подписчики?<br>
+                    В этом разделе можно найти ТОП групп, в которые входят подписчики из исследуемой группы.
+                    Для этого выберите группу и количество подписчиков для анализа. Обратите внимание, что сервис
+                    считывает ~75человек в секунду.
+                </div>
+            </div>
+        </div>
+
+        <div class="block-flat">
+            <form role="form">
+                <div class="form-group">
+                    <label>Группа для анализа:</label>
+                    <input type="text" id="groupAdress1" placeholder="Введите адрес группы или выберите из списка"
+                           class="form-control" ng-model="model.groupAddress" ng-class="{'parsley-error': urlError}">
+                    <ul class="parsley-errors-list filled">
+                        <li class="parsley-required" ng-bind="urlError"></li>
+                    </ul>
+
+                    <a class="choose-group-link" ng-click="showGroupsMenu()">Выбрать группу из списка</a>
+
+                    <rad-choose-group ng-show="!isHiddenMenu" on-action="setGroupLink"></rad-choose-group>
+                </div>
+                <div class="form-group">
+                    <label>Количество подписчиков для анализа:</label>
+                    <select class="form-control" ng-model="model.countOfSubscribers">
+                        <option selected value="">Выберите количество подписчиков</option>
+                        <option ng-repeat="option in optionsCount" value="{{option.value}}">{{option.value}}</option>
+                    </select>
+                    <ul class="parsley-errors-list filled">
+                        <li class="parsley-required" ng-bind="countError"></li>
+                    </ul>
+                    <label ng-show="model.calculateTime">Ориентировочное время расчета ~ {{model.calculateTime}}</label>
+                </div>
+                <button type="button" class="btn btn-block btn-info btn-rad" ng-click="find()"
+                        ng-disabled="isLoading">Начать поиск
+                </button>
+            </form>
+        </div>
+
+        <div rad-loader="isLoading">
+            <div ng-show="statIsLoaded || isLoading">
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="block-flat">
+                            <div class="header">
+                                <h3>Топ 50 групп, где еще сидят подписчики</h3>
+                            </div>
+                            <div class="panel-body">
+                                <div class="download-buttons">
+                                    <button class="btn btn-prusia" ng-click="getXlsReport()">
+                                        <i class="fa fa-file-excel-o"></i>
+                                        Скачать в Excel
+                                    </button>
+                                </div>
+                                <table class="table table-responsive">
+                                    <tr>
+                                        <th></th>
+                                        <th>Группа</th>
+                                        <th>id группы</th>
+                                        <th>Подписчиков</th>
+                                        <th>Контакты</th>
+                                    </tr>
+                                    <tr ng-repeat="group in model.findedGroups">
+                                        <td>{{$index+1}}</td>
+                                        <td>
+                                            <a href="https://vk.com/{{group.screen_name}}" target="_blank">{{group.name}}</a><br>
+                                            Общее число подписчиков: {{group.members_count}}
+                                        </td>
+                                        <td class="text-center">{{group.gid}}</td>
+                                        <td class="text-center">{{group.intersection}}</td>
+                                        <td>
+                                            <div class="" ng-repeat="contact in group.contacts">
+                                                <span ng-show="contact.desc">{{contact.desc}}<br></span>
+                                                <span ng-show="contact.phone">{{contact.phone}}<br></span>
+                                                <span ng-show="contact.email">{{contact.email}}<br></span>
+                                                <span ng-show="contact.user_id">
+                                                    <a target="_blank" href="https://vk.com/id{{contact.user_id}}">{{contact.user_id}}</a>
+                                                </span>
+                                                <hr ng-show="$index < group.contacts.length - 1">
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <div class="col-md-4">
+
+        <vk-group-widget></vk-group-widget>
+
+    </div>
+</div>

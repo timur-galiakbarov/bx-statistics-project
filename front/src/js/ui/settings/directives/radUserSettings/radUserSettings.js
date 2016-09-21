@@ -1,3 +1,4 @@
+/*
 import events from './../../../../bl/events.js';
 import topics from './../../../../bl/topics.js';
 
@@ -21,4 +22,4 @@ function radUserSettings() {
 
 function link($scope) {
 
-}
+}*/

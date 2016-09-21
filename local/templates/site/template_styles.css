@@ -1,0 +1,56 @@
+.vk-auth-icon {
+    float: left;
+    width: 100%;
+    margin-bottom: 25px;
+}
+
+.vk-auth-icon span {
+    float: left;
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    color: #456a94;
+    padding-top: 10px;
+}
+
+.vk-auth-icon span:hover {
+    color: #517fb3;
+}
+
+.vk-auth-icon a {
+    border: 0 !important;
+}
+
+.block-flat .header {
+    background: #456a94 !important;
+}
+
+.logo-title {
+    font-size: 18px !important;
+    font-family: "Roboto" !important;
+    padding-top: 2px;
+}
+
+.section-stat-1 {
+    background: #f5f5f5;
+}
+
+.section-stat-1 .slide-img {
+    margin-top: 30px;
+}
+
+.section-stat-2 {
+    background: #fff;
+}
+
+.section-stat-2 .slide-img {
+    margin-top: 30px;
+}
+
+.section-stat-3 {
+    background: #f5f5f5;
+}
+
+.section-stat-3 .slide-img {
+    margin-top: 30px;
+}

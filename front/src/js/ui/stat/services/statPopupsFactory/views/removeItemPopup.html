@@ -3,20 +3,20 @@
 
         <div class="modal-content">
             <div class="modal-header">
-                <h3>РЈРґР°Р»РµРЅРёРµ С‚РѕРІР°СЂР° в„–{{item.id}}</h3>
+                <h3>Удаление товара №{{item.id}}</h3>
                 <button type="button" class="close md-close" aria-hidden="true" ng-click="close()">&times;</button>
             </div>
             <div class="modal-body form">
                 <div class="form-group">
-                    <label>РџРѕРґС‚РІРµСЂРґРёС‚Рµ СѓРґР°Р»РµРЅРёРµ С‚РѕРІР°СЂР°:</label>
+                    <label>Подтвердите удаление товара:</label>
                     <br>
                     <span>{{item.id}} {{item.name}}</span>
                 </div>
 
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default btn-flat md-close" data-dismiss="modal" ng-click="close()">РћС‚РјРµРЅРёС‚СЊ</button>
-                <button type="button" class="btn btn-primary btn-flat md-close" ng-click="remove()">РџРѕРґС‚РІРµСЂРґРёС‚СЊ</button>
+                <button type="button" class="btn btn-default btn-flat md-close" data-dismiss="modal" ng-click="close()">Отменить</button>
+                <button type="button" class="btn btn-primary btn-flat md-close" ng-click="remove()">Подтвердить</button>
             </div>
         </div><!-- /.modal-content -->
     

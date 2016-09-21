@@ -2,37 +2,27 @@ import {server} from 'core';
 
 var serverApi = server;
 export default {
-    getItems(options){
+    getBannedList(options){
         return serverApi.request({
-            url: '/controllers/shop/shopItems.php',
-            type: 'GET',
-            data: options
-        }).then((res)=> {
-            return res;
-        });
-    },
-    addItem(options){
-        return serverApi.request({
-            url: '/controllers/shop/addItem.php',
+            url: '/controllers/common/generateXLSX_getBannedList.php',
             type: 'POST',
             data: options
         }).then((res)=> {
             return res;
         });
     },
-    getItem(options){
-        //console.log(options);
+    getCompareList(options){
         return serverApi.request({
-            url: '/controllers/shop/getItem.php',
-            type: 'GET',
+            url: '/controllers/common/generateXLSX_getCompareList.php',
+            type: 'POST',
             data: options
         }).then((res)=> {
             return res;
         });
     },
-    removeItem(options){
+    getFindAnalogList(options){
         return serverApi.request({
-            url: '/controllers/shop/removeItem.php',
+            url: '/controllers/common/generateXLSX_getFindAnalogList.php',
             type: 'POST',
             data: options
         }).then((res)=> {

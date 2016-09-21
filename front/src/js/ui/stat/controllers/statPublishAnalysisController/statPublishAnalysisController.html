@@ -1,0 +1,223 @@
+<div class="row main-stat">
+    <div class="col-md-8">
+
+        <div class="row" ng-show="isLoading && groupIsFinded">
+            <div class="col-xs-12">
+                <div class="progress progress-striped active">
+                    <div class="progress-bar progress-bar-info" style="width: 100%">
+                        Считано записей: {{progressPercent}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row top-block" ng-show="!dataIsLoaded && dataFromMemoryIsLoaded">
+            <div class="col-sm-12 item">
+                <div class="alert alert-info alert-white-alt2 rounded">
+                    <div class="icon"><i class="fa fa-info-circle"></i></div>
+                    Выберите группу для поиска интересных публикаций. Вы можете
+                    указать любую открытую группу, или группу в которой состоите.
+                    После анализа публикаций их можно отфильтровать по лайкам, репостам, комментариям и степени
+                    вовлеченности.
+                </div>
+            </div>
+        </div>
+
+        <div class="block-flat">
+            <form role="form">
+                <div class="form-group">
+                    <label>Группа для анализа:</label>
+                    <input type="text" id="groupAdress" placeholder="Введите адрес группы или выберите из списка"
+                           class="form-control" ng-class="{'parsley-error': urlError}" ng-model="model.groupAddress">
+                    <ul class="parsley-errors-list filled">
+                        <li class="parsley-required" ng-bind="urlError"></li>
+                    </ul>
+
+                    <a class="choose-group-link" ng-click="showGroupsMenu()">Выбрать группу из списка</a>
+
+                    <rad-choose-group on-action="setGroupLink" ng-show="!isHiddenMenu"></rad-choose-group>
+                </div>
+                <div class="form-group">
+                    <label>Количество публикаций для анализа</label>
+                    <input type="hidden" placeholder="Password" class="form-control">
+
+                    <div class="statDateFilters">
+                        <div class="radio">
+                            <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate"
+                                                                value="last30days">
+                                Последние 30 дней</label>
+                        </div>
+                        <div class="radio">
+                            <label class="radio-inline"> <input class="icheck" type="radio" checked="" name="checkDate"
+                                                                value="last500posts">
+                                Последние 500 записей</label>
+                        </div>
+                        <div class="radio">
+                            <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate"
+                                                                value="allPosts">
+                                Последние 5000 записей</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-block btn-info btn-rad" ng-click="getStat()"
+                        ng-disabled="isLoading">Начать анализ
+                </button>
+            </form>
+        </div>
+        <div class="alert alert-info alert-white rounded" ng-show="dataIsLoaded && !isLoading"
+             style="margin-top: -17px;">
+            <div class="icon"><i class="fa fa-filter"></i></div>
+            <div class="header">
+                <h4>Фильтр топ-публикаций</h4>
+            </div>
+            <div class="content" id="listSort">
+
+                <label class="radio-inline"> <input class="icheck" type="radio" checked="" name="filterPosts"
+                                                    value="likes">
+                    По лайкам</label>
+
+                <label class="radio-inline"> <input class="icheck" type="radio" name="filterPosts" value="reposts">
+                    По репостам</label>
+
+                <label class="radio-inline"> <input class="icheck" type="radio" name="filterPosts" value="comments">
+                    По комментариям</label>
+
+                <label class="radio-inline"> <input class="icheck" type="radio" name="filterPosts" value="ER">
+                    По ER</label>
+
+            </div>
+        </div>
+
+        <div class="page-head">
+            <h3 class="main-title" ng-bind="groupInfo.name"></h3>
+        </div>
+
+        <div class="block-flat" rad-loader="isLoading" ng-show="isLoading" style="height: 150px;">
+
+        </div>
+
+        <div class="row" ng-hide="isLoading">
+            <div ng-repeat="wallPost in wallListView">
+                <div class="col-lg-6 col-md-12 m-top-m-15">
+                    <div class="block-flat">
+                        <div class="header">
+                            <div class="publish-left-block">
+                                <strong>Дата: </strong> {{getDate(wallPost.date)}}
+                            </div>
+                            <div class="publish-full-block">
+                                <i class="fa fa-heart"></i> <strong> {{wallPost.likes.count}}</strong>
+                                <i class="fa fa-share-alt"></i> <strong> {{wallPost.reposts.count}}</strong>
+                                <i class="fa fa-comments"></i> <strong> {{wallPost.comments.count}}</strong>
+                                ER <strong> {{wallPost.ER}}%</strong>
+                            </div>
+                            <div class="clear"></div>
+                        </div>
+                        <div class="block-publish publishItem{{$index}}" data="{{currentIndex = $index}}">
+                            <button class="btn btn-success addToFavoritePost"
+                                    ng-disabled="wallPost.isAddedToFavorite"
+                                    ng-class="{'btn-success': !wallPost.isAddedToFavorite, 'btn-prusia': wallPost.isAddedToFavorite}"
+                                    ng-click="addToFavorite(wallPost, $index)">
+                                {{wallPost.isAddedToFavorite ? 'Запись сохранена' : 'Добавить в любимые'}}
+                            </button>
+                            <div class="text">
+                                <span ng-bind-html="wallPost.text"></span>
+                                <!--<a href="http://www.mhealth.ru/diet/ration/425723/">http://www.mhealth.ru/diet/ration/425723/</a>-->
+                            </div>
+                            <div ng-if="wallPost.attachments && wallPost.attachments.length>0">
+                                <div ng-repeat="attachment in wallPost.attachments">
+                                    <div class="video text-center"
+                                         ng-if="attachment.type == 'video'">
+
+                                        <div class="video-preview" ng-show="!attachment.video.url" ng-click="getVideoUrl(attachment)">
+                                            <img ng-src="{{attachment.video.image}}"
+                                                 style="max-width: 100%;">
+                                            <img class="play-icon" src="./images/video_play.png">
+                                        </div>
+
+                                        <iframe ng-if="attachment.video.url" ng-src="{{trustSrc(attachment.video.url)}}"
+                                                width="100%"
+                                                height="250"
+                                                allowfullscreen frameborder="0">
+                                        </iframe>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="image text-center" ng-if="wallPost.attachment && wallPost.attachment.photo">
+                                <img ng-src="{{wallPost.attachment.photo.src_big}}" style="max-width: 100%;"/>
+                            </div>
+                            <div ng-if="isShowAnotherPictures(wallPost.attachments)">
+                                <hr>
+
+                                <div class="col-sm-4 text-center publish-photo-link"
+                                     ng-repeat="anotherImage in wallPost.attachments"
+                                     ng-if="anotherImage.type == 'photo'"
+                                     ng-click="showCurrentPicture(anotherImage.photo.src_big, currentIndex)">
+                                    <img ng-src="{{anotherImage.photo.src_big}}" height="50">
+                                </div>
+
+                            </div>
+                            <div ng-if="isShowGif(wallPost.attachments)">
+                                <div ng-repeat="gif in wallPost.attachments" ng-if="gif.doc && gif.doc.ext == 'gif'">
+                                    <img ng-src="{{gif.doc.url}}" style="max-width: 100%;"/>
+                                </div>
+                            </div>
+                            <div class="clear"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="clear" ng-if="($index+1) % 2 == 0"></div>
+
+            </div>
+
+        </div>
+
+        <button type="button"
+                ng-show="wallPage*10 < wallList.length && !isLoading"
+                class="btn btn-block btn-info btn-rad" ng-click="showNextPosts()">Показать еще
+        </button>
+    </div>
+    <div class="col-md-4">
+        <div class="block-flat info-box">
+            <div class="header">
+                <h3><i class="fa fa-info-circle sign"></i> Что это?</h3>
+            </div>
+            <div class="content site-helper">
+                <p>Анализ публикаций - это удобный инструмент аналитики постов в сообществах вконтакте. Производит
+                    выгрузку постов с любой группы и показывает самые интересные публикации по ER, лайкам, репостам и
+                    комментариям. Любой понравившийся пост можно добавить в избранные.
+                </p>
+
+                <div class="content overflow-hidden info-example">
+                    <div class="well">
+                        <div class="example-title">Примеры статистики</div>
+                        <hr>
+                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
+                                ng-click="getStatExample('sociopat_ru')">Веселый социопат
+                        </button>
+                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
+                                ng-click="getStatExample('mh')">Men's Health
+                        </button>
+                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
+                                ng-click="getStatExample('v5inf')">5 интересных фактов
+                        </button>
+                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
+                                ng-click="getStatExample('pikabu')">Пикабу
+                        </button>
+                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
+                                ng-click="getStatExample('exclusive_muzic')">Новинки музыки 2016
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <vk-group-widget></vk-group-widget>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12" style="height: 50px">
+
+        </div>
+    </div>
+</div>

@@ -67,6 +67,11 @@ gulp.task('fonts:build', function () {
         .pipe(gulp.dest(path.build.fonts))
 });
 
+gulp.task('images:build', function () {
+    return gulp.src(path.src.images)
+        .pipe(gulp.dest(path.build.images))
+});
+
 gulp.task('build', ['bower_components'], function (done) {
     return runSequence(
         'indexHtml:build',
@@ -77,5 +82,6 @@ gulp.task('build', ['bower_components'], function (done) {
         'js:tplbuild',
         'js:build',
         'fonts:build',
+        'images:build',
         done);
 });

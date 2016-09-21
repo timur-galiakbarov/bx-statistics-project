@@ -1,71 +1,190 @@
 <div class="row main-stat">
     <div class="col-md-8">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="block-flat">
-                    <form role="form">
-                        <div class="form-group">
-                            <label>Группа для анализа 1:</label>
-                            <input type="text" placeholder="Введите адрес группы вконтакте" class="form-control">
-                        </div>
 
-                    </form>
+        <div class="row" ng-show="isLoading && groupIsFinded">
+            <div class="col-xs-12">
+                Идет поиск пересечений...
+                <div class="progress progress-striped active">
+                    <div class="progress-bar progress-bar-info" style="width: {{progressPercent}}%">
+                        {{progressPercent}}%
+                    </div>
                 </div>
             </div>
-
-            <div class="col-md-6">
-                <div class="block-flat">
-                    <form role="form">
-                        <div class="form-group">
-                            <label>Группа для анализа 2:</label>
-                            <input type="text" placeholder="Введите адрес группы вконтакте" class="form-control">
-                        </div>
-
-                    </form>
+        </div>
+        <div class="row" ng-show="isLoading && groupIsFinded && isUserGetData">
+            <div class="col-xs-12">
+                Получаем информацию о пользователях...
+                <div class="progress progress-striped active">
+                    <div class="progress-bar progress-bar-danger" style="width: {{progressUserPercent}}%">
+                        {{progressUserPercent}}%
+                    </div>
                 </div>
             </div>
-
         </div>
 
-        <div class="row">
-
-            <div class="col-md-4 col-sm-6 item">
-                <div class="fd-tile detail clean tile-prusia">
-                    <div class="content"><h1 class="text-left">24</h1>
-
-                        <p></p></div>
-                    <div class="icon"><i class="fa fa-users"></i></div>
-                    <div class="details" href="#">Участники <span></span></div>
+        <div class="row top-block" ng-show="!dataIsLoaded && !isLoading">
+            <div class="col-sm-12 item">
+                <div class="alert alert-info">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <i class="fa fa-info-circle sign"></i>Выберите группы для поиска пересечений.
+                    Вы можете указать любые открытые группы, или группы в которых состоите.
                 </div>
             </div>
+        </div>
 
+        <div class="block-flat">
+            <form role="form">
+                <div class="form-group">
+                    <label>Количество групп для сравнения:</label>
 
-            <div class="col-md-4 col-sm-6 item">
-                <div class="fd-tile detail clean tile-prusia">
-                    <div class="content"><h1 class="text-left">25</h1>
+                    <div class="radio" id="groupCountList" style="margin-left: -17px;">
+                        <label class="radio-inline">
+                            <input class="icheck" type="radio" name="countOfGroups" value="2" checked>
+                            2
+                        </label>
 
-                        <p></p></div>
-                    <div class="icon"><i class="fa fa-signal"></i></div>
-                    <div class="details" href="#">Посещаемость <span></span></div>
+                        <label class="radio-inline">
+                            <input class="icheck" type="radio" name="countOfGroups" value="3">
+                            3
+                        </label>
+
+                        <label class="radio-inline">
+                            <input class="icheck" type="radio" name="countOfGroups" value="4">
+                            4
+                        </label>
+
+                        <label class="radio-inline">
+                            <input class="icheck" type="radio" name="countOfGroups" value="5">
+                            5
+                        </label>
+                    </div>
                 </div>
-            </div>
+                <div class="form-group" ng-repeat="group in model.groups">
+                    <label>Группа для анализа {{$index+1}}:</label>
+                    <input type="text" placeholder="Введите адрес группы или выберите из списка"
+                           class="form-control" ng-model="group.groupAddress"
+                           ng-class="{'parsley-error': group.urlError}">
+                    <ul class="parsley-errors-list filled">
+                        <li class="parsley-required" ng-bind="group.urlError"></li>
+                    </ul>
 
-            <div class="col-md-4 col-sm-6 item">
-                <div class="fd-tile detail clean tile-prusia">
-                    <div class="content"><h1 class="text-left">72</h1>
+                    <a class="choose-group-link" ng-click="group.showGroupsMenu()">Выбрать группу из списка</a>
 
-                        <p></p></div>
-                    <div class="icon"><i class="fa fa-eye"></i></div>
-                    <div class="details" href="#">Просмотры <span></span></div>
+                    <rad-choose-group ng-show="!group.isHiddenMenu" on-action="group.setGroupLink"
+                                      on-index="$index"></rad-choose-group>
                 </div>
-            </div>
+                <div class="form-group">
+                    <div class="radio" id="needExtendUser" style="margin-left: -17px;">
+                        <label class="radio-inline">
+                            <input class="icheck" type="checkbox" name="needExtendUser" value="2" checked>
+                            Информация о пользователе (поиск займет больше времени)
+                        </label>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-block btn-info btn-rad" ng-click="compare()"
+                        ng-disabled="isLoading">Сравнить
+                </button>
+            </form>
+        </div>
 
+        <div rad-loader="isLoading">
+            <div ng-show="dataIsLoaded || isLoading">
+                <div class="row top-block">
+
+                    <div class="col-md-12 item">
+                        <div class="fd-tile detail clean tile-prusia">
+                            <div class="content"><h1 class="text-left">{{model.intersection.length}}</h1>
+
+                                <p></p></div>
+                            <div class="icon"><i class="fa fa-users"></i></div>
+                            <div class="details" href="#">Пересечение <span></span></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row" ng-show="dataIsLoaded">
+
+                    <div class="col-lg-6 col-md-12" ng-repeat="group in model.groups">
+                        <div class="block-flat">
+                            <div class="header">
+                                <h3>{{group.info.name}}</h3>
+                            </div>
+                            <div class="panel-body">
+                                Количество пользователей: {{group.info.count}}<br>
+                                Процент пересечения: {{group.intersectionPercent}}%
+                                <br>
+                                <br>
+
+                                <canvas id="pieChartGroup{{group.info.gid}}" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="block-flat">
+                            <div class="header">
+                                <h3>Пересечения</h3>
+                            </div>
+                            <div class="panel-body" ng-show="model.intersectionList.length">
+                                <div class="row">
+                                    <div class="download-buttons">
+                                        <button class="btn btn-prusia" ng-click="getXlsReport()">
+                                            <i class="fa fa-file-excel-o"></i>
+                                            Скачать в Excel
+                                        </button>
+                                    </div>
+                                    <div ng-show="model.intersectionList.length > 200">
+                                        В таблице приведены только 200 подписчиков, состоящих в исследуемых группах. Вы
+                                        можете загрузить
+                                        полный список
+                                        нажав на "Скачать в Excel"
+                                    </div>
+                                    <table class="table table-responsive">
+                                        <tr>
+                                            <th></th>
+                                            <th>Id</th>
+                                            <th ng-show="model.needExtendUser">Имя</th>
+                                            <!--<th ng-show="model.needExtendUser">Телефон</th>
+                                            <th ng-show="model.needExtendUser">Город</th>-->
+                                            <th ng-show="model.needExtendUser">Возраст</th>
+                                            <th ng-show="model.needExtendUser">Пол</th>
+                                        </tr>
+                                        <tr ng-repeat="user in model.intersectionListView">
+                                            <td>{{$index+1}}</td>
+                                            <td ng-show="model.needExtendUser">{{user.uid}}</td>
+                                            <td ng-show="!model.needExtendUser">{{user}}</td>
+                                            <td ng-show="model.needExtendUser">{{user.first_name}} {{user.last_name}}
+                                            </td>
+                                            <!--<td ng-show="model.needExtendUser">{{user.mobile_phone ||
+                                                user.home_phone || '-'}}
+                                            </td>
+                                            <td ng-show="model.needExtendUser">{{user.city}}
+                                            </td>-->
+                                            <td ng-show="model.needExtendUser">{{user.bdate}}
+                                            </td>
+                                            <td ng-show="model.needExtendUser">{{user.sex ? (user.sex == 1 ? 'жен.' :
+                                                'муж.') : '-'}}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="panel-body" ng-show="!model.intersectionList.length">
+                                Пересечений у групп нет.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
     </div>
     <div class="col-md-4">
-        <div class="block-flat">
-            <button type="button" class="btn btn-block btn-info btn-rad">Начать сравнение</button>
-        </div>
+        <vk-group-widget></vk-group-widget>
     </div>
 </div>

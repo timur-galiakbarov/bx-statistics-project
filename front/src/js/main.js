@@ -8,6 +8,8 @@ import radValidate from './ui/base/radValidate.js';
 import radValidationMessage from './ui/base/radValidationMessage.js';
 import radLoader from './ui/base/radLoader.js';
 import radOnFinishRenderNgRepeat from './ui/base/radOnFinishRenderNgRepeat.js';
+import vkGroupWidget from './ui/app/directives/vkGroupWidget/vkGroupWidget.js';
+import radTariff from './ui/app/directives/radTariff/radTariff.js';
 
 /*Dashboard controller*/
 import dashboardController from './ui/dashboard/controllers/dashboardController.js';
@@ -18,23 +20,32 @@ import radAmountFilter from './ui/base/radAmountFilter.js';
 /*statController------------------------------------------------------------------------------------------------------*/
 import statController from './ui/stat/controllers/statController.js';
 import statMainController from './ui/stat/controllers/statMainController/statMainController.js';
-import statPublishAnalisysController from './ui/stat/controllers/statPublishAnalisysController/statPublishAnalisysController.js';
+import statPublishAnalysisController from './ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.js';
 import statAuditoryCompareController from './ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.js';
+import favoritesController from './ui/favorites/controllers/favoritesController/favoritesController.js';
+import findBotsController from './ui/stat/controllers/findBotsController/findBotsController.js';
+import groupsAnalogController from './ui/stat/controllers/groupsAnalogController/groupsAnalogController.js';
+import adminController from './ui/admin/controllers/adminController.js';
+import vksyncController from './ui/admin/controllers/vksyncController/vksyncController.js';
+import adminDashboardController from './ui/admin/controllers/adminDashboardController/adminDashboardController.js';
 
 /*statDirectives*/
 import ngThumb from './ui/stat/uploader/radThumb.js';
 /*statServices*/
 import statPopupsFactory from './ui/stat/services/statPopupsFactory/statPopupsFactory.js';
 import vkApiFactory from './ui/stat/services/vkApiFactory/vkApiFactory.js';
+import memoryFactory from './ui/stat/services/memoryFactory/memoryFactory.js';
+import radCommonFunc from './ui/app/factories/radCommonFunc.js';
+import notify from './ui/app/factories/notify.js';
+import radChooseGroup from './ui/stat/directives/radChooseGroup/radChooseGroup.js';
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-import settingsController from './ui/settings/controllers/settingsController.js';
-import radUserSettings from './ui/settings/directives/radUserSettings/radUserSettings.js';
+//import settingsController from './ui/settings/controllers/settingsController.js';
+//import radUserSettings from './ui/settings/directives/radUserSettings/radUserSettings.js';
 
 import radMenu from './ui/menu/module.js';
 
 import app from './app.js';
-import radVkFactory from './ui/app/factories/radVkFactory.js';
 
 import route from './route.js';
 import bus from './bl/core/bus.js';

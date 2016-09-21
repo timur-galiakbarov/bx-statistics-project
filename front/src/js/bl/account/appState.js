@@ -1,5 +1,5 @@
 /**
- * Сервис хранения состояния пользователя
+ * пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  */
 
 import {bus} from 'core';
@@ -58,6 +58,12 @@ var appState = {
     },
     getMainStat(){
         return mainStat ? mainStat : ''
+    },
+    isActiveUser(){
+        return userInfo.isActiveUser;
+    },
+    isAdmin(){
+        return userInfo ? userInfo.admin : false;
     }
 };
 

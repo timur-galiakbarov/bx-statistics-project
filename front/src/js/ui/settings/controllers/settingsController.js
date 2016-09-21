@@ -1,3 +1,4 @@
+/*
 import events from './../../../bl/events.js';
 
 angular
@@ -5,7 +6,7 @@ angular
     .controller('settingsController', ['$rootScope', '$scope', '$state', 'bus', 'appState',
         function ($rootScope, $scope, $state, bus, appState) {
 
-            $rootScope.page.sectionTitle = 'РќР°СЃС‚СЂРѕР№РєРё';
+            $rootScope.page.sectionTitle = 'Настройки';
 
             $scope.userInfo = {
                 firstName: appState.getUserName(),
@@ -36,4 +37,4 @@ angular
             });
 
             $(".nano").nanoScroller();
-        }]);
+        }]);*/

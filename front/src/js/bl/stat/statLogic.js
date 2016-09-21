@@ -2,7 +2,6 @@ import bus from './../core/busModule.js';
 import topics from './../topics.js';
 import dataContext from './statDataContext.js';
 
-bus.subscribe(topics.SHOP.GET_ITEMS, dataContext.getItems);
-bus.subscribe(topics.SHOP.ADD_ITEM, dataContext.addItem);
-bus.subscribe(topics.SHOP.GET_ITEM, dataContext.getItem);
-bus.subscribe(topics.SHOP.REMOVE_ITEM, dataContext.removeItem);
+bus.subscribe(topics.REPORTS.GET_BANNED_LIST, dataContext.getBannedList);
+bus.subscribe(topics.REPORTS.GET_COMPARE_LIST, dataContext.getCompareList);
+bus.subscribe(topics.REPORTS.GET_FIND_ANALOG_LIST, dataContext.getFindAnalogList);

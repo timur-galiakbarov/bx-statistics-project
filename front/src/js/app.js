@@ -1,7 +1,7 @@
 import topics from './bl/topics.js';
 import events from './bl/events.js';
 
-/*РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїСЂРёР»РѕР¶РµРЅРёСЏ*/
+/*Инициализация приложения*/
 var app = angular.module('app', [
     'ngRoute',
     'ngSanitize',
@@ -9,7 +9,7 @@ var app = angular.module('app', [
     'rad.menu',
     'rad.stat',
     'rad.dashboard',
-    'rad.settings',
+    'rad.favorites',
     'ui.bootstrap'
 ]);
 
@@ -24,7 +24,7 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus',
             $rootScope.$apply(function () {
                 $rootScope.isAuth = true;
             });
-            //РћС‚РєСЂС‹РІР°РµРј СЂР°Р·РґРµР» РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+            //Открываем раздел по умолчанию
             if ($state.current.name == 'index')
                 $state.go('index.dashboard');
         });
@@ -35,9 +35,9 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus',
                     bus.publish(events.ACCOUNT.STATED, res);
                 });
 
-                bus.request(topics.ACCOUNT.GET_VK_INFO).then((res)=> {
-                    bus.publish(events.ACCOUNT.VK.AUTH, res);
-                })
+                /*bus.request(topics.ACCOUNT.GET_VK_INFO).then((res)=> {
+                 bus.publish(events.ACCOUNT.VK.AUTH, res);
+                 })*/
             } else {
                 $scope.isAuth = false;
                 location.href = '/login/';
@@ -61,5 +61,10 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus',
             });
             e.preventDefault();
         };
+
+        bus.subscribe(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL, ()=> {
+            //Открыть попап для показа информации о просроченном периоде
+            $("#finishedPeriodModal").modal();
+        });
 
     }]);

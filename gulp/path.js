@@ -6,7 +6,8 @@ var path = {
         js: 'build/js/',
         bower: 'build/bower_components/',
         fonts: 'build/fonts/',
-        tpljs: 'build/js/template/'
+        tpljs: 'build/js/template/',
+        images: 'build/images/'
     },
     bitrix: {//Пути для выплевывания в битрикс
         dir: './lk/',
@@ -15,7 +16,8 @@ var path = {
         js: './lk/js/',
         bower: './lk/bower_components/',
         fonts: './lk/fonts/',
-        tpljs: './lk/js/template/'
+        tpljs: './lk/js/template/',
+        images: './lk/images/'
     },
     src: { //Пути откуда брать исходники
         dir: './front/src/',
@@ -26,7 +28,8 @@ var path = {
         bower: 'bower_components/**/*.*',
         tpljs: './front/src/js/template/**/*.*',
         libcss: './front/src/lib/**/*.css',
-        libjs: './front/src/lib/**/*.js'
+        libjs: './front/src/lib/**/*.js',
+        images: './front/images/**/*.*'
     },
     watch: { //Тут мы укажем, за изменением каких файлов мы хотим наблюдать
         html: './front/src/**/*.html',

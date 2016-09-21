@@ -1,0 +1,91 @@
+<div rad-loader="isLoading">
+
+    <div class="row">
+
+        <div class="col-md-3 col-sm-6">
+            <div class="fd-tile detail clean tile-purple">
+                <div class="content"><h1 class="text-left">{{stat.userAllToday}}</h1>
+
+                </div>
+                <div class="icon"><i class="fa fa-flag"></i></div>
+                <div class="details">Заходило сегодня</div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3 col-sm-6">
+            <div class="fd-tile detail clean tile-green">
+                <div class="content"><h1 class="text-left">{{stat.userNewToday}}</h1>
+
+                </div>
+                <div class="icon"><i class="fa fa-comments"></i></div>
+                <div class="details">Новые сегодня</div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3 col-sm-6">
+            <div class="fd-tile detail clean tile-prusia">
+                <div class="content"><h1 class="text-left">{{stat.userOldToday}}</h1>
+
+                </div>
+                <div class="icon"><i class="fa fa-heart"></i></div>
+                <div class="details">Старые сегодня</div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="fd-tile detail clean tile-red">
+                <div class="content"><h1 class="text-left">{{stat.usersAll}}</h1>
+
+                </div>
+                <div class="icon"><i class="fa fa-eye"></i></div>
+                <div class="details">Всего пользователей</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <div class="col-md-8">
+            <div class="block-flat">
+                <div class="header">
+                    <h3 class="main-title">
+                        Пользователи
+                    </h3>
+                </div>
+                <div class="content">
+                    <table class="table table-responsive">
+                        <tr>
+                            <th></th>
+                            <th>Имя</th>
+                            <th>Последняя авторизация</th>
+                            <th>Дата регистрации</th>
+                            <th>Активен до</th>
+                        </tr>
+                        <tr ng-repeat="user in stat.usersList">
+                            <td>{{$index+1}}</td>
+                            <td><a ng-href="https://vk.com/id{{user.login}}" target="_blank">{{user.name}} {{user.lastName}}</a></td>
+                            <td>{{user.lastAuth}}</td>
+                            <td>{{user.dateRegister}}</td>
+                            <td>{{user.activeTo}}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="fd-tile detail clean tile-red">
+                <div class="content"><h1 class="text-left">{{stat.payCount}}</h1>
+
+                </div>
+                <div class="icon"><i class="fa fa-eye"></i></div>
+                <div class="details">Количество выплат</div>
+            </div>
+        </div>
+
+    </div>
+
+</div>

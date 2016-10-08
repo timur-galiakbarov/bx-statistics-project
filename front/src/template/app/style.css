@@ -22,6 +22,7 @@ body {
     font-family: 'Open Sans', sans-serif;
     font-size: 12px;
     color: #555;
+    height: 100%;
 }
 
 h1,
@@ -321,10 +322,12 @@ pre {
     white-space: nowrap;
 }
 
-.dropdown-menu > .active > a,
-.dropdown-menu > .active > a:hover,
-.dropdown-menu > .active > a:focus {
-    background: #7761a7;
+.dropdown-menu > .active > a{
+    background: #3b4c6a;
+}
+
+.dropdown-menu > .active > a:hover {
+    background: #44587a;
 }
 
 .dropdown-header {
@@ -440,7 +443,7 @@ pre {
 .navbar-default .navbar-nav > li > a {
     color: #3F4148;
     font-size: 14px;
-    font-weight: 400;
+    font-weight: 300;
 }
 
 .navbar-default .navbar-nav > li > a:hover {
@@ -672,9 +675,10 @@ pre {
 .dropdown-menu > li > a:focus,
 .dropdown-submenu:hover > a,
 .dropdown-menu li > a:hover {
-    background-color: #7761a7;
+    background-color: #44587a;
     background-image: none;
     color: #FFF;
+    cursor: pointer;
 }
 
 .navbar-default .navbar-nav > .dropdown > a .caret {
@@ -691,14 +695,14 @@ pre {
 .navbar-default .navbar-nav > .open > a,
 .navbar-default .navbar-nav > .open > a:hover,
 .navbar-nav > .open > a:focus {
-    background-color: #816bb1;
+    background-color: #3b4c6a;
     color: #223446;
 }
 
 .navbar-default .navbar-nav > .open > a,
 .navbar-default .navbar-nav > .open > a:hover,
 .navbar-default .navbar-nav > .open > a:focus {
-    background-color: #7761a7;
+    background-color: #44587a;
     color: #fff;
 }
 
@@ -869,6 +873,8 @@ body.boxed {
 
 body.boxed #cl-wrapper {
     width: 92%;
+    max-width: 1280px;
+    min-width: 1120px;
     position: relative;
     margin: 0 auto;
     overflow-x: hidden;
@@ -1079,6 +1085,8 @@ input::-webkit-input-speech-button {
     line-height: 21px;
     padding: 15px 30px 30px 30px;
     margin-top: 0;
+
+    padding-bottom: 90px;
 }
 
 .cl-mcont.white {
@@ -1572,7 +1580,7 @@ body.animated #cl-wrapper {
 }
 
 #head-nav.topbar {
-    background-color: #7761a7;
+    background-color: #456a94;
     color: #fff;
     padding-left: 0;
 }
@@ -1585,25 +1593,28 @@ body.animated #cl-wrapper {
 
 #head-nav.topbar .navbar-toggle {
     box-shadow: none;
-    background-color: #685298;
+    background-color: #3b4c6a;
     border: none;
     margin-right: 15px;
 }
 
 #head-nav.topbar .navbar-nav > li > a {
     color: #fff;
+    cursor: pointer;
 }
 
-#head-nav.topbar .navbar-nav > .active > a,
-#head-nav.topbar .navbar-nav > .active > a:hover,
-#head-nav.topbar .navbar-nav > .active > a:focus {
-    background-color: #816bb1;
+#head-nav.topbar .navbar-nav > .active > a{
+    background-color: #3b4c6a;
+}
+
+#head-nav.topbar .navbar-nav > li > a:hover, #head-nav.topbar .navbar-nav > .active > a:focus{
+    background: #44587a;
 }
 
 #head-nav.topbar .navbar-nav > .open > a,
 #head-nav.topbar .navbar-nav > .open > a:hover,
 #head-nav.topbar .navbar-nav > .open > a:focus {
-    background-color: #816bb1;
+    background-color: #44587a;
 }
 
 #head-nav.topbar .navbar-nav > .dropdown > a .caret {
@@ -9094,7 +9105,7 @@ ul.timeline li > .date {
 
     #head-nav.topbar .sidebar-logo {
         display: inline-block;
-        width: 70px;
+        /*width: 70px;*/
         float: left;
     }
 

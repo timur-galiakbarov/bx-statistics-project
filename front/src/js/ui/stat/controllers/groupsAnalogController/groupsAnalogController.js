@@ -7,7 +7,6 @@ angular
     .controller('groupsAnalogController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState', 'vkApiFactory', 'memoryFactory', '$timeout', 'radCommonFunc', '$stateParams', 'notify',
         function ($rootScope, $scope, $state, bus, statPopupsFactory, appState, vkApiFactory, memoryFactory, $timeout, radCommonFunc, $stateParams, notify) {
             $scope.currentTab = 'catalog';
-            $rootScope.page.sectionTitle = 'Где еще сидят подписчики';
 
             $scope.statIsLoaded = false;
             $scope.isLoading = false;
@@ -63,9 +62,10 @@ angular
             ];
 
             $scope.model = {
-                groupAddress: '',
+                groupAddress: $stateParams.getStatFromGroup ? $stateParams.getStatFromGroup : '',
                 countOfSubscribers: '',
-                calculateTime: ''
+                calculateTime: '',
+                title: 'Поиск групп с целевой аудиторей'
             };
 
             $scope.$watch('model.countOfSubscribers', (newVal)=> {
@@ -77,7 +77,7 @@ angular
                 });
                 $scope.countError = '';
                 if (index || index == 0) {
-                    $timeout(()=>{
+                    $timeout(()=> {
                         $scope.model.calculateTime = $scope.optionsCount[index].time;
                     });
                 }
@@ -120,7 +120,7 @@ angular
             }
 
             function find() {
-                if (!appState.isActiveUser()){
+                if (!appState.isActiveUser()) {
                     bus.publish(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL);
                     return;
                 }
@@ -130,7 +130,7 @@ angular
                     return;
                 }
 
-                if (!$scope.model.countOfSubscribers){
+                if (!$scope.model.countOfSubscribers) {
                     $scope.countError = 'Выберите количество подписчиков для анализа';
                     return;
                 }
@@ -158,7 +158,8 @@ angular
                 var usersPacks = [];
 
                 var groupInfoRequest = vkApiFactory.getGroupInfo(authData, {
-                    groupId: vkGroupId
+                    groupId: vkGroupId,
+                    fields: "photo_big,photo_medium,photo,members_count,counters,description"
                 }).then(function (res) {
                     if (res && res.error && res.error.error_code == 100) {
                         $scope.$apply(function () {
@@ -173,7 +174,9 @@ angular
                         $scope.model.groupStats.allCount = res.members_count;
                         $scope.model.groupStats.gid = res.gid;
                         $scope.model.groupStats.name = res.name;
-                        $scope.model.groupStats.photoUrl = res.photoUrl;
+                        $scope.model.groupStats.screen_name = res.screen_name;
+                        $scope.model.groupStats.description = res.description;
+                        $scope.model.groupStats.photoUrl = res.photo_big || res.photo_medium || res.photo;
 
                         $scope.model.groupStats.membersCount = res.members_count;
                     });
@@ -200,7 +203,7 @@ angular
                                 counter++;
                             }
 
-                            if (i >= min){
+                            if (i >= min) {
                                 return;
                             }
 
@@ -398,6 +401,8 @@ angular
                 var lastData = memoryFactory.getMemory('findAnalog');
                 if (lastData) {
                     $timeout(()=> {
+                        if ($stateParams.getStatFromGroup && lastData.groupAddress != $stateParams.getStatFromGroup)
+                            return;
 
                         $scope.model = lastData;
                         $scope.statIsLoaded = true;

@@ -1,5 +1,20 @@
+<div class="relative">
+    <h3 class="text-center" ng-bind-html="model.title"></h3>
+</div>
+
 <div class="row main-stat">
-    <div class="col-md-8">
+    <div class="col-md-3">
+        <div class="item" ng-show="dataIsLoaded && !isLoading">
+            <div class="fd-tile detail clean tile-prusia">
+                <div class="content"><h1 class="text-left">{{model.intersection.length}}</h1>
+
+                    <p></p></div>
+                <div class="icon"><i class="fa fa-users"></i></div>
+                <div class="details" href="#">Пересечение <span></span></div>
+            </div>
+        </div>
+    </div>
+    <div ng-class="{'col-md-9': dataIsLoaded, 'col-md-6': !dataIsLoaded}">
 
         <div class="row" ng-show="isLoading && groupIsFinded">
             <div class="col-xs-12">
@@ -18,16 +33,6 @@
                     <div class="progress-bar progress-bar-danger" style="width: {{progressUserPercent}}%">
                         {{progressUserPercent}}%
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row top-block" ng-show="!dataIsLoaded && !isLoading">
-            <div class="col-sm-12 item">
-                <div class="alert alert-info">
-                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                    <i class="fa fa-info-circle sign"></i>Выберите группы для поиска пересечений.
-                    Вы можете указать любые открытые группы, или группы в которых состоите.
                 </div>
             </div>
         </div>
@@ -89,21 +94,8 @@
 
         <div rad-loader="isLoading">
             <div ng-show="dataIsLoaded || isLoading">
-                <div class="row top-block">
 
-                    <div class="col-md-12 item">
-                        <div class="fd-tile detail clean tile-prusia">
-                            <div class="content"><h1 class="text-left">{{model.intersection.length}}</h1>
-
-                                <p></p></div>
-                            <div class="icon"><i class="fa fa-users"></i></div>
-                            <div class="details" href="#">Пересечение <span></span></div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="row" ng-show="dataIsLoaded">
+                <div class="row top-block" ng-show="dataIsLoaded">
 
                     <div class="col-lg-6 col-md-12" ng-repeat="group in model.groups">
                         <div class="block-flat">
@@ -181,10 +173,19 @@
                 </div>
 
             </div>
+
+            <div ng-hide="dataIsLoaded || isLoading" class="block-flat">
+                <div class="header">
+                    <h3><i class="fa fa-info-circle sign"></i> Что это?</h3>
+                </div>
+                <div class="content site-helper">
+                    <p> Данный раздел позволяет сравнивать аудитории любых групп.<br>
+                        Выберите группы для поиска пересечений.
+                        Вы можете указать любые открытые группы, или группы в которых состоите.
+                    </p>
+                </div>
+            </div>
         </div>
 
-    </div>
-    <div class="col-md-4">
-        <vk-group-widget></vk-group-widget>
     </div>
 </div>

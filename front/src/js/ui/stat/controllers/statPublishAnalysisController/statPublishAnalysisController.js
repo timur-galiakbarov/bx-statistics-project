@@ -9,7 +9,8 @@ angular
             $scope.currentTab = 'catalog';
             $rootScope.page.sectionTitle = 'Анализ публикаций';
             $scope.model = {
-                groupAddress: ''
+                groupAddress: '',
+                title: 'Анализ публикаций'
             };
             $scope.adminGroups = [];
             $scope.showGroupsMenu = showGroupsMenu;
@@ -26,6 +27,7 @@ angular
             $scope.addToFavorite = addToFavorite;
             $scope.getStatExample = getStatExample;
             $scope.getVideoUrl = getVideoUrl;
+            $scope.isShowDetail = isShowDetail;
 
             $scope.wallCount = 0;
             $scope.wallList = [];
@@ -104,9 +106,11 @@ angular
                 var vkGroupId = radCommonFunc.getGroupId($scope.model.groupAddress);
                 var vkGid;
                 var groupInfo;
+                var ER = parseFloat(0);
 
                 vkApiFactory.getGroupInfo(authData, {
-                    groupId: vkGroupId
+                    groupId: vkGroupId,
+                    fields: "photo_big,photo_medium,photo,members_count,counters,description"
                 }).then(function (res) {
 
                     if (res && res.error && res.error.error_code == 100) {
@@ -126,6 +130,8 @@ angular
                         membersCount = res.members_count;
                         groupInfo = res;
                         $scope.groupInfo = res;
+                        $scope.groupInfo.ER = 0;
+                        $scope.groupInfo.wallAnalysisCount = 0;
                     });
 
                     $.when(
@@ -133,6 +139,8 @@ angular
                             $scope.wallList = wall;
                             var filterValue = $("input[name=filterPosts]:checked").val() || 'likes';
                             wallFilter(filterValue);
+
+                            $scope.groupInfo.ER = (ER / $scope.groupInfo.wallAnalysisCount).toFixed(3);
                         })
                     )
                         .then(function () {
@@ -177,20 +185,23 @@ angular
                                 return;
                             }
 
+                            if (!$scope.groupInfo.wallCount) {
+                                $timeout(()=> {
+                                    $scope.groupInfo.wallCount = res[0];
+                                });
+                            }
+
                             if (res && res.length > 1) {
                                 $scope.wallCount = res[0];//Количество постов за период
                                 if (parseDate.lastPosts && parseDate.lastPosts == "all") {
                                     parseDate.lastPosts = res[0];
                                 }
                                 res.forEach(function (post, j) {
-                                    if (membersCount && post.likes && post.reposts && post.comments) {
-                                        post.ER = (post.likes.count + post.reposts.count + post.comments.count) / membersCount * 100;
-                                        post.ER = post.ER.toFixed(3);
-                                    }
 
                                     if (parseDate.lastPosts) {//Фильтр за последние посты
                                         if (j != 0 && postCounter <= parseDate.lastPosts) {
                                             wallStat.push(post);
+                                            calcER(post);
                                             postCounter++;
                                         }
                                         if (postCounter > parseDate.lastPosts) {
@@ -199,6 +210,7 @@ angular
                                     } else {//Фильтр за время
                                         if (post.date > parseDate.unixFrom && post.date < parseDate.unixTo) {
                                             wallStat.push(post);
+                                            calcER(post);
                                         } else if (post.date <= parseDate.unixFrom && !post.is_pinned) {
                                             flagStop = true;
                                         }
@@ -216,6 +228,16 @@ angular
                             } else {
                                 //console.log(wallStat);
                                 deferr.resolve(wallStat);
+                            }
+
+                            function calcER(post) {
+                                if (membersCount && post.likes && post.reposts && post.comments) {
+                                    post.ER = (post.likes.count + post.reposts.count + post.comments.count) / membersCount * 100;
+                                    post.ER = post.ER.toFixed(3);
+
+                                    ER += parseFloat(post.ER);
+                                    $scope.groupInfo.wallAnalysisCount += 1;
+                                }
                             }
                         }).fail(function () {
                             deferr.reject();
@@ -444,6 +466,10 @@ angular
                             notify.error("Не удалось получить видеозапись.");
                         }
                     });
+            }
+
+            function isShowDetail(index) {
+                return $('.publishItem' + index + ' .post-info-area').height() > 200;
             }
 
             init();

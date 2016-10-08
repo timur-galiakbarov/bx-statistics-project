@@ -3,14 +3,14 @@ import topics from './../../../../bl/topics.js';
 
 angular
     .module('rad.ui.directives')
-    .directive('radChooseGroup', radChooseGroup);
+    .directive('radChooseGroupMain', radChooseGroupMain);
 
-radChooseGroup.$inject = ['$timeout', 'vkApiFactory', 'appState', 'bus']
+radChooseGroupMain.$inject = ['$timeout', 'vkApiFactory', 'appState', 'bus', 'radCommonFunc'];
 
-function radChooseGroup($timeout, vkApiFactory, appState, bus) {
+function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc) {
     return {
         restrict: 'EA',
-        templateUrl: './templates/js/ui/stat/directives/radChooseGroup/radChooseGroup.html',
+        templateUrl: './templates/js/ui/stat/directives/radChooseGroupMain/radChooseGroupMain.html',
         scope: {
             onAction: "=",
             onIndex: "=?"
@@ -18,8 +18,19 @@ function radChooseGroup($timeout, vkApiFactory, appState, bus) {
         link: function ($scope) {
             $scope.showList = showList;
             $scope.setLink = setLink;
+            $scope.addBookmark = addBookmark;
+            $scope.removeBookmark = removeBookmark;
+
             $scope.currentState = 'isMy';
-            $scope.groupLoading = false;
+            $scope.groupsLoading;
+            $scope.bookmarkGroupUrl = '';
+            $scope.bookmarksList = [];
+            $scope.bookmarkError = "";
+
+            $scope.$watch('bookmarkGroupUrl', (newVal, oldVal)=> {
+                if (newVal != oldVal)
+                    $scope.bookmarkError = "";
+            });
 
             var authData = {
                 token: appState.getUserVkToken(),
@@ -191,6 +202,54 @@ function radChooseGroup($timeout, vkApiFactory, appState, bus) {
 
             function setLink(group) {
                 $scope.onAction(group, $scope.onIndex);
+            }
+
+            function addBookmark() {
+                if (!$scope.bookmarkGroupUrl) {
+                    $scope.bookmarkError = 'Укажите адрес или символьный код группы';
+                    return;
+                }
+                $scope.isLoading = true;
+
+                vkApiFactory.getGroupInfo(authData, {
+                    groupId: radCommonFunc.getGroupId($scope.bookmarkGroupUrl)
+                })
+                    .then((groupInfo)=> {
+                        if (groupInfo.error) {
+                            $timeout(()=> {
+                                $scope.bookmarkError = "Введеная группа вконтакте не найдена";
+                                $scope.isLoading = false;
+                            });
+                            return;
+                        }
+                        addBookmarkRequest(groupInfo)
+                            .then(()=> {
+                                getBookmarkList();
+                            });
+                    });
+
+                function addBookmarkRequest(groupInfo) {
+                    return bus.request(topics.BOOKMARK.ADD, {
+                        screenName: groupInfo.screen_name
+                    })
+                        .then((res)=> {
+                            $timeout(()=> {
+                                $scope.bookmarkGroupUrl = '';
+                            });
+                        });
+                }
+            }
+
+            function removeBookmark(index) {
+                $scope.isLoading = true;
+                bus.request(topics.BOOKMARK.REMOVE, {
+                    index: index
+                })
+                    .then((res)=> {
+                        if (res.success) {
+                            getBookmarkList();
+                        }
+                    });
             }
 
             init();

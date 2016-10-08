@@ -64,6 +64,12 @@ var appState = {
     },
     isAdmin(){
         return userInfo ? userInfo.admin : false;
+    },
+    getAuthData() {
+        return {
+            token: this.getUserVkToken(),
+            login: this.getUserVkLogin()
+        }
     }
 };
 

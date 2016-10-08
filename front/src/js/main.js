@@ -14,6 +14,9 @@ import radTariff from './ui/app/directives/radTariff/radTariff.js';
 /*Dashboard controller*/
 import dashboardController from './ui/dashboard/controllers/dashboardController.js';
 
+/*Account controller*/
+import accountController from './ui/account/controllers/accountController.js';
+
 /*UI------------------------------------------------------------------------------------------------------------------*/
 import radAmountFilter from './ui/base/radAmountFilter.js';
 
@@ -38,6 +41,7 @@ import memoryFactory from './ui/stat/services/memoryFactory/memoryFactory.js';
 import radCommonFunc from './ui/app/factories/radCommonFunc.js';
 import notify from './ui/app/factories/notify.js';
 import radChooseGroup from './ui/stat/directives/radChooseGroup/radChooseGroup.js';
+import radChooseGroupMain from './ui/stat/directives/radChooseGroupMain/radChooseGroupMain.js';
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 //import settingsController from './ui/settings/controllers/settingsController.js';

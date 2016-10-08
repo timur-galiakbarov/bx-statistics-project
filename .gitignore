@@ -31,4 +31,5 @@ node_modules/
 node_modules/*
 lk/
 upload/
-./.idea/*
+.idea/
+.idea/*

@@ -9,6 +9,7 @@ var app = angular.module('app', [
     'rad.menu',
     'rad.stat',
     'rad.dashboard',
+    'rad.account',
     'rad.favorites',
     'ui.bootstrap'
 ]);

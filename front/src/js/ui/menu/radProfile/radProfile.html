@@ -1,14 +1,29 @@
-<div class="profile-block" >
-    <div class="avatar"><img ng-src="{{model.photoUrl}}" width="100%"/></div>
-    <div class="info" rad-loader="isLoadingUser">
-        <p>{{model.userName}}<br>
-            {{model.userLastName}}</p>
-        <p class="uid">
-            <span>uid:</span> {{model.uid}}<br>
-            <a class="logoutLink" ng-click="logout()">Выйти</a>
-        </p>
+<div>
+    <ul class="nav navbar-nav navbar-right user-nav">
+        <li class="dropdown profile_menu">
+            <a class="dropdown-toggle" data-toggle="dropdown">
+                <img ng-src="{{model.photoUrl}}" width="30"/>
+                <span>{{model.userName}} {{model.userLastName}}</span>
+                <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+                <li><a ui-sref="index.account">Оплата</a></li>
+                <li class="divider"></li>
+                <li><a href="/capabilities/" target="_blank">О сервисе</a></li>
+                <li><a ng-click="logout()" style="cursor: pointer">Выйти</a></li>
+            </ul>
+        </li>
+    </ul>
+    <div class="nav navbar-nav navbar-right header-tariff" ui-sref="index.account">
+        <div ng-show="!noActiveTariff">
+            <span>Тариф</span> <span>&laquo;{{model.tariff}}&raquo;</span>
+            <br>
+            <span>действует до {{model.activeTo}}</span>
+        </div>
+        <div ng-show="noActiveTariff">
+            <span class="no-active-tariff">
+                Оплаченный период работы<br>
+                аккаунта завершен
+            </span>
+        </div>
     </div>
-
-    <!-- VK Widget -->
-    <div id="vk_subscribe" class="subscribeVkBtn"></div>
 </div>

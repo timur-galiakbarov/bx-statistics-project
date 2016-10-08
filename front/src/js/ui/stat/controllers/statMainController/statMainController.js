@@ -6,12 +6,12 @@ angular
     .controller('statMainController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState', 'vkApiFactory', 'memoryFactory', '$timeout', 'radCommonFunc', '$stateParams', 'notify',
         function ($rootScope, $scope, $state, bus, statPopupsFactory, appState, vkApiFactory, memoryFactory, $timeout, radCommonFunc, $stateParams, notify) {
             $scope.currentTab = 'catalog';
-            $rootScope.page.sectionTitle = 'Общая статистика сообщества';
 
-            $scope.getStat = getStat;
             $scope.model = {
+                title: 'Статистика сообщества',
                 groupAddress: ''
             };
+
             $scope.stat = {
                 photos: {},
                 videos: {}
@@ -27,13 +27,14 @@ angular
             $scope.adminGroups = [];
             $scope.activeTab = 'dynamic';
 
+            $scope.getStat = getStat;
             $scope.showGroupsMenu = showGroupsMenu;
             $scope.setGroupLink = setGroupLink;
             $scope.nextProgressStep = nextProgressStep;
             $scope.showTab = showTab;
             $scope.getStatExample = getStatExample;
 
-            $scope.$watch('isLoading', (newVal)=>{
+            $scope.$watch('isLoading', (newVal)=> {
                 $rootScope.globalLoading = newVal;
             });
 
@@ -392,14 +393,16 @@ angular
 
                 return {
                     from: moment(dateFrom).format("YYYY-MM-DD"),
+                    fromLabel: moment(dateFrom).format("DD.MM.YYYY"),
                     to: moment(dateTo).format("YYYY-MM-DD"),
+                    toLabel: moment(dateTo).format("DD.MM.YYYY"),
                     unixFrom: dateFrom / 1000,
                     unixTo: dateTo / 1000
                 };
             }
 
             function getStat(isExample) {
-                if (!appState.isActiveUser() && !isExample){
+                if (!appState.isActiveUser() && !isExample) {
                     bus.publish(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL);
                     return;
                 }
@@ -421,9 +424,14 @@ angular
 
                 $scope.stat.groupAddress = $scope.model.groupAddress;
                 $scope.stat.periodValue = $('input[name=checkDate]:checked').val();
+                $scope.stat.periodLabels = {
+                    from: parseDate.fromLabel,
+                    to: parseDate.toLabel
+                };
 
                 vkApiFactory.getGroupInfo(authData, {
-                    groupId: vkGroupId
+                    groupId: vkGroupId,
+                    fields: "photo_big,photo_medium,photo,members_count,counters,description"
                 }).then(function (res) {
 
                     if (res && res.error && res.error.error_code == 100) {
@@ -432,6 +440,14 @@ angular
                             $scope.isLoading = false;
                             $scope.statIsLoaded = false;
                         });
+                        return;
+                    }
+
+                    if (res && res.error && res.error.error_code == 6) {
+                        setTimeout(()=>{
+                            console.log("recursive!");
+                            getStat(isExample);
+                        }, 1500);
                         return;
                     }
 
@@ -447,19 +463,12 @@ angular
                             videos: res.counters && res.counters.videos ? res.counters.videos : 0
                         };
                         $scope.stat.groupName = res.name;
-                        $scope.stat.groupImage = res.photo_medium;
+                        $scope.stat.groupImage = res.photo_big || res.photo_medium || res.photo;
                         $scope.stat.description = res.description;
                         $scope.stat.screen_name = res.screen_name;
                         vkGid = res.gid;
                     });
                     groupInfo = res;
-
-                    /*{
-                     id: 197133948,
-                     first_name: 'Sam',
-                     last_name: 'Ty-Takoi',
-                     deactivated: 'banned'
-                     },*/
 
                     $.when(
                         getPeopleStat().always(()=> {
@@ -497,104 +506,122 @@ angular
                 //Получение статистики по численности
                 function getPeopleStat() {
                     var deferr = $.Deferred();
-                    vkApiFactory.getStat(authData, {
-                        groupId: vkGid,
-                        dateFrom: parseDate.from,
-                        dateTo: parseDate.to
-                    }).then(function (res) {
-                        var stat = {
-                            views: 0,
-                            visitors: 0,
-                            subscribed: 0,
-                            unsubscribed: 0,
-                            subscribedSumm: 0,
-                            reach: 0,
-                            reachSubscribers: 0
-                        };
-                        var graphPeopleStatData = {
-                            labels: [],
-                            subscribedDataSet: [],
-                            unsubscribedDataSet: []
-                        };
-                        var subscribersStatData = {
-                            labels: [],
-                            membersCount: []
-                        };
-                        var attendanceStatData = {
-                            labels: [],
-                            viewsData: [],
-                            visitorsData: []
-                        };
-                        var currMembersCount = groupInfo.members_count;
-                        if (res && !res.error) {
-                            $scope.statNotAccess = false;
-                            res.forEach(function (dateStat, i) {
-                                stat.views += dateStat.views ? dateStat.views : 0;
-                                stat.visitors += dateStat.visitors ? dateStat.visitors : 0;
-                                stat.subscribed += dateStat.subscribed ? dateStat.subscribed : 0;
-                                stat.unsubscribed += dateStat.unsubscribed ? dateStat.unsubscribed : 0;
-                                stat.reach += dateStat.reach ? dateStat.reach : 0;
-                                stat.reachSubscribers += dateStat.reach_subscribers ? dateStat.reach_subscribers : 0;
-                                //Сбор данных для графика участников
-                                graphPeopleStatData.labels.unshift(getDateFromVk(dateStat.day));
-                                graphPeopleStatData.subscribedDataSet.unshift(dateStat.subscribed || 0);
-                                graphPeopleStatData.unsubscribedDataSet.unshift(dateStat.unsubscribed || 0);
-                                //График посещаемости/просмотров группы
-                                attendanceStatData.labels.unshift(getDateFromVk(dateStat.day));
-                                attendanceStatData.viewsData.unshift(dateStat.views || 0);
-                                attendanceStatData.visitorsData.unshift(dateStat.visitors || 0);
 
-                                subscribersStatData.labels.unshift(getDateFromVk(dateStat.day));
-                                if (i != 0)
-                                    currMembersCount -= (dateStat.subscribed - dateStat.unsubscribed);
+                    getPeopleStatRequest();
 
-                                subscribersStatData.membersCount.unshift(currMembersCount);
-                            });
-                        }
-
-
-                        if (res && res.error && res.error.error_code == 7) {
-                            //Статистика группы недоступна
-                            $scope.statNotAccess = true;
-                        }
-
-                        var summSubscribers = 0,
-                            subscribersForStartPeriod;
-                        graphPeopleStatData.subscribedDataSet.forEach(function (item) {
-                            summSubscribers += item;
-                        });
-                        graphPeopleStatData.unsubscribedDataSet.forEach(function (item) {
-                            summSubscribers -= item;
-                        });
-
-                        $scope.$apply(function () {
-                            $scope.stat.views = stat.views;
-                            $scope.stat.visitors = stat.visitors;
-                            $scope.stat.subscribed = stat.subscribed;
-                            $scope.stat.unsubscribed = stat.unsubscribed;
-                            $scope.stat.subscribedSumm = stat.subscribed - stat.unsubscribed;
-                            $scope.stat.reachSubscribers = stat.reachSubscribers;
-                            $scope.stat.reach = stat.reach;
-                            $scope.stat.graph = {
-                                graphPeopleStatData: graphPeopleStatData,
-                                subscribersStatData: subscribersStatData,
-                                attendanceStatData: attendanceStatData
+                    function getPeopleStatRequest(){
+                        vkApiFactory.getStat(authData, {
+                            groupId: vkGid,
+                            dateFrom: parseDate.from,
+                            dateTo: parseDate.to
+                        }).then(function (res) {
+                            var stat = {
+                                views: 0,
+                                visitors: 0,
+                                subscribed: 0,
+                                unsubscribed: 0,
+                                subscribedSumm: 0,
+                                reach: 0,
+                                reachSubscribers: 0
                             };
+                            var graphPeopleStatData = {
+                                labels: [],
+                                subscribedDataSet: [],
+                                unsubscribedDataSet: []
+                            };
+                            var subscribersStatData = {
+                                labels: [],
+                                membersCount: []
+                            };
+                            var attendanceStatData = {
+                                labels: [],
+                                viewsData: [],
+                                visitorsData: []
+                            };
+                            var currMembersCount = groupInfo.members_count;
+                            if (res && !res.error) {
+                                $scope.statNotAccess = false;
+                                res.forEach(function (dateStat, i) {
+                                    stat.views += dateStat.views ? dateStat.views : 0;
+                                    stat.visitors += dateStat.visitors ? dateStat.visitors : 0;
+                                    stat.subscribed += dateStat.subscribed ? dateStat.subscribed : 0;
+                                    stat.unsubscribed += dateStat.unsubscribed ? dateStat.unsubscribed : 0;
+                                    stat.reach += dateStat.reach ? dateStat.reach : 0;
+                                    stat.reachSubscribers += dateStat.reach_subscribers ? dateStat.reach_subscribers : 0;
+                                    //Сбор данных для графика участников
+                                    graphPeopleStatData.labels.unshift(getDateFromVk(dateStat.day));
+                                    graphPeopleStatData.subscribedDataSet.unshift(dateStat.subscribed || 0);
+                                    graphPeopleStatData.unsubscribedDataSet.unshift(dateStat.unsubscribed || 0);
+                                    //График посещаемости/просмотров группы
+                                    attendanceStatData.labels.unshift(getDateFromVk(dateStat.day));
+                                    attendanceStatData.viewsData.unshift(dateStat.views || 0);
+                                    attendanceStatData.visitorsData.unshift(dateStat.visitors || 0);
+
+                                    subscribersStatData.labels.unshift(getDateFromVk(dateStat.day));
+                                    if (i != 0)
+                                        currMembersCount -= (dateStat.subscribed - dateStat.unsubscribed);
+
+                                    subscribersStatData.membersCount.unshift(currMembersCount);
+                                });
+                            }
+
+
+                            if (res && res.error) {
+                                switch (res.error.error_code) {
+                                    case 7:
+                                        //Статистика группы недоступна
+                                        $scope.statNotAccess = true;
+                                        break;
+                                    case 6:
+                                    {
+                                        setTimeout(()=> {
+                                            getPeopleStatRequest();
+                                        }, 500);
+                                        return deferr.promise();
+                                    }
+                                }
+
+                            }
+
+                            var summSubscribers = 0,
+                                subscribersForStartPeriod;
+                            graphPeopleStatData.subscribedDataSet.forEach(function (item) {
+                                summSubscribers += item;
+                            });
+                            graphPeopleStatData.unsubscribedDataSet.forEach(function (item) {
+                                summSubscribers -= item;
+                            });
+
+                            $scope.$apply(function () {
+                                $scope.stat.views = stat.views;
+                                $scope.stat.visitors = stat.visitors;
+                                $scope.stat.subscribed = stat.subscribed;
+                                $scope.stat.unsubscribed = stat.unsubscribed;
+                                $scope.stat.subscribedSumm = stat.subscribed - stat.unsubscribed;
+                                $scope.stat.reachSubscribers = stat.reachSubscribers;
+                                $scope.stat.reach = stat.reach;
+                                $scope.stat.graph = {
+                                    graphPeopleStatData: graphPeopleStatData,
+                                    subscribersStatData: subscribersStatData,
+                                    attendanceStatData: attendanceStatData
+                                };
+                            });
+
+                            peopleStatGraph.showGraph(graphPeopleStatData);
+                            subscribersStatGraph.showGraph(subscribersStatData);
+                            attendanceStatGraph.showGraph(attendanceStatData);
+
+                            deferr.resolve();
+
+                            function getDateFromVk(dateVk) {
+                                var normilizedDate = new Date(dateVk);
+                                return ('0' + normilizedDate.getDate()).slice(-2) + "." + ('0' + (normilizedDate.getMonth() + 1)).slice(-2);
+                            }
+                        }).fail(function () {
+                            deferr.reject();
                         });
+                    }
 
-                        peopleStatGraph.showGraph(graphPeopleStatData);
-                        subscribersStatGraph.showGraph(subscribersStatData);
-                        attendanceStatGraph.showGraph(attendanceStatData);
-
-                        deferr.resolve();
-
-                        function getDateFromVk(dateVk) {
-                            var normilizedDate = new Date(dateVk);
-                            return ('0' + normilizedDate.getDate()).slice(-2) + "." + ('0' + (normilizedDate.getMonth() + 1)).slice(-2);
-                        }
-                    }).fail(function () {
-                        deferr.reject();
-                    });
                     return deferr.promise();
                 }
 
@@ -1057,8 +1084,8 @@ angular
                 }
             }
 
-            function getStatExample(urlOrScreenName){
-                if ($scope.isLoading){
+            function getStatExample(urlOrScreenName) {
+                if ($scope.isLoading) {
                     notify.info("Дождитесь завершения получения статистики");
                     return;
                 }

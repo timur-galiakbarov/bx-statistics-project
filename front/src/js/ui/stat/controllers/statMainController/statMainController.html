@@ -1,9 +1,64 @@
+<div class="relative">
+    <h3 class="text-center">{{model.title}}</h3>
+
+    <div class="text-center group-title" ng-if="stat.groupName">&laquo;{{stat.groupName}}&raquo; за период с
+        {{stat.periodLabels.from}}
+        по {{stat.periodLabels.to}}
+    </div>
+</div>
+
 <div class="row main-stat">
-    <div class="col-md-8">
+    <div class="col-md-3">
+        <div class="block-flat group-info" ng-show="statIsLoaded">
+            <div class="content">
+                <div class="groupAvatar">
+                    <img ng-src="{{stat.groupImage}}">
+                </div>
+
+                <a href="https://vk.com/{{stat.screen_name}}" target="_blank"
+                   class="btn btn-block btn-prusia btn-rad go-to-group no-margin-left">Перейти к группе</a>
+
+                <div class="group-text">
+
+                    <p ng-show="stat.description" ng-bind-html="stat.description">
+                    </p>
+
+                    <p ng-show="!stat.description">
+                        Описание группы отсутствует
+                    </p>
+                </div>
+                <div class="clear"></div>
+            </div>
+
+        </div>
+        <div class="fd-tile detail clean tile-prusia" ng-show="statIsLoaded">
+            <div class="content"><h2 class="text-left" ng-bind="stat.membersCount"></h2>
+
+                <p></p></div>
+            <div class="icon"><i class="fa fa-users"></i></div>
+            <div class="details" href="#">Участники <span></span></div>
+        </div>
+        <div class="fd-tile detail clean tile-prusia" ng-hide="statNotAccess || !statIsLoaded">
+            <div class="content"><h2 class="text-left" ng-bind="stat.visitors"></h2>
+
+                <p></p></div>
+            <div class="icon"><i class="fa fa-signal"></i></div>
+            <div class="details" href="#">Посещаемость <span></span></div>
+        </div>
+        <div class="fd-tile detail clean tile-prusia" ng-hide="statNotAccess || !statIsLoaded">
+            <div class="content"><h2 class="text-left" ng-bind="stat.views"></h2>
+
+                <p></p></div>
+            <div class="icon"><i class="fa fa-eye"></i></div>
+            <div class="details" href="#">Просмотры <span></span></div>
+        </div>
+    </div>
+
+    <div ng-class="{'col-md-9': statIsLoaded, 'col-md-6': !statIsLoaded}">
 
         <div class="row" ng-show="isLoading && groupIsFinded">
             <div class="col-xs-12">
-                <div class="progress progress-striped active">
+                <div class="progress progress-striped active m-top-m-15">
                     <div class="progress-bar progress-bar-info" style="width: {{progressPercent}}%">
                         {{progressPercent}}%
                     </div>
@@ -13,7 +68,7 @@
 
         <div class="clear"></div>
 
-        <div class="row top-block" ng-show="!statIsLoaded">
+        <!--<div class="row top-block" ng-show="!statIsLoaded">
             <div class="col-sm-12 item">
                 <div class="alert alert-info alert-white-alt2 rounded">
                     <div class="icon"><i class="fa fa-info-circle"></i></div>
@@ -24,7 +79,7 @@
                 </div>
             </div>
 
-        </div>
+        </div>-->
 
         <div class="block-flat">
 
@@ -68,28 +123,7 @@
         </div>
 
         <div ng-show="statIsLoaded" rad-loader="isLoading">
-            <div class="block-flat">
-                <div class="header">
-                    <h3 class="main-title" ng-bind="stat.groupName"></h3>
-                </div>
-                <div class="content">
-                    <div class="groupAvatar">
-                        <img ng-src="{{stat.groupImage}}">
-                    </div>
-                    <div class="groupInfo">
-                        <a href="https://vk.com/{{stat.screen_name}}" target="_blank">Перейти к группе</a>
-                        <br>
 
-                        <p ng-show="stat.description" ng-bind-html="stat.description">
-                        </p>
-                        <p ng-show="!stat.description">
-                            Описание группы отсутствует
-                        </p>
-                    </div>
-                    <div class="clear"></div>
-                </div>
-
-            </div>
 
             <div class="tab-container">
                 <ul class="nav nav-tabs">
@@ -103,40 +137,6 @@
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane cont relative" ng-class="{active: activeTab == 'dynamic'}">
-                        <div class="row top-block">
-
-                            <div class="col-md-4 col-sm-6 item">
-                                <div class="fd-tile detail clean tile-prusia">
-                                    <div class="content"><h2 class="text-left" ng-bind="stat.membersCount"></h2>
-
-                                        <p></p></div>
-                                    <div class="icon"><i class="fa fa-users"></i></div>
-                                    <div class="details" href="#">Участники <span></span></div>
-                                </div>
-                            </div>
-
-
-                            <div class="col-md-4 col-sm-6 item" ng-hide="statNotAccess">
-                                <div class="fd-tile detail clean tile-prusia">
-                                    <div class="content"><h2 class="text-left" ng-bind="stat.visitors">25</h2>
-
-                                        <p></p></div>
-                                    <div class="icon"><i class="fa fa-signal"></i></div>
-                                    <div class="details" href="#">Посещаемость <span></span></div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4 col-sm-6 item" ng-hide="statNotAccess">
-                                <div class="fd-tile detail clean tile-prusia">
-                                    <div class="content"><h2 class="text-left" ng-bind="stat.views">72</h2>
-
-                                        <p></p></div>
-                                    <div class="icon"><i class="fa fa-eye"></i></div>
-                                    <div class="details" href="#">Просмотры <span></span></div>
-                                </div>
-                            </div>
-
-                        </div>
 
                         <div class="alert alert-info alert-white-alt rounded" ng-show="statNotAccess">
                             <div class="icon"><i class="fa fa-info-circle"></i></div>
@@ -147,35 +147,46 @@
                         </div>
                         <div ng-hide="statNotAccess">
                             <div class="header">
-                                <h3>Участники</h3>
+                                <h3>Количество вступивших и вышедших участников</h3>
                             </div>
                             <div class="content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left" ng-bind="stat.subscribed"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-sign-in"></i></div>
+                                            <div class="details" href="#">Вступивших <span></span></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left" ng-bind="stat.unsubscribed"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-sign-out"></i></div>
+                                            <div class="details" href="#">Вышедших <span></span></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left">
+                                                <i class="fa"
+                                                   ng-class="{'fa-angle-up': stat.subscribedSumm > 0, 'fa-angle-down': stat.subscribedSumm <= 0}"></i>
+                                                {{stat.subscribedSumm}}
+                                            </h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-balance-scale"></i></div>
+                                            <div class="details" href="#">Динамика <span></span></div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <canvas id="graphPeopleStat"></canvas>
-                                <table class="no-border hover">
-                                    <thead class="no-border">
-                                    <tr>
-                                        <th>Новых участников</th>
-                                        <th class="text-center">Вышедших участников</th>
-                                        <th class="text-center"></th>
-                                        <th class="text-right">Всего участников</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody class="no-border-y">
-                                    <tr>
-                                        <td ng-bind="stat.subscribed"></td>
-                                        <td class="text-center" ng-bind="stat.unsubscribed"></td>
-                                        <td class="text-center"
-                                            ng-class="{'color-success': stat.subscribedSumm > 0, 'color-error': stat.subscribedSumm <= 0}">
-                                            <i class="fa"
-                                               ng-class="{'fa-angle-up': stat.subscribedSumm > 0, 'fa-angle-down': stat.subscribedSumm <= 0}"></i>&nbsp;{{stat.subscribedSumm}}
-                                        </td>
-                                        <td class="text-right" ng-bind="stat.membersCount"></td>
-                                    </tr>
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
-                        <div ng-hide="statNotAccess">
+                        <div ng-hide="statNotAccess" class="m-top-15">
                             <div class="header">
                                 <h3>Динамика количества участников</h3>
                             </div>
@@ -183,171 +194,285 @@
                                 <canvas id="subscribersStatGraph" height="300"></canvas>
                             </div>
                         </div>
-                        <div ng-hide="statNotAccess">
+                        <div ng-hide="statNotAccess" class="m-top-15">
                             <div class="header">
                                 <h3>Посещаемость</h3>
                             </div>
                             <div class="content">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left" ng-bind="stat.visitors"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-users"></i></div>
+                                            <div class="details" href="#">Посетители <span></span></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left" ng-bind="stat.views"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-eye"></i></div>
+                                            <div class="details" href="#">Просмотры <span></span></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left">
+                                                {{stat.reachSubscribers}}
+                                            </h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-users"></i></div>
+                                            <div class="details" href="#">Охват подписчиков <span></span></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left">
+                                                {{stat.reach}}
+                                            </h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-users"></i></div>
+                                            <div class="details" href="#">Полный охват <span></span></div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <canvas id="attendanceStatGraph" height="300"></canvas>
-                                <table class="no-border hover">
-                                    <thead class="no-border">
-                                    <tr>
-                                        <th>Посетители</th>
-                                        <th class="text-center">Просмотры</th>
-                                        <th class="text-center">Охват подписчиков</th>
-                                        <th class="text-right">Полный охват</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody class="no-border-y">
-                                    <tr>
-                                        <td ng-bind="stat.visitors">560</td>
-                                        <td class="text-center" ng-bind="stat.views">430</td>
-                                        <td class="text-center" ng-bind="stat.reachSubscribers">430</td>
-                                        <td class="text-right" ng-bind="stat.reach">430</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     </div>
                     <div class="tab-pane cont relative" ng-class="{active: activeTab == 'activity'}">
+                        <div>
+                            <div class="header">
+                                <h3>Отметки &laquo;Мне нравится&raquo;</h3>
+                            </div>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.likesPeriod"></h2>
 
-                        <div class="header">
-                            <h3>Активность подписчиков</h3>
-                        </div>
-                        <div class="content">
-                            <table class="no-border hover">
-                                <thead class="no-border">
-                                <tr>
-                                    <th>Тип действия</th>
-                                    <th class="text-center">Количество</th>
-                                </tr>
-                                </thead>
-                                <tbody class="no-border-y">
-                                <tr>
-                                    <td>Отметки "Мне нравится" на стене
-                                        <i class="fa fa-info-circle info-icon"
-                                           data-toggle="tooltip" data-placement="top"
-                                           title="Количество отметок 'Мне нравится', поставленных в записях на стене, опубликованных в выбранный период времени."></i>
-                                    </td>
-                                    <td class="text-center" ng-bind="stat.wall.likesPeriod"></td>
-                                </tr>
-                                <tr>
-                                    <td>Отметки "Мне нравится" в фотографиях
-                                        <i class="fa fa-info-circle info-icon"
-                                           data-toggle="tooltip" data-placement="top"
-                                           title="Количество отметок 'Мне нравится', поставленных в фотографиях, опубликованных в выбранный период времени."></i>
-                                    </td>
-                                    <td class="text-center" ng-bind="stat.photos.likesPeriodCount"></td>
-                                </tr>
-                                <tr>
-                                    <td>Отметки "Мне нравится" в видеозаписях
-                                        <i class="fa fa-info-circle info-icon"
-                                           data-toggle="tooltip" data-placement="top"
-                                           title="Количество отметок 'Мне нравится', поставленных в видеозаписях, опубликованных в выбранный период времени."></i>
-                                    </td>
-                                    <td class="text-center" ng-bind="stat.videos.likesPeriodCount"></td>
-                                </tr>
-                                <tr>
-                                    <td>"Репосты" постов со стены
-                                        <i class="fa fa-info-circle info-icon"
-                                           data-toggle="tooltip" data-placement="top"
-                                           title="Количество репостов со стены, сделанных с записей, опубликованных в выбранный период времени."></i>
-                                    </td>
-                                    <td class="text-center" ng-bind="stat.wall.repostsPeriod"></td>
-                                </tr>
-                                <tr>
-                                    <td>"Репосты" фотографий
-                                        <i class="fa fa-info-circle info-icon"
-                                           data-toggle="tooltip" data-placement="top"
-                                           title="Количество репостов фотографий, опубликованных в выбранный период времени."></i>
-                                    </td>
-                                    <td class="text-center" ng-bind="stat.photos.repostsPeriodCount"></td>
-                                </tr>
-                                <tr>
-                                    <td>Комментариев на стене
-                                        <i class="fa fa-info-circle info-icon"
-                                           data-toggle="tooltip" data-placement="top"
-                                           title="Количество комментариев к записям на стене, опубликованных в выбранный период времени."></i>
-                                    </td>
-                                    <td class="text-center" ng-bind="stat.wall.commentsPeriod"></td>
-                                </tr>
-                                <tr>
-                                    <td>Комментариев в фотографиях
-                                        <i class="fa fa-info-circle info-icon"
-                                           data-toggle="tooltip" data-placement="top"
-                                           title="Количество комментариев к фотографиям, опубликованных в выбранный период времени."></i>
-                                    </td>
-                                    <td class="text-center" ng-bind="stat.photos.commentsPeriodCount"></td>
-                                </tr>
-                                <!--<tr>
-                                    <td>Комментариев в топиках</td>
-                                    <td class="text-center">430</td>
-                                </tr>-->
-                                </tbody>
-                            </table>
-                        </div>
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-heart"></i></div>
+                                            <div class="details">Лайков на стене
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Количество отметок 'Мне нравится', поставленных в записях на стене, опубликованных в выбранный период времени."></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.photos.likesPeriodCount"></h2>
 
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-heart"></i></div>
+                                            <div class="details">Лайков в фотографиях
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Количество отметок 'Мне нравится', поставленных в фотографиях, опубликованных в выбранный период времени."></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.videos.likesPeriodCount"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-heart"></i></div>
+                                            <div class="details">Лайков в видеозаписях
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Количество отметок 'Мне нравится', поставленных в видеозаписях, опубликованных в выбранный период времени."></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="m-top-15">
+                            <div class="header">
+                                <h3>Репосты</h3>
+                            </div>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.repostsPeriod"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-bullhorn"></i></div>
+                                            <div class="details">Репосты со стены
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Количество репостов со стены, сделанных с записей, опубликованных в выбранный период времени."></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.photos.repostsPeriodCount"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-bullhorn"></i></div>
+                                            <div class="details">Репосты фотографий
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Количество репостов фотографий, опубликованных в выбранный период времени."></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="m-top-15">
+                            <div class="header">
+                                <h3>Комментарии</h3>
+                            </div>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.commentsPeriod"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-comment"></i></div>
+                                            <div class="details">Комментариев на стене
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Количество комментариев к записям на стене, опубликованных в выбранный период времени."></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.photos.commentsPeriodCount"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-comment"></i></div>
+                                            <div class="details">Комментариев в фотографиях
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Количество комментариев к фотографиям, опубликованных в выбранный период времени."></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="tab-pane cont relative" ng-class="{active: activeTab == 'content'}">
+                        <div>
+                            <div class="header">
+                                <h3>Стена</h3>
+                            </div>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.postsPeriod"></h2>
 
-                        <div class="header">
-                            <h3>Контент</h3>
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Новые посты
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.allPosts"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Всего постов
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="content">
-                            <div class="table-responsive">
-                                <table class="no-border hover">
-                                    <thead class="no-border">
-                                    <tr>
-                                        <th>Тип контента</th>
-                                        <th class="text-center">Новых</th>
-                                        <th class="text-center">Всего</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody class="no-border-y">
-                                    <tr>
-                                        <td>Посты на стене
-                                            <i class="fa fa-info-circle info-icon"
-                                               data-toggle="tooltip" data-placement="top"
-                                               title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>
-                                        </td>
-                                        <td class="text-center" ng-bind="stat.wall.postsPeriod"></td>
-                                        <td class="text-center" ng-bind="stat.wall.allPosts"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Фотографии
-                                            <i class="fa fa-info-circle info-icon"
-                                               data-toggle="tooltip" data-placement="top"
-                                               title="Новых - количество добавленных фотографий в выбранный период времени. Всего - общее число фотографий в группе"></i>
-                                        </td>
-                                        <td class="text-center" ng-bind="stat.photos.photoPeriodCount"></td>
-                                        <td class="text-center" ng-bind="stat.groupCounters.photos"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Фотоальбомы
-                                            <i class="fa fa-info-circle info-icon"
-                                               data-toggle="tooltip" data-placement="top"
-                                               title="Новых - количество добавленных фотоальбомов в выбранный период времени. Всего - общее число фотоальбомов в группе"></i>
-                                        </td>
-                                        <td class="text-center" ng-bind="stat.albums.albumsPeriod"></td>
-                                        <td class="text-center" ng-bind="stat.groupCounters.albums"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Видеозаписи
-                                            <i class="fa fa-info-circle info-icon"
-                                               data-toggle="tooltip" data-placement="top"
-                                               title="Новых - количество добавленных видеозаписей в выбранный период времени. Всего - общее число видеозаписей в группе"></i>
-                                        </td>
-                                        <td class="text-center" ng-bind="stat.videos.videoPeriodCount"></td>
-                                        <td class="text-center" ng-bind="stat.groupCounters.videos"></td>
-                                    </tr>
-                                    <!--<tr>
-                                        <td>Топики</td>
-                                        <td class="text-center">430</td>
-                                        <td class="text-center" ng-bind="stat.groupCounters.topics"></td>
-                                    </tr>-->
-                                    </tbody>
-                                </table>
+                        <div class="m-top-15">
+                            <div class="header">
+                                <h3>Фотографии</h3>
+                            </div>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.photos.photoPeriodCount"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-picture-o"></i></div>
+                                            <div class="details">Новые фотографии
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных фотографий в выбранный период времени. Всего - общее число фотографий в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.groupCounters.photos"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-picture-o"></i></div>
+                                            <div class="details">Всего фотографий
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="m-top-15">
+                            <div class="header">
+                                <h3>Видеозаписи</h3>
+                            </div>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.videos.videoPeriodCount"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-video-camera"></i></div>
+                                            <div class="details">Новые видеозаписи
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных видеозаписей в выбранный период времени. Всего - общее число видеозаписей в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.groupCounters.videos"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-video-camera"></i></div>
+                                            <div class="details">Всего видеозаписей
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -357,9 +482,8 @@
 
 
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="block-flat info-box">
+
+        <div ng-hide="statIsLoaded" class="block-flat">
             <div class="header">
                 <h3><i class="fa fa-info-circle sign"></i> Что это?</h3>
             </div>
@@ -373,38 +497,44 @@
                     <div class="well">
                         <div class="example-title">Примеры статистики</div>
                         <hr>
-                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block" ng-click="getStatExample('sociopat_ru')">Веселый социопат</button>
-                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block" ng-click="getStatExample('mh')">Men's Health</button>
-                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block" ng-click="getStatExample('v5inf')">5 интересных фактов</button>
-                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block" ng-click="getStatExample('pikabu')">Пикабу</button>
-                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block" ng-click="getStatExample('exclusive_muzic')">Новинки музыки 2016</button>
+                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
+                                ng-click="getStatExample('sociopat_ru')">Веселый социопат
+                        </button>
+                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
+                                ng-click="getStatExample('mh')">Men's Health
+                        </button>
+                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
+                                ng-click="getStatExample('v5inf')">5 интересных фактов
+                        </button>
+                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
+                                ng-click="getStatExample('pikabu')">Пикабу
+                        </button>
+                        <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
+                                ng-click="getStatExample('exclusive_muzic')">Новинки музыки 2016
+                        </button>
                     </div>
                 </div>
                 <p>
-                    <i class="fa fa-line-chart"></i> <strong>Вкладка &laquo;Динамика&raquo;</strong> - отображает статистику по посещаемости, участникам,
+                    <i class="fa fa-line-chart"></i> <strong>Вкладка &laquo;Динамика&raquo;</strong> - отображает
+                    статистику по посещаемости, участникам,
                     количеству просмотров и динамике
                     подписчиков в виде периодовых графиков.
                 </p>
 
                 <p>
-                    <i class="fa fa-heart-o"></i> <strong>Вкладка &laquo;Активность подписчиков&raquo;</strong> - отображает показатели степени
+                    <i class="fa fa-heart-o"></i> <strong>Вкладка &laquo;Активность подписчиков&raquo;</strong> -
+                    отображает показатели степени
                     вовлеченности аудитории. Отображает в таблице данные по количеству лайков, репостов и комментариев
                     к записям в выбранный период.
                 </p>
 
                 <p>
-                    <i class="fa fa-file-text"></i> <strong>Вкладка &laquo;Изменение контента&raquo;</strong> - отображает таблицу данных по изменению контента
+                    <i class="fa fa-file-text"></i> <strong>Вкладка &laquo;Изменение контента&raquo;</strong> -
+                    отображает таблицу данных по изменению контента
                     в сообществе за выбранный период.
                 </p>
             </div>
         </div>
-        <vk-group-widget></vk-group-widget>
-        <!--<div class="block-flat">
-            <div class="header">
-                <h3>Наша группа</h3>
-            </div>
-            <br>
-
-        </div>-->
     </div>
+
 </div>

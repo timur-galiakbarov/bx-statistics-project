@@ -1,181 +1,125 @@
-<div class="row">
-    <div class="col-md-8">
+<div class="relative">
+    <h3 class="text-center">{{model.title}}</h3>
 
-        <div class="tab-container">
-            <ul class="nav nav-tabs">
-                <li ng-class="{active: activeTab == 'isMy'}" ng-click="showTab('isMy')"><a>Все мои группы</a></li>
-                <li ng-class="{active: activeTab == 'admin'}" ng-click="showTab('admin')"><a>Администрируемые</a></li>
-                <li ng-class="{active: activeTab == 'bookmark'}" ng-click="showTab('bookmark')"><a>Закладки</a></li>
-                <!--<li class=""><a>Последние используемые</a></li>
-                <li class=""><a>Закладки</a></li>-->
-            </ul>
-            <div class="tab-content">
-                <div class="tab-pane cont relative groupListBlock" ng-class="{active: activeTab == 'admin'}"
-                     rad-loader="adminGroupsLoading">
-                    Список администрируемых групп:
+    <div ng-show="model.groupInfo">
+        <div class="text-center group-title" ng-if="model.groupInfo.name">&laquo;{{model.groupInfo.name}}&raquo;</div>
+
+        <div class="go-back-link">
+            <i class="fa fa-arrow-circle-left" aria-hidden="true"></i>
+            <a ng-click="chooseAnotherGroup()">выбрать другую группу</a>
+        </div>
+    </div>
+</div>
+
+<div ng-show="!model.groupInfo">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <form ng-submit="search()">
+                <div class="input-group">
+                    <input type="text" class="form-control" ng-model="model.searchString">
+                    <span class="input-group-btn">
+                        <button class="btn btn-search" type="submit">Найти сообщество</button>
+                    </span>
+                </div>
+                <ul class="parsley-errors-list filled">
+                    <li class="parsley-required" ng-bind="urlError"></li>
+                </ul>
+            </form>
+        </div>
+    </div>
+
+    <div ng-show="isSearchGroup">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <div class="block-flat" ng-show="model.searchList[0] && model.searchList[0].length>0">
                     <table class="no-border hover list">
                         <tbody class="no-border-y">
-                        <tr class="items" ng-repeat="item in adminGroups">
-                            <td style="width: 60px;">
-                                <img ng-src="{{item.photo}}">
+                        <tr ng-repeat="item in model.searchList[0]" class="groupLink" ng-click="setGroup(item)"
+                            style="cursor:pointer;">
+                            <td width="30">
+                                <img ng-src="{{item.photo_200 || item.photo_100 || item.photo_50}}" width="40">
                             </td>
                             <td>
-                                <p>
-                                    <a href="http://vk.com/{{item.screen_name}}" target="_blank" style="cursor: pointer">
-                                        {{item.name}}
-                                    </a>
-                                    <span>
-                                        Участников: {{item.members_count}}
-                                    </span>
-                                </p>
-
-                            </td>
-                            <td class="text-right quickActionsBtns">
-                                <button ng-click="goToMainStat(item)" type="button" class="btn btn-info btn-rad btn-trans" data-toggle="tooltip" data-placement="top"
-                                        title="Показать статистику группы">
-                                    <span class="visible-lg">Статистика</span>
-                                    <i class="fa fa-bar-chart hidden-lg" aria-hidden="true"></i>
-                                </button>
-                                <button ng-click="goToPublishStat(item)" type="button" class="btn btn-info btn-rad btn-trans" data-toggle="tooltip" data-placement="top"
-                                        title="Показать лучшие посты в группе">
-                                    <span class="visible-lg">Лучшие посты</span>
-                                    <i class="fa fa-heart hidden-lg" aria-hidden="true"></i>
-                                </button>
+                                <a tabindex="-1" ng-bind="item.name"></a>
                             </td>
                         </tr>
                         </tbody>
                     </table>
-
                 </div>
-                <div class="tab-pane cont relative groupListBlock" ng-class="{active: activeTab == 'isMy'}"
-                     rad-loader="myGroupsLoading">
-                    Список всех моих групп:
-                    <table class="no-border hover list">
-                        <tbody class="no-border-y">
-                        <tr class="items" ng-repeat="item in myGroups">
-                            <td style="width: 60px;">
-                                <img ng-src="{{item.photo}}">
-                            </td>
-                            <td>
-                                <p>
-                                    <a href="http://vk.com/{{item.screen_name}}" target="_blank" style="cursor: pointer">
-                                        {{item.name}}
-                                    </a>
-                                    <span>
-                                        Участников: {{item.members_count}}
-                                    </span>
-                                </p>
-
-                            </td>
-                            <td class="text-right quickActionsBtns">
-                                <button ng-click="goToMainStat(item)" type="button" class="btn btn-info btn-rad btn-trans" data-toggle="tooltip" data-placement="top"
-                                        title="Показать статистику группы">
-                                    <span class="visible-lg">Статистика</span>
-                                    <i class="fa fa-bar-chart hidden-lg" aria-hidden="true"></i>
-                                </button>
-                                <button ng-click="goToPublishStat(item)" type="button" class="btn btn-info btn-rad btn-trans" data-toggle="tooltip" data-placement="top"
-                                        title="Показать лучшие посты в группе">
-                                    <span class="visible-lg">Лучшие посты</span>
-                                    <i class="fa fa-heart hidden-lg" aria-hidden="true"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-
-                </div>
-                <div class="tab-pane cont relative" ng-class="{active: activeTab == 'bookmark'}" rad-loader="isLoading">
-                    Список групп, добавленных в закладки:
-                    <table class="no-border hover list" ng-show="bookmarksList.length">
-                        <tbody class="no-border-y">
-                        <tr class="items" ng-repeat="bookmark in bookmarksList">
-                            <td style="width: 50px;">
-                                <img ng-src="{{bookmark.photo}}" width="50">
-                            </td>
-                            <td>
-                                <p>
-                                    <a href="http://vk.com/{{bookmark.screen_name}}" target="_blank">
-                                        {{bookmark.name}}
-                                    </a>
-                                    <span>
-                                        Участников: {{bookmark.members_count}}
-                                    </span>
-                                </p>
-                            </td>
-                            <td class="text-right quickActionsBtns">
-                                <button ng-click="goToMainStat(bookmark)" type="button" class="btn btn-info btn-rad btn-trans" data-toggle="tooltip" data-placement="top"
-                                        title="Показать статистику группы">
-                                    <span class="visible-lg">Статистика</span>
-                                    <i class="fa fa-bar-chart hidden-lg" aria-hidden="true"></i>
-                                </button>
-                                <button ng-click="goToPublishStat(bookmark)" type="button" class="btn btn-info btn-rad btn-trans" data-toggle="tooltip" data-placement="top"
-                                        title="Показать лучшие посты в группе">
-                                    <span class="visible-lg">Лучшие посты</span>
-                                    <i class="fa fa-heart hidden-lg" aria-hidden="true"></i>
-                                </button>
-                            </td>
-                            <td class="text-right" style="width: 40px;">
-                                <!--<a class="label label-default" href="#">
-                                    <i class="fa fa-pencil"></i>
-                                </a>-->
-                                <a class="label label-danger" style="cursor: pointer;"
-                                   ng-click="removeBookmark($index)">
-                                    <i class="fa fa-times"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-
-                    <div class="form-group" ng-show="!bookmarksList.length">
-                        Нет добавленных закладок
-                    </div>
-
-                    <div class="form-group">
-                        <label>Добавление группы в закладки</label>
-                        <input type="text" placeholder="Введите адрес группы вконтакте" ng-model="bookmarkGroupUrl"
-                               class="form-control" ng-class="{'parsley-error': bookmarkError}">
-                        <ul class="parsley-errors-list filled">
-                            <li class="parsley-required" ng-bind="bookmarkError"></li>
-                        </ul>
-                    </div>
-                    <button class="btn btn-primary" type="button" ng-click="addBookmark()">Добавить</button>
-
+                <div class="block-flat text-center" ng-show="!(model.searchList[0] && model.searchList[0].length>0)">
+                    По вашему запросу сообществ не найдено.
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="block-flat">
-            <div class="header">
-                <h3>Новости</h3>
-            </div>
-            <div class="content">
-                <div class="content">
-                    <ul class="list-group tickets">
-                        <li class="list-group-item" ng-repeat="news in newsList">
-                            <h4 class="name" ng-bind="news.name"></h4>
-                            <span class="date" ng-bind="news.date"></span>
+    <div class="row">
+        <div class="text-center">или выберите из вашего списка сообществ</div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <rad-choose-group-main on-action="setGroup" ng-show="true"></rad-choose-group-main>
+        </div>
+    </div>
+</div>
 
-                            <p style="line-height: 1.5" ng-bind-html="news.previewText"></p>
-                        </li>
-                    </ul>
+<div ng-show="model.groupInfo">
+
+    <div class="col-md-8 col-md-offset-2 row">
+        <div class="col-md-4">
+            <div class="block-flat block-action" ng-click="goToMainStat()">
+                <div class="image">
+                    <img src="/lk/images/icon_chart.png">
+                </div>
+                <div class="text-center name">
+                    <span>узнать подробнее об этом сообществе</span>
                 </div>
             </div>
         </div>
-
-    </div>
-
-    <div class="col-md-4 side-right">
-        <div class="block-flat">
-            <div class="header">
-                <h3>Мои данные</h3>
+        <div class="col-md-4">
+            <div class="block-flat block-action" ng-click="goToPublishStat()">
+                <div class="search-main-link text-center">
+                    <img src="/lk/images/icon_news.png">
+                </div>
+                <div class="text-center name">
+                    <span>найти самые интересные публикации</span>
+                </div>
             </div>
-            <br>
-            <rad-tariff></rad-tariff>
+        </div>
+        <div class="col-md-4">
+            <div class="block-flat block-action" ng-click="goToGroupsAnalog()">
+                <div class="image">
+                    <img src="/lk/images/icon_compass.png">
+                </div>
+                <div class="text-center name">
+                    <span>найти сообщества с целевой аудиторией</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <vk-group-widget></vk-group-widget>
+    <div class="col-md-8 col-md-offset-2 row smallActions">
+        <div class="col-sm-12">
+            <h3>Дополнительные действия</h3>
+        </div>
+        <div class="col-sm-12">
+            <div class="block-flat block-action" ng-click="goToAuditoryCompare()">
+                <div class="small-image">
+
+                </div>
+                <div class="small-text">
+                    <i class="fa fa-users" aria-hidden="true"></i> сравнить аудитории нескольких групп
+                </div>
+            </div>
+            <div class="block-flat block-action" ng-click="goToFindBots()">
+                <div class="small-image">
+
+                </div>
+                <div class="small-text">
+                    <i class="fa fa-trash" aria-hidden="true"></i> найти &laquo;мертвых&raquo; подписчиков группы
+                </div>
+            </div>
+        </div>
     </div>
+
 </div>

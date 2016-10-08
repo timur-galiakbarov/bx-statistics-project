@@ -19,24 +19,24 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            /*//Раздел "Статистика"
-             .state('index.stat', {
-             url: 'stat/',
-             views: {
-             'content': {
-             url: 'stat/',
-             templateUrl: './templates/js/ui/stat/controllers/statController.html',
-             controller: 'statController'
-             }
-             },
-             parent: 'index'
-             })*/
-            //Общая статистика
-            .state('index.stat', {
-                url: 'stat/?getStatFromGroup',
+            //Раздел "Аккаунт"
+            .state('index.account', {
+                url: 'account/',
                 views: {
                     'content': {
-                        url: 'stat',
+                        url: 'account/',
+                        templateUrl: './templates/js/ui/account/controllers/accountController.html',
+                        controller: 'accountController'
+                    }
+                },
+                parent: 'index'
+            })
+            //Общая статистика
+            .state('index.stat', {
+                url: 'statistics/?getStatFromGroup',
+                views: {
+                    'content': {
+                        url: 'statistics',
                         templateUrl: './templates/js/ui/stat/controllers/statMainController/statMainController.html',
                         controller: 'statMainController'
                     }
@@ -68,7 +68,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
             })
             //Сравнение аудиторий
             .state('index.auditoryCompare', {
-                url: 'auditoryCompare/',
+                url: 'auditoryCompare/?getStatFromGroup',
                 views: {
                     'content': {
                         url: 'auditoryCompare',
@@ -80,7 +80,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
             })
             //Поиск мертвых участников
             .state('index.findBots', {
-                url: 'findBots/',
+                url: 'findBots/?getStatFromGroup',
                 views: {
                     'content': {
                         url: 'findBots',
@@ -91,7 +91,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 parent: 'index'
             })
             .state('index.groupsAnalog', {
-                url: 'groupsAnalog/',
+                url: 'groupsAnalog/?getStatFromGroup',
                 views: {
                     'content': {
                         url: 'groupsAnalog',

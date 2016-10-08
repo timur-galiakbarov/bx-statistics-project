@@ -4,9 +4,10 @@
 
         <div class="alert alert-info alert-white-alt rounded alert-small-padding" ng-show="noActiveTariff">
 
-            <strong>Закончился период подписки </strong>
+            <strong>Закончился период подписки</strong>
             <br>
             Для продолжения работы оплатите требуемый период работы сервиса.
+            Стоимость одного месяца - всего <strong>149</strong> рублей при оплате за 6 месяцев.<br>
         </div>
 
         Мой тариф - {{model.tariff}}<br>
@@ -62,10 +63,11 @@
             </table>
 
             <label><input type="radio" name="paymentType" value="PC"> Яндекс.Деньгами</label><br>
-            <label><input type="radio" name="paymentType" value="AC" checked="checked"> Банковской картой</label>
+            <label><input type="radio" name="paymentType" value="AC" checked="checked"> Банковской картой (Visa, Mastercard)</label>
             <br>
 
-            <input type="submit" class="btn btn-success" value="Оплатить"/>
+            <input type="submit" class="btn btn-success btn-block" value="Оплатить"/>
+            <div class="block text-center">(произойдет переход на страницу оплаты)</div>
 
         </form>
     </div>
@@ -76,6 +78,8 @@
 
         <p>
             Для продолжения работы с сервисом оплатите необходимый период.
+            <br>
+            Стоимость одного месяца - всего <strong>149</strong> рублей при оплате за 6 месяцев.<br>
             <br><br>
 
         <form method="POST" action="https://money.yandex.ru/quickpay/confirm.xml" target="_blank">

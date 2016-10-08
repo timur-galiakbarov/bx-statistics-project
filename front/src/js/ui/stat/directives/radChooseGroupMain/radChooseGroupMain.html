@@ -7,7 +7,7 @@
             <li ng-class="{active: currentState == 'bookmark'}"><a ng-click="showList('bookmark')">Закладки</a></li>
         </ul>
 
-        <div class="groups-tab-area" rad-loader="groupLoading">
+        <div class="groups-tab-area" rad-loader="groupsLoading">
 
             <div class="tab-pane cont" ng-show="currentState == 'admin'">
                 <table class="no-border hover list">
@@ -58,6 +58,16 @@
                     </tr>
                     </tbody>
                 </table>
+
+                <div class="form-group">
+                    <label>Добавление группы в закладки</label>
+                    <input type="text" placeholder="Введите адрес группы вконтакте" ng-model="bookmarkGroupUrl"
+                           class="form-control" ng-class="{'parsley-error': bookmarkError}">
+                    <ul class="parsley-errors-list filled">
+                        <li class="parsley-required" ng-bind="bookmarkError"></li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" type="button" ng-click="addBookmark()">Добавить</button>
             </div>
 
         </div>

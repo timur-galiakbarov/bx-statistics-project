@@ -1,25 +1,39 @@
-<ul class="cl-vnavigation" id="leftMenu">
-    <rad-profile class="radProfile"></rad-profile>
-    <div class="clear"></div>
+<ul class="nav navbar-nav horizontal" id="leftMenu">
 
     <li ng-class="currentState('index.dashboard')?'active':''">
-        <a ng-click="openState('index.dashboard')"><i class="fa fa-desktop"></i><span>Главная</span></a>
+        <a ng-click="openState('index.dashboard')"><span>Главная</span></a>
     </li>
-    <li ng-class="currentState('index.stat')?'active':''">
-        <a ng-click="openState('index.stat')"><i class="fa fa-bar-chart"></i><span>Статистика групп</span></a>
+    <li class="dropdown">
+        <a data-toggle="dropdown">Сообщества <b class="caret"></b></a>
+        <ul class="dropdown-menu">
+            <li ng-class="currentState('index.stat')?'active':''">
+                <a ng-click="openState('index.stat')">Статистика сообщества</a>
+            </li>
+            <li ng-class="currentState('index.groupsAnalog')?'active':''">
+                <a ng-click="openState('index.groupsAnalog')">Сообщества, где есть ЦА</a>
+            </li>
+            <li ng-class="currentState('index.auditoryCompare')?'active':''">
+                <a ng-click="openState('index.auditoryCompare')">Сравнение аудиторий</a>
+            </li>
+            <li ng-class="currentState('index.findBots
+
+            ')?'active':''">
+                <a ng-click="openState('index.findBots')">Поиск &laquo;мертвых&raquo; подписчиков</a>
+            </li>
+        </ul>
     </li>
-    <li class="parent publish open">
-        <a ng-click="showStatsMenu('.publish')"><i class="fa fa-th-list"></i><span>Посты и публикации</span></a>
-        <ul class="sub-menu" style="display: block;">
+    <li class="dropdown publish">
+        <a data-toggle="dropdown">Публикации <b class="caret"></b></a>
+        <ul class="dropdown-menu">
             <li ng-class="currentState('index.publishAnalysis')?'active':''">
                 <a ng-click="openState('index.publishAnalysis')">Анализ публикаций</a>
             </li>
             <li ng-class="currentState('index.publishFavorites')?'active':''">
-                <a ng-click="openState('index.publishFavorites')">Любимые публикации</a>
+                <a ng-click="openState('index.publishFavorites')">Сохраненные публикации</a>
             </li>
         </ul>
     </li>
-    <li class="parent stat">
+    <!--<li class="parent stat">
         <a ng-click="showStatsMenu('.stat')"><i class="fa fa-search"></i><span>Анализ групп</span></a>
         <ul class="sub-menu">
             <li ng-class="currentState('index.groupsAnalog')?'active':''">
@@ -32,8 +46,8 @@
                 <a ng-click="openState('index.findBots')">Поиск &laquo;мертвых&raquo; подписчиков</a>
             </li>
         </ul>
-    </li>
-    <li class="parent adminPage" ng-if="isAdmin">
+    </li>-->
+    <!--<li class="parent adminPage" ng-if="isAdmin">
         <a ng-click="showStatsMenu('.adminPage')"><i class="fa fa-search"></i><span>Админка</span></a>
         <ul class="sub-menu">
             <li ng-class="currentState('index.admin.dashboard')?'active':''">
@@ -43,5 +57,5 @@
                 <a ng-click="openState('index.admin.vksync')">VK Sync</a>
             </li>
         </ul>
-    </li>
+    </li>-->
 </ul>

@@ -21,7 +21,7 @@ import events from './../../../../bl/events.js';
                 data: {
                     access_token: authData.token,//Токен
                     group_id: params.groupId,//Список групп
-                    fields: ["members_count", "counters", "description"]
+                    fields: params.fields || "members_count,counters,description"
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -38,7 +38,7 @@ import events from './../../../../bl/events.js';
                 data: {
                     access_token: authData.token,//Токен
                     group_ids: params.groupIds,//Список групп
-                    fields: params.fields || ["members_count", "counters"]
+                    fields: params.fields || "members_count,counters,photo"
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -288,6 +288,26 @@ import events from './../../../../bl/events.js';
             });
         };
 
+        var searchGroup = function (authData, params) {
+            return $.ajax({
+                type: "GET",
+                url: "https://api.vk.com/method/groups.search",
+                dataType: 'jsonp',
+                data: {
+                    access_token: authData.token,//Токен
+                    v: "5.53",
+                    q: params.q,
+                    type: params.type,
+                    country_id: params.country_id,
+                    sort: params.sort,
+                    count: params.count
+                }
+            }).then(function (res) {
+                errorAction(res);
+                return res.response || res.response === 0 ? res.response : res;
+            });
+        };
+
         var execute = {
             getWallPosts: function (authData, params) {
                 return $.ajax({
@@ -407,6 +427,7 @@ import events from './../../../../bl/events.js';
             getGroupCategories: getGroupCategories,
             isMember: isMember,
             getVideo: getVideo,
+            searchGroup: searchGroup,
             execute: execute
         }
 

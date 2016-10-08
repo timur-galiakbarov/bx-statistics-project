@@ -6,156 +6,163 @@ angular
     .controller('dashboardController', ['$rootScope', '$scope', 'bus', 'appState', 'vkApiFactory', '$timeout', 'radCommonFunc', 'notify', '$state',
         function ($rootScope, $scope, bus, appState, vkApiFactory, $timeout, radCommonFunc, notify, $state) {
 
-            $rootScope.page.sectionTitle = 'Главная';
+            $rootScope.page.sectionTitle = '';
 
-            $scope.adminGroups = [];
+            //vars
+            $scope.model = {
+                title: 'Анализ сообщества',
+                searchString: '',
+                searchList: []
+            };
+
             var authData = {
                 token: appState.getUserVkToken(),
                 login: appState.getUserVkLogin()
             };
-            $scope.showTab = showTab;
-            $scope.activeTab = 'isMy';
-            $scope.addBookmark = addBookmark;
-            $scope.getBookmarkList = getBookmarkList;
-            $scope.removeBookmark = removeBookmark;
-            $scope.goToMainStat = goToMainStat;
-            $scope.goToPublishStat = goToPublishStat;
 
-            $scope.bookmarkGroupUrl = '';
+            //functions proto
+            $scope.setGroup = setGroup;
+            $scope.chooseAnotherGroup = chooseAnotherGroup;
+            $scope.goToPublishStat = goToPublishStat;
+            $scope.goToMainStat = goToMainStat;
+            $scope.goToGroupsAnalog = goToGroupsAnalog;
+            $scope.goToFindBots = goToFindBots;
+            $scope.goToAuditoryCompare = goToAuditoryCompare;
+            $scope.search = search;
+
+            $scope.$watch('model.searchString', (newVal, oldVal)=> {
+                if (newVal != oldVal)
+                    $scope.urlError = "";
+            });
+
+            //functions
+            function setGroup(group) {
+                getGroupInfo(group).then((groupInfo)=> {
+                    $timeout(()=> {
+                        $scope.model.searchVisible = false;
+                        $scope.model.groupInfo = groupInfo;
+                    });
+                });
+            }
+
+            function getGroupInfo(link) {
+                return vkApiFactory.getGroupInfo(appState.getAuthData(), {
+                    groupId: radCommonFunc.getGroupId(link.screen_name),
+                    fields: 'photo'
+                })
+                    .then((groupInfo)=> {
+                        return groupInfo;
+                    });
+            }
+
+            function chooseAnotherGroup() {
+                $scope.model.groupInfo = false;
+            }
+
+            function goToPublishStat() {
+                if (!$scope.model.groupInfo) {
+
+                    return;
+                }
+                $state.go('index.publishAnalysis', {
+                    getStatFromGroup: $scope.model.groupInfo.screen_name
+                });
+            }
+
+            function goToMainStat() {
+                if (!$scope.model.groupInfo) {
+
+                    return;
+                }
+                $state.go('index.stat', {
+                    getStatFromGroup: $scope.model.groupInfo.screen_name
+                });
+            }
+
+            function goToGroupsAnalog() {
+                if (!$scope.model.groupInfo) {
+
+                    return;
+                }
+                $state.go('index.groupsAnalog', {
+                    getStatFromGroup: $scope.model.groupInfo.screen_name
+                });
+            }
+
+            function goToFindBots() {
+                if (!$scope.model.groupInfo) {
+
+                    return;
+                }
+                $state.go('index.findBots', {
+                    getStatFromGroup: $scope.model.groupInfo.screen_name
+                });
+            }
+
+            function goToAuditoryCompare() {
+                if (!$scope.model.groupInfo) {
+
+                    return;
+                }
+                $state.go('index.auditoryCompare', {
+                    getStatFromGroup: $scope.model.groupInfo.screen_name
+                });
+            }
+
+            function search() {
+                $timeout(()=> {
+                    $scope.model.searchList = [];
+                });
+
+                if (!$scope.model.searchString) {
+                    //Вывод ошибки
+                    $scope.urlError = 'Пустой запрос';
+                    $scope.isSearchGroup = false;
+                    return;
+                }
+
+                vkApiFactory.searchGroup(authData, {
+                    q: $scope.model.searchString,
+                    sort: "0"
+                }).then(function (res) {
+
+                    $timeout(()=> {
+                        $scope.isSearchGroup = true;
+
+                        var i = 0;
+                        res.items.forEach((group, index)=> {
+                            if (!$scope.model.searchList[i])
+                                $scope.model.searchList[i] = [];
+
+                            $scope.model.searchList[i].push(group);
+                            if (index % 10 == 0 && index != 0)
+                                i++;
+                        });
+                    });
+
+                });
+
+            }
+
+
             $scope.newsList = [];
-            $scope.bookmarksList = [];
-            $scope.bookmarkError = "";
-            $scope.adminGroupsLoading = false;
-            $scope.myGroupsLoading = false;
 
             init();
 
-            $scope.$watch('bookmarkGroupUrl', (newVal, oldVal)=> {
-                if (newVal != oldVal)
-                    $scope.bookmarkError = "";
-            });
-
-            $scope.$watch('isLoading', (newVal)=>{
+            $scope.$watch('isLoading', (newVal)=> {
                 $rootScope.globalLoading = newVal;
             });
 
             function init() {
                 $(".nano").nanoScroller();
-                getAdminGroups();
-                getMyGroups();
                 getNewsList();
-                getBookmarkList();
-
                 initTooltips();
             }
 
-            function initTooltips(){
+            function initTooltips() {
                 $(function () {
                     $('[data-toggle="tooltip"]').tooltip();
                 });
-            }
-
-            function getAdminGroups(iteration) {
-                if (!iteration)
-                    iteration = 0;
-
-                if (iteration > 3) {
-                    notify.error("Не удалось загрузить данные об администрируемых группах. Попробуйте позже");
-                    return;
-                }
-                $scope.adminGroupsLoading = true;
-                vkApiFactory.getUserGroups(authData, {
-                    extended: 1,
-                    filter: "moder",
-                    count: 1000,
-                    fields: "members_count"
-                })
-                    .then(function (res) {
-                        //console.log(res);
-                        if (res && res[0] > 0) {
-                            res = res.slice(1);
-                            $timeout(()=> {
-                                $scope.adminGroups = res;
-                                $(".nano").nanoScroller();
-                                setTimeout(()=>{
-                                    initTooltips();
-                                }, 300);
-                            });
-                        } else {
-                            iteration++;
-                            setTimeout(()=>{
-                                getAdminGroups(iteration);
-                            }, 500);
-                        }
-                        $scope.$apply(()=> {
-                            $scope.adminGroupsLoading = false;
-                        });
-                    })
-                    .fail((error)=> {
-                        iteration++;
-                        getAdminGroups(iteration);
-                    })
-                    .always(()=> {
-                        $(".nano").nanoScroller();
-                    });
-            }
-
-            function getMyGroups(iteration) {
-                if (!iteration)
-                    iteration = 0;
-
-                if (iteration > 3) {
-                    notify.error("Не удалось загрузить данные о ваших группах. Попробуйте позже");
-                    return;
-                }
-                $scope.myGroupsLoading = true;
-                vkApiFactory.getUserGroups(authData, {
-                    extended: 1,
-                    filter: "",
-                    count: 1000,
-                    fields: "members_count"
-                })
-                    .then(function (res) {
-                        if (res && res[0] > 0) {
-                            res = res.slice(1);
-                            $timeout(()=> {
-                                $scope.myGroups = res;
-                                $(".nano").nanoScroller();
-                                setTimeout(()=>{
-                                    initTooltips();
-                                }, 300);
-                            });
-                        } else {
-                            iteration++;
-                            setTimeout(()=>{
-                                getMyGroups(iteration);
-                            }, 500);
-                        }
-                        $scope.$apply(()=> {
-                            $scope.myGroupsLoading = false;
-                        });
-                    })
-                    .fail((error)=> {
-                        iteration++;
-                        getAdminGroups(iteration);
-                    })
-                    .always(()=> {
-                        $(".nano").nanoScroller();
-                    });
-            }
-
-            function showTab(tab) {
-                switch (tab) {
-                    case 'bookmark':
-                        $scope.activeTab = 'bookmark';
-                        break;
-                    case 'admin':
-                        $scope.activeTab = 'admin';
-                        break;
-                    case 'isMy':
-                        $scope.activeTab = 'isMy';
-                        break;
-                }
             }
 
             function getNewsList() {
@@ -173,93 +180,4 @@ angular
                     });
             }
 
-            function addBookmark() {
-                if (!$scope.bookmarkGroupUrl) {
-                    $scope.bookmarkError = 'Укажите адрес или символьный код группы';
-                    return;
-                }
-                $scope.isLoading = true;
-
-                vkApiFactory.getGroupInfo(authData, {
-                    groupId: radCommonFunc.getGroupId($scope.bookmarkGroupUrl)
-                })
-                    .then((groupInfo)=> {
-                        if (groupInfo.error) {
-                            $timeout(()=> {
-                                $scope.bookmarkError = "Введеная группа вконтакте не найдена";
-                                $scope.isLoading = false;
-                            });
-                            return;
-                        }
-                        addBookmarkRequest(groupInfo)
-                            .then(()=> {
-                                getBookmarkList();
-                            });
-                    });
-
-                function addBookmarkRequest(groupInfo) {
-                    return bus.request(topics.BOOKMARK.ADD, {
-                        screenName: groupInfo.screen_name
-                    })
-                        .then((res)=> {
-                            $timeout(()=> {
-                                $scope.bookmarkGroupUrl = '';
-                            });
-                        });
-                }
-            }
-
-            function getBookmarkList() {
-                $scope.isLoading = true;
-                bus.request(topics.BOOKMARK.GET_LIST)
-                    .then((bookmarksList)=> {
-                        var list = "";
-                        if (!bookmarksList || !bookmarksList.bookmarks.length) {
-                            $scope.isLoading = false;
-                            return;
-                        }
-                        bookmarksList.bookmarks.forEach((item)=> {
-                            list += item;
-                            list += ",";
-                        });
-                        vkApiFactory.getGroupsInfo(authData, {
-                            groupIds: list
-                        }).then((groups)=> {
-                            /*console.log(groups);*/
-                            $timeout(()=> {
-                                $scope.bookmarksList = groups;
-                            });
-                        })
-                            .always(()=> {
-                                $scope.isLoading = false;
-                            });
-                    })
-                    .fail(()=> {
-                        $scope.isLoading = false;
-                    });
-            }
-
-            function removeBookmark(index) {
-                $scope.isLoading = true;
-                bus.request(topics.BOOKMARK.REMOVE, {
-                    index: index
-                })
-                    .then((res)=> {
-                        if (res.success) {
-                            getBookmarkList();
-                        }
-                    });
-            }
-
-            function goToMainStat(groupInfo) {
-                $state.go('index.stat', {
-                    getStatFromGroup: groupInfo.screen_name
-                });
-            }
-
-            function goToPublishStat(groupInfo) {
-                $state.go('index.publishAnalysis', {
-                    getStatFromGroup: groupInfo.screen_name
-                });
-            }
         }]);

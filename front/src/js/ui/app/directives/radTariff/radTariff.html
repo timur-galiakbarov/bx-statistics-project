@@ -7,17 +7,25 @@
             <strong>Закончился период подписки</strong>
             <br>
             Для продолжения работы оплатите требуемый период работы сервиса.
-            Стоимость одного месяца - всего <strong>149</strong> рублей при оплате за 6 месяцев.<br>
+            Стоимость одного месяца - всего <strong>83</strong> рубля при оплате за 3 месяца.<br>
         </div>
 
         Мой тариф - {{model.tariff}}<br>
         Действует до - {{model.activeTo}}
+        <br><br>
+
+        <div class="block text-center">
+            <strong>Акция до 31.12.2016!</strong><br>
+            Целых три месяца после перезапуска socstat.ru дарим всем 50% скидку.<br>
+            Один месяц стоит всего 99 рублей, а это самая низкая цена.<br>
+            При оплате 3-х месяцев, стоимость одного месяца еще ниже - 83 рубля!
+        </div>
 
         <form method="POST" action="https://money.yandex.ru/quickpay/confirm.xml" target="_blank">
 
             <input type="hidden" name="receiver" value="410011867702471">
-            <input type="hidden" name="formcomment" value="socstat.ru - оплата периода {{paymentInfo.period}}">
-            <input type="hidden" name="short-dest" value="socstat.ru - оплата периода {{paymentInfo.period}}">
+            <input type="hidden" name="formcomment" value="socstat.ru">
+            <input type="hidden" name="short-dest" value="оплата периода {{paymentInfo.period}}">
             <input type="hidden" name="label" value="user{{model.userId}}">
             <input type="hidden" name="quickpay-form" value="shop">
             <input type="hidden" name="targets" value="Для пользователя {{model.userFullName}}">
@@ -32,41 +40,43 @@
                 <thead class="no-border">
                 <tr>
                     <th style="width:50%;">Период</th>
-                    <th>Стоимость</th>
+                    <th class="text-center">Стоимость</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody class="no-border-y">
                 <tr>
                     <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>1 месяц</td>
-                    <td class="text-center">199 <i class="fa fa-rub"></i></td>
+                    <td class="text-center"><strike>199</strike> <br>99<i class="fa fa-rub"></i></td>
                     <td class="text-right">
                         <input type="radio" ng-model="paymentInfo.period" value="1 месяц" checked="checked">
                     </td>
                 </tr>
                 <tr>
                     <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>3 месяца</td>
-                    <td class="text-center">499 <i class="fa fa-rub"></i></td>
+                    <td class="text-center"><strike>499</strike> <br>249<i class="fa fa-rub"></i></td>
                     <td class="text-right">
                         <input type="radio" ng-model="paymentInfo.period" value="3 месяца" checked="checked">
                     </td>
                 </tr>
-                <tr>
+                <!--<tr>
                     <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>6 месяцев</td>
                     <td class="text-center">899 <i class="fa fa-rub"></i></td>
                     <td class="text-right">
                         <input type="radio" ng-model="paymentInfo.period" value="6 месяцев" checked="checked">
                     </td>
-                </tr>
+                </tr>-->
 
                 </tbody>
             </table>
 
             <label><input type="radio" name="paymentType" value="PC"> Яндекс.Деньгами</label><br>
-            <label><input type="radio" name="paymentType" value="AC" checked="checked"> Банковской картой (Visa, Mastercard)</label>
+            <label><input type="radio" name="paymentType" value="AC" checked="checked"> Банковской картой (Visa,
+                Mastercard)</label>
             <br>
 
             <input type="submit" class="btn btn-success btn-block" value="Оплатить"/>
+
             <div class="block text-center">(произойдет переход на страницу оплаты)</div>
 
         </form>
@@ -79,14 +89,21 @@
         <p>
             Для продолжения работы с сервисом оплатите необходимый период.
             <br>
-            Стоимость одного месяца - всего <strong>149</strong> рублей при оплате за 6 месяцев.<br>
+            Стоимость одного месяца - всего <strong>83</strong> рублей при оплате за 3 месяца.<br>
             <br><br>
+
+        <div class="block text-center">
+            <strong>Акция до 31.12.2016!</strong><br>
+            Целых три месяца после перезапуска socstat.ru дарим всем 50% скидку.<br>
+            Один месяц стоит всего 99 рублей, а это самая низкая цена.<br>
+            При оплате 3-х месяцев, стоимость одного месяца еще ниже - 83 рубля!
+        </div>
 
         <form method="POST" action="https://money.yandex.ru/quickpay/confirm.xml" target="_blank">
 
             <input type="hidden" name="receiver" value="410011867702471">
-            <input type="hidden" name="formcomment" value="socstat.ru - оплата периода {{paymentInfo.period}}">
-            <input type="hidden" name="short-dest" value="socstat.ru - оплата периода {{paymentInfo.period}}">
+            <input type="hidden" name="formcomment" value="socstat.ru">
+            <input type="hidden" name="short-dest" value="оплата периода {{paymentInfo.period}}">
             <input type="hidden" name="label" value="user{{model.userId}}">
             <input type="hidden" name="quickpay-form" value="shop">
             <input type="hidden" name="targets" value="Для пользователя {{model.userFullName}}">
@@ -108,25 +125,25 @@
                 <tbody class="no-border-y">
                 <tr>
                     <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>1 месяц</td>
-                    <td class="text-center">199 <i class="fa fa-rub"></i></td>
+                    <td class="text-center"><strike>199</strike> <br>99<i class="fa fa-rub"></i></td>
                     <td class="text-right">
                         <input type="radio" ng-model="paymentInfo.period" value="1 месяц" checked="checked">
                     </td>
                 </tr>
                 <tr>
                     <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>3 месяца</td>
-                    <td class="text-center">499 <i class="fa fa-rub"></i></td>
+                    <td class="text-center"><strike>499</strike> <br>249<i class="fa fa-rub"></i></td>
                     <td class="text-right">
                         <input type="radio" ng-model="paymentInfo.period" value="3 месяца" checked="checked">
                     </td>
                 </tr>
-                <tr>
+                <!--<tr>
                     <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>6 месяцев</td>
                     <td class="text-center">899 <i class="fa fa-rub"></i></td>
                     <td class="text-right">
                         <input type="radio" ng-model="paymentInfo.period" value="6 месяцев" checked="checked">
                     </td>
-                </tr>
+                </tr>-->
 
                 </tbody>
             </table>

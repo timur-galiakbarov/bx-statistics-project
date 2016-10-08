@@ -5,9 +5,9 @@ angular
     .module('rad.menu')
     .directive('radProfile', radProfile);
 
-radProfile.inject = ['appState', 'vkApiFactory', 'notify'];
+radProfile.inject = ['appState', 'vkApiFactory', 'notify', '$rootScope', '$state'];
 
-function radProfile(appState, vkApiFactory, notify) {
+function radProfile(appState, vkApiFactory, notify, $rootScope, $state) {
     return {
         restrict: 'EA',
         templateUrl: './templates/js/ui/menu/radProfile/radProfile.html',
@@ -98,6 +98,15 @@ function radProfile(appState, vkApiFactory, notify) {
                         getUserData(iteration)
                     }, 500);
                 });
+            }
+
+            $scope.openState = function (state) {
+                if ($rootScope.globalLoading){
+                    notify.info("Пожалуйста, дождитесь загрузки данных, либо совершите действие в другой вкладке.");
+                    return;
+                }
+
+                $state.go(state);
             }
 
         }

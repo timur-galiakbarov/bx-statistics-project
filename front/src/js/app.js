@@ -68,4 +68,18 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus',
             $("#finishedPeriodModal").modal();
         });
 
+        function init (){
+            VK.Observer.subscribe("widgets.subscribed", function f()
+            {
+                $("#vk_subscribe").html("");
+            });
+
+            VK.Observer.subscribe("widgets.groups.joined", function f()
+            {
+                $("#vk_subscribe").html("");
+            });
+        }
+
+        init();
+
     }]);

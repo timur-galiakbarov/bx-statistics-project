@@ -28,14 +28,14 @@ function radTariff(appState) {
             };
             $scope.paymentInfo = {
                 period: '1 месяц',
-                summ: '199'
+                summ: '99'
             };
             $scope.noActiveTariff = !appState.isActiveUser();
 
             $scope.$watch('paymentInfo.period', (newVal)=> {
                 switch (newVal){
                     case '1 месяц':
-                        $scope.paymentInfo.summ = 199;
+                        $scope.paymentInfo.summ = 99;
                         break;
                     case '3 месяца':
                         $scope.paymentInfo.summ = 499;

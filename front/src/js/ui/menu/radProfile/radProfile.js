@@ -100,15 +100,6 @@ function radProfile(appState, vkApiFactory, notify, $rootScope, $state) {
                 });
             }
 
-            $scope.openState = function (state) {
-                if ($rootScope.globalLoading){
-                    notify.info("Пожалуйста, дождитесь загрузки данных, либо совершите действие в другой вкладке.");
-                    return;
-                }
-
-                $state.go(state);
-            }
-
         }
     };
 }

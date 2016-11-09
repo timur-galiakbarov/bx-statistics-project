@@ -49,7 +49,7 @@ if ($_GET["user_id"] != NULL) {//Если получен Uid пользоват�
             "PERSONAL_PHOTO" => CFile::MakeFileArray($auth_data["response"][0]["photo_200"]),
             "UF_VK_LOGIN" => $_GET["user_id"],
             "UF_VK_TOKEN" => $_GET["access_token"],
-            "UF_ACTIVE_TO" => date("d.m.Y", mktime(0, 0, 0, date("m"), date("d") + 6, date("Y"))),
+            "UF_ACTIVE_TO" => date("d.m.Y", mktime(0, 0, 0, date("m"), date("d") + 3, date("Y"))),
             "UF_TARIFF" => "Пробный"
         );
 

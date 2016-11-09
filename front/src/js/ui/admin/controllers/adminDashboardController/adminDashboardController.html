@@ -1,4 +1,4 @@
-<div rad-loader="isLoading">
+<div rad-loader="isLoading" class="admin-dashboard">
 
     <div class="row">
 
@@ -55,23 +55,37 @@
                         Пользователи
                     </h3>
                 </div>
-                <div class="content">
+                <div class="content users-table">
                     <table class="table table-responsive">
                         <tr>
                             <th></th>
                             <th>Имя</th>
+                            <th></th>
                             <th>Последняя авторизация</th>
                             <th>Дата регистрации</th>
                             <th>Активен до</th>
                         </tr>
                         <tr ng-repeat="user in stat.usersList">
                             <td>{{$index+1}}</td>
-                            <td><a ng-href="https://vk.com/id{{user.login}}" target="_blank">{{user.name}} {{user.lastName}}</a></td>
+                            <td><a ng-href="https://vk.com/id{{user.login}}" target="_blank">{{user.name}}
+                                {{user.lastName}}</a></td>
+                            <td><div class="status-active-user {{getColorStatus(user.activeTo)}}"></div></td>
                             <td>{{user.lastAuth}}</td>
                             <td>{{user.dateRegister}}</td>
                             <td>{{user.activeTo}}</td>
                         </tr>
                     </table>
+                </div>
+            </div>
+
+            <div class="block-flat">
+                <div class="header">
+                    <h3 class="main-title">
+                        График регистраций
+                    </h3>
+                </div>
+                <div class="content users-graph">
+                    <canvas id="registerGraph" height="300"></canvas>
                 </div>
             </div>
         </div>

@@ -1,7 +1,8 @@
 import topics from './bl/topics.js';
 import events from './bl/events.js';
+import ui from 'angular-ui-bootstrap';
 
-/*Инициализация приложения*/
+/*РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїСЂРёР»РѕР¶РµРЅРёСЏ*/
 var app = angular.module('app', [
     'ngRoute',
     'ngSanitize',
@@ -11,23 +12,27 @@ var app = angular.module('app', [
     'rad.dashboard',
     'rad.account',
     'rad.favorites',
-    'ui.bootstrap'
+    'ui.bootstrap',
+    'ui.bootstrap.tpls',
+    'ui.mask'
 ]);
+
+moment.locale('ru');
 
 angular.module('app').run(['$rootScope', 'bus',
     function ($rootScope, bus) {
 
     }]);
 
-app.controller('appController', ['$rootScope', '$scope', '$state', 'bus',
-    function ($rootScope, $scope, $state, bus) {
+app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notify',
+    function ($rootScope, $scope, $state, bus, notify) {
         bus.subscribe(events.APP.READY, function () {
             $rootScope.$apply(function () {
                 $rootScope.isAuth = true;
             });
-            //Открываем раздел по умолчанию
+            //РћС‚РєСЂС‹РІР°РµРј СЂР°Р·РґРµР» РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
             if ($state.current.name == 'index')
-                $state.go('index.dashboard');
+                goToDefaultState();
         });
         bus.request(topics.ACCOUNT.IS_AUTH, {notLogError: true}).then((res)=> {
             if (res.success) {
@@ -64,18 +69,35 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus',
         };
 
         bus.subscribe(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL, ()=> {
-            //Открыть попап для показа информации о просроченном периоде
+            //РћС‚РєСЂС‹С‚СЊ РїРѕРїР°Рї РґР»СЏ РїРѕРєР°Р·Р° РёРЅС„РѕСЂРјР°С†РёРё Рѕ РїСЂРѕСЃСЂРѕС‡РµРЅРЅРѕРј РїРµСЂРёРѕРґРµ
             $("#finishedPeriodModal").modal();
         });
 
-        function init (){
-            VK.Observer.subscribe("widgets.subscribed", function f()
-            {
+        $rootScope.$on('$stateChangeSuccess', function (evt, toState) {
+            if (toState.name === 'index') {
+                goToDefaultState();
+            }
+        });
+
+        $rootScope.openState = function (state) {
+            if ($rootScope.globalLoading){
+                notify.info("РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РґРѕР¶РґРёС‚РµСЃСЊ Р·Р°РіСЂСѓР·РєРё РґР°РЅРЅС‹С…, Р»РёР±Рѕ СЃРѕРІРµСЂС€РёС‚Рµ РґРµР№СЃС‚РІРёРµ РІ РґСЂСѓРіРѕР№ РІРєР»Р°РґРєРµ.");
+                return;
+            }
+
+            $state.go(state);
+        };
+
+        function goToDefaultState() {
+            $state.go('index.dashboard');
+        }
+
+        function init() {
+            VK.Observer.subscribe("widgets.subscribed", function f() {
                 $("#vk_subscribe").html("");
             });
 
-            VK.Observer.subscribe("widgets.groups.joined", function f()
-            {
+            VK.Observer.subscribe("widgets.groups.joined", function f() {
                 $("#vk_subscribe").html("");
             });
         }

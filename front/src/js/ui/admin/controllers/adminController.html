@@ -1,6 +1,22 @@
-<div ui-view="admin">
+<div ng-if="isAdmin">
+    <button type="button" class="btn btn-primary btn-rad" ng-class="{'btn-trans': adminTab != 'dashboard'}"
+            ng-click="openState('index.admin.dashboard')">Dashboard</button>
+    <button type="button" class="btn btn-primary btn-rad" ng-class="{'btn-trans': adminTab != 'vksync'}"
+            ng-click="openState('index.admin.vksync')">Vk Sync</button>
+    <div ui-view="admin">
 
+    </div>
 </div>
+<div ng-if="!isAdmin">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="block-flat text-center">
+                <h3>Доступ запрещен!</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 

@@ -31,6 +31,18 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
+            //Раздел "пригласи друга"
+            .state('index.partners', {
+                url: 'partners/',
+                views: {
+                    'content': {
+                        url: 'partners/',
+                        templateUrl: './templates/js/ui/account/controllers/partnersController.html',
+                        controller: 'partnersController'
+                    }
+                },
+                parent: 'index'
+            })
             //Общая статистика
             .state('index.stat', {
                 url: 'statistics/?getStatFromGroup',

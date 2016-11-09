@@ -10,12 +10,14 @@ import radLoader from './ui/base/radLoader.js';
 import radOnFinishRenderNgRepeat from './ui/base/radOnFinishRenderNgRepeat.js';
 import vkGroupWidget from './ui/app/directives/vkGroupWidget/vkGroupWidget.js';
 import radTariff from './ui/app/directives/radTariff/radTariff.js';
+import radAdminLink from './ui/app/directives/radAdminLink/radAdminLink.js';
 
 /*Dashboard controller*/
 import dashboardController from './ui/dashboard/controllers/dashboardController.js';
 
 /*Account controller*/
 import accountController from './ui/account/controllers/accountController.js';
+import partnersController from './ui/account/controllers/partnersController.js';
 
 /*UI------------------------------------------------------------------------------------------------------------------*/
 import radAmountFilter from './ui/base/radAmountFilter.js';

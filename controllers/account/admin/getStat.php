@@ -17,6 +17,7 @@ if (CModule::IncludeModule("iblock")) {
         "usersOldToday" => 0,
         "usersAll" => 0,
         "usersList" => Array(),
+        "usersRegisterList" => Array(),
         "payCount" => 0
     );
 
@@ -53,6 +54,18 @@ if (CModule::IncludeModule("iblock")) {
         ));
         $data["usersAll"]++;
     endwhile;
+
+    $rsUsers = CUser::GetList(($by = "date_register"), ($order = "asc"), Array()); // выбираем пользователей
+
+    while ($rsUsers->NavNext(true, "f_")) :
+        $currUser = CUser::GetByID($f_ID)->GetNext();
+        $currDate = date_parse_from_format("j.n.Y", $f_DATE_REGISTER);
+        array_push($data["usersRegisterList"], Array(
+            "dateRegister" => $currDate["month"].".".$currDate["day"].".".$currDate["year"]
+        ));
+
+    endwhile;
+
 
     $arSelect = Array("ID", "NAME", "DATE_ACTIVE_FROM");
     $arFilter = Array("IBLOCK_ID" => 4);

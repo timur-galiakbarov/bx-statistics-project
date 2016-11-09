@@ -4,14 +4,27 @@ import {enums} from './../../../../bl/module.js';
 
 angular
     .module('rad.stat')
-    .controller('statPublishAnalysisController', ['$rootScope', '$scope', '$state', 'bus', 'vkApiFactory', 'appState', '$timeout', 'memoryFactory', 'radCommonFunc', 'notify', '$stateParams', '$sce',
-        function ($rootScope, $scope, $state, bus, vkApiFactory, appState, $timeout, memoryFactory, radCommonFunc, notify, $stateParams, $sce) {
+    .controller('statPublishAnalysisController', ['$rootScope', '$scope', '$state', 'bus', 'vkApiFactory', 'appState',
+        '$timeout', 'memoryFactory', 'radCommonFunc', 'notify', '$stateParams', '$sce',
+        function ($rootScope, $scope, $state, bus, vkApiFactory, appState, $timeout, memoryFactory, radCommonFunc,
+                  notify, $stateParams, $sce) {
             $scope.currentTab = 'catalog';
             $rootScope.page.sectionTitle = 'Анализ публикаций';
             $scope.model = {
                 groupAddress: '',
-                title: 'Анализ публикаций'
+                title: 'Анализ публикаций',
+                datePicker: {
+                    dateFrom: '',
+                    dateTo: '',
+                    popupFrom: {
+                        opened: false
+                    },
+                    popupTo: {
+                        opened: false
+                    }
+                }
             };
+            $scope.error = {};
             $scope.adminGroups = [];
             $scope.showGroupsMenu = showGroupsMenu;
             $scope.isHiddenMenu = true;
@@ -28,6 +41,8 @@ angular
             $scope.getStatExample = getStatExample;
             $scope.getVideoUrl = getVideoUrl;
             $scope.isShowDetail = isShowDetail;
+            $scope.openDatepickerPopupFrom = openDatepickerPopupFrom;
+            $scope.openDatepickerPopupTo = openDatepickerPopupTo;
 
             $scope.wallCount = 0;
             $scope.wallList = [];
@@ -38,6 +53,16 @@ angular
             $scope.groupIsFinded = false;
             $scope.groupInfo = {};
             $scope.progressPercent = 0;
+            $scope.hiddenFilter = false;
+
+            $scope.dateOptions = {
+                formatYear: 'yy',
+                maxDate: new Date(),
+                minDate: new Date((new Date()).getTime() - 6 * 30 * 24 * 60 * 60 * 1000),
+                startingDay: 1,
+                showWeeks: false,
+                isRTL: false
+            };
 
             var authData = {
                 token: appState.getUserVkToken(),
@@ -53,6 +78,16 @@ angular
             $scope.$watch('model.groupAddress', (newVal, oldVal)=> {
                 if (newVal != oldVal)
                     $scope.urlError = "";
+            });
+
+            $scope.$watch('model.datePicker.dateFrom', (newVal, oldVal)=> {
+                if (newVal != oldVal)
+                    $scope.error.datePickerFromError = "";
+            });
+
+            $scope.$watch('model.datePicker.dateTo', (newVal, oldVal)=> {
+                if (newVal != oldVal)
+                    $scope.error.datePickerToError = "";
             });
 
             $scope.$watch('isLoading', (newVal)=> {
@@ -97,12 +132,18 @@ angular
                     return;
                 }
 
+                /*Проверка дат*/
+                var parseDate = getCheckedDate();
+                if (!parseDate || (parseDate && parseDate.error)) {
+                    return;
+                }
+
                 $scope.groupIsFinded = false;
                 $scope.progressPercent = 0;
                 $scope.isLoading = true;
+                $scope.hiddenFilter = true;
                 var allPostsCount = 0;
 
-                var parseDate = getCheckedDate();
                 var vkGroupId = radCommonFunc.getGroupId($scope.model.groupAddress);
                 var vkGid;
                 var groupInfo;
@@ -118,6 +159,7 @@ angular
                             $scope.urlError = 'Введеная группа вконтакте не найдена';
                             $scope.isLoading = false;
                             $scope.dataIsLoaded = false;
+                            $scope.hiddenFilter = false;
                         });
                         return;
                     }
@@ -339,6 +381,39 @@ angular
                             lastPosts: 5000
                         };
                         break;
+                    case "datePicker":
+                        if (!$scope.model.datePicker.dateFrom){
+                            $scope.error.datePickerFromError = "Неверная дата";
+                            return {
+                                error: true
+                            }
+                        }
+                        if (!$scope.model.datePicker.dateTo){
+                            $scope.error.datePickerToError = "Неверная дата";
+                            return {
+                                error: true
+                            }
+                        }
+                        if ($scope.model.datePicker.dateFrom > $scope.model.datePicker.dateTo){
+                            $scope.error.datePickerFromError = "Дата начала превышает дату окончания";
+                            return {
+                                error: true
+                            }
+                        }
+                        if ($scope.model.datePicker.dateFrom.getTime() == $scope.model.datePicker.dateTo.getTime()){
+                            $scope.model.datePicker.dateTo = new Date($scope.model.datePicker.dateTo.getTime() + 24*60*60*1000);
+                        }
+
+                        dateFrom = $scope.model.datePicker.dateFrom;
+                        dateTo = $scope.model.datePicker.dateTo;
+
+                        return {
+                            from: moment(dateFrom).format("YYYY-MM-DD"),
+                            to: moment(dateTo).format("YYYY-MM-DD"),
+                            unixFrom: dateFrom / 1000,
+                            unixTo: dateTo / 1000
+                        };
+                        break;
                 }
             }
 
@@ -470,6 +545,14 @@ angular
 
             function isShowDetail(index) {
                 return $('.publishItem' + index + ' .post-info-area').height() > 200;
+            }
+
+            function openDatepickerPopupFrom() {
+                $scope.model.datePicker.popupFrom.opened = !$scope.model.datePicker.popupFrom.opened;
+            }
+
+            function openDatepickerPopupTo() {
+                $scope.model.datePicker.popupTo.opened = !$scope.model.datePicker.popupTo.opened;
             }
 
             init();

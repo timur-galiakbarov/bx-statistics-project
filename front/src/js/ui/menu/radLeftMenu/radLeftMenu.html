@@ -1,4 +1,4 @@
-<ul class="nav navbar-nav horizontal" id="leftMenu">
+<ul class="nav navbar-nav horizontal my-main-menu" id="leftMenu">
 
     <li ng-class="currentState('index.dashboard')?'active':''">
         <a ng-click="openState('index.dashboard')"><span>Главная</span></a>
@@ -33,29 +33,4 @@
             </li>
         </ul>
     </li>
-    <!--<li class="parent stat">
-        <a ng-click="showStatsMenu('.stat')"><i class="fa fa-search"></i><span>Анализ групп</span></a>
-        <ul class="sub-menu">
-            <li ng-class="currentState('index.groupsAnalog')?'active':''">
-                <a ng-click="openState('index.groupsAnalog')">Группы, где есть ЦА</a>
-            </li>
-            <li ng-class="currentState('index.auditoryCompare')?'active':''">
-                <a ng-click="openState('index.auditoryCompare')">Сравнение аудиторий</a>
-            </li>
-            <li ng-class="currentState('index.findBots')?'active':''">
-                <a ng-click="openState('index.findBots')">Поиск &laquo;мертвых&raquo; подписчиков</a>
-            </li>
-        </ul>
-    </li>-->
-    <!--<li class="parent adminPage" ng-if="isAdmin">
-        <a ng-click="showStatsMenu('.adminPage')"><i class="fa fa-search"></i><span>Админка</span></a>
-        <ul class="sub-menu">
-            <li ng-class="currentState('index.admin.dashboard')?'active':''">
-                <a ng-click="openState('index.admin.dashboard')">Dashboard</a>
-            </li>
-            <li ng-class="currentState('index.admin.vksync')?'active':''">
-                <a ng-click="openState('index.admin.vksync')">VK Sync</a>
-            </li>
-        </ul>
-    </li>-->
 </ul>

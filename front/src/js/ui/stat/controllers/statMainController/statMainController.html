@@ -52,6 +52,9 @@
             <div class="icon"><i class="fa fa-eye"></i></div>
             <div class="details" href="#">Просмотры <span></span></div>
         </div>
+        <div class="block-flat">
+            <vk-group-widget></vk-group-widget>
+        </div>
     </div>
 
     <div ng-class="{'col-md-9': statIsLoaded, 'col-md-6': !statIsLoaded}">
@@ -81,7 +84,13 @@
 
         </div>-->
 
-        <div class="block-flat">
+        <div class="row showFilterArea" ng-show="hiddenFilter">
+            <div class="col-xs-12 text-center">
+                <a ng-click="hiddenFilter = false" class="showFilterLink">Раскрыть фильтр</a>
+            </div>
+        </div>
+
+        <div class="block-flat" ng-hide="hiddenFilter">
 
             <form role="form">
                 <div class="form-group">
@@ -113,12 +122,78 @@
                                                                 name="checkDate"
                                                                 value="month">
                                 Месяц</label>
+
+                            <div style="margin-top: 6px;">
+                                <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate"
+                                                                    value="datePicker">
+                                    За выбранный промежуток
+                                    <div>
+                                        <div class="date-picker-range-text">
+                                            с
+                                        </div>
+                                        <fieldset class="date-picker-change">
+                                            <div class="control-group">
+                                                <div class="controls">
+                                                    <div class="input-prepend input-group">
+                                                        <span class="add-on input-group-addon"
+                                                              ng-click="openDatepickerPopupFrom()">
+                                                            <span class="glyphicon glyphicon-th"></span>
+                                                        </span>
+                                                        <input type="text" class="form-control date-picker-input"
+                                                               ui-mask="99.99.9999"
+                                                               uib-datepicker-popup="ddMMyyyy"
+                                                               ng-model="model.datePicker.dateFrom"
+                                                               is-open="model.datePicker.popupFrom.opened"
+                                                               datepicker-options="dateOptions"
+                                                               show-button-bar="false"
+                                                               close-on-date-selection="true"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <ul class="parsley-errors-list filled">
+                                                <li class="parsley-required" ng-bind="error.datePickerFromError"></li>
+                                            </ul>
+                                        </fieldset>
+
+                                        <div class="date-picker-range-text">
+                                            по
+                                        </div>
+                                        <fieldset class="date-picker-change">
+                                            <div class="control-group">
+                                                <div class="controls">
+                                                    <div class="input-prepend input-group">
+                                                        <span class="add-on input-group-addon"
+                                                              ng-click="openDatepickerPopupTo()">
+                                                            <span class="glyphicon glyphicon-th"></span>
+                                                        </span>
+                                                        <input type="text" class="form-control date-picker-input"
+                                                               ui-mask="99.99.9999"
+                                                               uib-datepicker-popup="ddMMyyyy"
+                                                               ng-model="model.datePicker.dateTo"
+                                                               is-open="model.datePicker.popupTo.opened"
+                                                               datepicker-options="dateOptions"
+                                                               show-button-bar="false"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <ul class="parsley-errors-list filled">
+                                                <li class="parsley-required" ng-bind="error.datePickerToError"></li>
+                                            </ul>
+                                        </fieldset>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <button type="button" ng-disabled="isLoading" class="btn btn-block btn-info btn-rad"
                         ng-click="getStat()">Показать статистику
                 </button>
+                <div class="row hideFilterArea">
+                    <div class="col-xs-12 text-center">
+                        <a ng-click="hiddenFilter = true" class="showFilterLink">Скрыть фильтр</a>
+                    </div>
+                </div>
             </form>
         </div>
 
@@ -127,11 +202,12 @@
 
             <div class="tab-container">
                 <ul class="nav nav-tabs">
-                    <li ng-class="{active: activeTab == 'dynamic'}" ng-click="showTab('dynamic')"><a>Динамика</a></li>
+                    <li ng-class="{active: activeTab == 'dynamic'}" ng-click="showTab('dynamic')"><a>Посещения и
+                        просмотры</a></li>
                     <li ng-class="{active: activeTab == 'activity'}" ng-click="showTab('activity')"><a>Активность
                         подписчиков</a></li>
-                    <li ng-class="{active: activeTab == 'content'}" ng-click="showTab('content')"><a>Изменение
-                        контента</a></li>
+                    <li ng-class="{active: activeTab == 'er'}" ng-click="showTab('er')"><a>Вовлеченность</a></li>
+                    <li ng-class="{active: activeTab == 'content'}" ng-click="showTab('content')"><a>Контент</a></li>
                     <!--<li class=""><a>Последние используемые</a></li>
                     <li class=""><a>Закладки</a></li>-->
                 </ul>
@@ -196,7 +272,7 @@
                         </div>
                         <div ng-hide="statNotAccess" class="m-top-15">
                             <div class="header">
-                                <h3>Посещаемость</h3>
+                                <h3>Посещаемость и просмотры</h3>
                             </div>
                             <div class="content">
                                 <div class="row">
@@ -248,6 +324,16 @@
                     <div class="tab-pane cont relative" ng-class="{active: activeTab == 'activity'}">
                         <div>
                             <div class="header">
+                                <h3>Динамика реакций на контент</h3>
+                            </div>
+                            <div class="content">
+                                <div class="row">
+                                    <canvas id="wallActivityGraph" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="header">
                                 <h3>Отметки &laquo;Мне нравится&raquo;</h3>
                             </div>
                             <div class="content">
@@ -255,7 +341,7 @@
                                     <div class="col-md-4">
                                         <div class="fd-tile detail clean tile-prusia">
                                             <div class="content"><h2 class="text-left"
-                                                                     ng-bind="stat.wall.likesPeriod"></h2>
+                                                                     ng-bind="stat.wall.likesPeriod || 0"></h2>
 
                                                 <p></p></div>
                                             <div class="icon"><i class="fa fa-heart"></i></div>
@@ -269,7 +355,7 @@
                                     <div class="col-md-4">
                                         <div class="fd-tile detail clean tile-prusia">
                                             <div class="content"><h2 class="text-left"
-                                                                     ng-bind="stat.photos.likesPeriodCount"></h2>
+                                                                     ng-bind="stat.photos.likesPeriodCount || 0"></h2>
 
                                                 <p></p></div>
                                             <div class="icon"><i class="fa fa-heart"></i></div>
@@ -283,7 +369,7 @@
                                     <div class="col-md-4">
                                         <div class="fd-tile detail clean tile-prusia">
                                             <div class="content"><h2 class="text-left"
-                                                                     ng-bind="stat.videos.likesPeriodCount"></h2>
+                                                                     ng-bind="stat.videos.likesPeriodCount || 0"></h2>
 
                                                 <p></p></div>
                                             <div class="icon"><i class="fa fa-heart"></i></div>
@@ -294,6 +380,14 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h3 class="text-left">
+                                            Динамика лайков на стене
+                                        </h3>
+                                    </div>
+                                    <canvas id="wallLikesGraph" height="300"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -306,7 +400,7 @@
                                     <div class="col-md-4">
                                         <div class="fd-tile detail clean tile-prusia">
                                             <div class="content"><h2 class="text-left"
-                                                                     ng-bind="stat.wall.repostsPeriod"></h2>
+                                                                     ng-bind="stat.wall.repostsPeriod || 0"></h2>
 
                                                 <p></p></div>
                                             <div class="icon"><i class="fa fa-bullhorn"></i></div>
@@ -320,7 +414,7 @@
                                     <div class="col-md-4">
                                         <div class="fd-tile detail clean tile-prusia">
                                             <div class="content"><h2 class="text-left"
-                                                                     ng-bind="stat.photos.repostsPeriodCount"></h2>
+                                                                     ng-bind="stat.photos.repostsPeriodCount || 0"></h2>
 
                                                 <p></p></div>
                                             <div class="icon"><i class="fa fa-bullhorn"></i></div>
@@ -331,6 +425,14 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h3 class="text-left">
+                                            Динамика репостов со стены
+                                        </h3>
+                                    </div>
+                                    <canvas id="wallRepostsGraph" height="300"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -343,7 +445,7 @@
                                     <div class="col-md-4">
                                         <div class="fd-tile detail clean tile-prusia">
                                             <div class="content"><h2 class="text-left"
-                                                                     ng-bind="stat.wall.commentsPeriod"></h2>
+                                                                     ng-bind="stat.wall.commentsPeriod || 0"></h2>
 
                                                 <p></p></div>
                                             <div class="icon"><i class="fa fa-comment"></i></div>
@@ -357,7 +459,7 @@
                                     <div class="col-md-4">
                                         <div class="fd-tile detail clean tile-prusia">
                                             <div class="content"><h2 class="text-left"
-                                                                     ng-bind="stat.photos.commentsPeriodCount"></h2>
+                                                                     ng-bind="stat.photos.commentsPeriodCount || 0"></h2>
 
                                                 <p></p></div>
                                             <div class="icon"><i class="fa fa-comment"></i></div>
@@ -369,8 +471,78 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h3 class="text-left">
+                                            Динамика комментариев на стене
+                                        </h3>
+                                    </div>
+                                    <canvas id="wallCommentsGraph" height="300"></canvas>
+                                </div>
                             </div>
                         </div>
+                    </div>
+                    <div class="tab-pane cont relative" ng-class="{active: activeTab == 'er'}">
+                        <div>
+                            <div class="header">
+                                <h3>Вовлеченность аудитории</h3>
+                            </div>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.groupInfo.ER || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Средняя вовлеченность по постам (ER), %
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.groupInfo.ERday || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Средняя вовлеченность по дням (ER), %
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.groupInfo.ERMax || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Максимальная вовлеченность поста, %
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="header">
+                                <h3>Динамика вовлеченности по контенту</h3>
+                            </div>
+                            <div class="content">
+                                <canvas id="wallERGraph" height="300"></canvas>
+                            </div>
+                        </div>
+
                     </div>
                     <div class="tab-pane cont relative" ng-class="{active: activeTab == 'content'}">
                         <div>

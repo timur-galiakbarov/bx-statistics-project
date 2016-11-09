@@ -109,6 +109,35 @@ h2.main-title {
     margin-top: -15px;
 }
 
+.main-stat .showFilterArea{
+    margin-bottom: 15px;
+    margin-top: 5px !important;
+}
+
+.publish-analysis .showFilterArea{
+    margin-bottom: 35px !important;
+    margin-top: 5px !important;
+}
+
+.main-stat .hideFilterArea, .publish-analysis .hideFilterArea{
+    margin-bottom: 5px;
+    margin-top: 5px !important;
+}
+
+.main-stat .hideFilterArea .showFilterLink, .publish-analysis .hideFilterArea .showFilterLink{
+    font-size: 12px;
+}
+
+.main-stat .showFilterLink, .publish-analysis .showFilterLink{
+    cursor: pointer;
+    border-bottom: 1px dashed;
+    font-size: 14px;
+}
+
+.main-stat .showFilterLink:hover, .publish-analysis .showFilterLink:hover{
+    border-bottom: 0px dashed;
+}
+
 .admin-groups-dropdown {
     width: 100% !important;
     max-width: 100% !important;
@@ -406,28 +435,53 @@ h2.main-title {
     font-size: 12px !important;
 }
 
+.publish-analysis .date-picker-change, .main-stat .date-picker-change {
+    float: left;
+}
+
+.publish-analysis .date-picker-range-text, .main-stat .date-picker-range-text {
+    float: left;
+    height: 35px;
+    line-height: 35px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.publish-analysis .date-picker-input, .main-stat .date-picker-input {
+    width: 80px;
+}
+
+.publish-analysis .date-picker-change .input-group-addon, .main-stat .date-picker-change .input-group-addon {
+    background: #456a94;
+    color: #fff;
+}
+
 .block-publish {
     position: relative;
 }
 
-.group-info .group-text{
-    width:100%;
+.publish-analysis .sendToPublish {
+    font-size: 12px;
+}
+
+.group-info .group-text {
+    width: 100%;
     overflow-x: hidden;
 }
 
-.group-info .groupAvatar img{
+.group-info .groupAvatar img {
     max-width: 100%;
 }
 
-.group-info .groupAvatar{
+.group-info .groupAvatar {
     text-align: center;
 }
 
-.group-info .go-to-group{
-    margin-top:10px;
+.group-info .go-to-group {
+    margin-top: 10px;
 }
 
-.no-margin-left{
+.no-margin-left {
     margin-left: 0px;
 }
 
@@ -435,14 +489,70 @@ h2.main-title {
     margin-top: 15px;
 }
 
-.header-tariff{
+.header-tariff {
     text-align: center;
     padding: 15px 15px;
     cursor: pointer;
 }
 
-.header-tariff:hover{
+.header-tariff:hover {
     background-color: #44587a;
+}
+
+.header-partner {
+    text-align: center;
+    padding: 17px 15px;
+    cursor: pointer;
+}
+
+.header-partner:hover {
+    background-color: #44587a;
+}
+
+.partner-link{
+    font-size: 22px;
+}
+
+.admin-link {
+    width: 100%;
+    padding-top: 12px;
+}
+
+.admin-link a {
+    color: #ccc;
+    cursor: pointer;
+}
+
+.admin-link a:hover {
+    color: #ccc;
+    text-decoration: underline;
+}
+
+.admin-dashboard .users-table {
+    height: 420px;
+    overflow-y: scroll;
+}
+
+.admin-dashboard .status-active-user{
+    width:10px;
+    height:10px;
+    border-radius: 5px;
+}
+
+.admin-dashboard .status-active-user.grey{
+    background: #333;
+}
+
+.admin-dashboard .status-active-user.orange{
+    background: #FF9D00;
+}
+
+.admin-dashboard .status-active-user.red{
+    background: #ff2222;
+}
+
+.admin-dashboard .status-active-user.blue{
+    background: #006dcc;
 }
 
 .footer {
@@ -455,13 +565,18 @@ h2.main-title {
     bottom: 0;
 }
 
-.footer-logo{
+.footer-logo {
     width: 100%;
     text-align: center;
     color: #ccc;
 }
 
-.footer-logo span{
+.footer-logo span {
     font-size: 16px;
     font-weight: 300;
+}
+
+#vk_groups,
+#vk_groups iframe {
+    width: 100% !important;
 }

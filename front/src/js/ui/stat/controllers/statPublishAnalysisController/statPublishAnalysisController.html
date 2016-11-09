@@ -51,10 +51,13 @@
 
                     </div>
                     <div class="icon"><i class="fa fa-flag"></i></div>
-                    <a class="details" href="#">Средняя активность (ER), %</a>
+                    <a class="details" href="#">Средняя вовлеченность (ER), %</a>
                 </div>
             </div>
 
+            <div class="block-flat">
+                <vk-group-widget></vk-group-widget>
+            </div>
         </div>
 
         <div class="col-md-6">
@@ -68,7 +71,13 @@
                 </div>
             </div>
 
-            <div class="block-flat">
+            <div class="row showFilterArea" ng-show="hiddenFilter">
+                <div class="col-xs-12 text-center">
+                    <a ng-click="hiddenFilter = false" class="showFilterLink">Раскрыть фильтр</a>
+                </div>
+            </div>
+
+            <div class="block-flat" ng-hide="hiddenFilter">
                 <form role="form">
                     <div class="form-group">
                         <label>Группа для анализа:</label>
@@ -104,11 +113,78 @@
                                                                     value="allPosts">
                                     Последние 5000 записей</label>
                             </div>
+
+                            <div>
+                                <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate"
+                                                                    value="datePicker">
+                                    За выбранный промежуток
+                                    <div>
+                                        <div class="date-picker-range-text">
+                                            с
+                                        </div>
+                                        <fieldset class="date-picker-change">
+                                            <div class="control-group">
+                                                <div class="controls">
+                                                    <div class="input-prepend input-group">
+                                                        <span class="add-on input-group-addon"
+                                                              ng-click="openDatepickerPopupFrom()">
+                                                            <span class="glyphicon glyphicon-th"></span>
+                                                        </span>
+                                                        <input type="text" class="form-control date-picker-input"
+                                                               ui-mask="99.99.9999"
+                                                               uib-datepicker-popup="ddMMyyyy"
+                                                               ng-model="model.datePicker.dateFrom"
+                                                               is-open="model.datePicker.popupFrom.opened"
+                                                               datepicker-options="dateOptions"
+                                                               show-button-bar="false"
+                                                               close-on-date-selection="true"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <ul class="parsley-errors-list filled">
+                                                <li class="parsley-required" ng-bind="error.datePickerFromError"></li>
+                                            </ul>
+                                        </fieldset>
+
+                                        <div class="date-picker-range-text">
+                                            по
+                                        </div>
+                                        <fieldset class="date-picker-change">
+                                            <div class="control-group">
+                                                <div class="controls">
+                                                    <div class="input-prepend input-group">
+                                                        <span class="add-on input-group-addon"
+                                                              ng-click="openDatepickerPopupTo()">
+                                                            <span class="glyphicon glyphicon-th"></span>
+                                                        </span>
+                                                        <input type="text" class="form-control date-picker-input"
+                                                               ui-mask="99.99.9999"
+                                                               uib-datepicker-popup="ddMMyyyy"
+                                                               ng-model="model.datePicker.dateTo"
+                                                               is-open="model.datePicker.popupTo.opened"
+                                                               datepicker-options="dateOptions"
+                                                               show-button-bar="false"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <ul class="parsley-errors-list filled">
+                                                <li class="parsley-required" ng-bind="error.datePickerToError"></li>
+                                            </ul>
+                                        </fieldset>
+                                    </div>
+                                </label>
+                            </div>
+
                         </div>
                     </div>
                     <button type="button" class="btn btn-block btn-info btn-rad no-margin-left" ng-click="getStat()"
                             ng-disabled="isLoading">Начать анализ
                     </button>
+                    <div class="row hideFilterArea">
+                        <div class="col-xs-12 text-center">
+                            <a ng-click="hiddenFilter = true" class="showFilterLink">Скрыть фильтр</a>
+                        </div>
+                    </div>
                 </form>
             </div>
 
@@ -125,11 +201,16 @@
                                     <div class="publish-left-block">
                                         <strong>Дата: </strong> {{getDate(wallPost.date)}}
                                     </div>
-                                    <div class="publish-full-block">
+                                    <br/>
+
+                                    <div class="">
                                         <i class="fa fa-heart"></i> <strong> {{wallPost.likes.count}}</strong>
                                         <i class="fa fa-share-alt"></i> <strong> {{wallPost.reposts.count}}</strong>
                                         <i class="fa fa-comments"></i> <strong> {{wallPost.comments.count}}</strong>
                                         ER <strong> {{wallPost.ER}}%</strong>
+                                        <br/>
+                                        <a class="sendToPublish" ng-href="https://vk.com/feed?w=wall{{wallPost.from_id}}_{{wallPost.id}}"
+                                           target="_blank">Перейти к записи (в новой вкладке)</a>
                                     </div>
                                 </div>
                                 <div class="pull-right">
@@ -199,6 +280,14 @@
 
                     <div class="clear" ng-if="($index+1) % 2 == 0"></div>
 
+                </div>
+
+                <div ng-show="!wallListView.length && dataIsLoaded && !isLoading">
+                    <div class="col-md-12 m-top-m-15">
+                        <div class="block-flat wallPost">
+                            Записей по вашему фильтру нет :(
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -280,6 +369,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
 
     </div>

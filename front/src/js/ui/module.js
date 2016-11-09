@@ -1,6 +1,6 @@
 angular.module('rad.menu', []);
 angular.module('rad.ui.directives', []);
-angular.module('rad.stat', ['angularFileUpload', 'rad.ui.directives']);
+angular.module('rad.stat', ['angularFileUpload', 'rad.ui.directives', 'ui.bootstrap']);
 angular.module('rad.dashboard', []);
 angular.module('rad.favorites', []);
 angular.module('rad.account', []);

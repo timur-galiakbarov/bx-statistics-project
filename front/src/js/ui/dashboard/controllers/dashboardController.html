@@ -64,59 +64,61 @@
 </div>
 
 <div ng-show="model.groupInfo">
-
-    <div class="col-md-8 col-md-offset-2 row">
-        <div class="col-md-4">
-            <div class="block-flat block-action" ng-click="goToMainStat()">
-                <div class="image">
-                    <img src="/lk/images/icon_chart.png">
-                </div>
-                <div class="text-center name">
-                    <span>узнать подробнее об этом сообществе</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="block-flat block-action" ng-click="goToPublishStat()">
-                <div class="search-main-link text-center">
-                    <img src="/lk/images/icon_news.png">
-                </div>
-                <div class="text-center name">
-                    <span>найти самые интересные публикации</span>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="col-md-4">
+                <div class="block-flat block-action" ng-click="goToMainStat()">
+                    <div class="image">
+                        <img src="/lk/images/icon_chart.png">
+                    </div>
+                    <div class="text-center name">
+                        <span>узнать подробнее об этом сообществе</span>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="block-flat block-action" ng-click="goToGroupsAnalog()">
-                <div class="image">
-                    <img src="/lk/images/icon_compass.png">
+            <div class="col-md-4">
+                <div class="block-flat block-action" ng-click="goToPublishStat()">
+                    <div class="search-main-link text-center">
+                        <img src="/lk/images/icon_news.png">
+                    </div>
+                    <div class="text-center name">
+                        <span>найти самые интересные публикации</span>
+                    </div>
                 </div>
-                <div class="text-center name">
-                    <span>найти сообщества с целевой аудиторией</span>
+            </div>
+            <div class="col-md-4">
+                <div class="block-flat block-action" ng-click="goToGroupsAnalog()">
+                    <div class="image">
+                        <img src="/lk/images/icon_compass.png">
+                    </div>
+                    <div class="text-center name">
+                        <span>найти сообщества с целевой аудиторией</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="col-md-8 col-md-offset-2 row smallActions">
-        <div class="col-sm-12">
-            <h3>Дополнительные действия</h3>
-        </div>
-        <div class="col-sm-12">
-            <div class="block-flat block-action" ng-click="goToAuditoryCompare()">
-                <div class="small-image">
-
-                </div>
-                <div class="small-text">
-                    <i class="fa fa-users" aria-hidden="true"></i> сравнить аудитории нескольких групп
-                </div>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2 smallActions">
+            <div class="col-sm-12">
+                <h3>Дополнительные действия</h3>
             </div>
-            <div class="block-flat block-action" ng-click="goToFindBots()">
-                <div class="small-image">
+            <div class="col-sm-12">
+                <div class="block-flat block-action" ng-click="goToAuditoryCompare()">
+                    <div class="small-image">
 
+                    </div>
+                    <div class="small-text">
+                        <i class="fa fa-users" aria-hidden="true"></i> сравнить аудитории нескольких групп
+                    </div>
                 </div>
-                <div class="small-text">
-                    <i class="fa fa-trash" aria-hidden="true"></i> найти &laquo;мертвых&raquo; подписчиков группы
+                <div class="block-flat block-action" ng-click="goToFindBots()">
+                    <div class="small-image">
+
+                    </div>
+                    <div class="small-text">
+                        <i class="fa fa-trash" aria-hidden="true"></i> найти &laquo;мертвых&raquo; подписчиков группы
+                    </div>
                 </div>
             </div>
         </div>

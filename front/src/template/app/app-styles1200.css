@@ -1,8 +1,9 @@
 @media(max-width: 1200px){
-    .shop-tovar-item .itemImage{
-        height: 140px;
+    .my-main-menu li a{
+        padding-left: 10px !important;
+        padding-right: 10px !important;
     }
-    .shop-tovar-item .itemImage img{
-        max-height: 140px;
+    #head-nav.topbar .sidebar-logo{
+        width:160px !important;
     }
 }

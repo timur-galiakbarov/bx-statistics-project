@@ -38,7 +38,7 @@ function radTariff(appState) {
                         $scope.paymentInfo.summ = 99;
                         break;
                     case '3 месяца':
-                        $scope.paymentInfo.summ = 499;
+                        $scope.paymentInfo.summ = 249;
                         break;
                     case '6 месяцев':
                         $scope.paymentInfo.summ = 899;

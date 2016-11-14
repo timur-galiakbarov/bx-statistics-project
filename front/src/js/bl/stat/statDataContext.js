@@ -28,5 +28,14 @@ export default {
         }).then((res)=> {
             return res;
         });
+    },
+    getSectionList(options){
+        return serverApi.request({
+            url: '/controllers/stat/getContentSections.php',
+            type: 'POST',
+            data: options
+        }).then((res)=> {
+            return res;
+        });
     }
 }

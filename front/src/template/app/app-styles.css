@@ -580,3 +580,28 @@ h2.main-title {
 #vk_groups iframe {
     width: 100% !important;
 }
+
+.sectionContent{
+    width:100%;
+    float:left;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.sectionContent .image{
+    width:100%;
+    float:left;
+    text-align: center;
+    height:45px;
+}
+
+.sectionContent .link{
+    width:100%;
+    float:left;
+    text-align: center;
+}
+
+.sectionContent:hover{
+    background: #eee;
+    cursor: pointer;
+}

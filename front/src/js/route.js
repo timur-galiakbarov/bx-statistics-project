@@ -67,6 +67,18 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
+            //Поиск контента для сообщества
+            .state('index.findContent', {
+                url: 'findContent/',
+                views: {
+                    'content': {
+                        url: 'findContent/',
+                        templateUrl: './templates/js/ui/stat/controllers/findContentController/findContentController.html',
+                        controller: 'findContentController'
+                    }
+                },
+                parent: 'index'
+            })
             //Раздел "Мои записи"
             .state('index.publishFavorites', {
                 url: 'publishAnalysis/favorites',

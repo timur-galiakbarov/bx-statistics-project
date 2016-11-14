@@ -27,6 +27,7 @@ angular
             $scope.goToMainStat = goToMainStat;
             $scope.goToGroupsAnalog = goToGroupsAnalog;
             $scope.goToFindBots = goToFindBots;
+            $scope.goToFindContent = goToFindContent;
             $scope.goToAuditoryCompare = goToAuditoryCompare;
             $scope.search = search;
 
@@ -41,6 +42,7 @@ angular
                     $timeout(()=> {
                         $scope.model.searchVisible = false;
                         $scope.model.groupInfo = groupInfo;
+                        $scope.model.title = "Выбрать действие для группы"
                     });
                 });
             }
@@ -56,7 +58,10 @@ angular
             }
 
             function chooseAnotherGroup() {
-                $scope.model.groupInfo = false;
+                $timeout(()=>{
+                    $scope.model.groupInfo = false;
+                    $scope.model.title = "Анализ сообщества";
+                });
             }
 
             function goToPublishStat() {
@@ -97,6 +102,14 @@ angular
                 $state.go('index.findBots', {
                     getStatFromGroup: $scope.model.groupInfo.screen_name
                 });
+            }
+
+            function goToFindContent() {
+                if (!$scope.model.groupInfo) {
+
+                    return;
+                }
+                $state.go('index.findContent');
             }
 
             function goToAuditoryCompare() {

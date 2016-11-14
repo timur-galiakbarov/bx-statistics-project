@@ -26,6 +26,7 @@ import radAmountFilter from './ui/base/radAmountFilter.js';
 import statController from './ui/stat/controllers/statController.js';
 import statMainController from './ui/stat/controllers/statMainController/statMainController.js';
 import statPublishAnalysisController from './ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.js';
+import findContentController from './ui/stat/controllers/findContentController/findContentController.js';
 import statAuditoryCompareController from './ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.js';
 import favoritesController from './ui/favorites/controllers/favoritesController/favoritesController.js';
 import findBotsController from './ui/stat/controllers/findBotsController/findBotsController.js';

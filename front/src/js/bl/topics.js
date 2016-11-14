@@ -6,11 +6,8 @@ export default {
         GET_VK_INFO: 'ACCOUNT.GET_VK_INFO',//��������� ������ �� ����������� ���������
         LOGOUT_VK: 'ACCOUNT.LOGOUT_VK',//����� �� ���� ���������
     },
-    SHOP: {
-        GET_ITEMS: 'SHOP.GET_ITEMS',//��������� ������ �������
-        ADD_ITEM: 'SHOP.ADD_ITEM',//���������� ������ � ��
-        GET_ITEM: 'SHOP.GET_ITEM',//��������� ������ �� id
-        REMOVE_ITEM: 'SHOP.REMOVE_ITEM',//�������� ������ �� ��
+    GET_CONTENT: {
+        GET_LIST: 'GET_CONTENT.GET_LIST'//получение списка разделов для поиска контента
     },
     NEWS: {
         GET_LIST: 'NEWS.GET_LIST'//Получить список новостей

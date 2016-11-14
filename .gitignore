@@ -1,4 +1,3 @@
-# ������������ ��� ����� � �������� bitrix/
 bitrix/admin
 bitrix/backup
 bitrix/cache
@@ -32,4 +31,7 @@ node_modules/*
 lk/
 upload/
 .idea/
+.idea/workspace.xml
 .idea/*
+.idea/*.*
+bitrix/

@@ -972,6 +972,16 @@ angular
             }
 
             function init() {
+                //createCharts
+                graphModel.wallActivityGraph = new defaultGraph();
+                graphModel.wallLikesGraph = new defaultGraph();
+                graphModel.wallRepostsGraph = new defaultGraph();
+                graphModel.wallCommentsGraph = new defaultGraph();
+                graphModel.subscribersStatGraph = new defaultGraph();
+                graphModel.peopleStatGraph = new defaultGraph();
+                graphModel.attendanceStatGraph = new defaultGraph();
+                graphModel.wallERGraph = new defaultGraph();
+
                 checkMainStatIsSaved();
                 getMemoryData();
 
@@ -1024,7 +1034,7 @@ angular
                 if (graphModel.wallActivityGraph) {
                     graphModel.wallActivityGraph.destroy();
                 }
-                graphModel.wallActivityGraph = new defaultGraph();
+
                 graphModel.wallActivityGraph.showGraph({
                     element: "wallActivityGraph",
                     labels: $scope.stat.wall.activityData.map((item)=> {
@@ -1046,7 +1056,7 @@ angular
                 if (graphModel.wallLikesGraph) {
                     graphModel.wallLikesGraph.destroy();
                 }
-                graphModel.wallLikesGraph = new defaultGraph();
+
                 graphModel.wallLikesGraph.showGraph({
                     element: "wallLikesGraph",
                     labels: $scope.stat.wall.activityData.map((item)=> {
@@ -1069,7 +1079,7 @@ angular
                 if (graphModel.wallRepostsGraph) {
                     graphModel.wallRepostsGraph.destroy();
                 }
-                graphModel.wallRepostsGraph = new defaultGraph();
+
                 graphModel.wallRepostsGraph.showGraph({
                     element: "wallRepostsGraph",
                     labels: $scope.stat.wall.activityData.map((item)=> {
@@ -1091,7 +1101,7 @@ angular
                 if (graphModel.wallCommentsGraph) {
                     graphModel.wallCommentsGraph.destroy();
                 }
-                graphModel.wallCommentsGraph = new defaultGraph();
+
                 graphModel.wallCommentsGraph.showGraph({
                     element: "wallCommentsGraph",
                     labels: $scope.stat.wall.activityData.map((item)=> {
@@ -1113,7 +1123,7 @@ angular
                 if (graphModel.subscribersStatGraph) {
                     graphModel.subscribersStatGraph.destroy();
                 }
-                graphModel.subscribersStatGraph = new defaultGraph();
+
                 graphModel.subscribersStatGraph.showGraph({
                     element: "subscribersStatGraph",
                     labels: $scope.stat.graph.subscribersStatData.labels,
@@ -1131,7 +1141,7 @@ angular
                 if (graphModel.peopleStatGraph) {
                     graphModel.peopleStatGraph.destroy();
                 }
-                graphModel.peopleStatGraph = new defaultGraph();
+
                 graphModel.peopleStatGraph.showGraph({
                     element: "graphPeopleStat",
                     labels: $scope.stat.graph.graphPeopleStatData.labels,
@@ -1155,7 +1165,7 @@ angular
                 if (graphModel.attendanceStatGraph) {
                     graphModel.attendanceStatGraph.destroy();
                 }
-                graphModel.attendanceStatGraph = new defaultGraph();
+
                 graphModel.attendanceStatGraph.showGraph({
                     element: "attendanceStatGraph",
                     labels: $scope.stat.graph.attendanceStatData.labels,
@@ -1179,7 +1189,7 @@ angular
                 if (graphModel.wallERGraph) {
                     graphModel.wallERGraph.destroy();
                 }
-                graphModel.wallERGraph = new defaultGraph();
+
                 graphModel.wallERGraph.showGraph({
                     element: "wallERGraph",
                     labels: $scope.stat.wall.activityData.map((item)=> {

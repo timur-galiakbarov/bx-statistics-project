@@ -27,7 +27,7 @@ if ($USER->IsAuthorized())
                         <div class="form-group">
                             <div class="col-sm-12">
                                 <div class="vk-auth-icon text-center">
-                                    <a href="https://oauth.vk.com/authorize?client_id=5358505&scope=wall,photos,stats,friends,groups,video,notifications,email&redirect_uri=<?= $redirectUrl; ?>/login/getCode.php?site=auth&response_type=token">
+                                    <a href="https://oauth.vk.com/authorize?client_id=5358505&scope=stats,groups&redirect_uri=<?= $redirectUrl; ?>/login/getCode.php?site=auth&response_type=token">
                                         <img src="<?= SITE_TEMPLATE_PATH ?>/images/vk64.png" width="48">
                                         <span>Войти через VK</span>
                                     </a>

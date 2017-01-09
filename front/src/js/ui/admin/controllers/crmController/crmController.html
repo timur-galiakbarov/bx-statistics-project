@@ -1,0 +1,40 @@
+<div rad-loader="isLoading" class="admin-dashboard">
+
+    <div class="row">
+
+        <div class="col-md-8">
+            <div class="block-flat">
+                <div class="header">
+                    <h4>
+                        Получение id-администраторов из текста
+                    </h4>
+                </div>
+                <div class="content">
+                    <textarea class="form-control" ng-model="allSocialDOM.text"
+                              rows="20"></textarea>
+
+                    <hr>
+                    <h4>
+                        Список id-администраторов
+                    </h4>
+                    <textarea class="form-control" id="adminList"
+                              rows="20"></textarea>
+
+                    <div class="hidden" id="hiddenDOM"></div>
+                    <button class="btn btn-success" ng-click="parse.links()">Получить ссылки</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+
+        </div>
+
+    </div>
+
+    <div class="row">
+
+
+    </div>
+
+</div>

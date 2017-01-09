@@ -109,32 +109,32 @@ h2.main-title {
     margin-top: -15px;
 }
 
-.main-stat .showFilterArea{
+.main-stat .showFilterArea {
     margin-bottom: 15px;
     margin-top: 5px !important;
 }
 
-.publish-analysis .showFilterArea{
+.publish-analysis .showFilterArea {
     margin-bottom: 35px !important;
     margin-top: 5px !important;
 }
 
-.main-stat .hideFilterArea, .publish-analysis .hideFilterArea{
+.main-stat .hideFilterArea, .publish-analysis .hideFilterArea {
     margin-bottom: 5px;
     margin-top: 5px !important;
 }
 
-.main-stat .hideFilterArea .showFilterLink, .publish-analysis .hideFilterArea .showFilterLink{
+.main-stat .hideFilterArea .showFilterLink, .publish-analysis .hideFilterArea .showFilterLink {
     font-size: 12px;
 }
 
-.main-stat .showFilterLink, .publish-analysis .showFilterLink{
+.main-stat .showFilterLink, .publish-analysis .showFilterLink {
     cursor: pointer;
     border-bottom: 1px dashed;
     font-size: 14px;
 }
 
-.main-stat .showFilterLink:hover, .publish-analysis .showFilterLink:hover{
+.main-stat .showFilterLink:hover, .publish-analysis .showFilterLink:hover {
     border-bottom: 0px dashed;
 }
 
@@ -149,6 +149,56 @@ h2.main-title {
     max-width: 100% !important;
     overflow: hidden;
     cursor: pointer;
+}
+
+.groupListInfo {
+    width: 100%;
+    float: left;
+    margin-top: 5px;
+    margin-bottom: 15px;
+}
+
+.groupListInfo .groupListAvatar {
+    width: 20%;
+    float: left;
+}
+
+.groupListInfo .groupListAvatar img {
+    width: 100%;
+}
+
+.groupListInfo .groupListText {
+    width: 80%;
+    float: left;
+}
+
+.groupListInfo .groupListText .groupName {
+    padding-left: 5px;
+    line-height: 1.1 !important;
+}
+
+.groupListInfo .groupListText a {
+    padding-left: 5px;
+    line-height: 1.1 !important;
+}
+
+.wallPostHeader {
+    float: left;
+    width: 100%;
+    height: 50px;
+    margin-bottom: 25px;
+}
+
+.wallPostHeader .image {
+    float: left;
+    height: 50px;
+}
+
+.wallPostHeader .groupName {
+    padding-left: 15px;
+    font-size: 18px;
+    float:left;
+    padding-top: 10px;
 }
 
 .choose-group-link {
@@ -509,7 +559,7 @@ h2.main-title {
     background-color: #44587a;
 }
 
-.partner-link{
+.partner-link {
     font-size: 22px;
 }
 
@@ -533,25 +583,25 @@ h2.main-title {
     overflow-y: scroll;
 }
 
-.admin-dashboard .status-active-user{
-    width:10px;
-    height:10px;
+.admin-dashboard .status-active-user {
+    width: 10px;
+    height: 10px;
     border-radius: 5px;
 }
 
-.admin-dashboard .status-active-user.grey{
+.admin-dashboard .status-active-user.grey {
     background: #333;
 }
 
-.admin-dashboard .status-active-user.orange{
+.admin-dashboard .status-active-user.orange {
     background: #FF9D00;
 }
 
-.admin-dashboard .status-active-user.red{
+.admin-dashboard .status-active-user.red {
     background: #ff2222;
 }
 
-.admin-dashboard .status-active-user.blue{
+.admin-dashboard .status-active-user.blue {
     background: #006dcc;
 }
 
@@ -581,27 +631,27 @@ h2.main-title {
     width: 100% !important;
 }
 
-.sectionContent{
-    width:100%;
-    float:left;
+.sectionContent {
+    width: 100%;
+    float: left;
     border-radius: 5px;
     padding: 5px;
 }
 
-.sectionContent .image{
-    width:100%;
-    float:left;
+.sectionContent .image {
+    width: 100%;
+    float: left;
     text-align: center;
-    height:45px;
+    height: 45px;
 }
 
-.sectionContent .link{
-    width:100%;
-    float:left;
+.sectionContent .link {
+    width: 100%;
+    float: left;
     text-align: center;
 }
 
-.sectionContent:hover{
+.sectionContent:hover {
     background: #eee;
     cursor: pointer;
 }

@@ -43,7 +43,7 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
                         line-height:37px;
                         white-space: nowrap;"
                    data-ls="offsetxin:-50;durationin:1000;delayin:1000;offsetxout:-50;durationout:1000;">
-                    аналитики групп вконтакте
+                    аналитики групп ВКонтакте
                 </p>
 
                 <p class="ls-l" style="

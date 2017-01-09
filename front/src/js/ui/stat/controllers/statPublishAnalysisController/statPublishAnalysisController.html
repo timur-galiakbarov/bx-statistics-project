@@ -99,11 +99,12 @@
                         <div class="statDateFilters">
                             <div>
                                 <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate"
+                                                                    checked=""
                                                                     value="last30days">
                                     Последние 30 дней</label>
                             </div>
                             <div>
-                                <label class="radio-inline"> <input class="icheck" type="radio" checked=""
+                                <label class="radio-inline"> <input class="icheck" type="radio"
                                                                     name="checkDate"
                                                                     value="last500posts">
                                     Последние 500 записей</label>
@@ -209,7 +210,8 @@
                                         <i class="fa fa-comments"></i> <strong> {{wallPost.comments.count}}</strong>
                                         ER <strong> {{wallPost.ER}}%</strong>
                                         <br/>
-                                        <a class="sendToPublish" ng-href="https://vk.com/feed?w=wall{{wallPost.from_id}}_{{wallPost.id}}"
+                                        <a class="sendToPublish"
+                                           ng-href="https://vk.com/feed?w=wall{{wallPost.from_id}}_{{wallPost.id}}"
                                            target="_blank">Перейти к записи (в новой вкладке)</a>
                                     </div>
                                 </div>

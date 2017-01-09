@@ -63,7 +63,7 @@ if (CModule::IncludeModule("iblock")) {
         $lastDate = date_parse_from_format("j.n.Y", $arUser["UF_ACTIVE_TO"]);
         $currentDate = date_parse_from_format("j.n.Y", date("m").".".date("d").".".date("Y"));
 
-        if ($_POST["withdraw_amount"] == 99) {
+        if ($_POST["withdraw_amount"] == 99 || $_POST["withdraw_amount"] == 199) {
             $tariff = "Активный";
             if ($lastDate < $currentDate){
                 $activeTo = date("d.m.Y", mktime(0, 0, 0, date("m") + 1, date("d") + 1, date("Y")));
@@ -71,7 +71,7 @@ if (CModule::IncludeModule("iblock")) {
                 $activeTo = date("d.m.Y", mktime(0, 0, 0, $lastDate["month"] + 1, $lastDate["day"] + 1, $lastDate["year"]));
             }
         }
-        if ($_POST["withdraw_amount"] == 249) {
+        if ($_POST["withdraw_amount"] == 249 || $_POST["withdraw_amount"] == 499) {
             $tariff = "Активный";
             if ($lastDate < $currentDate){
                 $activeTo = date("d.m.Y", mktime(0, 0, 0, date("m") + 3, date("d") + 1, date("Y")));

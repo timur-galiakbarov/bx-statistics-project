@@ -48,6 +48,7 @@ angular
             $scope.getStatExample = getStatExample;
             $scope.openDatepickerPopupFrom = openDatepickerPopupFrom;
             $scope.openDatepickerPopupTo = openDatepickerPopupTo;
+            $scope.goToPublishStat = goToPublishStat;
 
             $scope.$watch('isLoading', (newVal)=> {
                 $rootScope.globalLoading = newVal;
@@ -219,26 +220,26 @@ angular
                         dateFrom = currDate.setDate(currDate.getDate() - 29);
                         break;
                     case "datePicker":
-                        if (!$scope.model.datePicker.dateFrom){
+                        if (!$scope.model.datePicker.dateFrom) {
                             $scope.error.datePickerFromError = "Неверная дата";
                             return {
                                 error: true
                             }
                         }
-                        if (!$scope.model.datePicker.dateTo){
+                        if (!$scope.model.datePicker.dateTo) {
                             $scope.error.datePickerToError = "Неверная дата";
                             return {
                                 error: true
                             }
                         }
-                        if ($scope.model.datePicker.dateFrom > $scope.model.datePicker.dateTo){
+                        if ($scope.model.datePicker.dateFrom > $scope.model.datePicker.dateTo) {
                             $scope.error.datePickerFromError = "Дата начала превышает дату окончания";
                             return {
                                 error: true
                             }
                         }
-                        if ($scope.model.datePicker.dateFrom.getTime() == $scope.model.datePicker.dateTo.getTime()){
-                            $scope.model.datePicker.dateTo = new Date($scope.model.datePicker.dateTo.getTime() + 24*60*60*1000);
+                        if ($scope.model.datePicker.dateFrom.getTime() == $scope.model.datePicker.dateTo.getTime()) {
+                            $scope.model.datePicker.dateTo = new Date($scope.model.datePicker.dateTo.getTime() + 24 * 60 * 60 * 1000);
                         }
 
                         dateFrom = $scope.model.datePicker.dateFrom;
@@ -292,6 +293,7 @@ angular
                 $scope.stat.groupInfo.wallAnalysisCount = 0;
                 $scope.stat.groupInfo.ER = 0;
                 $scope.stat.groupInfo.ERMax = 0;
+
                 $scope.hiddenFilter = true;
 
                 vkApiFactory.getGroupInfo(authData, {
@@ -331,7 +333,7 @@ angular
                         $scope.stat.groupName = res.name;
                         $scope.stat.groupImage = res.photo_big || res.photo_medium || res.photo;
                         $scope.stat.description = res.description;
-                        $scope.stat.screen_name = res.screen_name;
+                        $scope.stat.groupInfo.screen_name = res.screen_name;
                         vkGid = res.gid;
                     });
                     groupInfo = res;
@@ -344,10 +346,29 @@ angular
                             $scope.nextProgressStep($scope.percentItem);
                             $scope.stat.groupInfo.ER = (ER / $scope.stat.groupInfo.wallAnalysisCount).toFixed(3);
                             var ERdayCount = 0;
-                            $scope.stat.wall.activityData.forEach((item)=>{
+                            var activityDayCount = 0;
+                            $scope.stat.wall.summActions = 0;
+                            $scope.stat.wall.activityData.forEach((item)=> {
                                 ERdayCount = parseFloat(parseFloat(ERdayCount) + parseFloat(item.postER)).toFixed(3);
+                                activityDayCount = parseInt(activityDayCount) + parseInt(item.summActions);
+                                $scope.stat.wall.summActions += parseInt(item.summActions);
                             });
-                            $scope.stat.groupInfo.ERday = (ERdayCount/$scope.stat.wall.activityData.length).toFixed(3);
+                            $scope.stat.groupInfo.ERday = (ERdayCount / $scope.stat.wall.activityData.length).toFixed(3);
+                            //Средняя активность за период по дням
+                            $scope.stat.wall.srDayActivity = (activityDayCount / $scope.stat.wall.activityData.length).toFixed(1);
+                            $scope.stat.wall.srPostActivity = (activityDayCount / $scope.stat.groupInfo.wallAnalysisCount).toFixed(1);
+
+                            if (!$scope.stat.wall.postsPeriod){
+                                $scope.stat.wall.indexLikes = 0;
+                            }
+                            else{
+                                //Индекс одобрения
+                                $scope.stat.wall.indexLikes = parseFloat($scope.stat.wall.likesPeriod / $scope.stat.wall.postsPeriod).toFixed(3);
+                                //Индекс усиления
+                                $scope.stat.wall.indexReposts = parseFloat($scope.stat.wall.repostsPeriod / $scope.stat.wall.postsPeriod).toFixed(3);
+                                //Индекс общения
+                                $scope.stat.wall.indexComments = parseFloat($scope.stat.wall.commentsPeriod / $scope.stat.wall.postsPeriod).toFixed(3);
+                            }
                         }),
                         getAlbumsStat().always(()=> {
                             $scope.nextProgressStep($scope.percentItem);
@@ -950,6 +971,7 @@ angular
 
             function checkMainStatIsSaved() {
                 var stat = appState.getMainStat();
+
                 if (stat) {
                     $scope.stat = stat;
                 }
@@ -1049,6 +1071,16 @@ angular
                         borderColor: '#597da3',
                         backgroundColor: '#597da3',
                         pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }, {
+                        label: "Средняя реакция в день за период",
+                        data: $scope.stat.wall.activityData.map((item)=> {
+                            return $scope.stat.wall.srDayActivity;
+                        }),
+                        fill: false,
+                        borderColor: '#208e68',
+                        backgroundColor: '#208e68',
+                        pointBorderWidth: 0,
                         pointHoverRadius: 3
                     }]
                 });
@@ -1215,6 +1247,12 @@ angular
 
             function openDatepickerPopupTo() {
                 $scope.model.datePicker.popupTo.opened = !$scope.model.datePicker.popupTo.opened;
+            }
+
+            function goToPublishStat() {
+                $state.go('index.publishAnalysis', {
+                    getStatFromGroup: $scope.stat.groupInfo.screen_name
+                });
             }
 
             init();

@@ -3309,10 +3309,10 @@ table.information > tbody > tr > td {
 .alert-white-alt2 .icon {
     text-align: center;
     width: 45px;
-    height: 103%;
     position: absolute;
     top: -1px;
     left: -1px;
+    bottom: -1px;
     border: 1px solid #d5d5d5;
     padding-top: 15px;
 }

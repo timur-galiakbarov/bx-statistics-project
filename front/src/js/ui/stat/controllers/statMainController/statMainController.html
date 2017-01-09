@@ -15,7 +15,7 @@
                     <img ng-src="{{stat.groupImage}}">
                 </div>
 
-                <a href="https://vk.com/{{stat.screen_name}}" target="_blank"
+                <a href="https://vk.com/{{stat.groupInfo.screen_name}}" target="_blank"
                    class="btn btn-block btn-prusia btn-rad go-to-group no-margin-left">Перейти к группе</a>
 
                 <div class="group-text">
@@ -324,11 +324,122 @@
                     <div class="tab-pane cont relative" ng-class="{active: activeTab == 'activity'}">
                         <div>
                             <div class="header">
+                                <h3>Основные показатели</h3>
+                            </div>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.summActions || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Общее количество реакций
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.likesPeriod || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Количество лайков
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.repostsPeriod || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Количество репостов
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.commentsPeriod || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Количество комментариев
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-8">
+
+                                        <div class="alert alert-info alert-white-alt2 rounded">
+                                            <div class="icon"><i class="fa fa-info-circle"></i></div>
+                                            <strong>Популярный контент в этой группе</strong><br>
+                                            Если вы хотите узнать, какой контент в этой группе вызвал наибольший интерес
+                                            у
+                                            подписчиков,
+                                            вы можете сделать это по кнопке ниже.
+                                            <br>
+                                            <button class="btn btn-info" ng-click="goToPublishStat()" style="margin-top:5px; margin-left:-3px;">Анализировать контент</button>
+                                            <div class="clearfix"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="header">
                                 <h3>Динамика реакций на контент</h3>
                             </div>
                             <div class="content">
                                 <div class="row">
-                                    <canvas id="wallActivityGraph" height="300"></canvas>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.srPostActivity || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-heart"></i></div>
+                                            <div class="details">Среднее количество реакций на пост
+                                                <!-- <i class="fa fa-info-circle info-icon"
+                                                    data-toggle="tooltip" data-placement="top"
+                                                    title="Среднее количество реакций за выбранный вами период."></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.srDayActivity || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-heart"></i></div>
+                                            <div class="details">Среднее количество реакций в день
+                                                <!-- <i class="fa fa-info-circle info-icon"
+                                                    data-toggle="tooltip" data-placement="top"
+                                                    title="Среднее количество реакций за выбранный вами период."></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-12">
+                                        <canvas id="wallActivityGraph" height="300"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -387,7 +498,9 @@
                                             Динамика лайков на стене
                                         </h3>
                                     </div>
-                                    <canvas id="wallLikesGraph" height="300"></canvas>
+                                    <div class="col-xs-12">
+                                        <canvas id="wallLikesGraph" height="300"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -432,7 +545,9 @@
                                             Динамика репостов со стены
                                         </h3>
                                     </div>
-                                    <canvas id="wallRepostsGraph" height="300"></canvas>
+                                    <div class="col-xs-12">
+                                        <canvas id="wallRepostsGraph" height="300"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -477,7 +592,9 @@
                                             Динамика комментариев на стене
                                         </h3>
                                     </div>
-                                    <canvas id="wallCommentsGraph" height="300"></canvas>
+                                    <div class="col-xs-12">
+                                        <canvas id="wallCommentsGraph" height="300"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -485,7 +602,56 @@
                     <div class="tab-pane cont relative" ng-class="{active: activeTab == 'er'}">
                         <div>
                             <div class="header">
-                                <h3>Вовлеченность аудитории</h3>
+                                <h3>Основные показатели по стене группы</h3>
+                            </div>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.indexLikes || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Индекс одобрения
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.indexReposts || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Индекс усиления
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="fd-tile detail clean tile-prusia">
+                                            <div class="content"><h2 class="text-left"
+                                                                     ng-bind="stat.wall.indexComments || 0"></h2>
+
+                                                <p></p></div>
+                                            <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                            <div class="details">Индекс общения
+                                                <!--<i class="fa fa-info-circle info-icon"
+                                                   data-toggle="tooltip" data-placement="top"
+                                                   title="Новых - количество добавленных записей на стене в выбранный период времени. Всего - общее число записей на стене в группе"></i>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="header">
+                                <h3>Вовлеченность аудитории по стене группы</h3>
                             </div>
                             <div class="content">
                                 <div class="row">

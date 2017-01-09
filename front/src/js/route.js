@@ -149,6 +149,17 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index.admin'
             })
+            .state('index.admin.crm', {
+                url: 'crm/',
+                views: {
+                    'admin': {
+                        url: 'crm',
+                        templateUrl: './templates/js/ui/admin/controllers/crmController/crmController.html',
+                        controller: 'crmController'
+                    }
+                },
+                parent: 'index.admin'
+            })
             .state('index.admin.dashboard', {
                 url: 'dashboard/',
                 views: {

@@ -23,7 +23,8 @@ angular
                         opened: false
                     }
                 },
-                sections: []
+                sections: [],
+                groupsList: []
             };
             $scope.error = {};
             $scope.adminGroups = [];
@@ -127,6 +128,7 @@ angular
                 $scope.hiddenFilter = true;
                 $scope.wallList = [];
                 $scope.wallListView = [];
+                $scope.model.groupsList = [];
                 var step = (1 / section.groups.length) * 100;
                 console.log(section);
                 getContentPromise(0);
@@ -138,6 +140,14 @@ angular
                                 console.log(result);
 
                                 result.wallList.forEach((item)=> {
+                                    item.group = {
+                                        name: result.name,
+                                        photo: result.photo,
+                                        photo_big: result.photo_big,
+                                        photo_medium: result.photo_medium,
+                                        url: result.url,
+                                        screen_name: result.screen_name
+                                    };
                                     $scope.wallList.push(item);
                                 });
                                 if (index + 1 < section.groups.length) {
@@ -160,7 +170,7 @@ angular
 
                 memoryFactory.setMemory('getContent', {
                     wallList: $scope.wallList,
-                    groupAddress: $scope.model.groupAddress
+                    model: $scope.model
                 });
             }
 
@@ -189,6 +199,8 @@ angular
                         groupInfo = res;
                         groupInfo.ER = 0;
                         groupInfo.wallAnalysisCount = 0;
+                        $scope.model.groupsList.push(groupInfo);
+                        console.log(groupInfo);
                     });
 
                     $.when(
@@ -334,11 +346,8 @@ angular
                         $scope.wallListView.push($scope.wallList[i]);
                     else i = 20;
                 }
-                /*console.log($scope.wallListView);*/
+
                 $scope.$apply($scope.wallListView);
-                $timeout(()=> {
-                    $(".nano").nanoScroller();
-                });
             }
 
             function showNextPosts() {
@@ -425,8 +434,8 @@ angular
                 if (lastData) {
                     $scope.wallList = lastData.wallList;
                     var filterValue = $("input[name=filterPosts]:checked").val() || 'likes';
-                    $scope.model.groupAddress = lastData.groupAddress;
                     $timeout(()=> {
+                        $scope.model = lastData.model;
                         wallFilter(filterValue);
                         $scope.dataIsLoaded = true;
                     });
@@ -503,6 +512,7 @@ angular
             }
 
             function init() {
+                $scope.sectionIsAvailable = appState.isAdmin();
                 //getAdminGroups();
                 getDataFromMemory();
                 getSectionsList();

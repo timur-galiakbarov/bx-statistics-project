@@ -2738,7 +2738,7 @@ table.information > tbody > tr > td {
 .alert-white-alt2 .icon {
   text-align: center;
   width: 45px;
-  height: 103%;
+  height: 100%;
   position: absolute;
   top: -1px;
   left: -1px;

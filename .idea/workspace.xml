@@ -5,25 +5,26 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="111a26ba-efcb-4616-9187-2d27a653c905" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/front/images/1478716076_browser-web-content.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/controllers/stat/getContentSections.php" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/controllers/shop/addItem.php" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/controllers/shop/getItem.php" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/controllers/shop/removeItem.php" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/controllers/shop/shopItems.php" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/controllers/shop/uploadImages.php" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminController.html" afterPath="$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminController.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/template/app/app-styles.css" afterPath="$PROJECT_DIR$/front/src/template/app/app-styles.css" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html" afterPath="$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.js" afterPath="$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/encodings.xml" afterPath="$PROJECT_DIR$/.idea/encodings.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/admin/controllers/crmController/crmController.html" afterPath="$PROJECT_DIR$/front/src/js/ui/admin/controllers/crmController/crmController.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/admin/controllers/crmController/crmController.js" afterPath="$PROJECT_DIR$/front/src/js/ui/admin/controllers/crmController/crmController.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.html" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.js" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/index.php" afterPath="$PROJECT_DIR$/index.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/login/index.php" afterPath="$PROJECT_DIR$/login/index.php" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/main.js" afterPath="$PROJECT_DIR$/front/src/js/main.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/payment_result.php" afterPath="$PROJECT_DIR$/payment_result.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html" afterPath="$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.html" afterPath="$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.js" afterPath="$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/route.js" afterPath="$PROJECT_DIR$/front/src/js/route.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/bl/stat/statDataContext.js" afterPath="$PROJECT_DIR$/front/src/js/bl/stat/statDataContext.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/bl/stat/statLogic.js" afterPath="$PROJECT_DIR$/front/src/js/bl/stat/statLogic.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/bl/topics.js" afterPath="$PROJECT_DIR$/front/src/js/bl/topics.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html" afterPath="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/controllers/common/vksync/landing/css/style.css" afterPath="$PROJECT_DIR$/controllers/common/vksync/landing/css/style.css" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/front/src/template/app/style.css" afterPath="$PROJECT_DIR$/front/src/template/app/style.css" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="www.iws" />
@@ -52,115 +53,86 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="app-styles.css" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/template/app/app-styles.css">
+      <file leaf-file-name="vkApiFactory.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="593" column="20" selection-start-line="593" selection-start-column="20" selection-end-line="593" selection-end-column="20" />
+              <caret line="69" column="25" selection-start-line="69" selection-start-column="25" selection-end-line="69" selection-end-column="25" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="statMainController.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
+      <file leaf-file-name="radTariff.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-7.5">
-              <caret line="74" column="31" selection-start-line="74" selection-start-column="31" selection-end-line="74" selection-end-column="31" />
-              <folding>
-                <element signature="n#style#0;n#div#0;n#div#0;n#div#0;n#div#0;n#div#1;n#div#1;n#!!top" expanded="true" />
-                <element signature="n#style#0;n#div#0;n#div#0;n#div#0;n#div#1;n#form#0;n#div#3;n#div#1;n#div#1;n#!!top" expanded="true" />
-                <element signature="n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#!!top" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="findContentController.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-1.1568627">
-              <caret line="246" column="37" selection-start-line="246" selection-start-column="37" selection-end-line="246" selection-end-column="37" />
-              <folding>
-                <element signature="n#style#0;n#div#0;n#div#0;n#div#0;n#div#0;n#div#1;n#div#1;n#div#0;n#!!top" expanded="true" />
-                <element signature="n#style#0;n#div#3;n#div#1;n#div#1;n#div#0;n#!!top" expanded="true" />
-                <element signature="n#div#3;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
-                <element signature="n#div#1;n#div#1;n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
-                <element signature="n#div#2;n#div#1;n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
-                <element signature="n#div#4;n#div#1;n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="dashboardController.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-11.875">
-              <caret line="76" column="22" selection-start-line="76" selection-start-column="22" selection-end-line="76" selection-end-column="22" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="43" column="58" selection-start-line="43" selection-start-column="58" selection-end-line="43" selection-end-column="58" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="findContentController.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.js">
+      <file leaf-file-name="accountController.html" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/ui/account/controllers/accountController.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-9.703704">
-              <caret line="139" column="45" selection-start-line="139" selection-start-column="45" selection-end-line="139" selection-end-column="45" />
+            <state vertical-scroll-proportion="-5.0">
+              <caret line="8" column="12" selection-start-line="8" selection-start-column="12" selection-end-line="8" selection-end-column="12" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="statMainController.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="payment_result.php" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/payment_result.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-14.75">
+              <caret line="61" column="23" selection-start-line="61" selection-start-column="23" selection-end-line="61" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="radTariff.html" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-21.875">
+              <caret line="122" column="48" selection-start-line="122" selection-start-column="48" selection-end-line="122" selection-end-column="48" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name=".gitignore" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/.gitignore">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.7933884">
+              <caret line="32" column="6" selection-start-line="32" selection-start-column="6" selection-end-line="32" selection-end-column="6" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="statPublishAnalysisController.html" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-12.333333">
+              <caret line="355" column="26" selection-start-line="355" selection-start-column="26" selection-end-line="355" selection-end-column="26" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="statMainController.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.4064171">
-              <caret line="982" column="60" selection-start-line="982" selection-start-column="60" selection-end-line="982" selection-end-column="60" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="886" column="36" selection-start-line="886" selection-start-column="36" selection-end-line="886" selection-end-column="36" />
               <folding>
-                <element signature="e#16325#22574#0" expanded="false" />
+                <element signature="e#2855#6583#0" expanded="false" />
+                <element signature="e#6788#8002#0" expanded="false" />
+                <element signature="e#8042#10508#0" expanded="false" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="statPublishAnalysisController.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="292" column="31" selection-start-line="292" selection-start-column="21" selection-end-line="292" selection-end-column="31" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="statDataContext.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/front/src/js/bl/stat/statDataContext.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="36" column="25" selection-start-line="36" selection-start-column="25" selection-end-line="36" selection-end-column="25" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="getContentSections.php" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/controllers/stat/getContentSections.php">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="17" column="75" selection-start-line="17" selection-start-column="75" selection-end-line="17" selection-end-column="75" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="getBookmarksList.php" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/controllers/account/bookmarks/getBookmarksList.php">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="14" column="42" selection-start-line="14" selection-start-column="42" selection-end-line="14" selection-end-column="42" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -173,57 +145,57 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/groupsAnalogController/groupsAnalogController.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findBotsController/findBotsController.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/app/factories/notify.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/app/factories/radCommonFunc.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/services/statPopupsFactory/statPopupsFactory.js" />
-        <option value="$PROJECT_DIR$/bower_components/moment/src/moment.js" />
-        <option value="$PROJECT_DIR$/bower_components/moment/bower.json" />
-        <option value="$PROJECT_DIR$/bower_components/moment/src/lib/locale/locale.js" />
-        <option value="$PROJECT_DIR$/bower_components/angular-i18n/bower.json" />
-        <option value="$PROJECT_DIR$/bower_components/ngMask/bower.json" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/module.js" />
-        <option value="$PROJECT_DIR$/front/src/js/app.js" />
-        <option value="$PROJECT_DIR$/bower.json" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminDashboardController/adminDashboardController.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminDashboardController/adminDashboardController.html" />
-        <option value="$PROJECT_DIR$/front/src/template/app/style.css" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/directives/radChooseGroup/radChooseGroup.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/account/controllers/partnersController.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/account/controllers/partnersController.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/app/directives/vkGroupWidget/vkGroupWidget.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/groupsAnalogController/groupsAnalogController.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/favorites/controllers/favoritesController/favoritesController.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findBotsController/findBotsController.html" />
-        <option value="$PROJECT_DIR$/front/src/template/app/template.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/menu/radProfile/radProfile.html" />
-        <option value="$PROJECT_DIR$/login/vkAuth.php" />
         <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.js" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html" />
-        <option value="$PROJECT_DIR$/index.php" />
         <option value="$PROJECT_DIR$/local/templates/site/footer.php" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.js" />
         <option value="$PROJECT_DIR$/front/src/js/ui/account/controllers/accountController.html" />
-        <option value="$PROJECT_DIR$/front/src/js/main.js" />
-        <option value="$PROJECT_DIR$/front/src/js/route.js" />
         <option value="$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.js" />
         <option value="$PROJECT_DIR$/front/src/js/bl/topics.js" />
         <option value="$PROJECT_DIR$/front/src/js/bl/stat/statLogic.js" />
         <option value="$PROJECT_DIR$/front/src/js/bl/stat/statDataContext.js" />
         <option value="$PROJECT_DIR$/controllers/account/bookmarks/getBookmarksList.php" />
         <option value="$PROJECT_DIR$/controllers/stat/getContentSections.php" />
-        <option value="$PROJECT_DIR$/front/src/template/app/app-styles.css" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.html" />
-        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.js" />
         <option value="$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html" />
+        <option value="$PROJECT_DIR$/front/src/template/app/app-styles.css" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.js" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html" />
+        <option value="$PROJECT_DIR$/index.php" />
+        <option value="$PROJECT_DIR$/front/src/js/main.js" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminController.html" />
+        <option value="$PROJECT_DIR$/front/src/js/route.js" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/admin/controllers/crmController/crmController.html" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/admin/controllers/crmController/crmController.js" />
+        <option value="$PROJECT_DIR$/login/index.php" />
+        <option value="&lt;9b42d295-eec0-451b-a3b9-cb9a407c5ab9&gt;/socstat/public_html/login/index.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/objects/index.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/local/templates/aspro-scorp/header.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/include/site-email.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/local/templates/aspro-scorp/footer.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/local/templates/aspro-scorp/components/bitrix/news.list/house-declarations/template.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/our-objects/detail.php" />
+        <option value="$PROJECT_DIR$/controllers/common/vksync/landing/css/style.css" />
+        <option value="$PROJECT_DIR$/front/src/template/app/style.css" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/local/templates/aspro-scorp/components/bitrix/news.detail/declaration-detail/template.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/company/declarations/detail.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/local/templates/aspro-scorp/components/bitrix/news.detail/declaration/template.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/local/templates/aspro-scorp/components/bitrix/news.list/front-partners/template.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/local/templates/aspro-scorp/components/bitrix/news.detail/news/template.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/local/templates/aspro-scorp/components/bitrix/news.list/items-list/template.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/indexblocks.php" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/local/templates/aspro-scorp/template_styles.css" />
+        <option value="&lt;91f2c653-1348-46de-a825-3760f8af7e4d&gt;/public_html/local/templates/aspro-scorp/components/bitrix/news.list/news/template.php" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.html" />
         <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/directives/radChooseGroupMain/radChooseGroupMain.js" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/directives/radChooseGroupMain/radChooseGroupMain.html" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/directives/radChooseGroup/radChooseGroup.js" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/stat/directives/radChooseGroup/radChooseGroup.html" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.js" />
+        <option value="$PROJECT_DIR$/payment_result.php" />
+        <option value="$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.html" />
+        <option value="$PROJECT_DIR$/.gitignore" />
       </list>
     </option>
   </component>
@@ -327,8 +299,9 @@
   </component>
   <component name="PhpWorkspaceProjectConfiguration" backward_compatibility_performed="true" />
   <component name="ProjectFrameBounds">
-    <option name="width" value="1440" />
-    <option name="height" value="900" />
+    <option name="x" value="1440" />
+    <option name="width" value="1920" />
+    <option name="height" value="1080" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <OptionsSetting value="true" id="Add" />
@@ -353,8 +326,8 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -373,682 +346,6 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="login" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="local" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="templates" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="site" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="local" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="templates" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="template" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="template" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="app" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="controllers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="controllers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="statPublishAnalysisController" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="controllers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="statMainController" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="controllers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="findContentController" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="dashboard" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="controllers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="app" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="app" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="directives" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="app" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="directives" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="radTariff" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="account" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="controllers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bl" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bl" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="front" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="images" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="controllers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="controllers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="controllers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="account" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="www" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bx-soc-stat" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="controllers" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="account" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="bookmarks" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
         </subPane>
       </pane>
     </panes>
@@ -1062,7 +359,7 @@
     <property name="JavaScriptWeakerCompletionTypeGuess" value="true" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
     <property name="FullScreen" value="true" />
-    <property name="SearchEverywhereHistoryKey" value="dash&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/dashboard/controllers/dashboardController.html&#10;publis&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.js&#10;topics&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/topics.js&#10;publish&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html&#10;route&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/route.js&#10;radLeft&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html&#10;vk&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;appSt&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/account/appState.js&#10;topi&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/topics.js&#10;radLe&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html&#10;vkApi&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;appS&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/account/appState.js&#10;vkapifa&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;vkap&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/controllers/socAuth/vkAuth.php&#10;vkG&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/app/directives/vkGroupWidget/vkGroupWidget.js&#10;vkAp&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;radCho&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/directives/radChooseGroup/radChooseGroup.js&#10;vkApiFactory&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;vkFa&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;radChoo&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/directives/radChooseGroup/radChooseGroup.js&#10;notify&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/app/factories/notify.js&#10;topic&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/topics.js&#10;radLoader&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/base/radLoader.js&#10;serve&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/core/server.js&#10;server&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/core/server.js&#10;shopLo&#9;FILE&#9;file://C:/Bitrix/www/frontEnd/src/js/bl/shop/shopLogic.js" />
+    <property name="SearchEverywhereHistoryKey" value="statMain&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/controllers/statMainController/statMainController.js&#10;statPub&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html&#10;radTar&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/app/directives/radTariff/radTariff.js&#10;js/main&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/main.js&#10;vkApi&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;choose&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/directives/radChooseGroupMain/radChooseGroupMain.html&#10;dash&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/dashboard/controllers/dashboardController.html&#10;publis&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.js&#10;topics&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/topics.js&#10;publish&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html&#10;route&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/route.js&#10;radLeft&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html&#10;vk&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;appSt&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/account/appState.js&#10;topi&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/topics.js&#10;radLe&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html&#10;appS&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/account/appState.js&#10;vkapifa&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;vkap&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/controllers/socAuth/vkAuth.php&#10;vkG&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/app/directives/vkGroupWidget/vkGroupWidget.js&#10;vkAp&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;radCho&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/directives/radChooseGroup/radChooseGroup.js&#10;vkApiFactory&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;vkFa&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js&#10;radChoo&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/stat/directives/radChooseGroup/radChooseGroup.js&#10;notify&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/app/factories/notify.js&#10;topic&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/topics.js&#10;radLoader&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/ui/base/radLoader.js&#10;serve&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/core/server.js&#10;server&#9;FILE&#9;file:///Users/timurgaliakbarov/myProjects/socstat.ru/bx-soc-stat/front/src/js/bl/core/server.js&#10;shopLo&#9;FILE&#9;file://C:/Bitrix/www/frontEnd/src/js/bl/shop/shopLogic.js" />
     <property name="WebServerToolWindowPanel.toolwindow.show.size" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.show.date" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.show.permissions" value="false" />
@@ -1137,27 +434,27 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <frame x="1440" y="0" width="1920" height="1080" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24158654" sideWeight="0.49626866" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24110672" sideWeight="0.49626866" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32980332" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.29872206" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.22151224" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32181427" sideWeight="0.50373137" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32972974" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Gulp" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.18884121" sideWeight="0.11525974" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Gulp" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.29286474" sideWeight="0.17317708" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32970297" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24973376" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.18884121" sideWeight="0.88474023" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25783134" sideWeight="0.4969743" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.29286474" sideWeight="0.82682294" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.23715416" sideWeight="0.4969743" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32972974" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31730768" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31683168" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
@@ -1193,104 +490,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/bower_components/angular-bootstrap/ui-bootstrap.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.44458127">
-          <caret line="1564" column="0" selection-start-line="1564" selection-start-column="0" selection-end-line="1564" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bower_components/moment/src/moment.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-15.074074">
-          <caret line="50" column="0" selection-start-line="50" selection-start-column="0" selection-end-line="50" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/module.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.08690614">
-          <caret line="5" column="34" selection-start-line="5" selection-start-column="34" selection-end-line="5" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bower.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.62574494">
-          <caret line="35" column="31" selection-start-line="35" selection-start-column="31" selection-end-line="35" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/app.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="37" column="30" selection-start-line="37" selection-start-column="30" selection-end-line="37" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/template/app/style.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="885" column="23" selection-start-line="885" selection-start-column="23" selection-end-line="885" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/groupsAnalogController/groupsAnalogController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="275" column="37" selection-start-line="275" selection-start-column="37" selection-end-line="275" selection-end-column="37" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/directives/radChooseGroup/radChooseGroup.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="46" column="29" selection-start-line="46" selection-start-column="29" selection-end-line="46" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/account/controllers/accountController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.37206265">
-          <caret line="19" column="12" selection-start-line="19" selection-start-column="12" selection-end-line="19" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/account/controllers/partnersController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="10" column="41" selection-start-line="10" selection-start-column="41" selection-end-line="10" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/account/controllers/partnersController.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="14" column="50" selection-start-line="14" selection-start-column="50" selection-end-line="14" selection-end-column="50" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/app/directives/vkGroupWidget/vkGroupWidget.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="22" column="37" selection-start-line="22" selection-start-column="37" selection-end-line="22" selection-end-column="37" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/app/directives/vkGroupWidget/vkGroupWidget.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/groupsAnalogController/groupsAnalogController.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-17.0">
-          <caret line="40" column="14" selection-start-line="38" selection-start-column="8" selection-end-line="40" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.html">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-10.625">
@@ -1302,13 +501,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-19.416666">
           <caret line="35" column="19" selection-start-line="35" selection-start-column="19" selection-end-line="35" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-15.0">
-          <caret line="24" column="18" selection-start-line="24" selection-start-column="18" selection-end-line="24" selection-end-column="18" />
         </state>
       </provider>
     </entry>
@@ -1347,20 +539,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminDashboardController/adminDashboardController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-12.258064">
-          <caret line="188" column="101" selection-start-line="188" selection-start-column="101" selection-end-line="188" selection-end-column="101" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/login/index.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-15.125">
-          <caret line="29" column="33" selection-start-line="29" selection-start-column="33" selection-end-line="29" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/login/vkAuth.php">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.28225806">
@@ -1368,24 +546,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminDashboardController/adminDashboardController.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-9.541667">
-          <caret line="71" column="79" selection-start-line="71" selection-start-column="65" selection-end-line="71" selection-end-column="79" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/capabilities/index.php">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.48387095">
           <caret line="24" column="4" selection-start-line="6" selection-start-column="0" selection-end-line="24" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/index.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-16.0">
-          <caret line="447" column="31" selection-start-line="447" selection-start-column="31" selection-end-line="447" selection-end-column="31" />
         </state>
       </provider>
     </entry>
@@ -1403,67 +567,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-5.27451">
-          <caret line="58" column="65" selection-start-line="58" selection-start-column="54" selection-end-line="58" selection-end-column="65" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="40" column="53" selection-start-line="40" selection-start-column="50" selection-end-line="40" selection-end-column="53" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/payment_result.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-6.745098">
-          <caret line="75" column="13" selection-start-line="75" selection-start-column="13" selection-end-line="75" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="112" column="13" selection-start-line="112" selection-start-column="13" selection-end-line="112" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/account/controllers/accountController.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-17.5">
-          <caret line="28" column="74" selection-start-line="28" selection-start-column="74" selection-end-line="28" selection-end-column="74" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/main.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="28" column="14" selection-start-line="28" selection-start-column="14" selection-end-line="28" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.026595745">
-          <caret line="96" column="64" selection-start-line="0" selection-start-column="0" selection-end-line="375" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/route.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="70" column="37" selection-start-line="70" selection-start-column="20" selection-end-line="70" selection-end-column="37" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/bl/topics.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="9" column="39" selection-start-line="9" selection-start-column="19" selection-end-line="9" selection-end-column="39" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1485,7 +592,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="36" column="25" selection-start-line="36" selection-start-column="25" selection-end-line="36" selection-end-column="25" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1493,7 +599,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="14" column="42" selection-start-line="14" selection-start-column="42" selection-end-line="14" selection-end-column="42" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1501,76 +606,268 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="17" column="75" selection-start-line="17" selection-start-column="75" selection-end-line="17" selection-end-column="75" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/front/src/template/app/app-styles.css">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="593" column="20" selection-start-line="593" selection-start-column="20" selection-end-line="593" selection-end-column="20" />
-          <folding />
+          <caret line="188" column="24" selection-start-line="188" selection-start-column="24" selection-end-line="188" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/menu/radLeftMenu/radLeftMenu.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-17.5">
+          <caret line="28" column="79" selection-start-line="28" selection-start-column="79" selection-end-line="28" selection-end-column="79" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/index.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-4.117647">
+          <caret line="59" column="0" selection-start-line="59" selection-start-column="0" selection-end-line="59" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/bl/account/appState.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="14" column="55" selection-start-line="14" selection-start-column="55" selection-end-line="14" selection-end-column="55" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="526" column="37" selection-start-line="526" selection-start-column="37" selection-end-line="526" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminDashboardController/adminDashboardController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.39306358">
+          <caret line="195" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="210" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminController.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.17475729">
+          <caret line="6" column="38" selection-start-line="6" selection-start-column="38" selection-end-line="6" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminDashboardController/adminDashboardController.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-1.3333334">
+          <caret line="71" column="79" selection-start-line="0" selection-start-column="0" selection-end-line="104" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/route.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="153" column="24" selection-start-line="153" selection-start-column="24" selection-end-line="153" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/admin/controllers/crmController/crmController.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-11.25">
+          <caret line="19" column="64" selection-start-line="19" selection-start-column="55" selection-end-line="19" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/admin/controllers/adminController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="15" column="35" selection-start-line="15" selection-start-column="27" selection-end-line="15" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/admin/controllers/crmController/crmController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="30" column="38" selection-start-line="30" selection-start-column="38" selection-end-line="30" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/login/index.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-13.75">
+          <caret line="32" column="40" selection-start-line="32" selection-start-column="40" selection-end-line="32" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-13.666667">
+          <caret line="73" column="19" selection-start-line="71" selection-start-column="16" selection-end-line="73" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-7.9607844">
+          <caret line="94" column="64" selection-start-line="94" selection-start-column="64" selection-end-line="94" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/controllers/common/vksync/landing/css/style.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="2737" column="0" selection-start-line="2737" selection-start-column="0" selection-end-line="2737" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/template/app/style.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="3314" column="17" selection-start-line="3314" selection-start-column="17" selection-end-line="3314" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="84" column="30" selection-start-line="84" selection-start-column="30" selection-end-line="84" selection-end-column="30" />
+          <folding>
+            <element signature="n#div#3;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
+            <element signature="n#div#1;n#div#2;n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
+            <element signature="n#div#2;n#div#2;n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
+            <element signature="n#div#4;n#div#2;n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="632" column="49" selection-start-line="632" selection-start-column="49" selection-end-line="632" selection-end-column="49" />
+          <folding>
+            <element signature="n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#!!top" expanded="false" />
+            <element signature="n#style#0;n#button#0;n#div#0;n#div#0;n#div#1;n#div#1;n#div#0;n#div#1;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#!!top" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="292" column="31" selection-start-line="292" selection-start-column="21" selection-end-line="292" selection-end-column="31" />
+          <caret line="373" column="38" selection-start-line="373" selection-start-column="26" selection-end-line="373" selection-end-column="38" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.js">
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/directives/radChooseGroupMain/radChooseGroupMain.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-9.703704">
-          <caret line="139" column="45" selection-start-line="139" selection-start-column="45" selection-end-line="139" selection-end-column="45" />
+        <state vertical-scroll-proportion="-11.592592">
+          <caret line="164" column="55" selection-start-line="164" selection-start-column="55" selection-end-line="164" selection-end-column="55" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/directives/radChooseGroupMain/radChooseGroupMain.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-4.7058825">
+          <caret line="36" column="92" selection-start-line="36" selection-start-column="43" selection-end-line="36" selection-end-column="92" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/directives/radChooseGroup/radChooseGroup.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.5674967">
+          <caret line="50" column="56" selection-start-line="50" selection-start-column="56" selection-end-line="50" selection-end-column="56" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/directives/radChooseGroup/radChooseGroup.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.6513158">
+          <caret line="154" column="50" selection-start-line="154" selection-start-column="50" selection-end-line="154" selection-end-column="50" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/main.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.41216215">
+          <caret line="36" column="77" selection-start-line="36" selection-start-column="77" selection-end-line="36" selection-end-column="77" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/findContentController/findContentController.html">
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-1.1568627">
-          <caret line="246" column="37" selection-start-line="246" selection-start-column="37" selection-end-line="246" selection-end-column="37" />
-          <folding>
-            <element signature="n#style#0;n#div#0;n#div#0;n#div#0;n#div#0;n#div#1;n#div#1;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#div#3;n#div#1;n#div#1;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#div#3;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
-            <element signature="n#div#1;n#div#1;n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
-            <element signature="n#div#2;n#div#1;n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
-            <element signature="n#div#4;n#div#1;n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#div#0;n#!!top" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-11.875">
-          <caret line="76" column="22" selection-start-line="76" selection-start-column="22" selection-end-line="76" selection-end-column="22" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="69" column="25" selection-start-line="69" selection-start-column="25" selection-end-line="69" selection-end-column="25" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.html">
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-7.5">
-          <caret line="74" column="31" selection-start-line="74" selection-start-column="31" selection-end-line="74" selection-end-column="31" />
-          <folding>
-            <element signature="n#style#0;n#div#0;n#div#0;n#div#0;n#div#0;n#div#1;n#div#1;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#div#0;n#div#0;n#div#0;n#div#1;n#form#0;n#div#3;n#div#1;n#div#1;n#!!top" expanded="true" />
-            <element signature="n#div#0;n#div#0;n#div#0;n#div#4;n#div#1;n#div#1;n#!!top" expanded="false" />
-          </folding>
+        <state vertical-scroll-proportion="-12.333333">
+          <caret line="355" column="26" selection-start-line="355" selection-start-column="26" selection-end-line="355" selection-end-column="26" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/front/src/js/ui/stat/controllers/statMainController/statMainController.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.4064171">
-          <caret line="982" column="60" selection-start-line="982" selection-start-column="60" selection-end-line="982" selection-end-column="60" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="886" column="36" selection-start-line="886" selection-start-column="36" selection-end-line="886" selection-end-column="36" />
           <folding>
-            <element signature="e#16325#22574#0" expanded="false" />
+            <element signature="e#2855#6583#0" expanded="false" />
+            <element signature="e#6788#8002#0" expanded="false" />
+            <element signature="e#8042#10508#0" expanded="false" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/payment_result.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-14.75">
+          <caret line="61" column="23" selection-start-line="61" selection-start-column="23" selection-end-line="61" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/account/controllers/accountController.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-5.0">
+          <caret line="8" column="12" selection-start-line="8" selection-start-column="12" selection-end-line="8" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="43" column="58" selection-start-line="43" selection-start-column="58" selection-end-line="43" selection-end-column="58" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/front/src/js/ui/app/directives/radTariff/radTariff.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-21.875">
+          <caret line="122" column="48" selection-start-line="122" selection-start-column="48" selection-end-line="122" selection-end-column="48" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.7933884">
+          <caret line="32" column="6" selection-start-line="32" selection-start-column="6" selection-end-line="32" selection-end-column="6" />
+          <folding />
         </state>
       </provider>
     </entry>

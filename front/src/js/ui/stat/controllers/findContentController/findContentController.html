@@ -8,51 +8,26 @@
         <div class="col-md-3">
             <div ng-show="dataIsLoaded && !isLoading">
                 <div class="block-flat group-info">
+                    <div class="header">
+                        <h4>Какие группы исследовались?</h4>
+                    </div>
                     <div class="content">
-                        <div class="groupAvatar">
-                            <img ng-src="{{groupInfo.photo_big || groupInfo.photo_medium || groupInfo.photo}}">
+                        <div class="groupListInfo" ng-repeat="group in model.groupsList">
+                            <div class="groupListAvatar">
+                                <img ng-src="{{group.photo_big || group.photo_medium || group.photo}}">
+                            </div>
+                            <div class="groupListText">
+                                <div class="groupName">{{group.name}}</div>
+                                <a href="https://vk.com/{{group.screen_name}}" target="_blank"
+                                   class="">Перейти к группе</a>
+                            </div>
                         </div>
 
-                        <a href="https://vk.com/{{groupInfo.screen_name}}" target="_blank"
-                           class="btn btn-block btn-prusia btn-rad go-to-group no-margin-left">Перейти к группе</a>
-
-                        <div class="group-text">
-
-                            <p ng-show="groupInfo.description" ng-bind-html="groupInfo.description">
-                            </p>
-
-                            <p ng-show="!groupInfo.description">
-                                Описание группы отсутствует
-                            </p>
-                        </div>
                         <div class="clear"></div>
                     </div>
 
                 </div>
 
-                <div class="fd-tile detail clean tile-purple">
-                    <div class="content"><h1 class="text-left">{{groupInfo.members_count}}</h1>
-
-                    </div>
-                    <div class="icon"><i class="fa fa-users"></i></div>
-                    <a class="details" href="#">Подписчиков</a>
-                </div>
-
-                <div class="fd-tile detail clean tile-green">
-                    <div class="content"><h1 class="text-left">{{groupInfo.wallCount}}</h1>
-
-                    </div>
-                    <div class="icon"><i class="fa fa-flag"></i></div>
-                    <a class="details" href="#">Публикаций на стене</a>
-                </div>
-
-                <div class="fd-tile detail clean tile-blue">
-                    <div class="content"><h1 class="text-left">{{groupInfo.ER}}</h1>
-
-                    </div>
-                    <div class="icon"><i class="fa fa-flag"></i></div>
-                    <a class="details" href="#">Средняя вовлеченность (ER), %</a>
-                </div>
             </div>
 
             <div class="block-flat">
@@ -92,6 +67,23 @@
                             </div>
                         </div>
                     </div>
+                    <!--<hr>
+                    <h4>Мои категории</h4>
+
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <table class="table" ng-if="usersGroups && usersGroups.length">
+                                <tr ng-repeat="section in usersGroups">
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </table>
+                            <div ng-if="!usersGroups">
+                                У вас еще нет собственных категорий. Создайте сейчас!
+                            </div>
+                            <button class="btn btn-info" style="margin-top:10px;">Добавить категорию</button>
+                        </div>
+                    </div>-->
 
                     <div class="row hideFilterArea">
                         <div class="col-xs-12 text-center">
@@ -109,6 +101,15 @@
                 <div ng-repeat="wallPost in wallListView">
                     <div class="col-md-12 m-top-m-15">
                         <div class="block-flat wallPost">
+                            <div class="wallPostHeader">
+                                <div class="image">
+                                    <img ng-src="{{wallPost.group.photo_big || wallPost.group.photo_medium || wallPost.group.photo}}"
+                                         height="50">
+                                </div>
+                                <div class="groupName">
+                                    {{wallPost.group.name}}
+                                </div>
+                            </div>
                             <div class="header">
                                 <div class="pull-left">
                                     <div class="publish-left-block">
@@ -211,47 +212,6 @@
                     class="btn btn-block btn-info btn-rad" ng-click="showNextPosts()">Показать еще
             </button>
 
-            <div class="block-flat m-top-m-15" ng-show="!dataIsLoaded && !isLoading && false">
-                <div class="header">
-                    <h3><i class="fa fa-info-circle sign"></i> Что это?</h3>
-                </div>
-                <div class="content site-helper">
-                    <p>Анализ публикаций - это удобный инструмент аналитики постов в сообществах вконтакте. Производит
-                        выгрузку постов с любой группы и показывает самые интересные публикации по ER, лайкам, репостам
-                        и
-                        комментариям. Любой понравившийся пост можно добавить в избранные.
-                    </p>
-
-                    <p>
-                        Для поиска интересных публикаций выберите группу в блоке слева или с главной страницы. Вы можете
-                        указать любую открытую группу, или группу в которой состоите.
-                        После анализа публикаций их можно отфильтровать по лайкам, репостам, комментариям и степени
-                        вовлеченности.
-                    </p>
-
-                    <div class="content overflow-hidden info-example">
-                        <div class="well">
-                            <div class="example-title">Примеры статистики</div>
-                            <hr>
-                            <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
-                                    ng-click="getStatExample('sociopat_ru')">Веселый социопат
-                            </button>
-                            <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
-                                    ng-click="getStatExample('mh')">Men's Health
-                            </button>
-                            <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
-                                    ng-click="getStatExample('v5inf')">5 интересных фактов
-                            </button>
-                            <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
-                                    ng-click="getStatExample('pikabu')">Пикабу
-                            </button>
-                            <button type="button" class="btn btn-info btn-rad btn-sm btn-trans btn-block"
-                                    ng-click="getStatExample('exclusive_muzic')">Новинки музыки 2016
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
 
@@ -286,5 +246,29 @@
 
         </div>
 
+    </div>
+
+    <div ng-if="!sectionIsAvailable && false">
+        <div class="row">
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-6">
+                <div class="block-flat info-box">
+                    <div class="header">
+                        <div class="actions">
+
+                        </div>
+                        <h3>Этот инструмент тестируется :)</h3>
+                    </div>
+                    <div class="content">
+                        <p>Данный инструмент готовится к запуску. Пожалуйста подождите. Мы активно тестируем этот раздел
+                            и скоро он станет доступным для вас.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+
+            </div>
+        </div>
     </div>
 </div>

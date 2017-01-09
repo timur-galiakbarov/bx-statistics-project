@@ -25,6 +25,9 @@
     <li class="dropdown publish">
         <a data-toggle="dropdown">Публикации <b class="caret"></b></a>
         <ul class="dropdown-menu">
+            <li ng-class="currentState('index.findContent')?'active':''">
+                <a ng-click="openState('index.findContent')">Поиск контента</a>
+            </li>
             <li ng-class="currentState('index.publishAnalysis')?'active':''">
                 <a ng-click="openState('index.publishAnalysis')">Анализ публикаций</a>
             </li>

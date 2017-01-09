@@ -34,6 +34,7 @@ import groupsAnalogController from './ui/stat/controllers/groupsAnalogController
 import adminController from './ui/admin/controllers/adminController.js';
 import vksyncController from './ui/admin/controllers/vksyncController/vksyncController.js';
 import adminDashboardController from './ui/admin/controllers/adminDashboardController/adminDashboardController.js';
+import crmController from './ui/admin/controllers/crmController/crmController.js';
 
 /*statDirectives*/
 import ngThumb from './ui/stat/uploader/radThumb.js';

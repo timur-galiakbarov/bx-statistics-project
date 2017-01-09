@@ -5,9 +5,9 @@ angular
     .module('rad.ui.directives')
     .directive('radTariff', radTariff);
 
-radTariff.$inject = ['appState'];
+radTariff.$inject = ['appState', '$timeout'];
 
-function radTariff(appState) {
+function radTariff(appState, $timeout) {
     return {
         restrict: 'EA',
         templateUrl: './templates/js/ui/app/directives/radTariff/radTariff.html',
@@ -35,13 +35,19 @@ function radTariff(appState) {
             $scope.$watch('paymentInfo.period', (newVal)=> {
                 switch (newVal){
                     case '1 месяц':
-                        $scope.paymentInfo.summ = 99;
+                        $timeout(()=>{
+                            $scope.paymentInfo.summ = 199;
+                        });
                         break;
                     case '3 месяца':
-                        $scope.paymentInfo.summ = 249;
+                        $timeout(()=> {
+                            $scope.paymentInfo.summ = 499;
+                        });
                         break;
                     case '6 месяцев':
-                        $scope.paymentInfo.summ = 899;
+                        $timeout(()=> {
+                            $scope.paymentInfo.summ = 899;
+                        });
                         break;
                 }
             });

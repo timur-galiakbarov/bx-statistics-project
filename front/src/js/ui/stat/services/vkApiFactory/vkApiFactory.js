@@ -10,7 +10,8 @@ import events from './../../../../bl/events.js';
     function vkApiFactory(bus, appState, notify) {
 
         var config = {
-            appId: "5358505"
+            appId: "5358505",
+            v: "3.0"
         };
 
         var getGroupInfo = function (authData, params) {
@@ -21,7 +22,8 @@ import events from './../../../../bl/events.js';
                 data: {
                     access_token: authData.token,//Токен
                     group_id: params.groupId,//Список групп
-                    fields: params.fields || "members_count,counters,description"
+                    fields: params.fields || "members_count,counters,description",
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -38,7 +40,8 @@ import events from './../../../../bl/events.js';
                 data: {
                     access_token: authData.token,//Токен
                     group_ids: params.groupIds,//Список групп
-                    fields: params.fields || "members_count,counters,photo"
+                    fields: params.fields || "members_count,counters,photo",
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -56,7 +59,8 @@ import events from './../../../../bl/events.js';
                     access_token: authData.token,//Токен
                     group_id: params.groupId,//Список групп
                     date_from: params.dateFrom,
-                    date_to: params.dateTo
+                    date_to: params.dateTo,
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -74,7 +78,8 @@ import events from './../../../../bl/events.js';
                     owner_id: "-" + params.groupId,//Список групп
                     offset: params.offset,
                     count: params.count,
-                    fileds: params.fields
+                    fileds: params.fields,
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -93,7 +98,8 @@ import events from './../../../../bl/events.js';
                     extended: params.extended,
                     filter: params.filter,
                     fields: params.fields,
-                    count: params.count
+                    count: params.count,
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -110,7 +116,8 @@ import events from './../../../../bl/events.js';
                     access_token: authData.token,//Токен
                     owner_id: params.groupId,
                     count: params.count,
-                    offset: params.offset
+                    offset: params.offset,
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -128,7 +135,8 @@ import events from './../../../../bl/events.js';
                     owner_id: params.groupId,
                     count: params.count,
                     offset: params.offset,
-                    extended: params.extended
+                    extended: params.extended,
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -145,7 +153,8 @@ import events from './../../../../bl/events.js';
                     access_token: authData.token,//Токен
                     owner_id: params.groupId,
                     count: params.count,
-                    offset: params.offset
+                    offset: params.offset,
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -163,7 +172,8 @@ import events from './../../../../bl/events.js';
                     owner_id: params.groupId,
                     count: params.count,
                     offset: params.offset,
-                    extended: params.extended
+                    extended: params.extended,
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -178,7 +188,8 @@ import events from './../../../../bl/events.js';
                 dataType: 'jsonp',
                 data: {
                     access_token: authData.token,//Токен
-                    fields: params.fields || ''
+                    fields: params.fields || '',
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -197,7 +208,8 @@ import events from './../../../../bl/events.js';
                     sort: params.sortData,
                     offset: params.offset,
                     count: params.count,
-                    fields: "counters,contacts"
+                    fields: "counters,contacts",
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -212,7 +224,8 @@ import events from './../../../../bl/events.js';
                 dataType: 'jsonp',
                 data: {
                     access_token: authData.token,//Токен
-                    posts: params.posts
+                    posts: params.posts,
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -229,7 +242,7 @@ import events from './../../../../bl/events.js';
                     access_token: authData.token,//Токен
                     subcategories: 1,
                     extended: 1,
-                    v: "5.53"
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -245,8 +258,7 @@ import events from './../../../../bl/events.js';
                 data: {
                     access_token: authData.token,//Токен
                     category_id: params.category_id,
-
-                    v: "5.53"
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -263,7 +275,7 @@ import events from './../../../../bl/events.js';
                     access_token: authData.token,//Токен
                     group_id: params.groupId,
                     user_id: params.userId,
-                    v: "5.53"
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -280,7 +292,7 @@ import events from './../../../../bl/events.js';
                     access_token: authData.token,//Токен
                     owner_id: params.owner_id,
                     videos: params.videos,
-                    v: "5.53"
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -300,7 +312,8 @@ import events from './../../../../bl/events.js';
                     type: params.type,
                     country_id: params.country_id,
                     sort: params.sort,
-                    count: params.count
+                    count: params.count,
+                    version: config.v
                 }
             }).then(function (res) {
                 errorAction(res);
@@ -318,7 +331,8 @@ import events from './../../../../bl/events.js';
                         groupId: params.groupId,
                         offset: params.offset,
                         fields: params.fields,
-                        access_token: authData.token//Токен
+                        access_token: authData.token,//Токен
+                        version: config.v
                     }
                 }).then(function (res) {
                     errorAction(res);
@@ -342,7 +356,8 @@ import events from './../../../../bl/events.js';
                         groupId: params.groupId,
                         offset: params.offset,
                         fields: params.fields,
-                        access_token: authData.token//Токен
+                        access_token: authData.token,//Токен
+                        version: config.v
                     }
                 }).then(function (res) {
                     errorAction(res);
@@ -358,7 +373,8 @@ import events from './../../../../bl/events.js';
                         groupId: params.groupId,
                         offset: params.offset,
                         fields: params.fields,
-                        access_token: authData.token//Токен
+                        access_token: authData.token,//Токен
+                        version: config.v
                     }
                 }).then(function (res) {
                     errorAction(res);
@@ -367,7 +383,8 @@ import events from './../../../../bl/events.js';
             },
             getSubscribersGroups: function (authData, params) {
                 var data = {
-                    access_token: authData.token//Токен
+                    access_token: authData.token,//Токен
+                    version: config.v
                 };
                 params.userIds.forEach((user, i)=> {
                     data["user" + i] = user;
@@ -390,7 +407,8 @@ import events from './../../../../bl/events.js';
                     data: {
                         userIds: params.userIds,
                         fields: params.fields,
-                        access_token: authData.token//Токен
+                        access_token: authData.token,//Токен
+                        version: config.v
                     }
                 }).then(function (res) {
                     errorAction(res);

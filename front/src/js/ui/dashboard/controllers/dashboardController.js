@@ -29,6 +29,7 @@ angular
             $scope.goToFindBots = goToFindBots;
             $scope.goToFindContent = goToFindContent;
             $scope.goToAuditoryCompare = goToAuditoryCompare;
+            $scope.goToFindAdv = goToFindAdv;
             $scope.search = search;
 
             $scope.$watch('model.searchString', (newVal, oldVal)=> {
@@ -118,6 +119,16 @@ angular
                     return;
                 }
                 $state.go('index.auditoryCompare', {
+                    getStatFromGroup: $scope.model.groupInfo.screen_name
+                });
+            }
+
+            function goToFindAdv(){
+                if (!$scope.model.groupInfo) {
+
+                    return;
+                }
+                $state.go('index.findAdv', {
                     getStatFromGroup: $scope.model.groupInfo.screen_name
                 });
             }

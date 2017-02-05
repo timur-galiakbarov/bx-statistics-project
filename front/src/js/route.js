@@ -125,6 +125,17 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
+            .state('index.findAdv', {
+                url: 'findAdv/?getStatFromGroup',
+                views: {
+                    'content': {
+                        url: 'findAdv',
+                        templateUrl: './templates/js/ui/stat/controllers/findAdvPostsController/findAdvPostsController.html',
+                        controller: 'findAdvPostsController'
+                    }
+                },
+                parent: 'index'
+            })
             //----------------------------------------------------------------------------------------------------------
             //Админка
             .state('index.admin', {

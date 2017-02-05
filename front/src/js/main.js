@@ -31,6 +31,9 @@ import statAuditoryCompareController from './ui/stat/controllers/statAuditoryCom
 import favoritesController from './ui/favorites/controllers/favoritesController/favoritesController.js';
 import findBotsController from './ui/stat/controllers/findBotsController/findBotsController.js';
 import groupsAnalogController from './ui/stat/controllers/groupsAnalogController/groupsAnalogController.js';
+import findAdvPostsController from './ui/stat/controllers/findAdvPostsController/findAdvPostsController.js';
+
+
 import adminController from './ui/admin/controllers/adminController.js';
 import vksyncController from './ui/admin/controllers/vksyncController/vksyncController.js';
 import adminDashboardController from './ui/admin/controllers/adminDashboardController/adminDashboardController.js';

@@ -297,6 +297,11 @@ h2.main-title {
     padding-right: 10px !important;
 }
 
+.wallPost a:hover{
+    text-decoration: underline;
+    cursor: pointer;
+}
+
 .block-publish {
     padding-top: 15px;
 }

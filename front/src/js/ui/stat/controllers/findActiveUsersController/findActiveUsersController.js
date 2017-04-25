@@ -4,14 +4,14 @@ import {enums} from './../../../../bl/module.js';
 
 angular
     .module('rad.stat')
-    .controller('findAdvPostsController', ['$rootScope', '$scope', '$state', 'bus', 'vkApiFactory', 'appState',
-        '$timeout', 'memoryFactory', 'radCommonFunc', 'notify', '$stateParams', '$sce',
+    .controller('findActiveUsersController', ['$rootScope', '$scope', '$state', 'bus', 'vkApiFactory', 'appState',
+        '$timeout', 'memoryFactory', 'radCommonFunc', 'notify', '$stateParams',
         function ($rootScope, $scope, $state, bus, vkApiFactory, appState, $timeout, memoryFactory, radCommonFunc,
-                  notify, $stateParams, $sce) {
-
+                  notify, $stateParams) {
+            $scope.currentTab = 'catalog';
             $scope.model = {
                 groupAddress: '',
-                title: 'Поиск рекламных записей в сообществе',
+                title: 'Поиск самых активных пользователей в группе',
                 datePicker: {
                     dateFrom: '',
                     dateTo: '',
@@ -21,9 +21,7 @@ angular
                     popupTo: {
                         opened: false
                     }
-                },
-                postsList: [],
-                postAmount: 1200
+                }
             };
             $scope.error = {};
             $scope.adminGroups = [];
@@ -31,23 +29,14 @@ angular
             $scope.isHiddenMenu = true;
             $scope.setGroupLink = setGroupLink;
             $scope.getStat = getStat;
-            $scope.showNextPosts = showNextPosts;
             $scope.getDate = getDate;
             $scope.nextProgressStep = nextProgressStep;
-            $scope.isShowAnotherPictures = isShowAnotherPictures;
-            $scope.isShowGif = isShowGif;
-            $scope.showCurrentPicture = showCurrentPicture;
-            $scope.addToFavorite = addToFavorite;
             $scope.getStatExample = getStatExample;
-            $scope.getVideoUrl = getVideoUrl;
-            $scope.isShowDetail = isShowDetail;
             $scope.openDatepickerPopupFrom = openDatepickerPopupFrom;
             $scope.openDatepickerPopupTo = openDatepickerPopupTo;
 
             $scope.wallCount = 0;
             $scope.wallList = [];
-            $scope.wallListView = [];
-            $scope.wallPage = 1;
             $scope.isLoading = false;
             $scope.dataIsLoaded = false;
             $scope.groupIsFinded = false;
@@ -72,9 +61,6 @@ angular
             var membersCount = 0;
 
             var needGetStatFromParams = $stateParams.getStatFromGroup ? $stateParams.getStatFromGroup : false;
-            var reg = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-
-            $scope.$watch('wallList');
 
             $scope.$watch('model.groupAddress', (newVal, oldVal)=> {
                 if (newVal != oldVal)
@@ -94,10 +80,6 @@ angular
             $scope.$watch('isLoading', (newVal)=> {
                 $rootScope.globalLoading = newVal;
             });
-
-            $scope.trustSrc = function (src) {
-                return $sce.trustAsResourceUrl(src);
-            };
 
             function getAdminGroups() {
                 vkApiFactory.getUserGroups(authData, {
@@ -139,11 +121,6 @@ angular
                     return;
                 }
 
-                $scope.model.periodLabels = {
-                    from: parseDate.fromLabel,
-                    to: parseDate.toLabel
-                };
-
                 $scope.groupIsFinded = false;
                 $scope.progressPercent = 0;
                 $scope.isLoading = true;
@@ -184,12 +161,8 @@ angular
 
                     $.when(
                         getWallStat().then(function (wall) {
-                            $scope.model.postsList = wall;
-                            //Фильтр постов по параметрам (реклама)
-                            wallAdvFilter();
-
+                            $scope.wallList = wall;
                             var filterValue = $("input[name=filterPosts]:checked").val() || 'likes';
-                            wallFilter(filterValue);
 
                             $scope.groupInfo.ER = (ER / $scope.groupInfo.wallAnalysisCount).toFixed(3);
                         })
@@ -247,17 +220,7 @@ angular
                                 if (parseDate.lastPosts && parseDate.lastPosts == "all") {
                                     parseDate.lastPosts = res[0];
                                 }
-
                                 res.forEach(function (post, j) {
-
-                                    if (post.text) {
-                                        post.text = findLinks(post.text);
-                                    }
-
-                                    if (typeof post == "object") {
-                                        post.hasLink = post.text ? post.text.match(reg) : false;
-                                        post.hasRepost = post.post_type ? post.post_type == "copy" : false;
-                                    }
 
                                     if (parseDate.lastPosts) {//Фильтр за последние посты
                                         if (j != 0 && postCounter <= parseDate.lastPosts) {
@@ -291,15 +254,6 @@ angular
                                 deferr.resolve(wallStat);
                             }
 
-                            function findLinks(mess) {
-                                mess = mess.replace(reg, function (s) {
-                                    var str = (/:\/\//.exec(s) === null ? "http://" + s : s );
-                                    return "<a target=\"_blank\" href=\"" + str + "\">Перейти по ссылке (в новой вкладке)</a>";
-                                });
-
-                                return mess;
-                            }
-
                             function calcER(post) {
                                 if (membersCount && post.likes && post.reposts && post.comments) {
                                     post.ER = (post.likes.count + post.reposts.count + post.comments.count) / membersCount * 100;
@@ -318,122 +272,6 @@ angular
                 }
             }
 
-            function refreshViewList() {
-                $scope.wallListView = [];
-                $scope.wallPage = 1;
-                for (var i = 0; i < 10; i++) {
-                    if ($scope.wallList[i])
-                        $scope.wallListView.push($scope.wallList[i]);
-                    else i = 20;
-                }
-                $scope.$apply($scope.wallListView);
-            }
-
-            function wallFilter(filter) {
-                if (!filter) {
-                    filter = $('input[name=filterPosts]:checked').val();
-                }
-                if (filter == 'likes') {//Фильтр по лайкам
-                    $scope.wallList = _.sortBy($scope.wallList, function (o) {
-                        if (o.likes && o.likes.count)
-                            return o.likes.count;
-                        else
-                            return 0;
-                    }).reverse();
-                }
-                if (filter == 'date') {//Фильтр по дате
-                    $scope.wallList = _.sortBy($scope.wallList, function (o) {
-                        if (o.date)
-                            return o.date;
-                        else
-                            return 0;
-                    }).reverse();
-                }
-                if (filter == 'reposts') {//Фильтр по лайкам
-                    $scope.wallList = _.sortBy($scope.wallList, function (o) {
-                        if (o.likes && o.reposts.count)
-                            return o.reposts.count;
-                        else
-                            return 0;
-                    }).reverse();
-                }
-                if (filter == 'comments') {//Фильтр по лайкам
-                    $scope.wallList = _.sortBy($scope.wallList, function (o) {
-                        if (o.likes && o.comments.count)
-                            return o.comments.count;
-                        else
-                            return 0;
-                    }).reverse();
-                }
-
-                if (filter == 'ER') {//Фильтр по ER
-                    $scope.wallList = _.sortBy($scope.wallList, function (o) {
-                        if (o.likes && o.ER)
-                            return o.ER;
-                        else
-                            return 0;
-                    }).reverse();
-                }
-
-                refreshViewList();
-            }
-
-            function wallAdvFilter() {
-                var filter = {
-                    isAdv: false,
-                    hasLink: false,
-                    hasRepost: false
-                };
-                $('input[name=filterAdvPosts]:checked').each((index, value)=> {
-                    var currVal = $(value).val();
-                    if (currVal == "isAdv")
-                        filter.isAdv = true;
-                    if (currVal == "hasLink")
-                        filter.hasLink = true;
-                    if (currVal == "hasRepost")
-                        filter.hasRepost = true;
-                });
-
-                $scope.wallList = $scope.model.postsList.filter((post)=> {
-                    return postHasLink(post) || postHasRepost(post) || postIsAdv(post);
-                });
-
-                refreshViewList();
-
-                function postHasLink(post) {
-                    if (filter.hasLink) {
-                        return post.text ? post.text.match(reg) : false;
-                    } else
-                        return false;
-                }
-
-                function postHasRepost(post) {
-                    if (filter.hasRepost) {
-                        return post.text ? post.post_type == "copy" : false;
-                    } else
-                        return false;
-                }
-
-                function postIsAdv(post) {
-                    if (filter.isAdv) {
-                        return post.text ? post.marked_as_ads : false;
-                    } else
-                        return false;
-                }
-            }
-
-            function showNextPosts() {
-                for (var i = $scope.wallPage * 20; i < ($scope.wallPage + 1) * 20; i++) {
-                    if ($scope.wallList[i])
-                        $scope.wallListView.push($scope.wallList[i]);
-                    else i = ($scope.wallPage + 1) * 20;
-                }
-                $scope.wallPage++;
-                $timeout(()=> {
-                    $(".nano").nanoScroller();
-                });
-            }
-
             function getCheckedDate() {
                 var checkDate = $('input[name=checkDate]:checked').val();
                 var currDate = new Date();
@@ -446,9 +284,7 @@ angular
                         dateFrom = currDate.setDate(currDate.getDate() - 29);
                         return {
                             from: moment(dateFrom).format("YYYY-MM-DD"),
-                            fromLabel: moment(dateFrom).format("DD.MM.YYYY"),
                             to: moment(dateTo).format("YYYY-MM-DD"),
-                            toLabel: moment(dateTo).format("DD.MM.YYYY"),
                             unixFrom: dateFrom / 1000,
                             unixTo: dateTo / 1000
                         };
@@ -464,26 +300,26 @@ angular
                         };
                         break;
                     case "datePicker":
-                        if (!$scope.model.datePicker.dateFrom) {
+                        if (!$scope.model.datePicker.dateFrom){
                             $scope.error.datePickerFromError = "Неверная дата";
                             return {
                                 error: true
                             }
                         }
-                        if (!$scope.model.datePicker.dateTo) {
+                        if (!$scope.model.datePicker.dateTo){
                             $scope.error.datePickerToError = "Неверная дата";
                             return {
                                 error: true
                             }
                         }
-                        if ($scope.model.datePicker.dateFrom > $scope.model.datePicker.dateTo) {
+                        if ($scope.model.datePicker.dateFrom > $scope.model.datePicker.dateTo){
                             $scope.error.datePickerFromError = "Дата начала превышает дату окончания";
                             return {
                                 error: true
                             }
                         }
-                        if ($scope.model.datePicker.dateFrom.getTime() == $scope.model.datePicker.dateTo.getTime()) {
-                            $scope.model.datePicker.dateTo = new Date($scope.model.datePicker.dateTo.getTime() + 24 * 60 * 60 * 1000);
+                        if ($scope.model.datePicker.dateFrom.getTime() == $scope.model.datePicker.dateTo.getTime()){
+                            $scope.model.datePicker.dateTo = new Date($scope.model.datePicker.dateTo.getTime() + 24*60*60*1000);
                         }
 
                         dateFrom = $scope.model.datePicker.dateFrom;
@@ -491,9 +327,7 @@ angular
 
                         return {
                             from: moment(dateFrom).format("YYYY-MM-DD"),
-                            fromLabel: moment(dateFrom).format("DD.MM.YYYY"),
                             to: moment(dateTo).format("YYYY-MM-DD"),
-                            toLabel: moment(dateTo).format("DD.MM.YYYY"),
                             unixFrom: dateFrom / 1000,
                             unixTo: dateTo / 1000
                         };
@@ -506,16 +340,10 @@ angular
             }
 
             function getDataFromMemory() {
-                var lastData = memoryFactory.getMemory('publishAnalyser');
+                var lastData = memoryFactory.getMemory('findActiveUsers');
 
                 if (lastData) {
-                    $scope.wallList = lastData.wallList;
-                    var filterValue = $("input[name=filterPosts]:checked").val() || 'likes';
-                    $scope.model.groupAddress = lastData.groupAddress;
-                    $timeout(()=> {
-                        wallFilter(filterValue);
-                        $scope.dataIsLoaded = true;
-                    });
+
                 }
 
                 $timeout(()=> {
@@ -529,55 +357,6 @@ angular
                 });
             }
 
-            function isShowAnotherPictures(arr) {
-                if (!(arr && arr.length)) {
-                    return false;
-                }
-                var filteredArr = arr.filter((i)=> {
-                    return i.type == 'photo';
-                });
-                return filteredArr.length > 1;
-            }
-
-            function isShowGif(arr) {
-                if (!(arr && arr.length)) {
-                    return false;
-                }
-                var filteredArr = arr.filter((i)=> {
-                    return i.type == 'doc' && i.doc && i.doc.ext == "gif";
-                });
-                return filteredArr.length > 0;
-            }
-
-            function showCurrentPicture(url, index) {
-                $(".publishItem" + index + " .image img").attr("src", url);
-            }
-
-            function addToFavorite(post, index) {
-                if (!post) {
-                    return;
-                }
-
-                bus.request(topics.FAVORITE.ADD, {
-                    postData: post
-                })
-                    .then((result)=> {
-                        if (result && result.success) {
-                            $timeout(()=> {
-                                $scope.wallList[index].isAddedToFavorite = true;
-                            });
-                            notify.success("Пост сохранен в отложенные записи");
-                        } else {
-                            if (result && result.exceptionType == 'AlreadyExist') {
-                                $timeout(()=> {
-                                    $scope.wallList[index].isAddedToFavorite = true;
-                                });
-                                notify.error("Этот пост уже есть в ваших отложенных записях");
-                            }
-                        }
-                    });
-            }
-
             function init() {
                 getAdminGroups();
                 getDataFromMemory();
@@ -585,16 +364,6 @@ angular
                 $('.icheck').iCheck({
                     checkboxClass: 'icheckbox_flat-blue',
                     radioClass: 'iradio_flat-blue'
-                });
-
-                $("#listSort input").on("ifChanged", function (res) {
-                    if (res.currentTarget.checked == true) {
-                        wallFilter();
-                    }
-                });
-
-                $("#listFilter input").on("ifChanged", function (res) {
-                    wallAdvFilter();
                 });
 
                 $(".nano").nanoScroller();
@@ -614,27 +383,6 @@ angular
                 getStat(true);
             }
 
-            function getVideoUrl(video) {
-                video = video.video ? video.video : video;
-                return vkApiFactory.getVideo(authData, {
-                    videos: video.owner_id + "_" + video.vid + "_" + video.access_key
-                })
-                    .then((result)=> {
-                        if (result && result.items && result.items[0]) {
-                            $timeout(()=> {
-                                video.url = result.items[0].player;
-                            });
-                        }
-                        else {
-                            notify.error("Не удалось получить видеозапись.");
-                        }
-                    });
-            }
-
-            function isShowDetail(index) {
-                return $('.publishItem' + index + ' .post-info-area').height() > 200;
-            }
-
             function openDatepickerPopupFrom() {
                 $scope.model.datePicker.popupFrom.opened = !$scope.model.datePicker.popupFrom.opened;
             }
@@ -645,6 +393,4 @@ angular
 
             init();
 
-        }
-
-    ]);
+        }]);

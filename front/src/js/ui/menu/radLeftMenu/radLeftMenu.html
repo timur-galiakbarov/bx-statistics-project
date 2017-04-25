@@ -3,7 +3,46 @@
     <li ng-class="currentState('index.dashboard')?'active':''">
         <a ng-click="openState('index.dashboard')"><span>Главная</span></a>
     </li>
+
     <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Инструменты <b class="caret"></b></a>
+        <ul class="dropdown-menu col-menu-2">
+            <li class="col-sm-6 no-padding">
+                <ul>
+                    <li class="dropdown-header"><i class="fa fa-group"></i>Аналитика</li>
+                    <li ng-class="currentState('index.stat')?'active':''">
+                        <a ng-click="openState('index.stat')">Аналитика сообщества</a>
+                    </li>
+                    <li class="dropdown-header"><i class="fa fa-gear"></i>Инструменты таргета</li>
+                    <li ng-class="currentState('index.groupsAnalog')?'active':''">
+                        <a ng-click="openState('index.groupsAnalog')">Сообщества, где есть ЦА</a>
+                    </li>
+                    <li ng-class="currentState('index.auditoryCompare')?'active':''">
+                        <a ng-click="openState('index.auditoryCompare')">Сравнение аудиторий</a>
+                    </li>
+                    <li ng-class="currentState('index.findBots')?'active':''">
+                        <a ng-click="openState('index.findBots')">&laquo;Мертвые&raquo; подписчики</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="col-sm-6 no-padding">
+                <ul>
+                    <li class="dropdown-header"><i class="fa fa-legal"></i>Контент</li>
+                    <li ng-class="currentState('index.findContent')?'active':''">
+                        <a ng-click="openState('index.findContent')">Поиск контента</a>
+                    </li>
+                    <li ng-class="currentState('index.publishAnalysis')?'active':''">
+                        <a ng-click="openState('index.publishAnalysis')">Анализ публикаций</a>
+                    </li>
+                    <li ng-class="currentState('index.publishFavorites')?'active':''">
+                        <a ng-click="openState('index.publishFavorites')">Сохраненные публикации</a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+
+    <!--<li class="dropdown">
         <a data-toggle="dropdown">Сообщества <b class="caret"></b></a>
         <ul class="dropdown-menu">
             <li ng-class="currentState('index.stat')?'active':''">
@@ -35,5 +74,5 @@
                 <a ng-click="openState('index.publishFavorites')">Сохраненные публикации</a>
             </li>
         </ul>
-    </li>
+    </li>-->
 </ul>

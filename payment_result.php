@@ -79,6 +79,14 @@ if (CModule::IncludeModule("iblock")) {
                 $activeTo = date("d.m.Y", mktime(0, 0, 0, $lastDate["month"] + 3, $lastDate["day"] + 1, $lastDate["year"]));
             }
         }
+        if ($_POST["withdraw_amount"] == 999) {
+            $tariff = "Активный";
+            if ($lastDate < $currentDate){
+                $activeTo = date("d.m.Y", mktime(0, 0, 0, date("m"), date("d") + 1, date("Y") + 1));
+            } else {
+                $activeTo = date("d.m.Y", mktime(0, 0, 0, $lastDate["month"], $lastDate["day"] + 1, $lastDate["year"] + 1));
+            }
+        }
         /*if ($_POST["withdraw_amount"] == 899) {
             if ($arUser["UF_TARIFF"] == "Бесплатный") {
                 $activeTo = date("d.m.Y", mktime(0, 0, 0, date("m") + 6, date("d") + 1, date("Y")));

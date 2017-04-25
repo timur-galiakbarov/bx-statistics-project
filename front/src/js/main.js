@@ -32,6 +32,7 @@ import favoritesController from './ui/favorites/controllers/favoritesController/
 import findBotsController from './ui/stat/controllers/findBotsController/findBotsController.js';
 import groupsAnalogController from './ui/stat/controllers/groupsAnalogController/groupsAnalogController.js';
 import findAdvPostsController from './ui/stat/controllers/findAdvPostsController/findAdvPostsController.js';
+import findActiveUsersController from './ui/stat/controllers/findActiveUsersController/findActiveUsersController.js';
 
 
 import adminController from './ui/admin/controllers/adminController.js';

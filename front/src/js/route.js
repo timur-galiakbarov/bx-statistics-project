@@ -8,7 +8,6 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: './templates/template/app/template.html',
                 controller: 'appController'
             })
-            //Раздел "Главная"
             .state('index.dashboard', {
                 url: 'dashboard/',
                 views: {
@@ -19,7 +18,6 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Раздел "Аккаунт"
             .state('index.account', {
                 url: 'account/',
                 views: {
@@ -31,7 +29,6 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Раздел "пригласи друга"
             .state('index.partners', {
                 url: 'partners/',
                 views: {
@@ -43,7 +40,6 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Общая статистика
             .state('index.stat', {
                 url: 'statistics/?getStatFromGroup',
                 views: {
@@ -55,7 +51,6 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Анализ публикаций
             .state('index.publishAnalysis', {
                 url: 'publishAnalysis/?getStatFromGroup',
                 views: {
@@ -67,7 +62,6 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Поиск контента для сообщества
             .state('index.findContent', {
                 url: 'findContent/',
                 views: {
@@ -79,7 +73,6 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Раздел "Мои записи"
             .state('index.publishFavorites', {
                 url: 'publishAnalysis/favorites',
                 views: {
@@ -90,7 +83,6 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Сравнение аудиторий
             .state('index.auditoryCompare', {
                 url: 'auditoryCompare/?getStatFromGroup',
                 views: {
@@ -102,7 +94,6 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Поиск мертвых участников
             .state('index.findBots', {
                 url: 'findBots/?getStatFromGroup',
                 views: {
@@ -136,8 +127,18 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
+            .state('index.findActiveUsers', {
+                url: 'findActiveUsers/?getStatFromGroup',
+                views: {
+                    'content': {
+                        url: 'findActiveUsers',
+                        templateUrl: './templates/js/ui/stat/controllers/findActiveUsersController/findActiveUsersController.html',
+                        controller: 'findActiveUsersController'
+                    }
+                },
+                parent: 'index'
+            })
             //----------------------------------------------------------------------------------------------------------
-            //Админка
             .state('index.admin', {
                 url: 'admin/',
                 views: {

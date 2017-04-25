@@ -7,7 +7,7 @@
             <strong>Закончился период подписки</strong>
             <br>
             Для продолжения работы оплатите требуемый период работы сервиса.
-            Стоимость одного месяца - всего <strong>166</strong> рубля при оплате за 3 месяца.<br>
+            Стоимость одного месяца - всего <strong>84</strong> рубля при оплате за год.<br>
         </div>
 
         Мой тариф - {{model.tariff}}<br>
@@ -49,7 +49,14 @@
                     <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>3 месяца</td>
                     <td class="text-center">499 <i class="fa fa-rub"></i></td>
                     <td class="text-right">
-                        <input type="radio" ng-model="paymentInfo.period" value="3 месяца" checked="checked">
+                        <input type="radio" ng-model="paymentInfo.period" value="3 месяца">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>1 год</td>
+                    <td class="text-center">999 <i class="fa fa-rub"></i></td>
+                    <td class="text-right">
+                        <input type="radio" ng-model="paymentInfo.period" value="1 год">
                     </td>
                 </tr>
                 <!--<tr>
@@ -82,7 +89,7 @@
         <p>
             Для продолжения работы с сервисом оплатите необходимый период.
             <br>
-            Стоимость одного месяца - всего <strong>166</strong> рублей при оплате за 3 месяца.<br>
+            Стоимость одного месяца - всего <strong>84</strong> рубля при оплате за год.<br>
 
 
         <form method="POST" action="https://money.yandex.ru/quickpay/confirm.xml" target="_blank">
@@ -121,6 +128,13 @@
                     <td class="text-center">499 <i class="fa fa-rub"></i></td>
                     <td class="text-right">
                         <input type="radio" ng-model="paymentInfo.period" value="3 месяца">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>1 год</td>
+                    <td class="text-center">999 <i class="fa fa-rub"></i></td>
+                    <td class="text-right">
+                        <input type="radio" ng-model="paymentInfo.period" value="1 год">
                     </td>
                 </tr>
                 <!--<tr>

@@ -29,8 +29,10 @@ angular
             $scope.goToFindBots = goToFindBots;
             $scope.goToFindContent = goToFindContent;
             $scope.goToAuditoryCompare = goToAuditoryCompare;
+            $scope.goToFindActiveUsers = goToFindActiveUsers;
             $scope.goToFindAdv = goToFindAdv;
             $scope.search = search;
+            $scope.noActiveTariff = !appState.isActiveUser();
 
             $scope.$watch('model.searchString', (newVal, oldVal)=> {
                 if (newVal != oldVal)
@@ -95,6 +97,15 @@ angular
                 });
             }
 
+            function goToFindActiveUsers(){
+                if (!$scope.model.groupInfo) {
+                    return;
+                }
+                $state.go('index.findActiveUsers', {
+                    getStatFromGroup: $scope.model.groupInfo.screen_name
+                });
+            }
+
             function goToFindBots() {
                 if (!$scope.model.groupInfo) {
 
@@ -106,10 +117,6 @@ angular
             }
 
             function goToFindContent() {
-                if (!$scope.model.groupInfo) {
-
-                    return;
-                }
                 $state.go('index.findContent');
             }
 
@@ -144,6 +151,10 @@ angular
                     $scope.isSearchGroup = false;
                     return;
                 }
+
+                $scope.model.searchString = $scope.model.searchString.replace("http://vk.com/", "");
+                $scope.model.searchString = $scope.model.searchString.replace("https://vk.com/", "");
+                $scope.model.searchString = $scope.model.searchString.replace("vk.com/", "");
 
                 vkApiFactory.searchGroup(authData, {
                     q: $scope.model.searchString,

@@ -34,13 +34,28 @@
                 </div>
 
                 <div class="fd-tile detail clean tile-purple">
-                    <div class="content"><h1 class="text-left">{{wallList.length}}</h1>
+                    <div class="content"><h1 class="text-left">{{groupInfo.members_count}}</h1>
 
                     </div>
                     <div class="icon"><i class="fa fa-users"></i></div>
-                    <a class="details" href="#">рекламных постов за период</a>
+                    <a class="details" href="#">Подписчиков</a>
                 </div>
 
+                <div class="fd-tile detail clean tile-green">
+                    <div class="content"><h1 class="text-left">{{groupInfo.wallCount}}</h1>
+
+                    </div>
+                    <div class="icon"><i class="fa fa-flag"></i></div>
+                    <a class="details" href="#">Публикаций на стене</a>
+                </div>
+
+                <div class="fd-tile detail clean tile-blue">
+                    <div class="content"><h1 class="text-left">{{groupInfo.ER}}</h1>
+
+                    </div>
+                    <div class="icon"><i class="fa fa-flag"></i></div>
+                    <a class="details" href="#">Средняя вовлеченность (ER), %</a>
+                </div>
             </div>
 
             <div class="block-flat">
@@ -81,26 +96,21 @@
                         <rad-choose-group on-action="setGroupLink" ng-show="!isHiddenMenu"></rad-choose-group>
                     </div>
                     <div class="form-group">
-                        <label>Количество публикаций для анализа</label>
+                        <label>Временной промежуток для анализа</label>
                         <input type="hidden" placeholder="Password" class="form-control">
 
                         <div class="statDateFilters">
                             <div>
                                 <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate"
                                                                     checked=""
-                                                                    value="last30days">
-                                    Последние 30 дней</label>
-                            </div>
-                            <div>
-                                <label class="radio-inline"> <input class="icheck" type="radio"
-                                                                    name="checkDate"
-                                                                    value="last500posts">
-                                    Последние 500 записей</label>
+                                                                    value="last7days">
+                                    Последняя неделя</label>
                             </div>
                             <div>
                                 <label class="radio-inline"> <input class="icheck" type="radio" name="checkDate"
-                                                                    value="allPosts">
-                                    Последние 5000 записей</label>
+                                                                    checked=""
+                                                                    value="last30days">
+                                    Последние 30 дней</label>
                             </div>
 
                             <div>
@@ -203,21 +213,18 @@
                                            target="_blank">Перейти к записи (в новой вкладке)</a>
                                     </div>
                                 </div>
-
+                                <div class="pull-right">
+                                    <button class="btn btn-prusia addToFavoritePost"
+                                            ng-disabled="wallPost.isAddedToFavorite"
+                                            ng-class="{'btn-success': !wallPost.isAddedToFavorite, 'btn-prusia': wallPost.isAddedToFavorite}"
+                                            ng-click="addToFavorite(wallPost, $index)">
+                                        {{wallPost.isAddedToFavorite ? 'Запись сохранена' : 'Сохранить'}}
+                                    </button>
+                                </div>
                                 <div class="clear"></div>
                             </div>
                             <div class="block-publish publishItem{{$index}}" data="{{currentIndex = $index}}">
-                                <div class="tags">
-                                    <div class="item" ng-show="wallPost.marked_as_ads">
-                                        Отметка "Рекламная запись"
-                                    </div>
-                                    <div class="item" ng-show="wallPost.hasRepost">
-                                        Содержит репост
-                                    </div>
-                                    <div class="item" ng-show="wallPost.hasLink">
-                                        Содержит ссылку
-                                    </div>
-                                </div>
+
                                 <div class="text">
                                     <span ng-bind-html="wallPost.text"></span>
                                     <!--<a href="http://www.mhealth.ru/diet/ration/425723/">http://www.mhealth.ru/diet/ration/425723/</a>-->
@@ -290,12 +297,12 @@
                     class="btn btn-block btn-info btn-rad" ng-click="showNextPosts()">Показать еще
             </button>
 
-            <!--<div class="block-flat m-top-m-15" ng-show="!dataIsLoaded && !isLoading">
+            <div class="block-flat m-top-m-15" ng-show="!dataIsLoaded && !isLoading">
                 <div class="header">
                     <h3><i class="fa fa-info-circle sign"></i> Что это?</h3>
                 </div>
                 <div class="content site-helper">
-                    <p> - это удобный инструмент аналитики постов в сообществах вконтакте. Производит
+                    <p>Анализ публикаций - это удобный инструмент аналитики постов в сообществах вконтакте. Производит
                         выгрузку постов с любой группы и показывает самые интересные публикации по ER, лайкам, репостам
                         и
                         комментариям. Любой понравившийся пост можно добавить в избранные.
@@ -330,35 +337,11 @@
                         </div>
                     </div>
                 </div>
-            </div>-->
+            </div>
         </div>
 
 
         <div class="col-md-3">
-
-            <div class="block-flat list-sort" ng-show="dataIsLoaded && !isLoading">
-                <div class="header">
-                    <h4>Фильтр рекламных постов</h4>
-                </div>
-                <div class="content" id="listFilter">
-                    <div>
-                        <label class="radio-inline">
-                            <input class="icheck" type="checkbox" checked="" name="filterAdvPosts" value="isAdv">
-                            Указана метка "Рекламная запись"</label>
-                    </div>
-                    <div>
-                        <label class="radio-inline">
-                            <input class="icheck" type="checkbox" name="filterAdvPosts" value="hasLink">
-                            Имеется ссылка внутри поста</label>
-                    </div>
-                    <div>
-                        <label class="radio-inline">
-                            <input class="icheck" type="checkbox" name="filterAdvPosts" value="hasRepost">
-                            Есть репост записи</label>
-                    </div>
-                </div>
-            </div>
-
             <div class="block-flat list-sort" ng-show="dataIsLoaded && !isLoading">
                 <div class="header">
                     <h4>Сортировать</h4>
@@ -366,12 +349,7 @@
                 <div class="content" id="listSort">
                     <div>
                         <label class="radio-inline">
-                            <input class="icheck" type="radio" checked="" name="filterPosts" value="date">
-                            По дате</label>
-                    </div>
-                    <div>
-                        <label class="radio-inline">
-                            <input class="icheck" type="radio" name="filterPosts" value="likes">
+                            <input class="icheck" type="radio" checked="" name="filterPosts" value="likes">
                             По лайкам</label>
                     </div>
                     <div>
@@ -388,27 +366,6 @@
                         <label class="radio-inline">
                             <input class="icheck" type="radio" name="filterPosts" value="ER">
                             По ER</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="block-flat list-sort" ng-show="dataIsLoaded && !isLoading">
-                <div class="header">
-                    <h4>Мини-калькулятор дохода</h4>
-                </div>
-                <div class="content">
-                    <div class="form-group">
-                        <label>Средня цена размещения рекламного поста</label>
-                        <input type="text" class="form-control" ng-model="model.postAmount"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Количество рекламных постов за период - {{wallList.length}}</label>
-                    </div>
-                    <hr/>
-                    <div class="form-group">
-                        <label>Доход по постам</label>
-
-                        <h3>{{wallList.length * (model.postAmount>0 ? model.postAmount : 0) | radAmountFilter}} <i class="fa fa-rub"></i></h3>
                     </div>
                 </div>
             </div>

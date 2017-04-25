@@ -28,7 +28,7 @@ function radTariff(appState, $timeout) {
             };
             $scope.paymentInfo = {
                 period: '1 месяц',
-                summ: '99'
+                summ: '199'
             };
             $scope.noActiveTariff = !appState.isActiveUser();
 
@@ -47,6 +47,10 @@ function radTariff(appState, $timeout) {
                     case '6 месяцев':
                         $timeout(()=> {
                             $scope.paymentInfo.summ = 899;
+                        });
+                    case '1 год':
+                        $timeout(()=> {
+                            $scope.paymentInfo.summ = 999;
                         });
                         break;
                 }

@@ -379,10 +379,6 @@ h2.main-title {
     margin-left: 0px;
 }
 
-.m-top-m-15 {
-    margin-top: -20px;
-}
-
 .radProfile {
     background: #1d1f26;
 }
@@ -443,11 +439,28 @@ h2.main-title {
     text-align: center;
 }
 
+.block-action .small-image {
+    text-align: center;
+}
+
+.block-action .small-image img{
+    width: 100%;
+    max-width: 64px;
+}
+
 .block-action .name {
     margin-top: 10px;
     font-size: 18px;
     height: 68px;
     display: table;
+}
+
+.block-action .small-name {
+    margin-top: 10px;
+    font-size: 14px;
+    height: 62px;
+    display: table;
+    overflow-y: hidden;
 }
 
 .block-action .name span {
@@ -464,7 +477,7 @@ h2.main-title {
     font-size: 14px;
     position: absolute;
     left: 0;
-    top: 16px;
+    top: 24px;
 }
 
 .go-back-link a {
@@ -515,6 +528,26 @@ h2.main-title {
     position: relative;
 }
 
+.block-publish .tags{
+    width:100%;
+    height: 25px;
+    float:left;
+    margin-bottom: 10px;
+}
+
+.block-publish .tags .item{
+    border-radius: 3px;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    background: #006294;
+    color: #fff;
+    margin-right: 10px;
+    float: left;
+    font-size: 10px;
+}
+
 .publish-analysis .sendToPublish {
     font-size: 12px;
 }
@@ -542,6 +575,22 @@ h2.main-title {
 
 .m-top-15 {
     margin-top: 15px;
+}
+
+.m-top-20 {
+    margin-top: 20px;
+}
+
+.m-top-25 {
+    margin-top: 25px;
+}
+
+.m-top-m-15 {
+    margin-top: -20px;
+}
+
+.m-top-0 {
+    margin-top: 0px;
 }
 
 .header-tariff {

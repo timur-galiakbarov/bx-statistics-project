@@ -11,6 +11,12 @@ import radOnFinishRenderNgRepeat from './ui/base/radOnFinishRenderNgRepeat.js';
 import vkGroupWidget from './ui/app/directives/vkGroupWidget/vkGroupWidget.js';
 import radTariff from './ui/app/directives/radTariff/radTariff.js';
 import radAdminLink from './ui/app/directives/radAdminLink/radAdminLink.js';
+import vkApiFactory from './ui/app/factories/vkApi/vkApiFactory.js';
+import vkApiMapper from './ui/app/factories/vkApi/vkApiMapper.js';
+
+/*Analytics controller*/
+import analyticsDashboardController from './ui/analytics/controllers/analyticsDashboardController.js';
+import commonAnalyticsController from './ui/analytics/controllers/commonAnalytics/commonAnalyticsController.js';
 
 /*Dashboard controller*/
 import dashboardController from './ui/dashboard/controllers/dashboardController.js';
@@ -44,7 +50,6 @@ import crmController from './ui/admin/controllers/crmController/crmController.js
 import ngThumb from './ui/stat/uploader/radThumb.js';
 /*statServices*/
 import statPopupsFactory from './ui/stat/services/statPopupsFactory/statPopupsFactory.js';
-import vkApiFactory from './ui/stat/services/vkApiFactory/vkApiFactory.js';
 import memoryFactory from './ui/stat/services/memoryFactory/memoryFactory.js';
 import radCommonFunc from './ui/app/factories/radCommonFunc.js';
 import notify from './ui/app/factories/notify.js';

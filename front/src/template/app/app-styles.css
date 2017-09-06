@@ -6,7 +6,7 @@ h2.main-title {
 
 /*template styles--------------------*/
 .sidebar-logo {
-    background: #456a94 !important;
+    background: #456B71 !important;
     /*height: 55px !important;*/
 }
 
@@ -18,12 +18,23 @@ h2.main-title {
     cursor: pointer;
 }
 
+.logo-image {
+    float: left;
+    padding-right: 15px;
+}
+
 .logo-title {
     font-size: 18px !important;
     font-family: "Roboto" !important;
     padding-top: 2px;
     color: #fff !important;
     font-weight: 200;
+    float:left;
+    line-height: 1.2;
+}
+
+.logo-title .str1{
+    font-size: 12px;
 }
 
 /*#leftMenu {

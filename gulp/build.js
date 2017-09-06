@@ -8,35 +8,35 @@ var browserify = require('browserify');
 var babelify = require('babelify');
 var source = require('vinyl-source-stream');
 var ftp = require('gulp-ftp');
-var gutil = require('gulp-util');
+var buffer = require('gulp-buffer');
 
 var config = require('./config.js');
 var path = require('./path.js');
 
 gulp.task('html:build', function () {
-    return gulp.src([path.src.html, '!'+path.src.dir+'index.html']) //Выберем файлы по нужному пути
-        .pipe(gulp.dest(path.build.html)) //Выплюнем их в папку build
-        .pipe(reload({stream: true})); //И перезагрузим наш сервер для обновлений
+    return gulp.src([path.src.html, '!'+path.src.dir+'index.html'])
+        .pipe(gulp.dest(path.build.html))
+        .pipe(reload({stream: true}));
 });
 
 gulp.task('indexHtml:build', function () {
-    return gulp.src(path.src.dir+'index.html') //Выберем файлы по нужному пути
-        .pipe(gulp.dest(path.build.dir)) //Выплюнем их в папку build
-        .pipe(reload({stream: true})); //И перезагрузим наш сервер для обновлений
+    return gulp.src(path.src.dir+'index.html')
+        .pipe(gulp.dest(path.build.dir))
+        .pipe(reload({stream: true}));
 });
 
 gulp.task('css:build', function () {
-    return gulp.src(path.src.css) //Выберем файлы по нужному пути
+    return gulp.src(path.src.css)
         .pipe(concat('commonStyles.css'))
-        .pipe(gulp.dest(path.build.css)) //Выплюнем их в папку build
-        .pipe(reload({stream: true})); //И перезагрузим наш сервер для обновлений
+        .pipe(gulp.dest(path.build.css))
+        .pipe(reload({stream: true}));
 });
 
 gulp.task('libcss:build', function () {
-    return gulp.src(path.src.libcss) //Выберем файлы по нужному пути
+    return gulp.src(path.src.libcss)
         .pipe(concat('libStyles.css'))
-        .pipe(gulp.dest(path.build.css)) //Выплюнем их в папку build
-        .pipe(reload({stream: true})); //И перезагрузим наш сервер для обновлений
+        .pipe(gulp.dest(path.build.css))
+        .pipe(reload({stream: true}));
 });
 
 gulp.task('js:build', function () {
@@ -44,22 +44,23 @@ gulp.task('js:build', function () {
         .transform(babelify)
         .bundle()
         .pipe(source('bundle.js'))
-        //.pipe(uglify()) //Сожмем наш js
-        .pipe(gulp.dest(path.build.js)) //Выплюнем готовый файл в build
-        .pipe(reload({stream: true})); //И перезагрузим наш сервер для обновлений
+        .pipe(buffer())
+        //.pipe(uglify())
+        .pipe(gulp.dest(path.build.js))
+        .pipe(reload({stream: true}));
 });
 
 gulp.task('libjs:build', function () {
-    return gulp.src(path.src.libjs) //Выберем файлы по нужному пути
+    return gulp.src(path.src.libjs)
         .pipe(concat('libScripts.js'))
         .pipe(gulp.dest(path.build.js))
-        .pipe(reload({stream: true})); //И перезагрузим наш сервер для обновлений
+        .pipe(reload({stream: true}));
 });
 
 gulp.task('js:tplbuild', function () {
-    return gulp.src(path.src.tpljs) //Выберем файлы по нужному пути
-        .pipe(gulp.dest(path.build.tpljs)) //Выплюнем их в папку build
-        .pipe(reload({stream: true})); //И перезагрузим наш сервер для обновлений
+    return gulp.src(path.src.tpljs)
+        .pipe(gulp.dest(path.build.tpljs))
+        .pipe(reload({stream: true}));
 });
 
 gulp.task('fonts:build', function () {

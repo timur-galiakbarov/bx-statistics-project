@@ -7,8 +7,9 @@
     <file url="file://$PROJECT_DIR$/front/src/index.html" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/front/src/js/app.js" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/front/src/js/bl/account/accountLogic.js" charset="windows-1251" />
+    <file url="file://$PROJECT_DIR$/front/src/js/bl/account/appState.js" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/front/src/js/bl/core/server.js" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/front/src/js/route.js" charset="windows-1251" />
+    <file url="file://$PROJECT_DIR$/front/src/js/route.js" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/front/src/js/ui/base/radValidationMessage.js" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.html" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/front/src/js/ui/dashboard/controllers/dashboardController.js" charset="UTF-8" />
@@ -34,8 +35,8 @@
     <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/services/statPopupsFactory/views/addItemPopup.html" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/services/statPopupsFactory/views/openItemPopup.html" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/services/statPopupsFactory/views/removeItemPopup.html" charset="windows-1251" />
-    <file url="file://$PROJECT_DIR$/front/src/js/ui/stat/services/vkApiFactory/vkApiFactory.js" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/front/src/template/app/template.html" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gulp/build.js" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/login/index.php" charset="windows-1251" />
     <file url="file://$PROJECT_DIR$/login/vkAuth.php" charset="windows-1251" />
     <file url="PROJECT" charset="UTF-8" />

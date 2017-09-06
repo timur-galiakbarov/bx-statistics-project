@@ -67,10 +67,11 @@ if (CModule::IncludeModule("iblock")) {
     endwhile;
 
 
-    $arSelect = Array("ID", "NAME", "DATE_ACTIVE_FROM");
+    $arSelect = Array("ID", "NAME", "DATE_ACTIVE_FROM", "PROPERTY_AMOUNT");
     $arFilter = Array("IBLOCK_ID" => 4);
-    $res = CIBlockElement::GetList(Array(), $arFilter, false, Array("nPageSize" => 50), $arSelect);
+    $res = CIBlockElement::GetList(Array(), $arFilter, false, Array("nPageSize" => 999), $arSelect);
     while ($ob = $res->GetNextElement()) {
+        /*print_r($ob);*/
         $data["payCount"]++;
     }
 

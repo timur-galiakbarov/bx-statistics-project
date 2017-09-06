@@ -10,7 +10,7 @@ var path = require('./gulp/path.js');
 gulp.task('default', ['clean'], function (done) {
     if (config.buildBitrix) {
         path.build = path.bitrix;
-        return runSequence('build', 'injects', 'watch', done);
+        return runSequence('build', 'injects', 'watch'/*, 'rev'*/, done);
     } else {
         return runSequence('build', 'injects', 'watch', 'webserver', done);
     }

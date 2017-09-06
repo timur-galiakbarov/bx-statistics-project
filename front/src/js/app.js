@@ -41,9 +41,6 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notif
                     bus.publish(events.ACCOUNT.STATED, res);
                 });
 
-                /*bus.request(topics.ACCOUNT.GET_VK_INFO).then((res)=> {
-                 bus.publish(events.ACCOUNT.VK.AUTH, res);
-                 })*/
             } else {
                 $scope.isAuth = false;
                 location.href = '/login/';
@@ -80,7 +77,7 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notif
         });
 
         $rootScope.openState = function (state) {
-            if ($rootScope.globalLoading){
+            if ($rootScope.globalLoading) {
                 notify.info("Пожалуйста, дождитесь загрузки данных, либо совершите действие в другой вкладке.");
                 return;
             }
@@ -89,7 +86,7 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notif
         };
 
         function goToDefaultState() {
-            $state.go('index.dashboard');
+            $state.go('index.analytics');
         }
 
         function init() {

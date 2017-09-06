@@ -1122,8 +1122,7 @@ input::-webkit-input-speech-button {
 }
 
 .sidebar-logo {
-    background: #7761a7 url(../images/logo.png) /*tpa=http://www.condorthemes.com/flatdream/images/logo.png*/ no-repeat 15px 19px;
-    padding: 15px 20px;
+    padding: 8px 20px;
     display: block;
     height: 64px;
 }
@@ -1579,14 +1578,13 @@ body.animated #cl-wrapper {
 }
 
 #head-nav.topbar {
-    background-color: #456a94;
+    background-color: #456B71;
     color: #fff;
     padding-left: 0;
 }
 
 #head-nav.topbar .sidebar-logo {
     display: inline-block;
-    width: 220px;
     float: left;
 }
 
@@ -1603,17 +1601,17 @@ body.animated #cl-wrapper {
 }
 
 #head-nav.topbar .navbar-nav > .active > a{
-    background-color: #3b4c6a;
+    background-color: #456B71;
 }
 
 #head-nav.topbar .navbar-nav > li > a:hover, #head-nav.topbar .navbar-nav > .active > a:focus{
-    background: #44587a;
+    background: #456B71;
 }
 
 #head-nav.topbar .navbar-nav > .open > a,
 #head-nav.topbar .navbar-nav > .open > a:hover,
 #head-nav.topbar .navbar-nav > .open > a:focus {
-    background-color: #44587a;
+    background-color: #456B71;
 }
 
 #head-nav.topbar .navbar-nav > .dropdown > a .caret {
@@ -3706,7 +3704,7 @@ table.information > tbody > tr > td {
 
 /*MONO2*/
 .btn-mono2.btn-primary {
-    background-color: #634d93;
+    background-color: #456B71;
 }
 
 .btn-mono2.btn-primary:hover {
@@ -5831,7 +5829,7 @@ a.list-group-item:hover + a.list-group-item {
 
 .colored-header .modal-header {
     padding: 20px;
-    border-bottom: 5px solid #634d93 !important;
+    border-bottom: 5px solid #456B71 !important;
     background-color: #7761a7;
     color: #fff;
 }
@@ -6072,7 +6070,7 @@ body.modal-open,
 .dd-handle:hover {
     color: #FFF;
     background: #7761a7;
-    border-color: #634d93;
+    border-color: #456B71;
 }
 
 .dd-item > button {
@@ -7000,20 +6998,20 @@ table .primary-emphasis-dark {
 }
 
 table .primary-emphasis-dark {
-    background-color: #634d93;
+    background-color: #456B71;
 }
 
 table .success-emphasis,
 table .success-emphasis-dark {
-    background: #634d93;
+    background: #456B71;
     color: #FFF;
-    border-color: #634d93;
+    border-color: #456B71;
     text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
 }
 
 table .success-emphasis-dark {
-    background-color: #634d93;
-    border-color: #634d93;
+    background-color: #456B71;
+    border-color: #456B71;
 }
 
 table .warning-emphasis,
@@ -7328,7 +7326,7 @@ table tbody td .btn-group .dropdown-menu li > a {
 .nav-tabs > li > a:active {
     background: transparent;
     border: 1px solid transparent;
-    color: #634d93;
+    color: #456B71;
     border-radius: 2px 2px 0 0;
     -webkit-border-radius: 2px 2px 0 0;
 }
@@ -8932,11 +8930,11 @@ ul.timeline li > .date {
 }
 
 .fuelux .wizard ul li.complete:hover {
-    background: #634d93;
+    background: #456B71;
 }
 
 .fuelux .wizard ul li.complete:hover .chevron:before {
-    border-left-color: #634d93;
+    border-left-color: #456B71;
 }
 
 .fuelux .wizard ul li.complete .chevron {
@@ -9097,14 +9095,8 @@ ul.timeline li > .date {
         display: none;
     }
 
-    .sidebar-logo {
-        /* padding: 4px 0 5px;*/
-        /*background: url("../images/logo.png")/!*tpa=http://www.condorthemes.com/flatdream/images/logo.png*!/ no-repeat scroll 23px -48px #7761a7;*/
-    }
-
     #head-nav.topbar .sidebar-logo {
         display: inline-block;
-        /*width: 70px;*/
         float: left;
     }
 
@@ -9360,11 +9352,11 @@ ul.timeline li > .date {
 
     .navbar-header {
         padding: 0 10px;
-        background: #7761a7 url(../images/logo.png) /*tpa=http://www.condorthemes.com/flatdream/images/logo.png*/ no-repeat 15px 10px;
+        background: #456B71 url(../images/logo.png) /*tpa=http://www.condorthemes.com/flatdream/images/logo.png*/ no-repeat 15px 10px;
     }
 
     #head-nav.topbar .navbar-header {
-        background: #7761a7 url(../images/logo.png) /*tpa=http://www.condorthemes.com/flatdream/images/logo.png*/ no-repeat 30px 18px;
+        background: #456B71 url(../images/logo.png) /*tpa=http://www.condorthemes.com/flatdream/images/logo.png*/ no-repeat 30px 18px;
         padding: 8px 0;
     }
 
@@ -9393,7 +9385,7 @@ ul.timeline li > .date {
     #head-nav.topbar .user-nav > .open > a,
     #head-nav.topbar .user-nav > .open > a:hover,
     #head-nav.topbar .user-nav > .open > a:focus {
-        background-color: #816bb1 !important;
+        background-color: #456B71 !important;
     }
 
     #head-nav.topbar .profile_menu .dropdown-toggle {
@@ -9447,7 +9439,7 @@ ul.timeline li > .date {
     }
 
     .sb-collapsed .cl-sidebar .sidebar-logo {
-        background: url("../images/logo.png") /*tpa=http://www.condorthemes.com/flatdream/images/logo.png*/ no-repeat scroll 15px 19px #7761a7;
+
     }
 
     #cl-wrapper.fixed-menu .menu-space,

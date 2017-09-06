@@ -61,7 +61,7 @@ if (CModule::IncludeModule("iblock")) {
 
         $activeTo = "";
         $lastDate = date_parse_from_format("j.n.Y", $arUser["UF_ACTIVE_TO"]);
-        $currentDate = date_parse_from_format("j.n.Y", date("m").".".date("d").".".date("Y"));
+        $currentDate = date_parse_from_format("j.n.Y", date("d").".".date("m").".".date("Y"));
 
         if ($_POST["withdraw_amount"] == 99 || $_POST["withdraw_amount"] == 199) {
             $tariff = "Активный";

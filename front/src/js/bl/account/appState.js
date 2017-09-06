@@ -1,7 +1,3 @@
-/**
- * ������ �������� ��������� ������������
- */
-
 import {bus} from 'core';
 import events from '../events.js';
 import topics from '../topics.js';

@@ -1,6 +1,7 @@
 var gulp = require('gulp');
 var path = require('./path.js');
 var watch = require('gulp-watch');
+runSequence = require('gulp-run-sequence');
 
 
 gulp.task('watch', function () {

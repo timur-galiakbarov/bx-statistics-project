@@ -8,12 +8,24 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: './templates/template/app/template.html',
                 controller: 'appController'
             })
-            .state('index.dashboard', {
-                url: 'dashboard/',
+            //Аналитика - Dashboard
+            .state('index.analytics', {
+                url: 'analytics/',
                 views: {
                     'content': {
-                        templateUrl: './templates/js/ui/dashboard/controllers/dashboardController.html',
-                        controller: 'dashboardController'
+                        templateUrl: './templates/js/ui/analytics/controllers/analyticsDashboardController.html',
+                        controller: 'analyticsDashboardController'
+                    }
+                },
+                parent: 'index'
+            })
+            //Аналитика
+            .state('index.analytics.common', {
+                url: 'analytics/group/:gid',
+                views: {
+                    'content': {
+                        templateUrl: './templates/js/ui/analytics/controllers/commonAnalytics/commonAnalyticsController.html',
+                        controller: 'commonAnalyticsController'
                     }
                 },
                 parent: 'index'
@@ -36,17 +48,6 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                         url: 'partners/',
                         templateUrl: './templates/js/ui/account/controllers/partnersController.html',
                         controller: 'partnersController'
-                    }
-                },
-                parent: 'index'
-            })
-            .state('index.stat', {
-                url: 'statistics/?getStatFromGroup',
-                views: {
-                    'content': {
-                        url: 'statistics',
-                        templateUrl: './templates/js/ui/stat/controllers/statMainController/statMainController.html',
-                        controller: 'statMainController'
                     }
                 },
                 parent: 'index'

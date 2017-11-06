@@ -7,6 +7,9 @@ var userInfo = null;
 bus.subscribe(events.ACCOUNT.STATED, saveUserProfile);
 bus.subscribe(events.ACCOUNT.VK.AUTH, saveVkAuthInfo);
 bus.subscribe(events.ACCOUNT.ADD_FREE_GROUP_TO_LIST, addFreeGroupToList);
+bus.subscribe(events.ACCOUNT.STAT_LIST_UPDATED, (statList)=>{
+    userInfo.statList = statList;
+});
 
 function saveUserProfile(user) {
     userInfo = user.user ? user.user : null;
@@ -131,6 +134,9 @@ var appState = {
     },
     isUserSubscribed(){
         return userInfo ? userInfo.isSubscribed : false;
+    },
+    getStatList(){
+        return userInfo && userInfo.statList && userInfo.statList.list ? userInfo.statList.list : [];
     }
 };
 

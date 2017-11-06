@@ -10,7 +10,7 @@ radProfile.inject = ['appState', 'vkApiFactory', 'notify', '$rootScope', '$state
 function radProfile(appState, vkApiFactory, notify, $rootScope, $state) {
     return {
         restrict: 'EA',
-        templateUrl: './templates/js/ui/menu/radProfile/radProfile.html',
+        templateUrl: 'js/ui/menu/radProfile/radProfile.html',
         controller: ['$scope', 'bus', 'appState', function ($scope, bus, appState) {
 
         }],

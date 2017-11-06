@@ -1,11 +1,11 @@
 angular.module('app').config(['$stateProvider', '$urlRouterProvider',
-    function ($stateProvider, $urlRouterProvider) {
+        function ($stateProvider, $urlRouterProvider) {
         $urlRouterProvider.otherwise("/dashboard/");
-        //$urlRouterProvider.when('page-detail', '/contacts/:pageCode');
+
         $stateProvider
             .state('index', {
                 url: '/',
-                templateUrl: './templates/template/app/template.html',
+                templateUrl: 'template/app/template.html',
                 controller: 'appController'
             })
             //Dashboard-------------------------------------------------------------------------------------------------
@@ -13,7 +13,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 url: 'dashboard/',
                 views: {
                     'content': {
-                        templateUrl: './templates/js/ui/dashboard/controllers/dashboardController.html',
+                        templateUrl: 'js/ui/dashboard/controllers/dashboardController.html',
                         controller: 'dashboardController'
                     }
                 },
@@ -25,7 +25,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 url: 'analytics/',
                 views: {
                     'content': {
-                        templateUrl: './templates/js/ui/analytics/controllers/analyticsDashboardController.html',
+                        templateUrl: 'js/ui/analytics/controllers/analyticsDashboardController.html',
                         controller: 'analyticsDashboardController'
                     }
                 },
@@ -36,7 +36,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 url: 'analytics/group/:gid',
                 views: {
                     'content': {
-                        templateUrl: './templates/js/ui/analytics/controllers/commonAnalytics/commonAnalyticsController.html',
+                        templateUrl: 'js/ui/analytics/controllers/commonAnalytics/commonAnalyticsController.html',
                         controller: 'commonAnalyticsController'
                     }
                 },
@@ -48,7 +48,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 url: 'compare/',
                 views: {
                     'content': {
-                        templateUrl: './templates/js/ui/analytics/controllers/compareDashboardController/compareDashboardController.html',
+                        templateUrl: 'js/ui/analytics/controllers/compareDashboardController/compareDashboardController.html',
                         controller: 'compareDashboardController'
                     }
                 },
@@ -59,7 +59,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 url: 'compare/detail',
                 views: {
                     'content': {
-                        templateUrl: './templates/js/ui/analytics/controllers/compareController/compareController.html',
+                        templateUrl: 'js/ui/analytics/controllers/compareController/compareController.html',
                         controller: 'compareController'
                     }
                 },
@@ -73,7 +73,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 url: 'posts/',
                 views: {
                     'content': {
-                        templateUrl: './templates/js/ui/analytics/controllers/postsDashboardController/postsDashboardController.html',
+                        templateUrl: 'js/ui/analytics/controllers/postsDashboardController/postsDashboardController.html',
                         controller: 'postsDashboardController'
                     }
                 },
@@ -83,7 +83,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 url: 'posts/detail',
                 views: {
                     'content': {
-                        templateUrl: './templates/js/ui/analytics/controllers/postsController/postsController.html',
+                        templateUrl: 'js/ui/analytics/controllers/postsController/postsController.html',
                         controller: 'postsController'
                     }
                 },
@@ -98,30 +98,20 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 views: {
                     'content': {
                         url: 'account/',
-                        templateUrl: './templates/js/ui/account/controllers/accountController.html',
+                        templateUrl: 'js/ui/account/controllers/accountController.html',
                         controller: 'accountController'
                     }
                 },
                 parent: 'index'
             })
 
-            /*.state('index.publishFavorites', {
-                url: 'publishAnalysis/favorites',
-                views: {
-                    'content': {
-                        templateUrl: './templates/js/ui/favorites/controllers/favoritesController/favoritesController.html',
-                        controller: 'favoritesController'
-                    }
-                },
-                parent: 'index'
-            })*/
             //----------------------------------------------------------------------------------------------------------
             .state('index.admin', {
                 url: 'admin/',
                 views: {
                     'content': {
                         url: 'admin',
-                        templateUrl: './templates/js/ui/admin/controllers/adminController.html',
+                        templateUrl: 'js/ui/admin/controllers/adminController.html',
                         controller: 'adminController'
                     }
                 },
@@ -132,7 +122,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 views: {
                     'admin': {
                         url: 'vksync',
-                        templateUrl: './templates/js/ui/admin/controllers/vksyncController/vksyncController.html',
+                        templateUrl: 'js/ui/admin/controllers/vksyncController/vksyncController.html',
                         controller: 'vksyncController'
                     }
                 },
@@ -143,7 +133,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 views: {
                     'admin': {
                         url: 'crm',
-                        templateUrl: './templates/js/ui/admin/controllers/crmController/crmController.html',
+                        templateUrl: 'js/ui/admin/controllers/crmController/crmController.html',
                         controller: 'crmController'
                     }
                 },
@@ -154,7 +144,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 views: {
                     'admin': {
                         url: 'dashboard',
-                        templateUrl: './templates/js/ui/admin/controllers/adminDashboardController/adminDashboardController.html',
+                        templateUrl: 'js/ui/admin/controllers/adminDashboardController/adminDashboardController.html',
                         controller: 'adminDashboardController'
                     }
                 },

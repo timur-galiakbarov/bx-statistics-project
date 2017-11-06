@@ -9,7 +9,12 @@ require('./inject.js');
 
 gulp.task('watch', function () {
     gulp.watch([path.watch.html], function (event, cb) {
-        gulp.start('html:build');
+        return runSequence(
+            ['html:clear'],
+            'html:build',
+            'rev:html',
+            'injectHtml'
+        );
     });
     gulp.watch([path.watch.css], function (event, cb) {
         return runSequence(
@@ -36,5 +41,10 @@ gulp.task('css:clear', function (cb) {
 
 gulp.task('js:clear', function (cb) {
     return gulp.src(path.build.js + '**', { read: false })
+        .pipe(gulp_rimraf());
+});
+
+gulp.task('html:clear', function (cb) {
+    return gulp.src(path.build.html + '**', { read: false })
         .pipe(gulp_rimraf());
 });

@@ -42,6 +42,7 @@
     "promise": "./node_modules/q/q.js"
   },
   "devDependencies": {
+    "gulp-angular-templatecache": "^2.0.0",
     "gulp-rev-all": "^0.9.7",
     "gulp-rev-delete-original": "^0.2.3",
     "gulp-rimraf": "^0.2.1"

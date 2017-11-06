@@ -22,11 +22,6 @@ angular
                 login: appState.getUserVkLogin()
             };
 
-
-            bus.subscribe(events.ACCOUNT.FREE_GROUP_ADDED, ()=> {
-                getFreeGroupsList();
-            });
-
             function init() {
                 $rootScope.setTitle("Профиль и оплата");
                 $scope.model.vkUserInfo = appState.getUserVkInfo();

@@ -1,5 +1,6 @@
 import bus from './../core/busModule.js';
 import topics from './../topics.js';
+import events from './../events.js';
 import dataContext from './accountDataContext.js';
 import {server} from 'core';
 
@@ -10,6 +11,15 @@ bus.subscribe(topics.ACCOUNT.GET_USER_INFO, dataContext.getUserInfo);//Получение
 bus.subscribe(topics.ACCOUNT.GET_FREE_GROUPS, dataContext.getFreeGroups);//Получение списка бесплатных для анализа групп
 bus.subscribe(topics.ACCOUNT.ADD_FREE_GROUP, dataContext.addGroupToFreeList);//Добавить группу в список бесплатынх
 bus.subscribe(topics.ACCOUNT.LOGOUT, logout);//Получение данных о пользователе
+bus.subscribe(topics.ACCOUNT.SAVE_STAT_LIST, (data)=> {//Сохранить список групп для статистики на главной
+    return dataContext.saveStatList(data)
+        .then((res)=>{
+            bus.publish(events.ACCOUNT.STAT_LIST_UPDATED, {
+                id: res.id,
+                list: data.list
+            });
+        });
+});
 
 bus.subscribe(topics.NEWS.GET_LIST, dataContext.getNewsList);//Получение списка новостей
 

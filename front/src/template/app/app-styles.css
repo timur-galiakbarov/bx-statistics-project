@@ -207,3 +207,8 @@
     background: linear-gradient(60deg, #66bb6a, #43a047);
     box-shadow: 0 4px 20px 0px rgba(0, 0, 0, 0.14), 0 7px 10px -5px rgba(76, 175, 80, 0.4);
 }
+
+.dashboard .btn-stat{
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+}

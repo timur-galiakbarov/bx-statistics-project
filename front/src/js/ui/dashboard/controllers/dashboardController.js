@@ -3,8 +3,8 @@ import topics from './../../../bl/topics.js';
 
 angular
     .module('rad.dashboard')
-    .controller('dashboardController', ['$rootScope', '$scope', 'bus', 'appState', 'vkApiFactory', '$timeout', 'radCommonFunc', 'notify', 'memoryFactory',
-        function ($rootScope, $scope, bus, appState, vkApiFactory, $timeout, radCommonFunc, notify, memoryFactory) {
+    .controller('dashboardController', ['$rootScope', '$scope', 'bus', 'appState', 'vkApiFactory', '$timeout', 'radCommonFunc', 'notify', 'memoryFactory', 'localStorageService', '$state',
+        function ($rootScope, $scope, bus, appState, vkApiFactory, $timeout, radCommonFunc, notify, memoryFactory, localStorageService, $state) {
 
             var parseDate = {};
 
@@ -14,23 +14,28 @@ angular
             $scope.model = {
                 groupsStat: [],
                 groups: [],
-                filter: 'last7days'
+                filter: 'last7days',
+                freeList: [],
+                freeWithSubscribe: [],
+                addGroupInfo: {}
             };
 
             $scope.ui = {
                 isLoading: false,
                 periodFrom: "",
                 periodTo: "",
-                periodLabel: ""
+                periodLabel: "",
+                editListLoading: false,
+                freeGroupLoading: false
             };
 
             var authData = {
                 token: appState.getUserVkToken(),
                 login: appState.getUserVkLogin()
             };
+            var statList = appState.getStatList();
 
             $scope.showAddGroupList = false;
-            $scope.freeGroupLoading = false;
 
             //functions proto
             $scope.noActiveTariff = !appState.isActiveUser();
@@ -39,33 +44,50 @@ angular
             $scope.setFilter = setFilter;
             $scope.refresh = refresh;
             $scope.openEditGroupsModal = openEditGroupsModal;
+            $scope.saveStatList = saveStatList;
+            $scope.goToAnalytics = goToAnalytics;
+
+            bus.subscribe(events.ACCOUNT.FREE_GROUP_ADDED, ()=> {
+                getFreeGroupsList();
+            });
 
             init();
 
             function init() {
                 $rootScope.setTitle("Главная страница");
 
+                statList = appState.getStatList();
+                var filterFromLS = localStorageService.get('dashboardFilter');
+                if (filterFromLS) {
+                    $scope.model.filter = filterFromLS;
+                }
+
                 getFreeGroupsList();
                 var lastData = memoryFactory.getMemory("dashboardData");
                 if (lastData) {
                     $timeout(()=> {
                         $scope.model.groupsStat = lastData.groupsStat;
+                        $scope.model.adminGroups = lastData.adminGroups;
                         $scope.model.groups = lastData.groups;
                         $scope.ui.periodFrom = lastData.fromLabel;
                         $scope.ui.periodTo = lastData.toLabel;
                         $scope.ui.periodLabel = lastData.periodLabel;
-                        $scope.model.filter = lastData["filter"]
                     });
                 } else {
                     /*getNewsList();*/
                     getMyAnalytics()
                         .fail(()=> {
-                            notify.error("Не удалось получить данные по вашим группам");
+                            notify.error("Не удалось получить данные по вашим группам. Нажмите на кнопку 'Обновить'");
                             $timeout(()=> {
                                 $scope.ui.isLoading = false;
                             });
                         });
                 }
+
+                $('.icheck').iCheck({
+                    checkboxClass: 'icheckbox_flat-blue',
+                    radioClass: 'iradio_flat-blue'
+                });
             }
 
             function getMyAnalytics() {
@@ -91,7 +113,26 @@ angular
 
                 getAdminGroups()
                     .then((myList)=> {
-                        $scope.model.groups = myList;
+                        $scope.model.adminGroups = myList;
+
+                        myList = myList.map((item)=> {
+                            var editSelected = false;
+                            if (statList && statList.length) {
+                                editSelected = statList.filter((el)=> {
+                                    return el == item.gid;
+                                }).length > 0;
+                            } else {
+                                editSelected = true;
+                            }
+                            return angular.extend(item, {
+                                editSelected: editSelected
+                            });
+                        });
+
+                        $scope.model.groups = myList.filter((el)=>{
+                            return el.editSelected;
+                        });
+
                         $scope.$apply($scope.model.groups);
 
                         if ($scope.model.groups && $scope.model.groups.length) {
@@ -161,10 +202,10 @@ angular
                                     $scope.$apply($scope.ui.isLoading);
                                     memoryFactory.setMemory('dashboardData', {
                                         groupsStat: $scope.model.groupsStat,
+                                        adminGroups: $scope.model.adminGroups,
                                         fromLabel: $scope.ui.periodFrom,
                                         toLabel: $scope.ui.periodTo,
                                         periodLabel: $scope.ui.periodLabel,
-                                        ["filter"]: $scope.model.filter,
                                         groups: $scope.model.groups
                                     });
                                     deferr.resolve();
@@ -305,7 +346,7 @@ angular
             }
 
             function getFreeGroupsList() {
-                $scope.freeGroupLoading = true;
+                $scope.ui.freeGroupLoading = true;
                 $scope.availableToAddCount = 0;
 
                 var freeList = appState.getFreeGroups();
@@ -330,13 +371,13 @@ angular
                     ).then(()=> {
                             $timeout(()=> {
                                 calcAvailableToAddGroupsCount();
-                                $scope.freeGroupLoading = false;
+                                $scope.ui.freeGroupLoading = false;
                             });
                         });
                 } else {
                     $timeout(()=> {
                         calcAvailableToAddGroupsCount();
-                        $scope.freeGroupLoading = false;
+                        $scope.ui.freeGroupLoading = false;
                     });
                 }
             }
@@ -418,7 +459,7 @@ angular
                     return;
                 }
 
-                $scope.freeGroupLoading = true;
+                $scope.ui.freeGroupLoading = true;
 
                 bus.request(topics.ACCOUNT.ADD_FREE_GROUP, {
                     group: group,
@@ -439,9 +480,7 @@ angular
                                 default:
                                     notify.error("Произошла ошибка при добавлении группы");
                             }
-                            $timeout(()=> {
-                                $scope.freeGroupLoading = false;
-                            });
+                            $scope.ui.freeGroupLoading = false;
                             $("#confirmAddGroupToFree").modal('hide');
                             return;
                         }
@@ -455,9 +494,7 @@ angular
                     })
                     .fail(()=> {
                         notify.error("Произошла непредвиденная ошибка при добавлении группы. Просьба сообщить нам об этом");
-                        $timeout(()=> {
-                            $scope.freeGroupLoading = false;
-                        });
+                        $scope.ui.freeGroupLoading = false;
                         $("#confirmAddGroupToFree").modal('hide');
                     });
             }
@@ -637,8 +674,8 @@ angular
                     return;
                 }
 
-
                 $scope.model.filter = filter;
+                localStorageService.set('dashboardFilter', filter);
 
                 getMyAnalytics();
             }
@@ -653,6 +690,47 @@ angular
 
             function openEditGroupsModal() {
                 $("#editStatListModal").modal("show");
+            }
+
+            function saveStatList() {
+                $scope.ui.editListLoading = true;
+
+                var list = [];
+                $scope.model.adminGroups.forEach((el)=> {
+                    if (el.editSelected){
+                        list.push(el.gid);
+                    }
+                });
+
+                bus.request(topics.ACCOUNT.SAVE_STAT_LIST, {
+                    list: list
+                })
+                    .then(()=> {
+                        $timeout(()=> {
+                            $scope.ui.editListLoading = false;
+                            $("#editStatListModal").modal("hide");
+                            memoryFactory.setMemory('dashboardData', undefined);
+                            init();
+                        }, 400);
+                    })
+                    .fail(()=> {
+                        $timeout(()=> {
+                            $scope.ui.editListLoading = false;
+                            $("#editStatListModal").modal("hide");
+                        });
+                        notify.error("Произошла ошибка при сохранении списка групп. Попробуйте позже или свяжитесь с администратором в группе socstat.ru");
+                    });
+            }
+
+            function goToAnalytics(gid){
+                if ($scope.ui.isLoading){
+                    notify.info("Пожалуйста, дождитесь загрузки всех данных");
+                    return;
+                }
+
+                $state.go('index.analytics.common', {
+                    gid: gid
+                })
             }
 
         }]);

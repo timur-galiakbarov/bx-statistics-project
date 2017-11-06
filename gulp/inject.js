@@ -43,9 +43,9 @@ gulp.task('injectCss', function () {
         .pipe(gulp.dest(path.build.dir + ''));
 });
 
-gulp.task('injectTplJs', function () {
+gulp.task('injectHtml', function () {
     return gulp.src(path.build.dir + 'index.html')
-        .pipe(inject(gulp.src(path.build.tpljs + '*.js'),{
+        .pipe(inject(gulp.src(path.build.html + '*.js'),{
             name: 'templateJs',
             transform: function (filepath, file, i, length) {
                 return '<script src="'+filepath.replace(path.build.dir,'')+'"></script>';
@@ -54,13 +54,12 @@ gulp.task('injectTplJs', function () {
         .pipe(gulp.dest(path.build.dir + ''));
 });
 
-
 gulp.task('injects', function (done) {
     runSequence(
         'injectJs',
         'injectCss',
         'injectBower',
-        //'injectTplJs',
+        'injectHtml',
         done
     );
 });

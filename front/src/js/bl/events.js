@@ -20,6 +20,7 @@ export default {
         SHOW_NOT_SUBSCRIBE_MODAL: "ACCOUNT.SHOW_NOT_SUBSCRIBE_MODAL",//Показать модальное окно, что пользователь отписался от группы
         FREE_GROUP_ADDED: 'ACCOUNT.FREE_GROUP_ADDED', //Добавлена новая бесплатная группа
         ADD_FREE_GROUP_TO_LIST: 'ACCOUNT.ADD_FREE_GROUP_TO_LIST', //Сохранить в список новую добавленную группу
+        STAT_LIST_UPDATED: 'ACCOUNT.STAT_LIST_UPDATED', //Обновился список групп статистики на главной
     },
     STAT: {
         MAIN: {

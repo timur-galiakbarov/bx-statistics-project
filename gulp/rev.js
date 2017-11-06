@@ -22,7 +22,15 @@ gulp.task('rev', function (done) {
     return runSequence(
         'rev:js',
         'rev:css',
+        'rev:html',
         done);
+});
+
+gulp.task('rev:html', function () {
+    return gulp.src(path.build.html + "**/*")
+        .pipe(revAll.revision())
+        .pipe(revdel())
+        .pipe(gulp.dest(path.build.html));
 });
 
 gulp.task('rev:js', function () {

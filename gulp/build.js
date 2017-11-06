@@ -10,6 +10,7 @@ var source = require('vinyl-source-stream');
 var ftp = require('gulp-ftp');
 var buffer = require('gulp-buffer');
 var rev = require('gulp-rev');
+var templateCache = require('gulp-angular-templatecache');
 
 var config = require('./config.js');
 var path = require('./path.js');
@@ -33,8 +34,10 @@ var rimraf = require('rimraf');
 
 gulp.task('html:build', function () {
     return gulp.src([path.src.html, '!' + path.src.dir + 'index.html'])
-        .pipe(gulp.dest(path.build.html))
-        .pipe(reload({stream: true}));
+        .pipe(templateCache('templates1.js', {
+            module: 'templates'
+        }))
+        .pipe(gulp.dest(path.build.html));
 });
 
 gulp.task('indexHtml:build', function () {

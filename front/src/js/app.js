@@ -1,6 +1,7 @@
 import topics from './bl/topics.js';
 import events from './bl/events.js';
 import ui from 'angular-ui-bootstrap';
+import LocalStorageModule from 'angular-local-storage';
 
 /*Инициализация приложения*/
 var app = angular.module('app', [
@@ -14,15 +15,17 @@ var app = angular.module('app', [
     'rad.favorites',
     'ui.bootstrap',
     'ui.bootstrap.tpls',
-    'ui.mask'
+    'ui.mask',
+    'LocalStorageModule',
+    'templates'
 ]);
 
 moment.locale('ru');
 
-angular.module('app').run(['$rootScope', 'bus',
-    function ($rootScope, bus) {
+/*angular.module('app').run(['$rootScope', 'bus', '$templateCache',
+    function ($rootScope, bus, $templateCache) {
 
-    }]);
+    }]);*/
 
 app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notify',
     function ($rootScope, $scope, $state, bus, notify) {
@@ -96,7 +99,7 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notif
         };
 
         function goToDefaultState() {
-            $state.go('index.analytics');
+            $state.go('index.dashboard');
         }
 
         function init() {

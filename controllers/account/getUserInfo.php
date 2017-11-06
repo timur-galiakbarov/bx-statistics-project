@@ -14,6 +14,19 @@ if (CModule::IncludeModule("iblock")) {
         $isActiveUser = false;
     }
 
+    /*Получение списка групп для статистики на главной*/
+    $arSelect = Array("ID", "NAME", "PREVIEW_TEXT", "ACTIVE_FROM", "PROPERTY_USER_ID", "PROPERTY_LIST");
+    $arFilter = Array("IBLOCK_ID" => 7, "ACTIVE" => "Y", "PROPERTY_USER_ID" => $USER->GetID());
+    $res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
+
+    $statList = '';
+
+    while ($ob = $res->GetNextElement()) {
+        $arFields = $ob->GetFields();
+        $statList["id"] = $arFields["ID"];
+        $statList["list"] = $arFields["PROPERTY_LIST_VALUE"];
+    }
+
 
     $data = Array(
         'user' => Array(
@@ -27,7 +40,8 @@ if (CModule::IncludeModule("iblock")) {
             "tariff" => $arUser["UF_TARIFF"],
             "activeTo" => $arUser["UF_ACTIVE_TO"],
             "isActiveUser" => $isActiveUser,
-            "admin" => $USER->isAdmin()
+            "admin" => $USER->isAdmin(),
+            "statList" => $statList
         )
     );
 

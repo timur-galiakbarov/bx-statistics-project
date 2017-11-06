@@ -11,7 +11,7 @@ function radAdminLink(appState, $rootScope, $state) {
     return {
         restrict: 'EA',
         replace: true,
-        templateUrl: './templates/js/ui/app/directives/radAdminLink/radAdminLink.html',
+        templateUrl: 'js/ui/app/directives/radAdminLink/radAdminLink.html',
         controller: ['$scope', '$timeout', function ($scope, $timeout) {
 
         }],

@@ -10,7 +10,7 @@ radTariff.$inject = ['appState', '$timeout', '$state'];
 function radTariff(appState, $timeout, $state) {
     return {
         restrict: 'EA',
-        templateUrl: './templates/js/ui/app/directives/radTariff/radTariff.html',
+        templateUrl: 'js/ui/app/directives/radTariff/radTariff.html',
         controller: ['$scope', '$timeout', function ($scope, $timeout) {
 
         }],

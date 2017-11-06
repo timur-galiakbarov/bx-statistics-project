@@ -6,7 +6,8 @@ export default {
         GET_VK_INFO: 'ACCOUNT.GET_VK_INFO',
         LOGOUT_VK: 'ACCOUNT.LOGOUT_VK',
         GET_FREE_GROUPS: 'ACCOUNT.GET_FREE_GROUPS',
-        ADD_FREE_GROUP: 'ACCOUNT.ADD_FREE_GROUP'//Добавить группу в список бесплатных
+        ADD_FREE_GROUP: 'ACCOUNT.ADD_FREE_GROUP',//Добавить группу в список бесплатных
+        SAVE_STAT_LIST: 'ACCOUNT.SAVE_STAT_LIST',//Сохранить список групп для статистики на главной
     },
     GET_CONTENT: {
         GET_LIST: 'GET_CONTENT.GET_LIST'//получение списка разделов для поиска контента

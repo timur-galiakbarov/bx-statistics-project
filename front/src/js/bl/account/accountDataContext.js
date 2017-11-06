@@ -44,6 +44,18 @@ export default {
             }
         );
     },
+    saveStatList(data){
+        return serverApi.request({
+            url: '/controllers/account/statList/save.php',
+            type: 'POST',
+            data: {
+                list: data.list || []
+            }
+        }).then((res)=> {
+                return res;
+            }
+        );
+    },
     getVkInfo(options){
 
     },

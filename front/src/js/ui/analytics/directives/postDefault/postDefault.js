@@ -7,7 +7,7 @@ postDefault.$inject = ['$state', '$rootScope', 'notify', 'appState'];
 function postDefault($state, $rootScope, notify, appState) {
     return {
         restrict: 'EA',
-        templateUrl: './templates/js/ui/analytics/directives/postDefault/postDefault.html',
+        templateUrl: 'js/ui/analytics/directives/postDefault/postDefault.html',
         controller: ['$scope', '$state', function ($scope, $state) {
 
         }],

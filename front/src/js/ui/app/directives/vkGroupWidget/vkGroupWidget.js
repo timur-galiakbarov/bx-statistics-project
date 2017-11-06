@@ -8,7 +8,7 @@ angular
 function vkGroupWidget() {
     return {
         restrict: 'EA',
-        templateUrl: './templates/js/ui/app/directives/vkGroupWidget/vkGroupWidget.html',
+        templateUrl: 'js/ui/app/directives/vkGroupWidget/vkGroupWidget.html',
         controller: ['$scope', '$timeout', function ($scope, $timeout) {
 
         }],

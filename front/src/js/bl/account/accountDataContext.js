@@ -22,6 +22,28 @@ export default {
             }
         );
     },
+    getFreeGroups(){
+        return serverApi.request({
+            url: '/controllers/account/freeGroups/getList.php',
+            type: 'GET'
+        }).then((res)=> {
+                return res.data;
+            }
+        );
+    },
+    addGroupToFreeList(obj){
+        return serverApi.request({
+            url: '/controllers/account/freeGroups/add.php',
+            type: 'POST',
+            data: {
+                group: obj.group,
+                source: obj.source
+            }
+        }).then((res)=> {
+                return res;
+            }
+        );
+    },
     getVkInfo(options){
 
     },

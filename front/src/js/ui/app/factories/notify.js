@@ -5,9 +5,9 @@ import events from './../../../bl/events.js';
 
     module.factory('notify', notify);
 
-    notify.$inject = ['$modal', 'bus', 'appState'];
+    notify.$inject = ['$uibModal', 'bus', 'appState'];
 
-    function notify($modal, bus, appState) {
+    function notify($uibModal, bus, appState) {
         var logIt;
 
         toastr.options = {

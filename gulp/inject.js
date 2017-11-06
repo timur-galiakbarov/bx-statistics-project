@@ -4,9 +4,7 @@ var inject = require('gulp-inject');
 var path = require('./path.js');
 var gulpFilter = require('gulp-filter');
 var bowerFiles = require('main-bower-files');
-/**
- * Инжектирование скриптов bower в index.html
- */
+
 gulp.task('injectBower', function () {
     return gulp.src(path.build.dir + 'index.html')
         .pipe(inject(gulp.src(bowerFiles({

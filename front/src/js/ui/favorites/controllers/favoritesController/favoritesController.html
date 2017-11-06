@@ -9,38 +9,72 @@
             Любимых записей пока нет. <a ui-sref="index.publishAnalisys">Добавьте их</a>!
         </div>
 
-        <div class="row" ng-hide="isLoading || !favoriteList">
-            <div ng-repeat="wallPost in favoriteList" ng-if="!wallPost.isRemoved">
-                <div class="col-lg-6 col-md-12 m-top-m-15">
+        <div ng-hide="isLoading || !favoriteList">
+            <div class="row" ng-repeat="wallPost in favoriteList" ng-if="!wallPost.isRemoved">
+                <div class="col-xs-12">
+                    <div class="card card-product post-default">
+                        <div class="card-image video-preview">
+                            <a ng-if="wallPost.firstImage">
+                                <img ng-src="{{wallPost.firstImage.photo.photo_604}}" style="max-width: 100%;"/>
+                            </a>
 
-                    <div class="block-flat">
-                        <div class="header">
-                            <div class="publish-left-block">
-                                <strong>Дата: </strong> {{getDate(wallPost.date)}}
-                                <br/>
+                            <a ng-if="wallPost.firstDoc" class="text-center">
+                                <img ng-src="{{wallPost.firstDoc.doc.url}}" style="max-width: 100%;"/>
+                            </a>
+
+                            <a ng-if="wallPost.firstVideo">
+                                <img ng-show="!attachment.video.url"
+                                     ng-src="{{wallPost.firstVideo.video.photo_640}}" style="max-width: 100%;"
+                                     ng-click="getVideoUrl(attachment)"/>
+                            </a>
+                            <img ng-if="wallPost.firstVideo" class="play-icon" src="./images/video_play.png">
+
+                            <div class="ripple-container"></div>
+                        </div>
+                        <!--<div class="card-header" data-background-color="orange">
+                            <div class="pull-left">
                                 <i class="fa fa-heart"></i> <strong> {{wallPost.likes.count}}</strong>
                                 <i class="fa fa-share-alt"></i> <strong> {{wallPost.reposts.count}}</strong>
                                 <i class="fa fa-comments"></i> <strong> {{wallPost.comments.count}}</strong>
                             </div>
-                            <div class="publish-right-block">
-                                <button class="btn btn-prusia addToFavoritePost"
+                            <div class="pull-right category">
+                                <button class="btn btn-primary btn-round btn-fab btn-fab-mini"
                                         ng-click="removeFavorite(wallPost, $index)">
-                                    <i class="fa fa-close"></i>
+                                    <i class="material-icons">delete</i>
+                                    <div class="ripple-container"></div>
                                 </button>
                             </div>
                             <div class="clear"></div>
-                        </div>
-                        <div class="block-publish publishItem{{$index}}" data="{{currentIndex = $index}}">
-                            <div class="text">
-                                <span ng-bind-html="wallPost.text"></span>
-                                <!--<a href="http://www.mhealth.ru/diet/ration/425723/">http://www.mhealth.ru/diet/ration/425723/</a>-->
+                        </div>-->
+
+
+                        <div class="card-content table-responsive text-left">
+
+                            <div ng-if="isShowAnotherPictures(wallPost.attachments)">
+                                <hr>
+
+                                <div class="col-sm-4 text-center publish-photo-link"
+                                     ng-repeat="anotherImage in wallPost.attachments"
+                                     ng-if="anotherImage.type == 'photo'"
+                                     ng-click="showCurrentPicture(anotherImage.photo.src_big, currentIndex)">
+                                    <img ng-src="{{anotherImage.photo.src_big}}" height="50">
+                                </div>
+
                             </div>
-                            <div ng-if="wallPost.attachments && wallPost.attachments.length>0">
+
+                            <div ng-if="isShowGif(wallPost.attachments)">
+                                <div ng-repeat="gif in wallPost.attachments" ng-if="gif.doc && gif.doc.ext == 'gif'">
+                                    <img ng-src="{{gif.doc.url}}" style="max-width: 100%;"/>
+                                </div>
+                            </div>
+
+                            <!--<div ng-if="wallPost.attachments && wallPost.attachments.length>0">
                                 <div ng-repeat="attachment in wallPost.attachments">
                                     <div class="video text-center"
                                          ng-if="attachment.type == 'video'">
 
-                                        <div class="video-preview" ng-show="!attachment.video.url" ng-click="getVideoUrl(attachment)">
+                                        <div class="video-preview" ng-show="!attachment.video.url"
+                                             ng-click="getVideoUrl(attachment)">
                                             <img ng-src="{{attachment.video.image}}"
                                                  style="max-width: 100%;">
                                             <img class="play-icon" src="./images/video_play.png">
@@ -53,34 +87,27 @@
                                         </iframe>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="image text-center" ng-if="wallPost.attachment && wallPost.attachment.photo">
-                                <img ng-src="{{wallPost.attachment.photo.src_big}}" style="max-width: 100%;"/>
-                            </div>
-                            <div ng-if="isShowAnotherPictures(wallPost.attachments)">
-                                <hr>
+                            </div>-->
 
-                                <div class="col-sm-4 text-center publish-photo-link"
-                                     ng-repeat="anotherImage in wallPost.attachments"
-                                     ng-if="anotherImage.type == 'photo'"
-                                     ng-click="showCurrentPicture(anotherImage.photo.src_big, currentIndex)">
-                                    <img ng-src="{{anotherImage.photo.src_big}}" height="50">
-                                </div>
+                            <div class="text">
+                                <span ng-bind-html="wallPost.text"></span>
+                                <!--<a href="http://www.mhealth.ru/diet/ration/425723/">http://www.mhealth.ru/diet/ration/425723/</a>-->
+                            </div>
 
-                            </div>
-                            <div ng-if="isShowGif(wallPost.attachments)">
-                                <div ng-repeat="gif in wallPost.attachments" ng-if="gif.doc && gif.doc.ext == 'gif'">
-                                    <img ng-src="{{gif.doc.url}}" style="max-width: 100%;"/>
-                                </div>
-                            </div>
                             <div class="clear"></div>
                         </div>
+                        <div class="card-footer">
+                            <div class="stats">
+                                <i class="material-icons">access_time</i> {{getDate(wallPost.date)}}
+                            </div>
+                            <div class="pull-right">
+                                <i class="fa fa-heart"></i> <strong> {{wallPost.likes.count}}</strong>
+                                <i class="fa fa-share-alt"></i> <strong> {{wallPost.reposts.count}}</strong>
+                                <i class="fa fa-comments"></i> <strong> {{wallPost.comments.count}}</strong>
+                            </div>
+                        </div>
                     </div>
-
                 </div>
-
-                <div class="clear" ng-if="($index+1) % 2 == 0"></div>
-
             </div>
 
             <div ng-show="isShowNext && !isLoading">
@@ -93,7 +120,9 @@
 
     </div>
 
-    <div class="col-md-4">
-        <vk-group-widget></vk-group-widget>
+    <div class="col-sm-4">
+        <div class="block-flat">
+            <vk-group-widget></vk-group-widget>
+        </div>
     </div>
 </div>

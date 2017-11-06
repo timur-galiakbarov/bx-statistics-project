@@ -1,8 +1,0 @@
-@media(max-width: 1200px){
-    .shop-tovar-item .itemImage{
-        height: 140px;
-    }
-    .shop-tovar-item .itemImage img{
-        max-height: 140px;
-    }
-}

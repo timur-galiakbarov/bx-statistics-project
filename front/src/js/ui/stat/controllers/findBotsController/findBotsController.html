@@ -1,5 +1,47 @@
+<div class="relative">
+    <h3 class="text-center" ng-bind-html="model.title"></h3>
+
+    <div class="text-center group-title" ng-if="model.groupName">&laquo;{{model.groupName}}&raquo;
+    </div>
+</div>
+
 <div class="row main-stat">
-    <div class="col-md-8">
+    <div class="col-md-3">
+        <div class="block-flat group-info" ng-show="statIsLoaded">
+            <div class="content">
+                <div class="groupAvatar">
+                    <img ng-src="{{model.groupPhoto}}">
+                </div>
+
+                <a href="https://vk.com/{{model.groupScreenName}}" target="_blank"
+                   class="btn btn-block btn-prusia btn-rad go-to-group no-margin-left">Перейти к группе</a>
+
+                <div class="group-text">
+
+                    <p ng-show="model.groupDescription" ng-bind-html="model.groupDescription">
+                    </p>
+
+                    <p ng-show="!model.groupDescription">
+                        Описание группы отсутствует
+                    </p>
+                </div>
+                <div class="clear"></div>
+            </div>
+
+        </div>
+        <div class="fd-tile detail clean tile-prusia" ng-show="statIsLoaded">
+            <div class="content"><h2 class="text-left" ng-bind="model.groupMembersCount"></h2>
+
+                <p></p></div>
+            <div class="icon"><i class="fa fa-users"></i></div>
+            <div class="details">Участники <span></span></div>
+        </div>
+        <div class="block-flat">
+            <vk-group-widget></vk-group-widget>
+        </div>
+    </div>
+
+    <div ng-class="{'col-md-9': statIsLoaded, 'col-md-6': !statIsLoaded}">
 
         <div class="row" ng-show="isLoading && groupIsFinded">
             <div class="col-xs-12">
@@ -125,11 +167,6 @@
 
             </div>
         </div>
-
-    </div>
-    <div class="col-md-4">
-
-        <vk-group-widget></vk-group-widget>
 
     </div>
 </div>

@@ -33,17 +33,39 @@
             }],
             link: function (scope, element, attr, ctrls) {
                 var className = 'loader';
-                var index = attr.radLoader;
                 if (attr.radLoader) {
                     scope.$watch(attr.radLoader, function (loading) {
                         if (loading) {
+
+                            attr.loadId = "loader" + (new Date()).getTime();
+
                             element.append('<div class="loader_block"></div>');
-                            spinner[index] = new Spinner(opts).spin();
-                            element.append(spinner[index].el);
+
+                            var obj = new Spinner(opts).spin();
+
+                            var index = spinner.filter((spin)=>{
+                                return spin.id == attr.loadId;
+                            })[0];
+                            if (index && index.obj.stop){
+                                index.obj.stop();
+                                index = {
+                                    obj: obj,
+                                    id: attr.loadId
+                                }
+                            } else {
+                                spinner.push({
+                                    obj: obj,
+                                    id: attr.loadId
+                                });
+                            }
+                            element.append(obj.el);
                         } else {
+                            var index = spinner.filter((spin)=> {
+                                return spin.id == attr.loadId;
+                            })[0];
                             element.children('.loader_block').remove();
-                            if (spinner[index] && spinner[index].stop)
-                                spinner[index].stop();
+                            if (index && index.obj.stop)
+                                index.obj.stop();
                         }
                         element.toggleClass(className, !!loading);
                     });

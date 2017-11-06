@@ -10,34 +10,26 @@ function radLeftMenu($state, $rootScope, notify, appState) {
         templateUrl: './templates/js/ui/menu/radLeftMenu/radLeftMenu.html',
         controller: ['$scope', '$state', function ($scope, $state) {
             $scope.currentState = function (state) {
-                if (state == $state.current.name)
+                //console.log($state);
+                if ($state.current.name.indexOf(state)>=0)
                     return true;
             }
         }],
         link: function ($scope) {
             $scope.showStatsMenu = function (elemClass) {
 
-                var currItem = $("#leftMenu " + elemClass + " ul.sub-menu");
+                var currItem = $("#leftMenu " + elemClass + " ul.dropdown");
                 var parentLi = $("#leftMenu " + elemClass);
-                if (currItem.css("display") == "block") {
-                    currItem.slideUp('fast');
+                if (parentLi.hasClass("open")) {
+                    //currItem.slideUp('fast');
                     parentLi.removeClass("open");
                 } else {
-                    currItem.slideDown('fast');
+                    //currItem.slideDown('fast');
                     parentLi.addClass("open");
                 }
             };
 
             $scope.isAdmin = appState.isAdmin();
-
-            $scope.openState = function (state) {
-                if ($rootScope.globalLoading){
-                    notify.info("Пожалуйста, дождитесь загрузки данных.");
-                    return;
-                }
-
-                $state.go(state);
-            }
         }
     };
 }

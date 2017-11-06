@@ -1,5 +1,46 @@
+<div class="relative">
+    <h3 class="text-center">{{model.title}}</h3>
+
+    <div class="text-center group-title" ng-if="model.groupStats.name">&laquo;{{model.groupStats.name}}&raquo;
+    </div>
+</div>
+
 <div class="row main-stat">
-    <div class="col-md-8">
+    <div class="col-md-3">
+        <div class="block-flat group-info" ng-show="statIsLoaded">
+            <div class="content">
+                <div class="groupAvatar">
+                    <img ng-src="{{model.groupStats.photoUrl}}">
+                </div>
+
+                <a href="https://vk.com/{{model.groupStats.screen_name}}" target="_blank"
+                   class="btn btn-block btn-prusia btn-rad go-to-group no-margin-left">Перейти к группе</a>
+
+                <div class="group-text">
+
+                    <p ng-show="model.groupStats.description" ng-bind-html="model.groupStats.description">
+                    </p>
+
+                    <p ng-show="!model.groupStats.description">
+                        Описание группы отсутствует
+                    </p>
+                </div>
+                <div class="clear"></div>
+            </div>
+
+        </div>
+        <div class="fd-tile detail clean tile-prusia" ng-show="statIsLoaded">
+            <div class="content"><h2 class="text-left" ng-bind="model.groupStats.allCount"></h2>
+
+                <p></p></div>
+            <div class="icon"><i class="fa fa-users"></i></div>
+            <div class="details">Участники <span></span></div>
+        </div>
+        <div class="block-flat">
+            <vk-group-widget></vk-group-widget>
+        </div>
+    </div>
+    <div ng-class="{'col-md-9': statIsLoaded, 'col-md-6': !statIsLoaded}">
 
         <div class="row" ng-show="isLoading && groupIsFinded">
             <div class="col-xs-12">
@@ -7,18 +48,6 @@
                     <div class="progress-bar progress-bar-info" style="width: {{progressPercent}}%">
                         {{progressPercent}}%
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row top-block" ng-show="!statIsLoaded && !isLoading">
-            <div class="col-sm-12 item">
-                <div class="alert alert-info">
-                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                    <i class="fa fa-info-circle sign"></i>Где еще сидят подписчики?<br>
-                    В этом разделе можно найти ТОП групп, в которые входят подписчики из исследуемой группы.
-                    Для этого выберите группу и количество подписчиков для анализа. Обратите внимание, что сервис
-                    считывает ~75человек в секунду.
                 </div>
             </div>
         </div>
@@ -74,15 +103,20 @@
                                     <tr>
                                         <th></th>
                                         <th>Группа</th>
+                                        <th width="30"></th>
                                         <th>id группы</th>
                                         <th>Подписчиков</th>
                                         <th>Контакты</th>
                                     </tr>
                                     <tr ng-repeat="group in model.findedGroups">
                                         <td>{{$index+1}}</td>
+                                        <td width="30">
+                                            <img ng-src="{{group.photo}}" width="40">
+                                        </td>
                                         <td>
-                                            <a href="https://vk.com/{{group.screen_name}}" target="_blank">{{group.name}}</a><br>
-                                            Общее число подписчиков: {{group.members_count}}
+                                            <a href="https://vk.com/{{group.screen_name}}" target="_blank">{{group.name}}</a>
+                                            <br>
+                                            Участников: {{group.members_count}}
                                         </td>
                                         <td class="text-center">{{group.gid}}</td>
                                         <td class="text-center">{{group.intersection}}</td>
@@ -107,10 +141,18 @@
             </div>
         </div>
 
-    </div>
-    <div class="col-md-4">
-
-        <vk-group-widget></vk-group-widget>
+        <div ng-hide="statIsLoaded || isLoading" class="block-flat">
+            <div class="header">
+                <h3><i class="fa fa-info-circle sign"></i> Что это?</h3>
+            </div>
+            <div class="content site-helper">
+                <p> Где еще сидят подписчики?<br>
+                    В этом разделе можно найти ТОП групп, в которые входят подписчики из исследуемой группы.
+                    Для этого выберите группу и количество подписчиков для анализа. Обратите внимание, что сервис
+                    считывает ~75человек в секунду.
+                </p>
+            </div>
+        </div>
 
     </div>
 </div>

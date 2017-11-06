@@ -5,16 +5,16 @@ import events from './../../../../bl/events.js';
 
     module.factory('statPopupsFactory', statPopupsFactory);
 
-    statPopupsFactory.$inject = ['$modal', 'bus', 'appState'];
+    statPopupsFactory.$inject = ['$uibModal', 'bus', 'appState'];
 
-    function statPopupsFactory($modal, bus, appState) {
+    function statPopupsFactory($uibModal, bus, appState) {
 
         var openAddItemPopup = function () {
 
-            $modal.open({
+            $uibModal.open({
                 animation: true,
                 templateUrl: './templates/js/ui/stat/services/statPopupsFactory/views/addItemPopup.html',
-                controller: function ($scope, $modalInstance, FileUploader) {
+                controller: function ($scope, $uibModalInstance, FileUploader) {
                     var uploader = $scope.uploader = new FileUploader({
                         url: '/controllers/shop/uploadImages.php'
                     });
@@ -98,11 +98,11 @@ import events from './../../../../bl/events.js';
                     var sendData = function () {
                         bus.request(topics.SHOP.ADD_ITEM, $scope.item).then((res)=> {
                             bus.publish(events.SHOP.ITEM_CREATED, res);
-                            $modalInstance.close();
+                            $uibModalInstance.close();
                         })
                     };
                     $scope.close = function () {
-                        $modalInstance.close();
+                        $uibModalInstance.close();
                     };
                 },
             });
@@ -115,10 +115,10 @@ import events from './../../../../bl/events.js';
         };
 
         var openItemPopup = function (id) {
-            $modal.open({
+            $uibModal.open({
                 animation: true,
                 templateUrl: './templates/js/ui/stat/services/statPopupsFactory/views/openItemPopup.html',
-                controller: function ($scope, $modalInstance) {
+                controller: function ($scope, $uibModalInstance) {
                     $scope.isLoading = true;
 
                     bus.request(topics.SHOP.GET_ITEM, {id: id}).then((res)=> {
@@ -154,17 +154,17 @@ import events from './../../../../bl/events.js';
                     });
 
                     $scope.close = function () {
-                        $modalInstance.close();
+                        $uibModalInstance.close();
                     };
                 }
             });
         };
 
         var openRemoveItemPopup = function (options) {
-            $modal.open({
+            $uibModal.open({
                 animation: true,
                 templateUrl: './templates/js/ui/stat/services/statPopupsFactory/views/removeItemPopup.html',
-                controller: function ($scope, $modalInstance) {
+                controller: function ($scope, $uibModalInstance) {
                     $scope.item = {
                         name: options.name,
                         userId: appState.getUserId(),
@@ -179,11 +179,11 @@ import events from './../../../../bl/events.js';
                                 //console.log(res);
                             });
                         }
-                        //Закрываем попап
-                        $modalInstance.close();
+                        //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+                        $uibModalInstance.close();
                     };
                     $scope.close = function () {
-                        $modalInstance.close();
+                        $uibModalInstance.close();
                     };
                 },
             });

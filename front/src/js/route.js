@@ -1,6 +1,6 @@
 angular.module('app').config(['$stateProvider', '$urlRouterProvider',
     function ($stateProvider, $urlRouterProvider) {
-        $urlRouterProvider.otherwise("/");
+        $urlRouterProvider.otherwise("/dashboard/");
         //$urlRouterProvider.when('page-detail', '/contacts/:pageCode');
         $stateProvider
             .state('index', {
@@ -8,7 +8,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: './templates/template/app/template.html',
                 controller: 'appController'
             })
-            //Раздел "Главная"
+            //Dashboard-------------------------------------------------------------------------------------------------
             .state('index.dashboard', {
                 url: 'dashboard/',
                 views: {
@@ -19,44 +19,93 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            /*//Раздел "Статистика"
-             .state('index.stat', {
-             url: 'stat/',
-             views: {
-             'content': {
-             url: 'stat/',
-             templateUrl: './templates/js/ui/stat/controllers/statController.html',
-             controller: 'statController'
-             }
-             },
-             parent: 'index'
-             })*/
-            //Общая статистика
-            .state('index.stat', {
-                url: 'stat/?getStatFromGroup',
+            //РЎС‚Р°С‚РёСЃС‚РёРєР° СЃРѕРѕР±С‰РµСЃС‚РІ--------------------------------------------------------------------------------------
+            //РЎС‚Р°С‚РёСЃС‚РёРєР° - РЎРїРёСЃРѕРє
+            .state('index.analytics', {
+                url: 'analytics/',
                 views: {
                     'content': {
-                        url: 'stat',
-                        templateUrl: './templates/js/ui/stat/controllers/statMainController/statMainController.html',
-                        controller: 'statMainController'
+                        templateUrl: './templates/js/ui/analytics/controllers/analyticsDashboardController.html',
+                        controller: 'analyticsDashboardController'
                     }
                 },
                 parent: 'index'
             })
-            //Анализ публикаций
-            .state('index.publishAnalysis', {
-                url: 'publishAnalysis/?getStatFromGroup',
+            //РЎС‚Р°С‚РёСЃС‚РёРєР° - РґРµС‚Р°Р»СЊРЅР°СЏ СЃС‚СЂР°РЅРёС†Р°
+            .state('index.analytics.common', {
+                url: 'analytics/group/:gid',
                 views: {
                     'content': {
-                        url: 'publishAnalysis/',
-                        templateUrl: './templates/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html',
-                        controller: 'statPublishAnalysisController'
+                        templateUrl: './templates/js/ui/analytics/controllers/commonAnalytics/commonAnalyticsController.html',
+                        controller: 'commonAnalyticsController'
                     }
                 },
                 parent: 'index'
             })
-            //Раздел "Мои записи"
-            .state('index.publishFavorites', {
+            //РЎСЂР°РІРЅРµРЅРёРµ СЃРѕРѕР±С‰РµСЃС‚РІ---------------------------------------------------------------------------------------
+            //РЎСЂР°РІРЅРµРЅРёРµ СЃРѕРѕР±С‰РµСЃС‚РІ - РЎРїРёСЃРѕРє
+            .state('index.compare', {
+                url: 'compare/',
+                views: {
+                    'content': {
+                        templateUrl: './templates/js/ui/analytics/controllers/compareDashboardController/compareDashboardController.html',
+                        controller: 'compareDashboardController'
+                    }
+                },
+                parent: 'index'
+            })
+            //РЎСЂР°РІРЅРµРЅРёРµ СЃРѕРѕР±С‰РµСЃС‚РІ - С‚Р°Р±Р»РёС†Р°
+            .state('index.compare.detail', {
+                url: 'compare/detail',
+                views: {
+                    'content': {
+                        templateUrl: './templates/js/ui/analytics/controllers/compareController/compareController.html',
+                        controller: 'compareController'
+                    }
+                },
+                params: {
+                    list: ""
+                },
+                parent: 'index'
+            })
+            //РђРЅР°Р»РёР· РїСѓР±Р»РёРєР°С†РёР№
+            .state('index.posts', {
+                url: 'posts/',
+                views: {
+                    'content': {
+                        templateUrl: './templates/js/ui/analytics/controllers/postsDashboardController/postsDashboardController.html',
+                        controller: 'postsDashboardController'
+                    }
+                },
+                parent: 'index'
+            })
+            .state('index.posts.detail', {
+                url: 'posts/detail',
+                views: {
+                    'content': {
+                        templateUrl: './templates/js/ui/analytics/controllers/postsController/postsController.html',
+                        controller: 'postsController'
+                    }
+                },
+                params: {
+                    list: ""
+                },
+                parent: 'index'
+            })
+            //РћРїР»Р°С‚Р°----------------------------------------------------------------------------------------------------
+            .state('index.account', {
+                url: 'account/',
+                views: {
+                    'content': {
+                        url: 'account/',
+                        templateUrl: './templates/js/ui/account/controllers/accountController.html',
+                        controller: 'accountController'
+                    }
+                },
+                parent: 'index'
+            })
+
+            /*.state('index.publishFavorites', {
                 url: 'publishAnalysis/favorites',
                 views: {
                     'content': {
@@ -65,44 +114,8 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                     }
                 },
                 parent: 'index'
-            })
-            //Сравнение аудиторий
-            .state('index.auditoryCompare', {
-                url: 'auditoryCompare/',
-                views: {
-                    'content': {
-                        url: 'auditoryCompare',
-                        templateUrl: './templates/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.html',
-                        controller: 'statAuditoryCompareController'
-                    }
-                },
-                parent: 'index'
-            })
-            //Поиск мертвых участников
-            .state('index.findBots', {
-                url: 'findBots/',
-                views: {
-                    'content': {
-                        url: 'findBots',
-                        templateUrl: './templates/js/ui/stat/controllers/findBotsController/findBotsController.html',
-                        controller: 'findBotsController'
-                    }
-                },
-                parent: 'index'
-            })
-            .state('index.groupsAnalog', {
-                url: 'groupsAnalog/',
-                views: {
-                    'content': {
-                        url: 'groupsAnalog',
-                        templateUrl: './templates/js/ui/stat/controllers/groupsAnalogController/groupsAnalogController.html',
-                        controller: 'groupsAnalogController'
-                    }
-                },
-                parent: 'index'
-            })
+            })*/
             //----------------------------------------------------------------------------------------------------------
-            //Админка
             .state('index.admin', {
                 url: 'admin/',
                 views: {
@@ -121,6 +134,17 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                         url: 'vksync',
                         templateUrl: './templates/js/ui/admin/controllers/vksyncController/vksyncController.html',
                         controller: 'vksyncController'
+                    }
+                },
+                parent: 'index.admin'
+            })
+            .state('index.admin.crm', {
+                url: 'crm/',
+                views: {
+                    'admin': {
+                        url: 'crm',
+                        templateUrl: './templates/js/ui/admin/controllers/crmController/crmController.html',
+                        controller: 'crmController'
                     }
                 },
                 parent: 'index.admin'

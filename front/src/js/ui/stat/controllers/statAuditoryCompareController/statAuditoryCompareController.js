@@ -4,14 +4,13 @@ import {enums} from './../../../../bl/module.js';
 
 angular
     .module('rad.stat')
-    .controller('statAuditoryCompareController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState', 'vkApiFactory', '$timeout', 'radCommonFunc', 'notify', 'memoryFactory',
-        function ($rootScope, $scope, $state, bus, statPopupsFactory, appState, vkApiFactory, $timeout, radCommonFunc, notify, memoryFactory) {
-            $scope.currentTab = 'catalog';
-            $rootScope.page.sectionTitle = 'Сравнение аудиторий';
+    .controller('statAuditoryCompareController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState', 'vkApiFactory', '$timeout', 'radCommonFunc', 'notify', 'memoryFactory', '$stateParams',
+        function ($rootScope, $scope, $state, bus, statPopupsFactory, appState, vkApiFactory, $timeout, radCommonFunc, notify, memoryFactory, $stateParams) {
             $scope.model = {
                 groupAddress1: '',
                 groupAddress2: '',
-                differences: 0
+                differences: 0,
+                title: 'Сравнение аудиторий'
             };
             $scope.dataIsLoaded = false;
 
@@ -92,7 +91,7 @@ angular
             }
 
             function compare() {
-                if (!appState.isActiveUser()){
+                if (!appState.isActiveUser()) {
                     bus.publish(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL);
                     return;
                 }
@@ -297,7 +296,7 @@ angular
 
             function getUsersInfoByIds(iteration) {
                 if (!iteration) {
-                    $timeout(()=>{
+                    $timeout(()=> {
                         $scope.isUserGetData = true;
                         $scope.progressUserPercent = 0;
                     });
@@ -331,7 +330,7 @@ angular
                     if (res) {
                         $scope.model.intersectionList = $scope.model.intersectionList.concat(res);
                         if ((iteration + 1) * userCount < $scope.model.intersection.length) {
-                            $timeout(()=>{
+                            $timeout(()=> {
                                 $scope.progressUserPercent = ((100 / $scope.model.intersection.length) * (iteration + 1) * userCount).toFixed(2);
                             });
 

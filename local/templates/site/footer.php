@@ -109,11 +109,7 @@
             <!-- end widget -->
             <div class="col-lg-6 col-md-6 col-sm-12 columns text-right">
                 <div class="footer-menu right">
-                    <ul class="menu">
-                        <li><a href="/">Главная</a></li>
-                        <li><a href="/news/">Новости</a></li>
-                        <li><a href="/login/">Войти</a></li>
-                    </ul>
+
                 </div>
             </div>
             <!-- end large-6 -->

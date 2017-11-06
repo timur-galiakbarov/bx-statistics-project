@@ -1,0 +1,261 @@
+<div rad-loader="ui.isLoading">
+
+    <div class="row">
+        <div class="col-sm-8">
+            <div class="card">
+                <div class="card-header card-header-icon" data-background-color="blue">
+                    <i class="material-icons">build</i>
+                </div>
+                <div class="card-content">
+                    <h4 class="card-title">Анализ публикаций в сообществах</h4>
+
+                    <p class="category">за период с {{ui.periodFrom}} по {{ui.periodTo}}</p>
+
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="row showFilterArea" ng-show="ui.hiddenFilter">
+                                <div class="col-xs-12">
+                                    <a ng-click="ui.hiddenFilter = false" class="btn btn-default showFilterLink">Раскрыть
+                                        фильтр</a>
+                                    <a ng-click="openState('index.posts')" class="btn btn-success showFilterLink">Выбрать
+                                        другие группы</a>
+                                </div>
+                            </div>
+
+                            <div class="block-flat" ng-hide="ui.hiddenFilter">
+                                <form role="form" class="form-horizontal filter">
+                                    <div class="row">
+                                        <div class="col-xs-12">
+                                            <h4>Фильтр - период анализа</h4>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+
+                                        <div class="col-sm-12 checkbox-radios">
+                                            <div class="radio">
+                                                <label>
+                                                    <input type="radio" name="checkDate" value="week">
+                                                    <span class="circle"></span>
+                                                    <span class="check"></span> Неделя
+                                                </label>
+                                            </div>
+                                            <div class="radio">
+                                                <label>
+                                                    <input type="radio" name="checkDate" value="twoWeek">
+                                                    <span class="circle"></span>
+                                                    <span class="check"></span> Две недели
+                                                </label>
+                                            </div>
+                                            <div class="radio">
+                                                <label>
+                                                    <input type="radio" name="checkDate" value="month"
+                                                           checked="checked">
+                                                    <span class="circle"></span>
+                                                    <span class="check"></span> Последние 30 дней
+                                                </label>
+                                            </div>
+                                            <div class="radio">
+                                                <label>
+                                                    <input type="radio" name="checkDate" value="datePicker">
+                                                    <span class="circle"></span>
+                                                    <span class="check"></span> За выбранный промежуток
+                                                </label>
+
+                                                <div class="row">
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label class="label-control text-left">Дата начала</label>
+
+                                                            <div class="input-group">
+                                                            <span class="input-group-addon"
+                                                                  ng-click="openDatepickerPopupFrom()">
+                                                                <button class="btn btn-success btn-open-date-picker">
+                                                                    <span class="glyphicon glyphicon-th"></span>
+                                                                </button>
+                                                            </span>
+
+                                                                <div class="form-group is-empty">
+                                                                    <input type="text"
+                                                                           class="form-control datepicker"
+                                                                           ui-mask="99.99.9999"
+                                                                           uib-datepicker-popup="ddMMyyyy"
+                                                                           ng-model="model.datePicker.dateFrom"
+                                                                           is-open="model.datePicker.popupFrom.opened"
+                                                                           datepicker-options="dateOptions"
+                                                                           show-button-bar="false"
+                                                                           close-on-date-selection="true"/>
+                                                                    <span class="material-input"></span>
+                                                                <span class="help-block">
+                                                                    <ul class="parsley-errors-list filled">
+                                                                        <li class="parsley-required"
+                                                                            ng-bind="error.datePickerFromError"></li>
+                                                                    </ul>
+                                                                </span>
+                                                                    <span class="material-input"></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label class="label-control text-left">Дата
+                                                                окончания</label>
+
+                                                            <div class="input-group">
+                                                            <span class="input-group-addon"
+                                                                  ng-click="openDatepickerPopupTo()">
+                                                                <button class="btn btn-success btn-open-date-picker">
+                                                                    <span class="glyphicon glyphicon-th"></span>
+                                                                </button>
+                                                            </span>
+
+                                                                <div class="form-group is-empty">
+                                                                    <input type="text"
+                                                                           class="form-control"
+                                                                           ui-mask="99.99.9999"
+                                                                           uib-datepicker-popup="ddMMyyyy"
+                                                                           ng-model="model.datePicker.dateTo"
+                                                                           is-open="model.datePicker.popupTo.opened"
+                                                                           datepicker-options="dateOptions"
+                                                                           show-button-bar="false"/>
+                                                            <span class="help-block">
+                                                                <ul class="parsley-errors-list filled">
+                                                                    <li class="parsley-required"
+                                                                        ng-bind="error.datePickerToError"></li>
+                                                                </ul>
+                                                            </span>
+                                                                    <span class="material-input"></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-xs-12">
+                                            <button type="button" ng-disabled="ui.isLoading" class="btn btn-info btn-rad"
+                                                    ng-click="getAllStat()">Начать анализ
+                                            </button>
+
+                                            <a ng-click="ui.hiddenFilter = true" class="btn btn-default showFilterLink">Скрыть
+                                                фильтр</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-8">
+
+            <div class="card">
+                <div class="card-header card-header-icon" data-background-color="blue">
+                    <i class="material-icons">assignment</i>
+                </div>
+                <div class="card-content">
+                    <h4 class="card-title">Анализируемые группы</h4>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped compare-groups-table">
+                            <thead>
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th class="text-center"></th>
+                                <th class="text-center">Группа</th>
+                                <th class="text-center">Записей за период</th>
+                                <th class="text-center">Среднее количество реакций на пост</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="group in model.groupsStat" ng-show="group.visible">
+                                <td class="text-center">{{$index+1}}</td>
+                                <td class="text-center"></td>
+                                <td class="text-center" width="50">
+                                    <img ng-src="{{group.groupInfo.photo_small}}" width="40" rad-tooltip="{{group.groupInfo.name}}" placement="top">
+                                </td>
+                                <td class="text-center" ng-bind-html="(group.stat.actionsCount || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(group.stat.actionsAverageByPost || 0) | radNumberFormatter:'withNbps'"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" ng-repeat="wallPost in model.showedList">
+                <div class="col-xs-12">
+                    <post-default data="wallPost"
+                                  group-info="getGroupInfoByPost(wallPost)"
+                                  view="'postAnalysis'"></post-default>
+                </div>
+            </div>
+
+            <div ng-show="model.showedList.length <  model.wall.length && !ui.isLoading">
+                <button class="btn btn-info btn-block" ng-click="nextPosts()">
+                            <span class="btn-label">
+                                <i class="material-icons">arrow_downward</i>
+                            </span>
+                    Показать еще
+                    <div class="ripple-container"></div>
+                </button>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card">
+                <div class="card-header card-header-icon" data-background-color="blue">
+                    <i class="material-icons">sort</i>
+                </div>
+                <div class="card-content">
+                    <h4 class="card-title">Сортировать</h4>
+
+                    <div class="row">
+                        <div class="col-sm-12 checkbox-radios">
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" ng-model="model.postsFilter" name="postsFilter"
+                                           value="likes">
+                                    <span class="circle"></span>
+                                    <span class="check"></span> по лайкам
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" ng-model="model.postsFilter" name="postsFilter"
+                                           value="reposts">
+                                    <span class="circle"></span>
+                                    <span class="check"></span> по репостам
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" ng-model="model.postsFilter" name="postsFilter"
+                                           value="comments">
+                                    <span class="circle"></span>
+                                    <span class="check"></span> по комментариям
+                                </label>
+                            </div>
+                            <!--<div class="radio">
+                                <label>
+                                    <input type="radio" ng-model="model.postsFilter" name="postsFilter"
+                                           value="er">
+                                    <span class="circle"></span>
+                                    <span class="check"></span> по вовлеченности
+                                </label>
+                            </div>-->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,109 @@
+<div class="card card-product post-default">
+    <div class="card-image video-preview"
+         ng-if="wallPost.firstImage || wallPost.firstDoc || wallPost.firstVideo">
+        <a ng-if="wallPost.firstImage">
+            <img ng-src="{{wallPost.firstImage.photo.photo_604}}" style="max-width: 100%;"/>
+        </a>
+
+        <a ng-if="wallPost.firstDoc" class="text-center">
+            <img ng-src="{{wallPost.firstDoc.doc.url}}" style="max-width: 100%;"/>
+        </a>
+
+        <a ng-if="wallPost.firstVideo">
+            <img ng-show="!attachment.video.url"
+                 ng-src="{{getVideoPreview()}}" style="max-width: 100%;"
+                 ng-click="getVideoUrl(attachment)"/>
+        </a>
+        <img ng-if="wallPost.firstVideo" class="play-icon" src="./images/video_play.png">
+
+        <div class="ripple-container"></div>
+    </div>
+
+    <div class="card-content table-responsive text-left">
+
+        <div ng-if="isShowAnotherPictures(wallPost.attachments)">
+            <hr>
+
+            <div class="col-sm-4 text-center publish-photo-link"
+                 ng-repeat="anotherImage in wallPost.attachments"
+                 ng-if="anotherImage.type == 'photo'"
+                 ng-click="showCurrentPicture(anotherImage.photo.src_big, currentIndex)">
+                <img ng-src="{{anotherImage.photo.src_big}}" height="50">
+            </div>
+
+        </div>
+
+        <div ng-if="isShowGif(wallPost.attachments)">
+            <div ng-repeat="gif in wallPost.attachments"
+                 ng-if="gif.doc && gif.doc.ext == 'gif'">
+                <img ng-src="{{gif.doc.url}}" style="max-width: 100%;"/>
+            </div>
+        </div>
+
+        <!--<div ng-if="wallPost.attachments && wallPost.attachments.length>0">
+            <div ng-repeat="attachment in wallPost.attachments">
+                <div class="video text-center"
+                     ng-if="attachment.type == 'video'">
+
+                    <div class="video-preview" ng-show="!attachment.video.url"
+                         ng-click="getVideoUrl(attachment)">
+                        <img ng-src="{{attachment.video.image}}"
+                             style="max-width: 100%;">
+                        <img class="play-icon" src="./images/video_play.png">
+                    </div>
+
+                    <iframe ng-if="attachment.video.url" ng-src="{{trustSrc(attachment.video.url)}}"
+                            width="100%"
+                            height="250"
+                            allowfullscreen frameborder="0">
+                    </iframe>
+                </div>
+            </div>
+        </div>-->
+
+        <div class="text">
+            <span ng-bind-html="wallPost.text"></span>
+        </div>
+
+        <div class="post-repost" ng-if="wallPost.copy_history && wallPost.copy_history.length">
+            <div class="alert alert-warning">
+                <span><i class="fa fa-share"></i> Запись содержит репост записи с другой группы</span>
+            </div>
+        </div>
+
+        <div class="clear"></div>
+    </div>
+
+    <div class="card-footer">
+        <div class="" ng-if="view == 'postAnalysis'">
+            <div class="pull-left">
+                <img ng-src="{{groupInfo.photo_small}}" width="50" placement="top">
+            </div>
+            <div class="pull-left group-name-on-post">
+                <span>Пост из группы</span><br/>
+                {{groupInfo.name}}
+            </div>
+        </div>
+
+        <hr ng-if="view == 'postAnalysis'"/>
+
+        <div class="stats">
+            <i class="material-icons">access_time</i> {{getDate(wallPost.date)}}
+            <br>
+            <a class="btn btn-info btn-sm"
+               ng-href="https://vk.com/{{groupInfo.screen_name || ('club' + groupInfo.gid)}}?w=wall-{{groupInfo.gid}}_{{wallPost.id}}"
+               target="_blank">
+                                                <span class="btn-label">
+                                                    <i class="fa fa-arrow-right"></i>
+                                                </span>
+                Перейти к записи
+                <div class="ripple-container"></div>
+            </a>
+        </div>
+        <div class="pull-right">
+            <i class="fa fa-heart"></i> <strong> {{wallPost.likes.count}}</strong>
+            <i class="fa fa-share-alt"></i> <strong> {{wallPost.reposts.count}}</strong>
+            <i class="fa fa-comments"></i> <strong> {{wallPost.comments.count}}</strong>
+        </div>
+    </div>
+</div>

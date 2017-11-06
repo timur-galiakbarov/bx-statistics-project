@@ -30,7 +30,7 @@ angular
                 login: appState.getUserVkLogin()
             };
 
-            $scope.$watch('isLoading', (newVal)=>{
+            $scope.$watch('isLoading', (newVal)=> {
                 $rootScope.globalLoading = newVal;
             });
 
@@ -84,7 +84,7 @@ angular
                 var filteredArr = arr.filter((i)=> {
                     return i.type == 'doc' && i.doc && i.doc.ext == "gif";
                 });
-                return filteredArr.length > 0;
+                return filteredArr.length > 1;
             }
 
             function showCurrentPicture(url, index) {
@@ -144,9 +144,29 @@ angular
                     .then((res)=> {
                         $timeout(()=> {
                             if (res && res.length > 0) {
-                                res.forEach((item)=>{
-                                    $scope.favoriteList.push(item);
-                                    $timeout(()=>{
+                                res.forEach((item)=> {
+                                    var firstImage = "";
+                                    var firstVideo = "";
+                                    var firstDoc = "";
+                                    if (item.attachments && item.attachments.length) {
+                                        firstImage = item.attachments.filter((a)=> {
+                                            return a.type == "photo";
+                                        })[0];
+
+                                        firstVideo = item.attachments.filter((a)=> {
+                                            return a.type == "video";
+                                        })[0];
+
+                                        firstDoc = item.attachments.filter((a)=> {
+                                            return a.type == "doc" && a.doc && a.doc.ext == "gif";
+                                        })[0];
+                                    }
+                                    $scope.favoriteList.push(angular.extend(item, {
+                                        firstImage: firstImage,
+                                        firstVideo: firstVideo,
+                                        firstDoc: firstDoc
+                                    }));
+                                    $timeout(()=> {
                                         $(".nano").nanoScroller();
                                     }, 300);
                                 });

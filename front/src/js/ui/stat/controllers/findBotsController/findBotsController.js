@@ -6,9 +6,6 @@ angular
     .module('rad.stat')
     .controller('findBotsController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState', 'vkApiFactory', 'memoryFactory', '$timeout', 'radCommonFunc', '$stateParams', 'notify',
         function ($rootScope, $scope, $state, bus, statPopupsFactory, appState, vkApiFactory, memoryFactory, $timeout, radCommonFunc, $stateParams, notify) {
-            $scope.currentTab = 'catalog';
-            $rootScope.page.sectionTitle = 'Поиск "мертвых" подписчиков';
-
             $scope.statIsLoaded = false;
             $scope.isLoading = false;
             $scope.isHiddenMenu = true;
@@ -25,13 +22,15 @@ angular
                 gid: ''
             };
             var chart;
+            var needGetStatFromParams = $stateParams.getStatFromGroup ? $stateParams.getStatFromGroup : false;
 
             $scope.model = {
                 groupAddress: '',
                 groupName: '',
                 deactivatedList: [],
                 deactivatedListView: [],
-                deactivatedCount: 0
+                deactivatedCount: 0,
+                title: "Поиск &laquo;мертвых&raquo; подписчиков"
             };
 
             $scope.$watch('isLoading', (newVal)=>{
@@ -119,7 +118,8 @@ angular
                 };
 
                 var groupInfoRequest = vkApiFactory.getGroupInfo(authData, {
-                    groupId: vkGroupId
+                    groupId: vkGroupId,
+                    fields: "photo_big,photo_medium,photo,members_count,counters,description"
                 }).then(function (res) {
                     if (res && res.error && res.error.error_code == 100) {
                         $scope.$apply(function () {
@@ -138,6 +138,10 @@ angular
 
                         $scope.model.membersCount = res.members_count;
                         $scope.model.groupName = res.name;
+                        $scope.model.groupScreenName = res.screen_name;
+                        $scope.model.groupPhoto = res.photo_big || res.photo_medium || res.photo;
+                        $scope.model.groupDescription = res.description;
+                        $scope.model.groupMembersCount = res.members_count;
                     });
                 });
 
@@ -352,6 +356,12 @@ angular
                 $(function () {
                     $('[data-toggle="tooltip"]').tooltip();
                 });
+
+                if (needGetStatFromParams) {
+                    $scope.model.groupAddress = needGetStatFromParams;
+                    find();
+                    notify.info("Процесс поиска мертвых участников начался. Пожалуйста подождите.");
+                }
 
                 $(".nano").nanoScroller();
             }

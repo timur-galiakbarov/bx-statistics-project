@@ -1,29 +1,29 @@
 var path = {
-    build: { //Тут мы укажем куда складывать готовые после сборки файлы
+    build: {
         dir: 'build/',
         html: 'build/templates/',
         css: 'build/css/',
         js: 'build/js/',
         bower: 'build/bower_components/',
         fonts: 'build/fonts/',
-        tpljs: 'build/js/template/',
+        tpljs: 'build/js/',
         images: 'build/images/'
     },
-    bitrix: {//Пути для выплевывания в битрикс
+    bitrix: {
         dir: './lk/',
         html: './lk/templates/',
         css: './lk/css/',
         js: './lk/js/',
         bower: './lk/bower_components/',
         fonts: './lk/fonts/',
-        tpljs: './lk/js/template/',
+        tpljs: './lk/js/',
         images: './lk/images/'
     },
-    src: { //Пути откуда брать исходники
+    src: {
         dir: './front/src/',
-        html: './front/src/**/*.html', //Синтаксис src/*.html говорит gulp что мы хотим взять все файлы с расширением .html
-        css: './front/src/**/*.css', //Синтаксис src/*.html говорит gulp что мы хотим взять все файлы с расширением .html
-        js: './front/src/js/main.js',//В стилях и скриптах нам понадобятся только main файлы
+        html: './front/src/**/*.html',
+        css: './front/src/**/*.css',
+        js: './front/src/js/main.js',
         fonts: './front/src/fonts/**/*.*',
         bower: 'bower_components/**/*.*',
         tpljs: './front/src/js/template/**/*.*',
@@ -31,7 +31,7 @@ var path = {
         libjs: './front/src/lib/**/*.js',
         images: './front/images/**/*.*'
     },
-    watch: { //Тут мы укажем, за изменением каких файлов мы хотим наблюдать
+    watch: {
         html: './front/src/**/*.html',
         js: './front/src/js/**/*.js',
         css: './front/src/**/*.css',

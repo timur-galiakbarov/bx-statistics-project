@@ -3,14 +3,20 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 $APPLICATION->SetPageProperty("keywords", "Анализ групп вк, статистика групп вконтакте, статистика сообществ, вконтакте, анализ постов группы вконтакте");
 $APPLICATION->SetPageProperty("description", "Сервис socstat.ru - это инструмент smm-менеджера. С помощью нашего сервиса можно выполнить анализ любой группы «Вконтакте», узнать динамику активности и степень вовлеченности подписчиков");
 $APPLICATION->SetTitle("Аналитика и статистика групп вконтакте");
+
+global $USER;
+if ($USER->IsAuthorized()){
+    header("location: /lk/");
+}
+
 ?>
 
 <section class="slideshow-wrapper">
     <div id="slider-wrapper">
-        <div id="layerslider" style="width:100%;height:550px;">
+        <div id="layerslider" style="width:100%;height:450px;">
 
             <div class="ls-slide" data-ls="slidedelay:8000;transition2d:21,105;timeshift:-1000;">
-                <img src="<?= SITE_TEMPLATE_PATH ?>/demos/sliderbg_02.png" class="ls-bg" alt="Slide background"/>
+                <img src="<?= SITE_TEMPLATE_PATH ?>/demos/slider_bg.png" class="ls-bg" alt="Slide background"/>
 
                 <p class="ls-l" style="
                         top:120px;
@@ -25,8 +31,8 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
                         font-size:30px;
                         line-height:37px;
                         white-space: nowrap;"
-                   data-ls="offsetxin:-50;durationin:2000;delayin:1000;offsetxout:-50;durationout:1000;">
-                    Поиск самого интересного контента
+                   data-ls="offsetxin:-50;durationin:1000;delayin:1000;offsetxout:-50;durationout:1000;">
+                    Простой и понятный инструмент
                 </p>
 
                 <p class="ls-l" style="
@@ -42,24 +48,24 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
                         font-size:30px;
                         line-height:37px;
                         white-space: nowrap;"
-                   data-ls="offsetxin:-50;durationin:2000;delayin:1000;offsetxout:-50;durationout:1000;">
-                    в группах вконтакте
+                   data-ls="offsetxin:-50;durationin:1000;delayin:1000;offsetxout:-50;durationout:1000;">
+                    аналитики групп ВКонтакте
                 </p>
 
                 <p class="ls-l" style="
-                        top:280px;
+                        top:260px;
                         left:590px;
-                        font-weight: 500;
+                        font-weight: 300;
                         text-align: right;
                         font-size:30px;
                         color:#ffffff;
                         white-space: nowrap;"
-                   data-ls="offsetxin:0;delayin:2500;rotatein:90;transformoriginin:right bottom 0;offsetxout:0;durationout:1500;transformoriginout:right bottom 0;">
-                    Анализируйте контент в своих группах
+                   data-ls="offsetxin:0;delayin:1500;rotatein:90;transformoriginin:right bottom 0;offsetxout:0;durationout:1000;transformoriginout:right bottom 0;">
+                    Анализируйте свои группы
                 </p>
 
                 <a target="_blank" href="/lk/" class="ls-l btn btn-success" style="
-                        top:320px;
+                        top:300px;
                         left:590px;
                         font-weight: 300;
                         text-align: center;
@@ -71,125 +77,24 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
                         color:#ffffff;
                         border-radius: 5px;
                         white-space: nowrap;"
-                   data-ls="offsetxin:0;durationin:1500;delayin:3850;easingin:easeOutElastic;rotatexin:90;transformoriginin:50% top 0;offsetxout:0;durationout:1000;rotatexout:90;transformoriginout:50% bottom 0;">
+                   data-ls="offsetxin:0;durationin:1500;delayin:1800;easingin:easeOutElastic;rotatexin:90;transformoriginin:50% top 0;offsetxout:0;durationout:1000;rotatexout:90;transformoriginout:50% bottom 0;">
                     Начать работу
                 </a>
 
                 <p class="ls-l" style="
-                        top:375px;
+                        top:355px;
                         left:590px;
                         font-weight:300;
                         font-size:30px;
                         color:#ffffff;
                         white-space: nowrap;"
-                   data-ls="offsetxin:-50;delayin:3000;skewxin:60;scalexin:1.5;offsetxout:-50;durationout:1000;skewxout:60;scalexout:1.5;">
-                    и в группах конкурентов
+                   data-ls="offsetxin:-50;delayin:1800;skewxin:60;scalexin:1.5;offsetxout:-50;durationout:1000;skewxout:60;scalexout:1.5;">
+                    и группы конкурентов
                 </p>
                 <img class="ls-l" style="top:0px;left:25%;white-space: nowrap;"
-                     data-ls="durationin:1500;scalexin:0.8;scaleyin:0.8;scalexout:0.8;scaleyout:0.8;"
-                     src="<?= SITE_TEMPLATE_PATH  ?>/images/slider_analysis.png" alt="">
-            </div>
-            <!-- end second slide -->
-
-            <div class="ls-slide" data-ls="slidedelay:8000;transition2d:75,79;">
-                <img src="<?= SITE_TEMPLATE_PATH ?>/demos/sliderbg_01.png" class="ls-bg" alt="Slide background"/>
-
-                <p class="ls-l" style="
-                        top:220px;
-                        left:20px;
-                        font-weight: 300;
-                        background: white;
-                        background: #ffffff;
-                        color:#3498db;
-                        height:40px;
-                        padding-right:10px;
-                        padding-left:10px;
-                        font-size:30px;
-                        line-height:37px;
-                        white-space: nowrap;"
-                   data-ls="offsetxin:-50;durationin:1000;delayin:1000;offsetxout:-50;durationout:1000;">
-                    Аналитика и статистика
-                </p>
-
-                <p class="ls-l" style="
-                        top:270px;
-                        left:20px;
-                        font-weight: 300;
-                        background: white;
-                        background: #ffffff;
-                        color:#3498db;
-                        height:40px;
-                        padding-right:10px;
-                        padding-left:10px;
-                        font-size:30px;
-                        line-height:37px;
-                        white-space: nowrap;"
-                   data-ls="offsetxin:-50;durationin:1000;delayin:1000;offsetxout:-50;durationout:1000;">
-                    групп вконтакте
-                </p>
-
-                <!--<p class="ls-l" style="
-                        top:320px;
-                        left:20px;
-                        font-weight: 300;
-                        color:#ffffff;
-                        background:#3498db;
-                        height:40px;
-                        padding-right:10px;
-                        padding-left:10px;
-                        font-size:30px;
-                        line-height:37px;
-                        white-space: nowrap;"
-                   data-ls="offsetxin:-50;durationin:1000;delayin:1000;offsetxout:-50;durationout:1000;">
-                    Бесплатно
-                </p>-->
-
-                <p class="ls-l" style="
-                        top:220px;
-                        left:955px;
-                        font-weight: 500;
-                        text-align: right;
-                        font-size:30px;
-                        color:#ffffff;
-                        white-space: nowrap;"
-                   data-ls="offsetxin:0;delayin:1500;rotatein:90;transformoriginin:right bottom 0;offsetxout:0;durationout:1500;transformoriginout:right bottom 0;">
-                    Без регистрации
-                </p>
-
-                <a target="_blank" href="/lk/" class="ls-l btn btn-success" style="
-                        top:260px;
-                        left:955px;
-                        font-weight: 300;
-                        text-align: center;
-                        width:200px;
-                        height:40px;
-                        padding-right:10px;
-                        font-size:24px;
-                        line-height:37px;
-                        color:#ffffff;
-                        border-radius: 5px;
-                        border: 1px solid #aaa;
-                        white-space: nowrap;"
-                   data-ls="offsetxin:0;durationin:1500;delayin:3250;easingin:easeOutElastic;rotatexin:90;transformoriginin:50% top 0;offsetxout:0;durationout:1000;rotatexout:90;transformoriginout:50% bottom 0;">
-                    Начать работу
-                </a>
-
-                <p class="ls-l" style="
-                        top:315px;
-                        left:955px;
-                        font-weight:300;
-                        font-size:30px;
-                        color:#ffffff;
-                        white-space: nowrap;"
-                   data-ls="offsetxin:-50;delayin:2000;skewxin:60;scalexin:1.5;offsetxout:-50;durationout:1000;skewxout:60;scalexout:1.5;">
-                    Начните сейчас
-                </p>
-                <img class="ls-l" style="top:80px;left:52%;white-space: nowrap;"
-                     data-ls="durationin:1500;scalexin:0.8;scaleyin:0.8;scalexout:0.8;scaleyout:0.8;"
+                     data-ls="durationin:1000;scalexin:0.8;scaleyin:0.8;scalexout:0.8;scaleyout:0.8;"
                      src="<?= SITE_TEMPLATE_PATH ?>/images/firstPicture.png" alt="">
-
             </div>
-            <!-- end first slide -->
         </div>
         <!-- layer slider -->
     </div>
@@ -198,6 +103,50 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
 <!-- end slideshow-wrapper -->
 
 <section class="section1">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <div class="general-title text-center">
+                    <h1>О сервисе socstat.ru</h1>
+
+                    <p>Качественный инструмент smm-менеджера &laquo;Вконтакте&raquo;</p>
+                    <hr>
+                </div>
+                <p>
+                    Сервис socstat.ru - это инструмент smm-менеджера. С помощью нашего сервиса можно выполнить анализ
+                    любой
+                    группы &laquo;Вконтакте&raquo;, узнать динамику активности и степень вовлеченности подписчиков,
+                    узнать статистику посещаемости и динамику подписчиков для групп с открытой статистикой, увидеть
+                    как часто обновляется контент.
+                    <br><br>
+                    Для любой открытой группы можно провести анализ наиболее интересного контента, отфильтрованного
+                    по степени вовлеченности (ER), количеству лайков, репостов, комментариев. Выяснив, что нравится
+                    вашим подписчикам в группах со схожей тематикой, вам будет проще ориентироваться при написании
+                    постов в группе для продвижения.
+                    <br><br>
+
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="section2">
+    <div class="container">
+        <div class="message text-center">
+            <h2 class="big-title">Будьте <span>впереди</span>!</h2>
+
+            <p class="small-title">
+                Анализируйте поведение подписчиков в своих группах и у конкурентов.
+                <br>Проводите конкурентную разведку.
+                <br>Оперативно делайте сравнения и выводы для достижения результатов.
+            </p>
+            <a class="button large" href="/login/">Начать работу</a>
+        </div>
+        <!-- end message -->
+    </div>
+    <!-- end container -->
+</section>
+<section class="section-blue">
     <div class="container">
         <div class="general-title text-center">
             <h3>Возможности сервиса</h3>
@@ -210,20 +159,19 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
                 <div class="servicebox text-center">
                     <div class="service-icon">
                         <div class="dm-icon-effect-1" data-effect="slide-bottom">
-                            <a class=""> <i class="dm-icon fa fa-search fa-3x"></i> </a>
+                            <a class=""> <i class="dm-icon fa fa-bar-chart-o fa-3x"></i> </a>
                         </div>
                         <div class="servicetitle">
-                            <h4>Поиск групп подписчиков</h4>
+                            <h4>Аналитика сообществ</h4>
                             <hr>
                         </div>
-                        <p>Позволяет получить Топ групп, на которые подписаны ваши подписчики или подписчики из любой
-                            открытой группы.
-                            Полезно для <b>понимания интересов</b> подписчиков.
-                        </p>
+                        <p>За выбранный период можно получить различные статистические метрики: количество
+                            посещений, динамика аудитории, данные по контенту, степень вовлеченности и многое другое</p>
                     </div>
                     <!-- service-icon -->
                 </div>
                 <!-- servicebox -->
+
             </div>
             <!-- large-3 -->
 
@@ -237,8 +185,8 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
                             <h4>Анализ публикаций</h4>
                             <hr>
                         </div>
-                        <p>Анализируйте лучшие публикации в различных группах. Узнайте, какой контент
-                            нравится вашим пользователям больше всего. Сохраните наиболее интересный контент.</p>
+                        <p>Анализируйте лучшие и взрывные публикации в любых группах. Узнайте, какой контент
+                            нравится пользователям больше всего. Сохраните наиболее интересный контент.</p>
                     </div>
                     <!-- service-icon -->
                 </div>
@@ -256,9 +204,8 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
                             <h4>Сравнение аудитории</h4>
                             <hr>
                         </div>
-                        <p>Сравнение аудитории двух или нескольких любых групп. Позволяет вычислить количество общих
-                            пользователей между
-                            группами. Быстрая обработка даже <b>очень больших</b> групп. </p>
+                        <p>Сравнивайте аудитории двух или нескольких любых групп. Узнавайте пересечения. Быстрая
+                            обработка даже <b>очень больших</b> групп. </p>
                     </div>
                     <!-- service-icon -->
                 </div>
@@ -271,14 +218,16 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
                 <div class="servicebox text-center">
                     <div class="service-icon">
                         <div class="dm-icon-effect-1" data-effect="slide-bottom">
-                            <a class=""> <i class="dm-icon fa fa-bar-chart-o fa-3x"></i> </a>
+                            <a class=""> <i class="dm-icon fa fa-search fa-3x"></i> </a>
                         </div>
                         <div class="servicetitle">
-                            <h4>Общая статистика</h4>
+                            <h4>Поиск групп подписчиков</h4>
                             <hr>
                         </div>
-                        <p>За выбранный период можно получить различные статистические данные: количество
-                            посещений, динамика аудитории, данные по контенту</p>
+                        <p>Позволяет получить Топ групп, на которые подписаны ваши подписчики или подписчики из любой
+                            открытой группы.
+                            Полезно для <b>понимания интересов</b> подписчиков.
+                        </p>
                     </div>
                     <!-- service-icon -->
                 </div>
@@ -435,7 +384,8 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
                     <hr>
                 </div>
                 <p>
-                    Вычисление количества пересечений аудиторий в двух или более группах вконтакте, а также процента от общего
+                    Вычисление количества пересечений аудиторий в двух или более группах вконтакте, а также процента от
+                    общего
                     числа подписчиков по каждой группе.
                     Поиск пересечений возможен даже при большом количестве подписчиков.
                 </p>
@@ -454,7 +404,7 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
         <div class="general-title">
             <h3>Привлекательные цены</h3>
 
-            <p>Низкие цены за удобный сервис</p>
+            <p>Мы держим цены низкими, а качество высоким - убедитесь сами!</p>
             <hr>
         </div>
         <div class="row">
@@ -467,9 +417,9 @@ $APPLICATION->SetTitle("Аналитика и статистика групп в
                     <div class="icn-main-container">
                         <span class="icn-container">0 <i class="fa fa-rub"></i></span>
                     </div>
-                    <p>Пробный период - 5 дней с момента первой авторизации. Сервис доступен без ограничений.</p>
+                    <p>Пробный период - 3 дня с момента первой авторизации. Сервис доступен без ограничений.</p>
                     <ul class="pricing">
-                        <li>Период - 5 дней</li>
+                        <li>Период - 3 дня</li>
                         <li>Без ограничений</li>
                         <!--<li>Техническая</li>-->
                     </ul>

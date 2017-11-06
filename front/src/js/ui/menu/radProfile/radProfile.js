@@ -5,9 +5,9 @@ angular
     .module('rad.menu')
     .directive('radProfile', radProfile);
 
-radProfile.inject = ['appState', 'vkApiFactory', 'notify'];
+radProfile.inject = ['appState', 'vkApiFactory', 'notify', '$rootScope', '$state'];
 
-function radProfile(appState, vkApiFactory, notify) {
+function radProfile(appState, vkApiFactory, notify, $rootScope, $state) {
     return {
         restrict: 'EA',
         templateUrl: './templates/js/ui/menu/radProfile/radProfile.html',
@@ -20,11 +20,17 @@ function radProfile(appState, vkApiFactory, notify) {
                 login: appState.getUserVkLogin()
             };
 
+            var userData = appState.user();
+
+            $scope.noActiveTariff = !appState.isActiveUser();
+
             $scope.model = {
                 userName: '',
                 userLastName: '',
                 uid: '',
-                photoUrl: ''
+                photoUrl: '',
+                tariff: userData.tariff,
+                activeTo: userData.activeTo,
             };
 
             $scope.logout = function () {
@@ -83,10 +89,14 @@ function radProfile(appState, vkApiFactory, notify) {
                         });
 
                     } else {
-                        setTimeout(getUserData(iteration), 500);
+                        setTimeout(()=>{
+                            getUserData(iteration)
+                        }, 500);
                     }
                 }).fail((err)=> {
-                    setTimeout(getUserData(iteration), 500);
+                    setTimeout(()=>{
+                        getUserData(iteration)
+                    }, 500);
                 });
             }
 

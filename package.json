@@ -3,24 +3,17 @@
   "version": "1.0.0",
   "main": "gulpfile.js",
   "dependencies": {
-    "gulp": "^3.9.0",
-    "gulp-babel": "^5.2.1",
-    "gulp-browserify": "^0.5.1",
-    "gulp-concat": "^2.6.0"
-  },
-  "browser": {
-    "core": "./front/src/js/bl/core/module.js",
-    "lodash": "./node_modules/lodash/index.js",
-    "postal.request-response": "./bower_components/postal.request-response/lib/postal.request-response.js",
-    "promise": "./node_modules/q/q.js"
-  },
-  "devDependencies": {
+    "angular-local-storage": "^0.7.1",
+    "angular-ui-bootstrap": "^2.2.0",
     "babelify": "^6.3.0",
     "bower": "^1.5.2",
     "browser-sync": "^2.9.1",
     "browserify": "^11.0.1",
+    "gulp": "^3.9.0",
     "gulp-babel": "^5.2.1",
     "gulp-bower": "0.0.10",
+    "gulp-browserify": "^0.5.1",
+    "gulp-buffer": "0.0.2",
     "gulp-concat": "^2.6.0",
     "gulp-filter": "^4.0.0",
     "gulp-ftp": "^1.1.0",
@@ -41,6 +34,17 @@
     "rigger": "git://github.com/buildjs/rigger",
     "rimraf": "^2.4.3",
     "vinyl-source-stream": "^1.1.0"
+  },
+  "browser": {
+    "core": "./front/src/js/bl/core/module.js",
+    "lodash": "./node_modules/lodash/index.js",
+    "postal.request-response": "./bower_components/postal.request-response/lib/postal.request-response.js",
+    "promise": "./node_modules/q/q.js"
+  },
+  "devDependencies": {
+    "gulp-rev-all": "^0.9.7",
+    "gulp-rev-delete-original": "^0.2.3",
+    "gulp-rimraf": "^0.2.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

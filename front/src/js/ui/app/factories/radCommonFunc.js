@@ -5,9 +5,9 @@ import events from './../../../bl/events.js';
 
     module.factory('radCommonFunc', radCommonFunc);
 
-    radCommonFunc.$inject = ['$modal', 'bus', 'appState'];
+    radCommonFunc.$inject = ['$uibModal', 'bus', 'appState'];
 
-    function radCommonFunc($modal, bus, appState) {
+    function radCommonFunc($uibModal, bus, appState) {
 
         var api = {
             getGroupId: function(url){

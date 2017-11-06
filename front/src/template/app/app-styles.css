@@ -1,340 +1,209 @@
-/*h2*/
-h2.main-title {
-    font-weight: normal;
-    font-size: 28px;
-}
-
-/*template styles--------------------*/
-.sidebar-logo {
-    background: #456a94 !important;
-    height: 55px !important;
-}
-
-.cl-vnavigation .active > a {
-    border-left: 3px solid #456a94 !important;
-}
-
-.cl-vnavigation a {
+.nav a {
     cursor: pointer;
 }
 
-.logo-title {
-    font-size: 18px !important;
-    font-family: "Roboto" !important;
-    padding-top: 2px;
-    color: #fff !important;
-    font-weight: 200;
+.post-default {
+    max-width: 550px;
 }
 
-#leftMenu {
-    float: left;
-    width: 100%;
+.post-default .card-image {
+    min-height: 40px;
+    background: #eee;
 }
 
-@media (max-width: 767px) {
-    #leftMenu {
-        background: #272930;
-    }
+.clear {
+    clear: both;
+}
 
-    /*.logo-title {
-        text-align: center;
-        padding-top: 13px;
-    }*/
+.video-preview {
+    position: relative;
+}
+
+.video-preview .play-icon {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-top: -32px;
+    margin-left: -32px;
+    height: 64px !important;
+    width: 64px !important;
+}
+
+.custom-nav-pills > li > a {
+    font-size: 10px !important;
+    font-weight: 300 !important;
+}
+
+/*Validation*/
+.parsley-errors-list {
+    margin-top: 4px;
+    padding: 0;
+}
+
+.parsley-errors-list li {
+    padding: 0;
+    list-style: none;
+    color: #cc0000;
+}
+
+.parsley-error {
+    border-color: #c00 !important;
+}
+
+.btn-open-date-picker {
+    width: 50px;
+    padding: 5px 0px !important;
+    margin: 0 !important;
+}
+
+.uib-datepicker-popup .btn {
+    background: #fff !important;
+    color: #333 !important;
+    margin: 2px 0px !important;
+    padding: 5px 11px !important;
+}
+
+.uib-datepicker-popup .text-muted {
+    color: #bbb !important;
+}
+
+.form-horizontal.filter .checkbox-radios .checkbox:first-child,
+.form-horizontal.filter .checkbox-radios .radio:first-child {
+    margin-top: 0px !important;
+}
+
+.form-horizontal.filter .checkbox-radios .radio {
+    padding-top: 0px !important;
 }
 
 .loader {
-
     opacity: 0.5;
 }
 
-/*-----------------------------------*/
-/*StatFilter*/
-.statDateFilters {
+.posts-sort-block {
+    margin-top: 92px !important;
+}
+
+.btn-choose-group {
+    background: #bbb !important;
+}
+
+.groupLink {
+    cursor: pointer;
+}
+
+.choose-group-list {
+    height: 400px;
+    overflow-y: scroll;
+}
+
+.choose-group-list .group-name {
+    color: #006294;
+    font-weight: 500;
+}
+
+.group-avatar {
+
+}
+
+.group-avatar img {
+    border-radius: 50%;
+    max-width: 130px;
+}
+
+.group-title {
+    padding-bottom: 15px;
+    font-weight: 500;
+}
+
+.section-title {
+    font-size: 20px !important;
+}
+
+.sidebar .nav > li.old-lk {
+    position: absolute;
     width: 100%;
+    bottom: 30px;
 }
 
-/* rad-profile
-*/
-.profile-block {
-    float: left;
-    width: 100%;
-    padding: 25px 0;
-}
-
-@media (max-width: 767px) {
-    .profile-block {
-
-        background: #272930;
-    }
-}
-
-.profile-block .avatar {
-    width: 60px !important;
-    float: left;
-    margin-left: 15px;
-}
-
-.profile-block .avatar img {
-    border-radius: 30px;
-    moz-border-radius: 30px;
-}
-
-.profile-block .info {
-    float: left;
-    width: 170px;
-    margin-left: 15px;
-}
-
-.profile-block .info p {
-    color: #fff;
-    font-size: 14px;
-    line-height: 1.3;
-}
-
-.profile-block .info p.uid {
-    color: #ccc;
-    font-size: 12px;
-}
-
-/*����� ����������
--------------------------------------*/
-.main-stat .top-block .item {
-    margin-top: -20px;
-}
-
-.main-stat .top-block .item .fd-tile {
-    border-radius: 3px !important;
-}
-
-.main-stat canvas {
-    margin-top: -15px;
-}
-
-.admin-groups-dropdown {
-    width: 100% !important;
-    max-width: 100% !important;
-    background: #f5f1fc;
-}
-
-.admin-groups-dropdown li {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-.choose-group-link {
-    border-bottom: 1px dashed;
-    cursor: pointer;
-}
-
-.choose-group-link:hover {
-    border-bottom: 0px dashed;
-}
-
-.nav-tabs li {
-    cursor: pointer;
+.compare-groups-table th {
+    font-size: 12px !important;
 }
 
 .relative {
     position: relative;
 }
 
-.changeGroupAccordion {
-    margin-top: 5px;
-}
-
-.changeGroupAccordion .panel-heading a {
-    font-size: 12px !important;
-    padding: 10px 15px !important;
-    cursor: pointer;
-    border-top: 1px solid #ddd;
-}
-
-.changeGroupAccordion .panel-heading a:hover {
-    background: #eee;
-}
-
-.changeGroupAccordion .panel-body {
-    padding: 0px !important;
-}
-
-.changeGroupAccordion .panel-heading.active a {
-    background: #7761a7;
-    color: #fff;
-}
-
-.changeGroupAccordion tr.groupLink:hover {
-    background: #4aa3df;
-    cursor: pointer;
-}
-
-.changeGroupAccordion tr.groupLink:hover a {
-    color: #fff;
-}
-
-.changeGroupAccordion .table {
-    margin-bottom: 0px !important;
-}
-
-.navbar {
-    height: 56px !important;
-}
-
-.logoutLink {
-    color: #ddd;
-    cursor: pointer;
-}
-
-.logoutLink:hover {
-    text-decoration: underline;
-    color: #fff;
-}
-
-.info-icon {
-    color: #006294;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.info-icon:hover {
-    color: #004fc8;
-}
-
-.publish-left-block {
-    float: left;
-    font-size: 12px;
-}
-
-.publish-right-block{
-    float: right;
-}
-
-.publish-full-block {
-    width: 100%;
-    float: left;
-    font-size: 14px;
-}
-
-.alert-small-padding{
-    padding-top: 5px;
-    padding-bottom: 5px;
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-}
-
-.block-publish {
-    padding-top: 15px;
-}
-
-.block-publish .image img {
-    border-radius: 5px;
-}
-
-.block-publish .video {
-    margin-bottom:15px;
-    cursor: pointer;
-}
-
-.block-publish .video-preview {
-    position: relative;
-}
-
-.block-publish .video-preview .play-icon{
-    position: absolute;
-    left: 50%;
-    margin-left: -32px;
-    top: 50%;
-    margin-top: -32px;
-}
-
-.publish-photo-link {
-    cursor: pointer;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    border: 2px solid #fff;
-}
-
-.publish-photo-link img {
-    max-width: 100%;
-}
-
-.publish-photo-link:hover {
-    background: #ccc;
-    border: 2px solid #999;
-    border-radius: 5px;
-}
-
-.subscribeVkBtn{
+.group-name-on-post {
     padding-left: 15px;
-    padding-right: 17px;
 }
 
-.groupAvatar {
-    float: left;
-    padding-right: 15px;
-    padding-bottom: 10px;
-}
-
-.addToFavoritePost {
-    margin-left: 0px !important;
-    font-size: 12px !important;
-}
-
-.info-example{
+.group-name-on-post span {
+    font-size: 12px;
     color: #444;
 }
 
-.site-helper p{
-    /*font-size: 12px !important;*/
-    line-height: 1.5;
+.period-radio {
+    position: relative;
+    left: 50%;
+    margin-left: -21px;
 }
 
-.info-example .example-title{
-    font-size: 14px;
-    text-align: center;
-    width: 100%;
-    /*font-weight: bold;*/
+.period-radio label .circle, .period-radio label .check {
+    height: 24px !important;
+    width: 24px !important;
 }
 
-.info-example hr{
-    margin-top: 5px;
-    margin-bottom: 12px;
+.period-radio input[type=radio]:checked ~ .check {
+    background: #4caf50 !important;
 }
 
-.info-example ul{
-    padding-left: 15px;
+.period-radio input[type=radio]:checked ~ .circle {
+    border-color: #4caf50 !important;
 }
 
-.info-example li{
-    list-style: circle;
-    padding-left: 0px;
-    margin-left: 0px;
+.root-user-info {
+    float: right;
+    margin-left: 15px;
+    line-height: 1.1;
 }
 
-.m-top-m-15 {
-    margin-top: -20px;
-}
-
-.radProfile {
-    background: #1d1f26;
-}
-
-.quickActionsBtns .btn {
+.root-user-info span {
     font-size: 12px;
-}
-
-.groupListBlock p {
-    line-height: 1.2 !important;
-}
-
-.groupListBlock p span {
-    line-height: 1.2;
-    padding-top: 5px
-}
-
-.progressSubscribersBar {
-    width: 100%;
-    margin-top: -35px;
+    margin-top: 5px;
     float: left;
+}
+
+.sidebar .nav > li.admin-link {
+    position: absolute;
+    width: 100%;
+    bottom: 80px;
+}
+
+.group-is-free {
+    background: #edca84;
+    border-radius: 5px;
+    padding: 3px;
+    font-size: 11px;
+}
+
+.card-header h4.title {
+    color: #fff !important;
+}
+
+.admin-user-table {
+    max-height: 600px;
+    overflow-y: scroll;
+}
+.stat_icon{
+    font-size: 10px;
+}
+
+.btn {
+    background-color: #f2f2f2;
+}
+
+.card [data-background-color="custom"] {
+    background: linear-gradient(60deg, #66bb6a, #43a047);
+    box-shadow: 0 4px 20px 0px rgba(0, 0, 0, 0.14), 0 7px 10px -5px rgba(76, 175, 80, 0.4);
 }

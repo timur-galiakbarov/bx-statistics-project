@@ -1,47 +1,44 @@
-<ul class="cl-vnavigation" id="leftMenu">
-    <rad-profile class="radProfile"></rad-profile>
-    <div class="clear"></div>
-
+<ul class="nav">
     <li ng-class="currentState('index.dashboard')?'active':''">
-        <a ng-click="openState('index.dashboard')"><i class="fa fa-desktop"></i><span>Главная</span></a>
+        <a ng-click="openState('index.dashboard')" class="link">
+            <i class="material-icons">dashboard</i>
+
+            <p>Главная</p>
+        </a>
     </li>
-    <li ng-class="currentState('index.stat')?'active':''">
-        <a ng-click="openState('index.stat')"><i class="fa fa-bar-chart"></i><span>Статистика групп</span></a>
+    <li ng-class="currentState('index.analytics')?'active':''">
+        <a ng-click="openState('index.analytics')" class="link">
+            <i class="material-icons">multiline_chart</i>
+
+            <p>Анализ сообществ</p>
+        </a>
     </li>
-    <li class="parent publish open">
-        <a ng-click="showStatsMenu('.publish')"><i class="fa fa-th-list"></i><span>Посты и публикации</span></a>
-        <ul class="sub-menu" style="display: block;">
-            <li ng-class="currentState('index.publishAnalysis')?'active':''">
-                <a ng-click="openState('index.publishAnalysis')">Анализ публикаций</a>
-            </li>
-            <li ng-class="currentState('index.publishFavorites')?'active':''">
-                <a ng-click="openState('index.publishFavorites')">Любимые публикации</a>
-            </li>
-        </ul>
+    <li ng-class="currentState('index.compare')?'active':''">
+        <a ng-click="openState('index.compare')" class="link">
+            <i class="material-icons">compare</i>
+
+            <p>Сравнение сообществ</p>
+        </a>
     </li>
-    <li class="parent stat">
-        <a ng-click="showStatsMenu('.stat')"><i class="fa fa-search"></i><span>Анализ групп</span></a>
-        <ul class="sub-menu">
-            <li ng-class="currentState('index.groupsAnalog')?'active':''">
-                <a ng-click="openState('index.groupsAnalog')">Группы, где есть ЦА</a>
-            </li>
-            <li ng-class="currentState('index.auditoryCompare')?'active':''">
-                <a ng-click="openState('index.auditoryCompare')">Сравнение аудиторий</a>
-            </li>
-            <li ng-class="currentState('index.findBots')?'active':''">
-                <a ng-click="openState('index.findBots')">Поиск &laquo;мертвых&raquo; подписчиков</a>
-            </li>
-        </ul>
+    <li ng-class="currentState('index.posts')?'active':''">
+        <a ng-click="openState('index.posts')" class="link">
+            <i class="material-icons">find_in_page</i>
+
+            <p>Анализ публикаций</p>
+        </a>
     </li>
-    <li class="parent adminPage" ng-if="isAdmin">
-        <a ng-click="showStatsMenu('.adminPage')"><i class="fa fa-search"></i><span>Админка</span></a>
-        <ul class="sub-menu">
-            <li ng-class="currentState('index.admin.dashboard')?'active':''">
-                <a ng-click="openState('index.admin.dashboard')">Dashboard</a>
-            </li>
-            <li ng-class="currentState('index.admin.vksync')?'active':''">
-                <a ng-click="openState('index.admin.vksync')">VK Sync</a>
-            </li>
-        </ul>
+    <li ng-class="currentState('index.account')?'active':''">
+        <a ng-click="openState('index.account')">
+            <i class="material-icons">perm_identity</i>
+
+            <p>Профиль и оплата</p>
+        </a>
     </li>
+    <li class="old-lk">
+        <a href="/oldlk/" target="_blank">
+            <i class="material-icons">archive</i>
+            <p>Старый кабинет</p>
+        </a>
+    </li>
+    <rad-admin-link></rad-admin-link>
 </ul>

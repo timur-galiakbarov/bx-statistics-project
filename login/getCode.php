@@ -1,11 +1,13 @@
-<?// подключение служебной части пролога
+<?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 //------------------------------------------------------------------------------?>
 
     <script>
-        var temp=location.hash;
-        temp = temp.replace('#','');
-        location.href="vkAuth.php?"+temp;
+
+        var url = location.href || window.location.href;
+        var arr = url.split("#");
+
+        location.href="vkAuth.php?"+arr[1];
     </script>
 
 <?//----------------------------------------------------------------------------

@@ -6,17 +6,29 @@ angular
     .controller('statMainController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState', 'vkApiFactory', 'memoryFactory', '$timeout', 'radCommonFunc', '$stateParams', 'notify',
         function ($rootScope, $scope, $state, bus, statPopupsFactory, appState, vkApiFactory, memoryFactory, $timeout, radCommonFunc, $stateParams, notify) {
             $scope.currentTab = 'catalog';
-            $rootScope.page.sectionTitle = 'Общая статистика сообщества';
 
-            $scope.getStat = getStat;
             $scope.model = {
-                groupAddress: ''
+                title: 'Статистика сообщества',
+                groupAddress: '',
+                datePicker: {
+                    dateFrom: '',
+                    dateTo: '',
+                    popupFrom: {
+                        opened: false
+                    },
+                    popupTo: {
+                        opened: false
+                    }
+                }
             };
+
             $scope.stat = {
                 photos: {},
-                videos: {}
+                videos: {},
+                groupInfo: {}
             };
 
+            $scope.error = {};
             $scope.statIsLoaded = false;
             $scope.isHiddenMenu = true;
             $scope.statNotAccess = false;
@@ -26,15 +38,30 @@ angular
             $scope.percentItem = (100 / 6).toFixed(2);
             $scope.adminGroups = [];
             $scope.activeTab = 'dynamic';
+            $scope.hiddenFilter = false;
 
+            $scope.getStat = getStat;
             $scope.showGroupsMenu = showGroupsMenu;
             $scope.setGroupLink = setGroupLink;
             $scope.nextProgressStep = nextProgressStep;
             $scope.showTab = showTab;
             $scope.getStatExample = getStatExample;
+            $scope.openDatepickerPopupFrom = openDatepickerPopupFrom;
+            $scope.openDatepickerPopupTo = openDatepickerPopupTo;
+            $scope.goToPublishStat = goToPublishStat;
 
-            $scope.$watch('isLoading', (newVal)=>{
+            $scope.$watch('isLoading', (newVal)=> {
                 $rootScope.globalLoading = newVal;
+            });
+
+            $scope.$watch('model.datePicker.dateFrom', (newVal, oldVal)=> {
+                if (newVal != oldVal)
+                    $scope.error.datePickerFromError = "";
+            });
+
+            $scope.$watch('model.datePicker.dateTo', (newVal, oldVal)=> {
+                if (newVal != oldVal)
+                    $scope.error.datePickerToError = "";
             });
 
             var authData = {
@@ -42,9 +69,11 @@ angular
                 login: appState.getUserVkLogin()
             };
 
+            var graphModel = {};
+
             var needGetStatFromParams = $stateParams.getStatFromGroup ? $stateParams.getStatFromGroup : false;
 
-            var peopleStatGraph = (function () {
+            function defaultGraph() {
                 var startRender = false,
                     currgraph,
                     chart;
@@ -57,16 +86,15 @@ angular
                     if (chart)
                         chart.destroy();
 
-                    var config = peopleStatGraphConfig(data);
-                    var ctx = document.getElementById("graphPeopleStat") ? document.getElementById("graphPeopleStat").getContext("2d") : false;
+                    var config = graphConfig(data);
+                    var ctx = document.getElementById(currgraph.element) ? document.getElementById(currgraph.element).getContext("2d") : false;
                     if (!ctx) {
 
                         return;
                     }
-
-                    ctx.clearRect(0, 0, document.getElementById("graphPeopleStat").width, document.getElementById("graphPeopleStat").height);
+                    ctx.clearRect(0, 0, document.getElementById(currgraph.element).width, document.getElementById(currgraph.element).height);
                     ctx.canvas.height = 300;
-                    ctx.canvas.width = $("#graphPeopleStat").parent().width();
+                    ctx.canvas.width = $("#" + currgraph.element).parent().width();
 
                     chart = new Chart(ctx, config);
 
@@ -82,27 +110,18 @@ angular
                             renderGraph(currgraph);
                         }, 200);
                     });
+                    bus.subscribe(events.STAT.MAIN.RESIZE_GRAPH, ()=> {
+                        setTimeout(function () {
+                            renderGraph(currgraph);
+                        }, 0);
+                    });
                 };
-                var peopleStatGraphConfig = function (data) {
+                var graphConfig = function (data) {
                     return {
                         type: 'line',
                         data: {
-                            labels: data.labels,
-                            datasets: [{
-                                label: "Новых участников",
-                                data: data.subscribedDataSet,
-                                fill: false,
-                                borderColor: '#597da3',
-                                backgroundColor: '#597da3',
-                                pointBorderWidth: 2,
-                                pointHoverRadius: 3
-                            }, {
-                                label: "Вышедших участников",
-                                data: data.unsubscribedDataSet,
-                                fill: false,
-                                borderColor: '#b05c91',
-                                backgroundColor: '#b05c91'
-                            }]
+                            labels: currgraph.labels,
+                            datasets: currgraph.datasets
                         },
                         options: {
                             responsive: false,
@@ -140,204 +159,16 @@ angular
                     }
                 };
 
-                return {
-                    showGraph: showGraph
-                }
-            })();
-
-            var subscribersStatGraph = (function () {
-                var startRender = false,
-                    currgraph,
-                    chart;
-                var showGraph = function (data) {
-                    currgraph = data;
-                    renderGraph(data);
-                    initHandlers();
-                };
-                var renderGraph = function (data) {
-                    if (chart)
+                this.showGraph = showGraph;
+                this.destroy = ()=> {
+                    if (chart) {
                         chart.destroy();
-
-                    var config = peopleStatGraphConfig(data);
-                    var ctx = document.getElementById("subscribersStatGraph") ? document.getElementById("subscribersStatGraph").getContext("2d") : false;
-                    if (!ctx) {
-
-                        return;
-                    }
-                    ctx.clearRect(0, 0, document.getElementById("subscribersStatGraph").width, document.getElementById("subscribersStatGraph").height);
-                    ctx.canvas.height = 300;
-                    ctx.canvas.width = $("#subscribersStatGraph").parent().width();
-
-                    chart = new Chart(ctx, config);
-
-                    startRender = false;
-                };
-                var initHandlers = function () {
-                    $(window).resize(function () {
-                        if (startRender)
-                            return;
-
-                        startRender = true;
-                        setTimeout(function () {
-                            renderGraph(currgraph);
-                        }, 200);
-                    });
-                };
-                var peopleStatGraphConfig = function (data) {
-                    return {
-                        type: 'line',
-                        data: {
-                            labels: data.labels,
-                            datasets: [{
-                                label: "Количество участников",
-                                data: data.membersCount,
-                                fill: false,
-                                borderColor: '#597da3',
-                                backgroundColor: '#597da3',
-                                pointBorderWidth: 2,
-                                pointHoverRadius: 3
-                            }]
-                        },
-                        options: {
-                            responsive: false,
-                            title: {
-                                display: true,
-                                text: ''
-                            },
-                            tooltips: {
-                                mode: 'label',
-                            },
-                            hover: {
-                                mode: 'dataset'
-                            },
-                            scales: {
-                                xAxes: [{
-                                    display: true,
-                                    scaleLabel: {
-                                        show: true,
-                                        labelString: 'Дата'
-                                    }
-                                }],
-                                yAxes: [{
-                                    display: true,
-                                    scaleLabel: {
-                                        show: true,
-                                        labelString: 'Значение'
-                                    }
-                                }]
-                            },
-                            legend: {
-                                display: false,
-                                labelspadding: 0
-                            }
-                        }
                     }
                 };
-
-                return {
-                    showGraph: showGraph
+                this.getChart = ()=> {
+                    return chart;
                 }
-            })();
-
-            var attendanceStatGraph = (function () {
-                var startRender = false,
-                    currgraph,
-                    chart;
-                var showGraph = function (data) {
-                    currgraph = data;
-                    renderGraph(data);
-                    initHandlers();
-                };
-                var renderGraph = function (data) {
-                    if (chart)
-                        chart.destroy();
-
-                    var config = peopleStatGraphConfig(data);
-                    var ctx = document.getElementById("attendanceStatGraph") ? document.getElementById("attendanceStatGraph").getContext("2d") : false;
-                    if (!ctx) {
-
-                        return;
-                    }
-                    ctx.clearRect(0, 0, document.getElementById("attendanceStatGraph").width, document.getElementById("attendanceStatGraph").height);
-                    ctx.canvas.height = 300;
-                    ctx.canvas.width = $("#attendanceStatGraph").parent().width();
-
-                    chart = new Chart(ctx, config);
-
-                    startRender = false;
-                };
-                var initHandlers = function () {
-                    $(window).resize(function () {
-                        if (startRender)
-                            return;
-
-                        startRender = true;
-                        setTimeout(function () {
-                            renderGraph(currgraph);
-                        }, 200);
-                    });
-                };
-                var peopleStatGraphConfig = function (data) {
-                    return {
-                        type: 'line',
-                        data: {
-                            labels: data.labels,
-                            datasets: [{
-                                label: "Просмотров",
-                                data: data.viewsData,
-                                fill: false,
-                                borderColor: '#597da3',
-                                backgroundColor: '#597da3',
-                                pointBorderWidth: 2,
-                                pointHoverRadius: 3
-                            }, {
-                                label: "Посещений",
-                                data: data.visitorsData,
-                                fill: false,
-                                borderColor: '#b05c91',
-                                backgroundColor: '#b05c91'
-                            }]
-                        },
-                        options: {
-                            responsive: false,
-                            title: {
-                                display: true,
-                                text: ''
-                            },
-                            tooltips: {
-                                mode: 'label',
-                            },
-                            hover: {
-                                mode: 'dataset'
-                            },
-                            scales: {
-                                xAxes: [{
-                                    display: true,
-                                    scaleLabel: {
-                                        show: true,
-                                        labelString: 'Дата'
-                                    }
-                                }],
-                                yAxes: [{
-                                    display: true,
-                                    scaleLabel: {
-                                        show: true,
-                                        labelString: 'Значение'
-                                    }
-                                }]
-                            },
-                            legend: {
-                                display: false,
-                                labelspadding: 0
-                            }
-                        }
-                    }
-                };
-
-                return {
-                    showGraph: showGraph
-                }
-            })();
+            }
 
             $scope.$watch('model.groupAddress', (newVal, oldVal)=> {
                 if (newVal != oldVal)
@@ -351,14 +182,14 @@ angular
                     $scope.model.groupAddress = lastData.groupAddress;
 
                     $timeout(()=> {
-                        if (lastData.graph.graphPeopleStatData)
-                            peopleStatGraph.showGraph(lastData.graph.graphPeopleStatData);
+                        /*if (lastData.graph.graphPeopleStatData)
+                         peopleStatGraph.showGraph(lastData.graph.graphPeopleStatData);
 
-                        if (lastData.graph.subscribersStatData)
-                            subscribersStatGraph.showGraph(lastData.graph.subscribersStatData);
+                         if (lastData.graph.subscribersStatData)
+                         subscribersStatGraph.showGraph(lastData.graph.subscribersStatData);
 
-                        if (lastData.graph.attendanceStatData)
-                            attendanceStatGraph.showGraph(lastData.graph.attendanceStatData);
+                         if (lastData.graph.attendanceStatData)
+                         attendanceStatGraph.showGraph(lastData.graph.attendanceStatData);*/
 
                         //Установка периода todo доделать
                         /*$.each('input[name=checkDate]')(()=> {
@@ -388,18 +219,47 @@ angular
                     case "month":
                         dateFrom = currDate.setDate(currDate.getDate() - 29);
                         break;
+                    case "datePicker":
+                        if (!$scope.model.datePicker.dateFrom) {
+                            $scope.error.datePickerFromError = "Неверная дата";
+                            return {
+                                error: true
+                            }
+                        }
+                        if (!$scope.model.datePicker.dateTo) {
+                            $scope.error.datePickerToError = "Неверная дата";
+                            return {
+                                error: true
+                            }
+                        }
+                        if ($scope.model.datePicker.dateFrom > $scope.model.datePicker.dateTo) {
+                            $scope.error.datePickerFromError = "Дата начала превышает дату окончания";
+                            return {
+                                error: true
+                            }
+                        }
+                        if ($scope.model.datePicker.dateFrom.getTime() == $scope.model.datePicker.dateTo.getTime()) {
+                            $scope.model.datePicker.dateTo = new Date($scope.model.datePicker.dateTo.getTime() + 24 * 60 * 60 * 1000);
+                        }
+
+                        dateFrom = $scope.model.datePicker.dateFrom;
+                        dateTo = $scope.model.datePicker.dateTo;
+
+                        break;
                 }
 
                 return {
                     from: moment(dateFrom).format("YYYY-MM-DD"),
+                    fromLabel: moment(dateFrom).format("DD.MM.YYYY"),
                     to: moment(dateTo).format("YYYY-MM-DD"),
+                    toLabel: moment(dateTo).format("DD.MM.YYYY"),
                     unixFrom: dateFrom / 1000,
                     unixTo: dateTo / 1000
                 };
             }
 
             function getStat(isExample) {
-                if (!appState.isActiveUser() && !isExample){
+                if (!appState.isActiveUser() && !isExample) {
                     bus.publish(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL);
                     return;
                 }
@@ -412,18 +272,33 @@ angular
                 $scope.groupIsFinded = false;
                 $scope.progressPercent = 0.0;
                 $scope.isLoading = true;
-                $scope.activeTab = 'dynamic';
+                $scope.activeTab = 'activity';
 
                 var parseDate = getCheckedDate();
+                if (!parseDate || (parseDate && parseDate.error)) {
+                    return;
+                }
+
                 var vkGroupId = radCommonFunc.getGroupId($scope.model.groupAddress);
                 var vkGid;
                 var groupInfo;
+                var ER = parseFloat(0);
 
                 $scope.stat.groupAddress = $scope.model.groupAddress;
                 $scope.stat.periodValue = $('input[name=checkDate]:checked').val();
+                $scope.stat.periodLabels = {
+                    from: parseDate.fromLabel,
+                    to: parseDate.toLabel
+                };
+                $scope.stat.groupInfo.wallAnalysisCount = 0;
+                $scope.stat.groupInfo.ER = 0;
+                $scope.stat.groupInfo.ERMax = 0;
+
+                $scope.hiddenFilter = true;
 
                 vkApiFactory.getGroupInfo(authData, {
-                    groupId: vkGroupId
+                    groupId: vkGroupId,
+                    fields: "photo_big,photo_medium,photo,members_count,counters,description"
                 }).then(function (res) {
 
                     if (res && res.error && res.error.error_code == 100) {
@@ -431,7 +306,16 @@ angular
                             $scope.urlError = 'Введеная группа вконтакте не найдена';
                             $scope.isLoading = false;
                             $scope.statIsLoaded = false;
+                            $scope.hiddenFilter = false;
                         });
+                        return;
+                    }
+
+                    if (res && res.error && res.error.error_code == 6) {
+                        setTimeout(()=> {
+                            console.log("recursive!");
+                            getStat(isExample);
+                        }, 1500);
                         return;
                     }
 
@@ -447,19 +331,12 @@ angular
                             videos: res.counters && res.counters.videos ? res.counters.videos : 0
                         };
                         $scope.stat.groupName = res.name;
-                        $scope.stat.groupImage = res.photo_medium;
+                        $scope.stat.groupImage = res.photo_big || res.photo_medium || res.photo;
                         $scope.stat.description = res.description;
-                        $scope.stat.screen_name = res.screen_name;
+                        $scope.stat.groupInfo.screen_name = res.screen_name;
                         vkGid = res.gid;
                     });
                     groupInfo = res;
-
-                    /*{
-                     id: 197133948,
-                     first_name: 'Sam',
-                     last_name: 'Ty-Takoi',
-                     deactivated: 'banned'
-                     },*/
 
                     $.when(
                         getPeopleStat().always(()=> {
@@ -467,6 +344,31 @@ angular
                         }),
                         getWallStat().always(()=> {
                             $scope.nextProgressStep($scope.percentItem);
+                            $scope.stat.groupInfo.ER = (ER / $scope.stat.groupInfo.wallAnalysisCount).toFixed(3);
+                            var ERdayCount = 0;
+                            var activityDayCount = 0;
+                            $scope.stat.wall.summActions = 0;
+                            $scope.stat.wall.activityData.forEach((item)=> {
+                                ERdayCount = parseFloat(parseFloat(ERdayCount) + parseFloat(item.postER)).toFixed(3);
+                                activityDayCount = parseInt(activityDayCount) + parseInt(item.summActions);
+                                $scope.stat.wall.summActions += parseInt(item.summActions);
+                            });
+                            $scope.stat.groupInfo.ERday = (ERdayCount / $scope.stat.wall.activityData.length).toFixed(3);
+                            //Средняя активность за период по дням
+                            $scope.stat.wall.srDayActivity = (activityDayCount / $scope.stat.wall.activityData.length).toFixed(1);
+                            $scope.stat.wall.srPostActivity = (activityDayCount / $scope.stat.groupInfo.wallAnalysisCount).toFixed(1);
+
+                            if (!$scope.stat.wall.postsPeriod){
+                                $scope.stat.wall.indexLikes = 0;
+                            }
+                            else{
+                                //Индекс одобрения
+                                $scope.stat.wall.indexLikes = parseFloat($scope.stat.wall.likesPeriod / $scope.stat.wall.postsPeriod).toFixed(3);
+                                //Индекс усиления
+                                $scope.stat.wall.indexReposts = parseFloat($scope.stat.wall.repostsPeriod / $scope.stat.wall.postsPeriod).toFixed(3);
+                                //Индекс общения
+                                $scope.stat.wall.indexComments = parseFloat($scope.stat.wall.commentsPeriod / $scope.stat.wall.postsPeriod).toFixed(3);
+                            }
                         }),
                         getAlbumsStat().always(()=> {
                             $scope.nextProgressStep($scope.percentItem);
@@ -482,6 +384,9 @@ angular
                         })
                     )
                         .then(function () {
+                            //Рисуем графики
+                            renderAllGraphs();
+
                             bus.publish(events.STAT.MAIN.FINISHED, $scope.stat);
                             memoryFactory.setMemory('mainStat', $scope.stat);
                         })
@@ -497,104 +402,118 @@ angular
                 //Получение статистики по численности
                 function getPeopleStat() {
                     var deferr = $.Deferred();
-                    vkApiFactory.getStat(authData, {
-                        groupId: vkGid,
-                        dateFrom: parseDate.from,
-                        dateTo: parseDate.to
-                    }).then(function (res) {
-                        var stat = {
-                            views: 0,
-                            visitors: 0,
-                            subscribed: 0,
-                            unsubscribed: 0,
-                            subscribedSumm: 0,
-                            reach: 0,
-                            reachSubscribers: 0
-                        };
-                        var graphPeopleStatData = {
-                            labels: [],
-                            subscribedDataSet: [],
-                            unsubscribedDataSet: []
-                        };
-                        var subscribersStatData = {
-                            labels: [],
-                            membersCount: []
-                        };
-                        var attendanceStatData = {
-                            labels: [],
-                            viewsData: [],
-                            visitorsData: []
-                        };
-                        var currMembersCount = groupInfo.members_count;
-                        if (res && !res.error) {
-                            $scope.statNotAccess = false;
-                            res.forEach(function (dateStat, i) {
-                                stat.views += dateStat.views ? dateStat.views : 0;
-                                stat.visitors += dateStat.visitors ? dateStat.visitors : 0;
-                                stat.subscribed += dateStat.subscribed ? dateStat.subscribed : 0;
-                                stat.unsubscribed += dateStat.unsubscribed ? dateStat.unsubscribed : 0;
-                                stat.reach += dateStat.reach ? dateStat.reach : 0;
-                                stat.reachSubscribers += dateStat.reach_subscribers ? dateStat.reach_subscribers : 0;
-                                //Сбор данных для графика участников
-                                graphPeopleStatData.labels.unshift(getDateFromVk(dateStat.day));
-                                graphPeopleStatData.subscribedDataSet.unshift(dateStat.subscribed || 0);
-                                graphPeopleStatData.unsubscribedDataSet.unshift(dateStat.unsubscribed || 0);
-                                //График посещаемости/просмотров группы
-                                attendanceStatData.labels.unshift(getDateFromVk(dateStat.day));
-                                attendanceStatData.viewsData.unshift(dateStat.views || 0);
-                                attendanceStatData.visitorsData.unshift(dateStat.visitors || 0);
 
-                                subscribersStatData.labels.unshift(getDateFromVk(dateStat.day));
-                                if (i != 0)
-                                    currMembersCount -= (dateStat.subscribed - dateStat.unsubscribed);
+                    getPeopleStatRequest();
 
-                                subscribersStatData.membersCount.unshift(currMembersCount);
-                            });
-                        }
-
-
-                        if (res && res.error && res.error.error_code == 7) {
-                            //Статистика группы недоступна
-                            $scope.statNotAccess = true;
-                        }
-
-                        var summSubscribers = 0,
-                            subscribersForStartPeriod;
-                        graphPeopleStatData.subscribedDataSet.forEach(function (item) {
-                            summSubscribers += item;
-                        });
-                        graphPeopleStatData.unsubscribedDataSet.forEach(function (item) {
-                            summSubscribers -= item;
-                        });
-
-                        $scope.$apply(function () {
-                            $scope.stat.views = stat.views;
-                            $scope.stat.visitors = stat.visitors;
-                            $scope.stat.subscribed = stat.subscribed;
-                            $scope.stat.unsubscribed = stat.unsubscribed;
-                            $scope.stat.subscribedSumm = stat.subscribed - stat.unsubscribed;
-                            $scope.stat.reachSubscribers = stat.reachSubscribers;
-                            $scope.stat.reach = stat.reach;
-                            $scope.stat.graph = {
-                                graphPeopleStatData: graphPeopleStatData,
-                                subscribersStatData: subscribersStatData,
-                                attendanceStatData: attendanceStatData
+                    function getPeopleStatRequest() {
+                        vkApiFactory.getStat(authData, {
+                            groupId: vkGid,
+                            dateFrom: parseDate.from,
+                            dateTo: parseDate.to
+                        }).then(function (res) {
+                            var stat = {
+                                views: 0,
+                                visitors: 0,
+                                subscribed: 0,
+                                unsubscribed: 0,
+                                subscribedSumm: 0,
+                                reach: 0,
+                                reachSubscribers: 0
                             };
+                            var graphPeopleStatData = {
+                                labels: [],
+                                subscribedDataSet: [],
+                                unsubscribedDataSet: []
+                            };
+                            var subscribersStatData = {
+                                labels: [],
+                                membersCount: []
+                            };
+                            var attendanceStatData = {
+                                labels: [],
+                                viewsData: [],
+                                visitorsData: []
+                            };
+                            var currMembersCount = groupInfo.members_count;
+                            if (res && !res.error) {
+                                $scope.statNotAccess = false;
+                                res.forEach(function (dateStat, i) {
+                                    stat.views += dateStat.views ? dateStat.views : 0;
+                                    stat.visitors += dateStat.visitors ? dateStat.visitors : 0;
+                                    stat.subscribed += dateStat.subscribed ? dateStat.subscribed : 0;
+                                    stat.unsubscribed += dateStat.unsubscribed ? dateStat.unsubscribed : 0;
+                                    stat.reach += dateStat.reach ? dateStat.reach : 0;
+                                    stat.reachSubscribers += dateStat.reach_subscribers ? dateStat.reach_subscribers : 0;
+                                    //Сбор данных для графика участников
+                                    graphPeopleStatData.labels.unshift(getDateFromVk(dateStat.day));
+                                    graphPeopleStatData.subscribedDataSet.unshift(dateStat.subscribed || 0);
+                                    graphPeopleStatData.unsubscribedDataSet.unshift(dateStat.unsubscribed || 0);
+                                    //График посещаемости/просмотров группы
+                                    attendanceStatData.labels.unshift(getDateFromVk(dateStat.day));
+                                    attendanceStatData.viewsData.unshift(dateStat.views || 0);
+                                    attendanceStatData.visitorsData.unshift(dateStat.visitors || 0);
+
+                                    subscribersStatData.labels.unshift(getDateFromVk(dateStat.day));
+                                    if (i != 0)
+                                        currMembersCount -= (dateStat.subscribed - dateStat.unsubscribed);
+
+                                    subscribersStatData.membersCount.unshift(currMembersCount);
+                                });
+                            }
+
+
+                            if (res && res.error) {
+                                switch (res.error.error_code) {
+                                    case 7:
+                                        //Статистика группы недоступна
+                                        $scope.statNotAccess = true;
+                                        break;
+                                    case 6:
+                                    {
+                                        setTimeout(()=> {
+                                            getPeopleStatRequest();
+                                        }, 500);
+                                        return deferr.promise();
+                                    }
+                                }
+
+                            }
+
+                            var summSubscribers = 0,
+                                subscribersForStartPeriod;
+                            graphPeopleStatData.subscribedDataSet.forEach(function (item) {
+                                summSubscribers += item;
+                            });
+                            graphPeopleStatData.unsubscribedDataSet.forEach(function (item) {
+                                summSubscribers -= item;
+                            });
+
+                            $scope.$apply(function () {
+                                $scope.stat.views = stat.views;
+                                $scope.stat.visitors = stat.visitors;
+                                $scope.stat.subscribed = stat.subscribed;
+                                $scope.stat.unsubscribed = stat.unsubscribed;
+                                $scope.stat.subscribedSumm = stat.subscribed - stat.unsubscribed;
+                                $scope.stat.reachSubscribers = stat.reachSubscribers;
+                                $scope.stat.reach = stat.reach;
+                                $scope.stat.graph = {
+                                    graphPeopleStatData: graphPeopleStatData,
+                                    subscribersStatData: subscribersStatData,
+                                    attendanceStatData: attendanceStatData
+                                };
+                            });
+
+                            deferr.resolve();
+
+                            function getDateFromVk(dateVk) {
+                                var normilizedDate = new Date(dateVk);
+                                return ('0' + normilizedDate.getDate()).slice(-2) + "." + ('0' + (normilizedDate.getMonth() + 1)).slice(-2);
+                            }
+                        }).fail(function () {
+                            deferr.reject();
                         });
+                    }
 
-                        peopleStatGraph.showGraph(graphPeopleStatData);
-                        subscribersStatGraph.showGraph(subscribersStatData);
-                        attendanceStatGraph.showGraph(attendanceStatData);
-
-                        deferr.resolve();
-
-                        function getDateFromVk(dateVk) {
-                            var normilizedDate = new Date(dateVk);
-                            return ('0' + normilizedDate.getDate()).slice(-2) + "." + ('0' + (normilizedDate.getMonth() + 1)).slice(-2);
-                        }
-                    }).fail(function () {
-                        deferr.reject();
-                    });
                     return deferr.promise();
                 }
 
@@ -610,10 +529,22 @@ angular
                         },
                         counters: {
                             wallPostsPeriodCount: 0
-                        }
+                        },
+                        statGraph: []
                     };
 
                     getWall();
+
+                    function calcER(post) {
+                        if ($scope.stat.membersCount && post.likes && post.reposts && post.comments) {
+                            var postER = (post.likes.count + post.reposts.count + post.comments.count) / $scope.stat.membersCount * 100;
+                            postER = postER.toFixed(3);
+
+                            return postER;
+                        }
+
+                        return (0).toFixed(3);
+                    }
 
                     function getWall() {
                         if (iteration >= 130) {
@@ -636,13 +567,45 @@ angular
 
                             if (res && res.length > 1) {
                                 wallStat.counters.allWallPostsCount = res[0];//Количество постов за период
-
                                 res.forEach(function (post) {
                                     if (post.date > parseDate.unixFrom && post.date < parseDate.unixTo) {
                                         wallStat.counters.wallPostsPeriodCount++;//Количество постов за период
                                         wallStat.activity.likesPeriodCount += post.likes.count || 0;
                                         wallStat.activity.repostsPeriodCount += post.reposts.count || 0;
                                         wallStat.activity.commentsPeriodCount += post.comments.count || 0;
+
+                                        var date = new Date(post.date * 1000);
+                                        var postDate = date.getDate() + "." + (date.getMonth() + 1) + "." + date.getFullYear();
+                                        var postER = calcER(post);
+                                        ER += parseFloat(postER);
+                                        $scope.stat.groupInfo.wallAnalysisCount += 1;
+
+                                        if ($scope.stat.groupInfo.ERMax < postER) {
+                                            $scope.stat.groupInfo.ERMax = postER;
+                                        }
+
+
+                                        if (!wallStat.statGraph.length || (wallStat.statGraph[wallStat.statGraph.length - 1] && wallStat.statGraph[wallStat.statGraph.length - 1].date != postDate)) {
+                                            wallStat.statGraph.push({
+                                                likes: post.likes.count || 0,
+                                                reposts: post.reposts.count || 0,
+                                                comments: post.comments.count || 0,
+                                                summActions: (post.likes.count || 0) + (post.reposts.count || 0) + (post.comments.count || 0),
+                                                postER: postER,
+                                                date: postDate,
+                                                datetime: new Date(date.getFullYear(), date.getMonth(), date.getDate())
+                                            });
+                                        } else {
+                                            wallStat.statGraph[wallStat.statGraph.length - 1].likes += post.likes.count || 0;
+                                            wallStat.statGraph[wallStat.statGraph.length - 1].reposts += post.reposts.count || 0;
+                                            wallStat.statGraph[wallStat.statGraph.length - 1].comments += post.comments.count || 0;
+                                            wallStat.statGraph[wallStat.statGraph.length - 1].summActions += (post.likes.count || 0) + (post.reposts.count || 0) + (post.comments.count || 0);
+                                            var t = wallStat.statGraph[wallStat.statGraph.length - 1].postER;
+                                            wallStat.statGraph[wallStat.statGraph.length - 1].postER = (parseFloat(t) + parseFloat(postER)).toFixed(3);
+
+                                        }
+
+
                                     } else if (post.date <= parseDate.unixFrom && !post.is_pinned) {
                                         flagStop = true;
                                     }
@@ -659,13 +622,20 @@ angular
                                 getWall();
                             } else {
                                 /*console.log(wallStat);*/
+                                wallStat.statGraph.sort((a, b)=> {
+                                    if (new Date(a.datetime) > new Date(b.datetime))
+                                        return 1;
+                                    else return -1;
+                                });
+
                                 $scope.$apply(function () {
                                     $scope.stat.wall = {
                                         allPosts: wallStat.counters.allWallPostsCount,
                                         postsPeriod: wallStat.counters.wallPostsPeriodCount,
                                         likesPeriod: wallStat.activity.likesPeriodCount,
                                         repostsPeriod: wallStat.activity.repostsPeriodCount,
-                                        commentsPeriod: wallStat.activity.commentsPeriodCount
+                                        commentsPeriod: wallStat.activity.commentsPeriodCount,
+                                        activityData: wallStat.statGraph
                                     };
                                 });
                                 deferr.resolve();
@@ -1001,6 +971,7 @@ angular
 
             function checkMainStatIsSaved() {
                 var stat = appState.getMainStat();
+
                 if (stat) {
                     $scope.stat = stat;
                 }
@@ -1023,6 +994,16 @@ angular
             }
 
             function init() {
+                //createCharts
+                graphModel.wallActivityGraph = new defaultGraph();
+                graphModel.wallLikesGraph = new defaultGraph();
+                graphModel.wallRepostsGraph = new defaultGraph();
+                graphModel.wallCommentsGraph = new defaultGraph();
+                graphModel.subscribersStatGraph = new defaultGraph();
+                graphModel.peopleStatGraph = new defaultGraph();
+                graphModel.attendanceStatGraph = new defaultGraph();
+                graphModel.wallERGraph = new defaultGraph();
+
                 checkMainStatIsSaved();
                 getMemoryData();
 
@@ -1044,6 +1025,7 @@ angular
             }
 
             function showTab(tab) {
+                bus.publish(events.STAT.MAIN.RESIZE_GRAPH);
                 switch (tab) {
                     case 'activity':
                         $scope.activeTab = 'activity';
@@ -1051,14 +1033,17 @@ angular
                     case 'dynamic':
                         $scope.activeTab = 'dynamic';
                         break;
+                    case 'er':
+                        $scope.activeTab = 'er';
+                        break;
                     case 'content':
                         $scope.activeTab = 'content';
                         break;
                 }
             }
 
-            function getStatExample(urlOrScreenName){
-                if ($scope.isLoading){
+            function getStatExample(urlOrScreenName) {
+                if ($scope.isLoading) {
                     notify.info("Дождитесь завершения получения статистики");
                     return;
                 }
@@ -1066,7 +1051,214 @@ angular
                 getStat(true);
             }
 
+            function renderAllGraphs() {
+                //График динамики реакций на контент
+                if (graphModel.wallActivityGraph) {
+                    graphModel.wallActivityGraph.destroy();
+                }
+
+                graphModel.wallActivityGraph.showGraph({
+                    element: "wallActivityGraph",
+                    labels: $scope.stat.wall.activityData.map((item)=> {
+                        return item.date;
+                    }),
+                    datasets: [{
+                        label: "Реакции на контент",
+                        data: $scope.stat.wall.activityData.map((item)=> {
+                            return item.summActions;
+                        }),
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }, {
+                        label: "Средняя реакция в день за период",
+                        data: $scope.stat.wall.activityData.map((item)=> {
+                            return $scope.stat.wall.srDayActivity;
+                        }),
+                        fill: false,
+                        borderColor: '#208e68',
+                        backgroundColor: '#208e68',
+                        pointBorderWidth: 0,
+                        pointHoverRadius: 3
+                    }]
+                });
+                //График лайков на стене
+                if (graphModel.wallLikesGraph) {
+                    graphModel.wallLikesGraph.destroy();
+                }
+
+                graphModel.wallLikesGraph.showGraph({
+                    element: "wallLikesGraph",
+                    labels: $scope.stat.wall.activityData.map((item)=> {
+                        return item.date;
+                    }),
+                    datasets: [{
+                        label: "Лайки на стене",
+                        data: $scope.stat.wall.activityData.map((item)=> {
+                            return item.likes;
+                        }),
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }]
+                });
+
+                //График репостов со стены
+                if (graphModel.wallRepostsGraph) {
+                    graphModel.wallRepostsGraph.destroy();
+                }
+
+                graphModel.wallRepostsGraph.showGraph({
+                    element: "wallRepostsGraph",
+                    labels: $scope.stat.wall.activityData.map((item)=> {
+                        return item.date;
+                    }),
+                    datasets: [{
+                        label: "Репосты со стены",
+                        data: $scope.stat.wall.activityData.map((item)=> {
+                            return item.reposts;
+                        }),
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }]
+                });
+                //График комментариев на стене
+                if (graphModel.wallCommentsGraph) {
+                    graphModel.wallCommentsGraph.destroy();
+                }
+
+                graphModel.wallCommentsGraph.showGraph({
+                    element: "wallCommentsGraph",
+                    labels: $scope.stat.wall.activityData.map((item)=> {
+                        return item.date;
+                    }),
+                    datasets: [{
+                        label: "Комментарии на стене",
+                        data: $scope.stat.wall.activityData.map((item)=> {
+                            return item.comments;
+                        }),
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }]
+                });
+                //График динамики количества участников
+                if (graphModel.subscribersStatGraph) {
+                    graphModel.subscribersStatGraph.destroy();
+                }
+
+                graphModel.subscribersStatGraph.showGraph({
+                    element: "subscribersStatGraph",
+                    labels: $scope.stat.graph.subscribersStatData.labels,
+                    datasets: [{
+                        label: "Количество пользователей",
+                        data: $scope.stat.graph.subscribersStatData.membersCount,
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }]
+                });
+                //График количества вступивших и вышедших участников
+                if (graphModel.peopleStatGraph) {
+                    graphModel.peopleStatGraph.destroy();
+                }
+
+                graphModel.peopleStatGraph.showGraph({
+                    element: "graphPeopleStat",
+                    labels: $scope.stat.graph.graphPeopleStatData.labels,
+                    datasets: [{
+                        label: "Новых участников",
+                        data: $scope.stat.graph.graphPeopleStatData.subscribedDataSet,
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }, {
+                        label: "Вышедших участников",
+                        data: $scope.stat.graph.graphPeopleStatData.unsubscribedDataSet,
+                        fill: false,
+                        borderColor: '#b05c91',
+                        backgroundColor: '#b05c91'
+                    }]
+                });
+                //График посещаемости и просмотров
+                if (graphModel.attendanceStatGraph) {
+                    graphModel.attendanceStatGraph.destroy();
+                }
+
+                graphModel.attendanceStatGraph.showGraph({
+                    element: "attendanceStatGraph",
+                    labels: $scope.stat.graph.attendanceStatData.labels,
+                    datasets: [{
+                        label: "Просмотров",
+                        data: $scope.stat.graph.attendanceStatData.viewsData,
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }, {
+                        label: "Посещений",
+                        data: $scope.stat.graph.attendanceStatData.visitorsData,
+                        fill: false,
+                        borderColor: '#b05c91',
+                        backgroundColor: '#b05c91'
+                    }]
+                });
+                //График динамики вовлеченности
+                if (graphModel.wallERGraph) {
+                    graphModel.wallERGraph.destroy();
+                }
+
+                graphModel.wallERGraph.showGraph({
+                    element: "wallERGraph",
+                    labels: $scope.stat.wall.activityData.map((item)=> {
+                        return item.date;
+                    }),
+                    datasets: [{
+                        label: "Суммарная вовлеченность за день",
+                        data: $scope.stat.wall.activityData.map((item)=> {
+                            return item.postER;
+                        }),
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }]
+                });
+            }
+
+            function openDatepickerPopupFrom() {
+                $scope.model.datePicker.popupFrom.opened = !$scope.model.datePicker.popupFrom.opened;
+            }
+
+            function openDatepickerPopupTo() {
+                $scope.model.datePicker.popupTo.opened = !$scope.model.datePicker.popupTo.opened;
+            }
+
+            function goToPublishStat() {
+                $state.go('index.publishAnalysis', {
+                    getStatFromGroup: $scope.stat.groupInfo.screen_name
+                });
+            }
+
             init();
 
 
-        }]);
+        }
+
+    ])
+;

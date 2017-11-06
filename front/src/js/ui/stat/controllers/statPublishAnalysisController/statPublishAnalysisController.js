@@ -4,13 +4,27 @@ import {enums} from './../../../../bl/module.js';
 
 angular
     .module('rad.stat')
-    .controller('statPublishAnalysisController', ['$rootScope', '$scope', '$state', 'bus', 'vkApiFactory', 'appState', '$timeout', 'memoryFactory', 'radCommonFunc', 'notify', '$stateParams', '$sce',
-        function ($rootScope, $scope, $state, bus, vkApiFactory, appState, $timeout, memoryFactory, radCommonFunc, notify, $stateParams, $sce) {
+    .controller('statPublishAnalysisController', ['$rootScope', '$scope', '$state', 'bus', 'vkApiFactory', 'appState',
+        '$timeout', 'memoryFactory', 'radCommonFunc', 'notify', '$stateParams', '$sce',
+        function ($rootScope, $scope, $state, bus, vkApiFactory, appState, $timeout, memoryFactory, radCommonFunc,
+                  notify, $stateParams, $sce) {
             $scope.currentTab = 'catalog';
             $rootScope.page.sectionTitle = 'Анализ публикаций';
             $scope.model = {
-                groupAddress: ''
+                groupAddress: '',
+                title: 'Анализ публикаций',
+                datePicker: {
+                    dateFrom: '',
+                    dateTo: '',
+                    popupFrom: {
+                        opened: false
+                    },
+                    popupTo: {
+                        opened: false
+                    }
+                }
             };
+            $scope.error = {};
             $scope.adminGroups = [];
             $scope.showGroupsMenu = showGroupsMenu;
             $scope.isHiddenMenu = true;
@@ -26,6 +40,9 @@ angular
             $scope.addToFavorite = addToFavorite;
             $scope.getStatExample = getStatExample;
             $scope.getVideoUrl = getVideoUrl;
+            $scope.isShowDetail = isShowDetail;
+            $scope.openDatepickerPopupFrom = openDatepickerPopupFrom;
+            $scope.openDatepickerPopupTo = openDatepickerPopupTo;
 
             $scope.wallCount = 0;
             $scope.wallList = [];
@@ -36,6 +53,16 @@ angular
             $scope.groupIsFinded = false;
             $scope.groupInfo = {};
             $scope.progressPercent = 0;
+            $scope.hiddenFilter = false;
+
+            $scope.dateOptions = {
+                formatYear: 'yy',
+                maxDate: new Date(),
+                minDate: new Date((new Date()).getTime() - 6 * 30 * 24 * 60 * 60 * 1000),
+                startingDay: 1,
+                showWeeks: false,
+                isRTL: false
+            };
 
             var authData = {
                 token: appState.getUserVkToken(),
@@ -51,6 +78,16 @@ angular
             $scope.$watch('model.groupAddress', (newVal, oldVal)=> {
                 if (newVal != oldVal)
                     $scope.urlError = "";
+            });
+
+            $scope.$watch('model.datePicker.dateFrom', (newVal, oldVal)=> {
+                if (newVal != oldVal)
+                    $scope.error.datePickerFromError = "";
+            });
+
+            $scope.$watch('model.datePicker.dateTo', (newVal, oldVal)=> {
+                if (newVal != oldVal)
+                    $scope.error.datePickerToError = "";
             });
 
             $scope.$watch('isLoading', (newVal)=> {
@@ -95,18 +132,26 @@ angular
                     return;
                 }
 
+                /*Проверка дат*/
+                var parseDate = getCheckedDate();
+                if (!parseDate || (parseDate && parseDate.error)) {
+                    return;
+                }
+
                 $scope.groupIsFinded = false;
                 $scope.progressPercent = 0;
                 $scope.isLoading = true;
+                $scope.hiddenFilter = true;
                 var allPostsCount = 0;
 
-                var parseDate = getCheckedDate();
                 var vkGroupId = radCommonFunc.getGroupId($scope.model.groupAddress);
                 var vkGid;
                 var groupInfo;
+                var ER = parseFloat(0);
 
                 vkApiFactory.getGroupInfo(authData, {
-                    groupId: vkGroupId
+                    groupId: vkGroupId,
+                    fields: "photo_big,photo_medium,photo,members_count,counters,description"
                 }).then(function (res) {
 
                     if (res && res.error && res.error.error_code == 100) {
@@ -114,6 +159,7 @@ angular
                             $scope.urlError = 'Введеная группа вконтакте не найдена';
                             $scope.isLoading = false;
                             $scope.dataIsLoaded = false;
+                            $scope.hiddenFilter = false;
                         });
                         return;
                     }
@@ -126,6 +172,8 @@ angular
                         membersCount = res.members_count;
                         groupInfo = res;
                         $scope.groupInfo = res;
+                        $scope.groupInfo.ER = 0;
+                        $scope.groupInfo.wallAnalysisCount = 0;
                     });
 
                     $.when(
@@ -133,6 +181,8 @@ angular
                             $scope.wallList = wall;
                             var filterValue = $("input[name=filterPosts]:checked").val() || 'likes';
                             wallFilter(filterValue);
+
+                            $scope.groupInfo.ER = (ER / $scope.groupInfo.wallAnalysisCount).toFixed(3);
                         })
                     )
                         .then(function () {
@@ -177,20 +227,23 @@ angular
                                 return;
                             }
 
+                            if (!$scope.groupInfo.wallCount) {
+                                $timeout(()=> {
+                                    $scope.groupInfo.wallCount = res[0];
+                                });
+                            }
+
                             if (res && res.length > 1) {
                                 $scope.wallCount = res[0];//Количество постов за период
                                 if (parseDate.lastPosts && parseDate.lastPosts == "all") {
                                     parseDate.lastPosts = res[0];
                                 }
                                 res.forEach(function (post, j) {
-                                    if (membersCount && post.likes && post.reposts && post.comments) {
-                                        post.ER = (post.likes.count + post.reposts.count + post.comments.count) / membersCount * 100;
-                                        post.ER = post.ER.toFixed(3);
-                                    }
 
                                     if (parseDate.lastPosts) {//Фильтр за последние посты
                                         if (j != 0 && postCounter <= parseDate.lastPosts) {
                                             wallStat.push(post);
+                                            calcER(post);
                                             postCounter++;
                                         }
                                         if (postCounter > parseDate.lastPosts) {
@@ -199,6 +252,7 @@ angular
                                     } else {//Фильтр за время
                                         if (post.date > parseDate.unixFrom && post.date < parseDate.unixTo) {
                                             wallStat.push(post);
+                                            calcER(post);
                                         } else if (post.date <= parseDate.unixFrom && !post.is_pinned) {
                                             flagStop = true;
                                         }
@@ -216,6 +270,16 @@ angular
                             } else {
                                 //console.log(wallStat);
                                 deferr.resolve(wallStat);
+                            }
+
+                            function calcER(post) {
+                                if (membersCount && post.likes && post.reposts && post.comments) {
+                                    post.ER = (post.likes.count + post.reposts.count + post.comments.count) / membersCount * 100;
+                                    post.ER = post.ER.toFixed(3);
+
+                                    ER += parseFloat(post.ER);
+                                    $scope.groupInfo.wallAnalysisCount += 1;
+                                }
                             }
                         }).fail(function () {
                             deferr.reject();
@@ -315,6 +379,39 @@ angular
                     case "allPosts":
                         return {
                             lastPosts: 5000
+                        };
+                        break;
+                    case "datePicker":
+                        if (!$scope.model.datePicker.dateFrom){
+                            $scope.error.datePickerFromError = "Неверная дата";
+                            return {
+                                error: true
+                            }
+                        }
+                        if (!$scope.model.datePicker.dateTo){
+                            $scope.error.datePickerToError = "Неверная дата";
+                            return {
+                                error: true
+                            }
+                        }
+                        if ($scope.model.datePicker.dateFrom > $scope.model.datePicker.dateTo){
+                            $scope.error.datePickerFromError = "Дата начала превышает дату окончания";
+                            return {
+                                error: true
+                            }
+                        }
+                        if ($scope.model.datePicker.dateFrom.getTime() == $scope.model.datePicker.dateTo.getTime()){
+                            $scope.model.datePicker.dateTo = new Date($scope.model.datePicker.dateTo.getTime() + 24*60*60*1000);
+                        }
+
+                        dateFrom = $scope.model.datePicker.dateFrom;
+                        dateTo = $scope.model.datePicker.dateTo;
+
+                        return {
+                            from: moment(dateFrom).format("YYYY-MM-DD"),
+                            to: moment(dateTo).format("YYYY-MM-DD"),
+                            unixFrom: dateFrom / 1000,
+                            unixTo: dateTo / 1000
                         };
                         break;
                 }
@@ -444,6 +541,18 @@ angular
                             notify.error("Не удалось получить видеозапись.");
                         }
                     });
+            }
+
+            function isShowDetail(index) {
+                return $('.publishItem' + index + ' .post-info-area').height() > 200;
+            }
+
+            function openDatepickerPopupFrom() {
+                $scope.model.datePicker.popupFrom.opened = !$scope.model.datePicker.popupFrom.opened;
+            }
+
+            function openDatepickerPopupTo() {
+                $scope.model.datePicker.popupTo.opened = !$scope.model.datePicker.popupTo.opened;
             }
 
             init();

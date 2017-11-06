@@ -1,0 +1,274 @@
+<div class="publish-analysis">
+    <h3 class="text-center">{{model.title}}</h3>
+
+    <div class="text-center group-title" ng-if="groupInfo.name">&laquo;{{groupInfo.name}}&raquo;</div>
+
+    <div class="row">
+
+        <div class="col-md-3">
+            <div ng-show="dataIsLoaded && !isLoading">
+                <div class="block-flat group-info">
+                    <div class="header">
+                        <h4>Какие группы исследовались?</h4>
+                    </div>
+                    <div class="content">
+                        <div class="groupListInfo" ng-repeat="group in model.groupsList">
+                            <div class="groupListAvatar">
+                                <img ng-src="{{group.photo_big || group.photo_medium || group.photo}}">
+                            </div>
+                            <div class="groupListText">
+                                <div class="groupName">{{group.name}}</div>
+                                <a href="https://vk.com/{{group.screen_name}}" target="_blank"
+                                   class="">Перейти к группе</a>
+                            </div>
+                        </div>
+
+                        <div class="clear"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="block-flat">
+                <vk-group-widget></vk-group-widget>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="row" ng-show="isLoading">
+                <div class="col-xs-12">
+                    <div class="progress progress-striped active m-top-m-15">
+                        <div class="progress-bar progress-bar-info" style="width: {{progressPercent}}%">
+                            {{progressPercent}} %
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row showFilterArea" ng-show="hiddenFilter">
+                <div class="col-xs-12 text-center">
+                    <a ng-click="hiddenFilter = false" class="showFilterLink">Раскрыть фильтр</a>
+                </div>
+            </div>
+
+            <div class="block-flat" ng-hide="hiddenFilter">
+                <div class="">
+                    <h4>Выберите категорию</h4>
+                </div>
+                <form role="form">
+                    <div class="row">
+                        <div class="col-sm-3" ng-repeat="section in model.sections">
+                            <div class="sectionContent" ng-click="getContent(section)">
+                                <div class="image">
+                                    <img ng-src="{{section.picture}}" height="40">
+                                </div>
+                                <div class="link">{{section.name}}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--<hr>
+                    <h4>Мои категории</h4>
+
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <table class="table" ng-if="usersGroups && usersGroups.length">
+                                <tr ng-repeat="section in usersGroups">
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </table>
+                            <div ng-if="!usersGroups">
+                                У вас еще нет собственных категорий. Создайте сейчас!
+                            </div>
+                            <button class="btn btn-info" style="margin-top:10px;">Добавить категорию</button>
+                        </div>
+                    </div>-->
+
+                    <div class="row hideFilterArea">
+                        <div class="col-xs-12 text-center">
+                            <a ng-click="hiddenFilter = true" class="showFilterLink">Скрыть фильтр</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="block-flat" rad-loader="isLoading" ng-show="isLoading" style="height: 150px;">
+
+            </div>
+
+            <div class="row" ng-hide="isLoading">
+                <div ng-repeat="wallPost in wallListView">
+                    <div class="col-md-12 m-top-m-15">
+                        <div class="block-flat wallPost">
+                            <div class="wallPostHeader">
+                                <div class="image">
+                                    <img ng-src="{{wallPost.group.photo_big || wallPost.group.photo_medium || wallPost.group.photo}}"
+                                         height="50">
+                                </div>
+                                <div class="groupName">
+                                    {{wallPost.group.name}}
+                                </div>
+                            </div>
+                            <div class="header">
+                                <div class="pull-left">
+                                    <div class="publish-left-block">
+                                        <strong>Дата: </strong> {{getDate(wallPost.date)}}
+                                    </div>
+                                    <br/>
+
+                                    <div class="">
+                                        <i class="fa fa-heart"></i> <strong> {{wallPost.likes.count}}</strong>
+                                        <i class="fa fa-share-alt"></i> <strong> {{wallPost.reposts.count}}</strong>
+                                        <i class="fa fa-comments"></i> <strong> {{wallPost.comments.count}}</strong>
+                                        ER <strong> {{wallPost.ER}}%</strong>
+                                        <br/>
+                                        <a class="sendToPublish"
+                                           ng-href="https://vk.com/feed?w=wall{{wallPost.from_id}}_{{wallPost.id}}"
+                                           target="_blank">Перейти к записи (в новой вкладке)</a>
+                                    </div>
+                                </div>
+                                <div class="pull-right">
+                                    <button class="btn btn-prusia addToFavoritePost"
+                                            ng-disabled="wallPost.isAddedToFavorite"
+                                            ng-class="{'btn-success': !wallPost.isAddedToFavorite, 'btn-prusia': wallPost.isAddedToFavorite}"
+                                            ng-click="addToFavorite(wallPost, $index)">
+                                        {{wallPost.isAddedToFavorite ? 'Запись сохранена' : 'Сохранить'}}
+                                    </button>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                            <div class="block-publish publishItem{{$index}}" data="{{currentIndex = $index}}">
+
+                                <div class="text">
+                                    <span ng-bind-html="wallPost.text"></span>
+                                    <!--<a href="http://www.mhealth.ru/diet/ration/425723/">http://www.mhealth.ru/diet/ration/425723/</a>-->
+                                </div>
+                                <div ng-if="wallPost.attachments && wallPost.attachments.length>0">
+                                    <div ng-repeat="attachment in wallPost.attachments">
+                                        <div class="video text-center"
+                                             ng-if="attachment.type == 'video'">
+
+                                            <div class="video-preview" ng-show="!attachment.video.url"
+                                                 ng-click="getVideoUrl(attachment)">
+                                                <img ng-src="{{attachment.video.image}}"
+                                                     style="max-width: 100%;">
+                                                <img class="play-icon" src="./images/video_play.png">
+                                            </div>
+
+                                            <iframe ng-if="attachment.video.url"
+                                                    ng-src="{{trustSrc(attachment.video.url)}}"
+                                                    width="100%"
+                                                    height="250"
+                                                    allowfullscreen frameborder="0">
+                                            </iframe>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="image text-center"
+                                     ng-if="wallPost.attachment && wallPost.attachment.photo">
+                                    <img ng-src="{{wallPost.attachment.photo.src_big}}" style="max-width: 100%;"/>
+                                </div>
+                                <div ng-if="isShowAnotherPictures(wallPost.attachments)">
+                                    <hr>
+
+                                    <div class="col-sm-4 text-center publish-photo-link"
+                                         ng-repeat="anotherImage in wallPost.attachments"
+                                         ng-if="anotherImage.type == 'photo'"
+                                         ng-click="showCurrentPicture(anotherImage.photo.src_big, currentIndex)">
+                                        <img ng-src="{{anotherImage.photo.src_big}}" height="50">
+                                    </div>
+
+                                </div>
+                                <div ng-if="isShowGif(wallPost.attachments)">
+                                    <div ng-repeat="gif in wallPost.attachments"
+                                         ng-if="gif.doc && gif.doc.ext == 'gif'" class="text-center">
+                                        <img ng-src="{{gif.doc.url}}" style="max-width: 100%;"/>
+                                    </div>
+                                </div>
+                                <div class="clear"></div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="clear" ng-if="($index+1) % 2 == 0"></div>
+
+                </div>
+
+                <div ng-show="!wallListView.length && dataIsLoaded && !isLoading">
+                    <div class="col-md-12 m-top-m-15">
+                        <div class="block-flat wallPost">
+                            Записей по вашему фильтру нет :(
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <button type="button"
+                    ng-show="wallPage*10 < wallList.length && !isLoading"
+                    class="btn btn-block btn-info btn-rad" ng-click="showNextPosts()">Показать еще
+            </button>
+
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="block-flat list-sort" ng-show="dataIsLoaded && !isLoading">
+                <div class="header">
+                    <h4>Сортировать</h4>
+                </div>
+                <div class="content" id="listSort">
+                    <div>
+                        <label class="radio-inline">
+                            <input class="icheck" type="radio" checked="" name="filterPosts" value="likes">
+                            По лайкам</label>
+                    </div>
+                    <div>
+                        <label class="radio-inline">
+                            <input class="icheck" type="radio" name="filterPosts" value="reposts">
+                            По репостам</label>
+                    </div>
+                    <div>
+                        <label class="radio-inline">
+                            <input class="icheck" type="radio" name="filterPosts" value="comments">
+                            По комментариям</label>
+                    </div>
+                    <div>
+                        <label class="radio-inline">
+                            <input class="icheck" type="radio" name="filterPosts" value="ER">
+                            По ER</label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div ng-if="!sectionIsAvailable && false">
+        <div class="row">
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-6">
+                <div class="block-flat info-box">
+                    <div class="header">
+                        <div class="actions">
+
+                        </div>
+                        <h3>Этот инструмент тестируется :)</h3>
+                    </div>
+                    <div class="content">
+                        <p>Данный инструмент готовится к запуску. Пожалуйста подождите. Мы активно тестируем этот раздел
+                            и скоро он станет доступным для вас.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+
+            </div>
+        </div>
+    </div>
+</div>

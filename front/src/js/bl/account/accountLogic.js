@@ -7,8 +7,10 @@ var serverApi = server;
 
 bus.subscribe(topics.ACCOUNT.IS_AUTH, dataContext.isAuth);//Возвращает статус авторизации пользователя
 bus.subscribe(topics.ACCOUNT.GET_USER_INFO, dataContext.getUserInfo);//Получение данных о пользователе
-/*bus.subscribe(topics.ACCOUNT.ACCOUNT.GET_VK_INFO, dataContext.getVkInfo);//Получение данных о пользователе в вконтакте*/
+bus.subscribe(topics.ACCOUNT.GET_FREE_GROUPS, dataContext.getFreeGroups);//Получение списка бесплатных для анализа групп
+bus.subscribe(topics.ACCOUNT.ADD_FREE_GROUP, dataContext.addGroupToFreeList);//Добавить группу в список бесплатынх
 bus.subscribe(topics.ACCOUNT.LOGOUT, logout);//Получение данных о пользователе
+
 bus.subscribe(topics.NEWS.GET_LIST, dataContext.getNewsList);//Получение списка новостей
 
 bus.subscribe(topics.BOOKMARK.ADD, dataContext.addBookmark);//Добавление группы в закладки

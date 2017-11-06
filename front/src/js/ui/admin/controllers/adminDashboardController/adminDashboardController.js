@@ -6,7 +6,6 @@ angular
     .module('rad.stat')
     .controller('adminDashboardController', ['$rootScope', '$scope', '$state', 'bus', 'vkApiFactory', 'appState', '$timeout',
         function ($rootScope, $scope, $state, bus, vkApiFactory, appState, $timeout) {
-            $rootScope.page.sectionTitle = 'Dashboard';
 
             $scope.stat = {
                 userAllToday: 0,
@@ -14,6 +13,7 @@ angular
                 userOldToday: 0
             };
             $scope.getColorStatus = getColorStatus;
+            $scope.refresh = refresh;
 
             bus.publish(events.ADMIN.STATE_CHANGED, "dashboard");
 
@@ -62,7 +62,7 @@ angular
                 };
                 var graphConfig = function (data) {
                     return {
-                        type: 'line',
+                        type: 'bar',
                         data: {
                             labels: currgraph.labels,
                             datasets: currgraph.datasets
@@ -118,6 +118,9 @@ angular
                             $scope.stat.usersAll = res.data.usersAll;
                             $scope.stat.usersList = res.data.usersList;
                             $scope.stat.payCount = res.data.payCount;
+                            $scope.stat.payCountCurrentMonth = res.data.payCountCurrentMonth;
+                            $scope.stat.payCountLastMonth = res.data.payCountLastMonth;
+                            $scope.stat.payCountRur = res.data.payCountRur;
 
                             $scope.stat.registerGraph = formatGraphData(res.data.usersRegisterList);
                             graph.showGraph({
@@ -174,6 +177,8 @@ angular
                     counter: currCounter
                 });
 
+                graphData = graphData.reverse();
+
                 return graphData;
             }
 
@@ -182,19 +187,19 @@ angular
                     return "grey";
 
                 var parseDate = activeDate.split(".");
-                var activeDateNormilize = new Date(parseDate[2], parseDate[1]-1, parseDate[0]).getTime();
+                var activeDateNormilize = new Date(parseDate[2], parseDate[1] - 1, parseDate[0]).getTime();
                 var currentDate = (new Date()).getTime();
 
 
-                if (activeDateNormilize - currentDate > 0 && activeDateNormilize - currentDate < 2*24*60*60*1000){
+                if (activeDateNormilize - currentDate > 0 && activeDateNormilize - currentDate < 2 * 24 * 60 * 60 * 1000) {
                     return "orange";
                 }
 
-                if (activeDateNormilize - currentDate > 6*24*60*60*1000){
+                if (activeDateNormilize - currentDate > 6 * 24 * 60 * 60 * 1000) {
                     return "blue";
                 }
 
-                if (activeDateNormilize - currentDate < 0){
+                if (activeDateNormilize - currentDate < 0) {
                     return "red";
                 }
 
@@ -202,6 +207,13 @@ angular
             }
 
             function init() {
+
+                $rootScope.setTitle("Admin Dashboard");
+                $scope.isLoading = true;
+                getAdminStat();
+            }
+
+            function refresh() {
                 $scope.isLoading = true;
                 getAdminStat();
             }

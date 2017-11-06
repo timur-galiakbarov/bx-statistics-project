@@ -7,11 +7,11 @@
             <strong>Закончился период подписки</strong>
             <br>
             Для продолжения работы оплатите требуемый период работы сервиса.
-            Стоимость одного месяца - всего <strong>84</strong> рубля при оплате за год.<br>
+            Стоимость одного месяца - всего <strong>116</strong> рублей при оплате за год.<br>
         </div>
 
-        Мой тариф - {{model.tariff}}<br>
-        Действует до - {{model.activeTo}}
+        <br>
+        Безлимитный период действует до - {{model.activeTo}}
 
 
         <form method="POST" action="https://money.yandex.ru/quickpay/confirm.xml" target="_blank">
@@ -29,51 +29,89 @@
             <input type="hidden" name="need-phone" value="false">
             <input type="hidden" name="need-address" value="false">
 
-            <table class="no-border hover">
-                <thead class="no-border">
+            <table class="table">
+                <tbody>
                 <tr>
-                    <th style="width:50%;">Период</th>
-                    <th class="text-center">Стоимость</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody class="no-border-y">
-                <tr>
-                    <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>1 месяц</td>
-                    <td class="text-center">199 <i class="fa fa-rub"></i></td>
-                    <td class="text-right">
-                        <input type="radio" ng-model="paymentInfo.period" value="1 месяц" checked="checked">
+                    <td class="text-center">
+                        <div class="radio period-radio">
+                            <label>
+                                <input type="radio" ng-model="paymentInfo.period"
+                                       value="1 месяц">
+                                <span class="circle"></span>
+                                <span class="check"></span>
+                            </label>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="radio period-radio">
+                            <label>
+                                <input type="radio" ng-model="paymentInfo.period"
+                                       value="3 месяца">
+                                <span class="circle"></span>
+                                <span class="check"></span>
+                            </label>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="radio period-radio">
+                            <label>
+                                <input type="radio" ng-model="paymentInfo.period"
+                                       value="1 год">
+                                <span class="circle"></span>
+                                <span class="check"></span>
+                            </label>
+                        </div>
                     </td>
                 </tr>
                 <tr>
-                    <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>3 месяца</td>
-                    <td class="text-center">499 <i class="fa fa-rub"></i></td>
-                    <td class="text-right">
-                        <input type="radio" ng-model="paymentInfo.period" value="3 месяца">
+                    <td class="text-center">
+                        1 месяц
+                    </td>
+                    <td class="text-center">
+                        <h4>3 месяца</h4>
+                    </td>
+                    <td class="text-center">
+                        Целый год
                     </td>
                 </tr>
                 <tr>
-                    <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>1 год</td>
-                    <td class="text-center">999 <i class="fa fa-rub"></i></td>
-                    <td class="text-right">
-                        <input type="radio" ng-model="paymentInfo.period" value="1 год">
+                    <td class="text-center">
+                        199
+                        <small><i class="fa fa-rub"></i></small>
+                    </td>
+                    <td class="text-center">
+                        <h4>499
+                            <small><i class="fa fa-rub"></i></small>
+                        </h4>
+                    </td>
+                    <td class="text-center">
+                        1399
+                        <small><i class="fa fa-rub"></i></small>
                     </td>
                 </tr>
-                <!--<tr>
-                    <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>6 месяцев</td>
-                    <td class="text-center">899 <i class="fa fa-rub"></i></td>
-                    <td class="text-right">
-                        <input type="radio" ng-model="paymentInfo.period" value="6 месяцев" checked="checked">
-                    </td>
-                </tr>-->
-
                 </tbody>
             </table>
 
-            <label><input type="radio" name="paymentType" value="PC"> Яндекс.Деньгами</label><br>
-            <label><input type="radio" name="paymentType" value="AC" checked="checked"> Банковской картой (Visa,
-                Mastercard)</label>
-            <br>
+            <div class="radio">
+                <label>
+                    <input type="radio" name="paymentType"
+                           value="PC">
+                    <span class="circle"></span>
+                    <span class="check"></span> Яндекс.Деньгами
+                </label>
+            </div>
+
+            <div class="radio">
+                <label>
+                    <input type="radio" name="paymentType"
+                           value="AC" checked="checked">
+                    <span class="circle"></span>
+                    <span class="check"></span> Банковской картой (Visa,
+                    Mastercard)
+                </label>
+            </div>
+
+            <br/>
 
             <input type="submit" class="btn btn-success btn-block" value="Оплатить"/>
 
@@ -83,14 +121,21 @@
     </div>
 
     <div class="text-center" ng-if="view == 'popup'">
-        <div class="i-circle primary"><i class="fa fa-calendar-times-o"></i></div>
-        <h4>Закончился срок подписки</h4>
+        <div class="alert alert-info">
+            <b>Бесплатно для 3-х групп</b><br/>
+            <span>
+                Вы можете пользоваться сервисом <b>бесплатно</b> для 3-х групп, которые указали в разделе <a
+                    ng-click="goToProfile()">Профиль и оплата</a>. Если вы этого еще не сделали, то можете сделать это прямо
+            сейчас.
+            </span>
+        </div>
 
-        <p>
-            Для продолжения работы с сервисом оплатите необходимый период.
-            <br>
-            Стоимость одного месяца - всего <strong>84</strong> рубля при оплате за год.<br>
+        Чтобы пользоваться аналитикой для других групп, необходимо оплатить подписку на любой из приведенного ниже
+        списка период.<br/>
+        Стоимость одного месяца - всего <strong>116</strong> рублей при оплате за год.
 
+        <br/>
+        <br/>
 
         <form method="POST" action="https://money.yandex.ru/quickpay/confirm.xml" target="_blank">
 
@@ -107,52 +152,93 @@
             <input type="hidden" name="need-phone" value="false">
             <input type="hidden" name="need-address" value="false">
 
-            <table class="no-border hover">
-                <thead class="no-border">
+            <table class="table">
+                <tbody>
                 <tr>
-                    <th class="text-center" style="width:50%;">Период</th>
-                    <th class="text-center">Стоимость</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody class="no-border-y">
-                <tr>
-                    <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>1 месяц</td>
-                    <td class="text-center">199 <i class="fa fa-rub"></i></td>
-                    <td class="text-right">
-                        <input type="radio" ng-model="paymentInfo.period" value="1 месяц" checked="checked">
+                    <td class="text-center" width="33%">
+                        <div class="radio period-radio">
+                            <label>
+                                <input type="radio" ng-model="paymentInfo.period"
+                                       value="1 месяц">
+                                <span class="circle"></span>
+                                <span class="check"></span>
+                            </label>
+                        </div>
+                    </td>
+                    <td class="text-center" width="34%">
+                        <div class="radio period-radio">
+                            <label>
+                                <input type="radio" ng-model="paymentInfo.period"
+                                       value="3 месяца">
+                                <span class="circle"></span>
+                                <span class="check"></span>
+                            </label>
+                        </div>
+                    </td>
+                    <td class="text-center" width="33%">
+                        <div class="radio period-radio">
+                            <label>
+                                <input type="radio" ng-model="paymentInfo.period"
+                                       value="1 год">
+                                <span class="circle"></span>
+                                <span class="check"></span>
+                            </label>
+                        </div>
                     </td>
                 </tr>
                 <tr>
-                    <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>3 месяца</td>
-                    <td class="text-center">499 <i class="fa fa-rub"></i></td>
-                    <td class="text-right">
-                        <input type="radio" ng-model="paymentInfo.period" value="3 месяца">
+                    <td class="text-center">
+                        1 месяц
+                    </td>
+                    <td class="text-center">
+                        <h4>3 месяца</h4>
+                    </td>
+                    <td class="text-center">
+                        Целый год
                     </td>
                 </tr>
                 <tr>
-                    <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>1 год</td>
-                    <td class="text-center">999 <i class="fa fa-rub"></i></td>
-                    <td class="text-right">
-                        <input type="radio" ng-model="paymentInfo.period" value="1 год">
+                    <td class="text-center">
+                        199
+                        <small><i class="fa fa-rub"></i></small>
+                    </td>
+                    <td class="text-center">
+                        <h4>499
+                            <small><i class="fa fa-rub"></i></small>
+                        </h4>
+                    </td>
+                    <td class="text-center">
+                        1399
+                        <small><i class="fa fa-rub"></i></small>
                     </td>
                 </tr>
-                <!--<tr>
-                    <td style="width:30%;"><i class="fa fa-calendar-check-o"></i>6 месяцев</td>
-                    <td class="text-center">899 <i class="fa fa-rub"></i></td>
-                    <td class="text-right">
-                        <input type="radio" ng-model="paymentInfo.period" value="6 месяцев" checked="checked">
-                    </td>
-                </tr>-->
-
                 </tbody>
             </table>
 
-            <label><input type="radio" name="paymentType" value="PC"> Яндекс.Деньгами</label><br>
-            <label><input type="radio" name="paymentType" value="AC" checked="checked"> Банковской картой</label>
-            <br>
+            <div class="radio">
+                <label>
+                    <input type="radio" name="paymentType"
+                           value="PC">
+                    <span class="circle"></span>
+                    <span class="check"></span> Яндекс.Деньгами
+                </label>
+            </div>
 
-            <input type="submit" class="btn btn-primary btn-block" value="Оплатить"/>
+            <div class="radio">
+                <label>
+                    <input type="radio" name="paymentType"
+                           value="AC" checked="checked">
+                    <span class="circle"></span>
+                    <span class="check"></span> Банковской картой (Visa,
+                    Mastercard)
+                </label>
+            </div>
+
+            <br/>
+
+            <input type="submit" class="btn btn-success btn-block" value="Оплатить"/>
+
+            <div class="block text-center">(произойдет переход на страницу оплаты)</div>
 
         </form>
         </p>

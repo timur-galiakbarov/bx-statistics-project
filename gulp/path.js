@@ -6,7 +6,7 @@ var path = {
         js: 'build/js/',
         bower: 'build/bower_components/',
         fonts: 'build/fonts/',
-        tpljs: 'build/js/template/',
+        tpljs: 'build/js/',
         images: 'build/images/'
     },
     bitrix: {
@@ -16,7 +16,7 @@ var path = {
         js: './lk/js/',
         bower: './lk/bower_components/',
         fonts: './lk/fonts/',
-        tpljs: './lk/js/template/',
+        tpljs: './lk/js/',
         images: './lk/images/'
     },
     src: {

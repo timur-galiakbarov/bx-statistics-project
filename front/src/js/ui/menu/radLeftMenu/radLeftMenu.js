@@ -10,7 +10,8 @@ function radLeftMenu($state, $rootScope, notify, appState) {
         templateUrl: './templates/js/ui/menu/radLeftMenu/radLeftMenu.html',
         controller: ['$scope', '$state', function ($scope, $state) {
             $scope.currentState = function (state) {
-                if (state == $state.current.name)
+                //console.log($state);
+                if ($state.current.name.indexOf(state)>=0)
                     return true;
             }
         }],

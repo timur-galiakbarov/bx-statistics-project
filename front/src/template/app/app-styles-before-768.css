@@ -1,0 +1,9 @@
+@media(max-width: 768px){
+    .section-title{
+        width: 100%;
+        text-align: center;
+    }
+    .main-panel>.content{
+        margin-top: 110px !important;
+    }
+}

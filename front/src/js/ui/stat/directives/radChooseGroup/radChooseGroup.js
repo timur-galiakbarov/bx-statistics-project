@@ -18,7 +18,7 @@ function radChooseGroup($timeout, vkApiFactory, appState, bus) {
         link: function ($scope) {
             $scope.showList = showList;
             $scope.setLink = setLink;
-            $scope.currentState = 'isMy';
+            $scope.currentState = 'admin';
             $scope.groupLoading = false;
 
             var authData = {

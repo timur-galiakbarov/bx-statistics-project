@@ -1,24 +1,28 @@
-<div class="relative">
-    <h3 class="text-center">{{model.title}}</h3>
-</div>
-
 <div class="row">
 
-    <div class="col-md-6 col-md-offset-3">
-        <div class="block-flat">
-            <rad-tariff></rad-tariff>
-        </div>
-    </div>
+    <div class="col-md-7">
 
-    <div class="col-md-6 col-md-offset-3">
-        <div class="block-flat">
-            <div class="header">
-                <h3><i class="fa fa-info-circle sign"></i> Информация</h3>
+        <div class="card">
+            <div class="card-header card-header-icon" data-background-color="blue">
+                <i class="material-icons">payment</i>
             </div>
-            <div class="content site-helper">
+            <div class="card-content">
+                <h4 class="card-title">Оплата</h4>
+                Оплаченная подписка дает возможность анализировать любые группы без ограничений.
+                <rad-tariff></rad-tariff>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header card-header-icon" data-background-color="blue">
+                <i class="material-icons">info_outline</i>
+            </div>
+            <div class="card-content">
+                <h4 class="card-title">Информация</h4>
+
                 <ul>
-                    <li>Ваш аккаунт активируется моментально после оплаты. После возвращения с кассы на socstat.ru может
-                        потребоваться перезагрузка страницы.
+                    <li>Ваш аккаунт активируется моментально после оплаты. После возвращения с кассы на socstat.ru
+                        требуется перезагрузить страницу.
                     </li>
                     <li>
                         Оплаченный период суммируется с оставшимся периодом.
@@ -28,13 +32,35 @@
                         действия пробного тарифа остается 3 дня. При оплате одного месяца вы сможете пользоваться
                         сервисом 1 месяц + 3 дня, оставшиеся от пробного периода.
                     </li>
-                    <li>Если у вас возникли вопросы, вы всегда можете задать их в <a href="https://vk.com/socstat_ru" target="_blank">группе вконтакте</a>.
+                    <li>Если у вас возникли вопросы, вы всегда можете задать их в <a href="https://vk.com/socstat_ru"
+                                                                                     target="_blank">группе
+                        вконтакте</a>.
                         Связаться со мной можно <a href="https://vk.com/extremaler" target="_blank">тут</a>.
                     </li>
                 </ul>
             </div>
+        </div>
 
+    </div>
+
+    <div class="col-sm-5">
+        <div class="card card-profile">
+            <div class="card-avatar" ng-if="model.vkUserInfo.photo_200 || model.vkUserInfo.photo_100">
+                <a>
+                    <img class="img" ng-src="{{model.vkUserInfo.photo_200 || model.vkUserInfo.photo_100}}">
+                </a>
+            </div>
+            <div class="card-content">
+                <h6 class="category text-gray">Мой аккаунт</h6>
+                <h4 class="card-title">{{model.vkUserInfo.first_name}} {{model.vkUserInfo.last_name}}</h4>
+
+                <p class="description">
+                    Безлимитная аналитика<br/>доступна до: {{tariffInfo.activeTo}}<br/>
+                </p>
+                <a class="btn btn-default btn-round" ng-click="logout()">Выйти</a>
+            </div>
         </div>
     </div>
 
 </div>
+

@@ -1,14 +1,13 @@
 import events from './../../../../bl/events.js';
+import topics from './../../../../bl/topics.js';
 import {enums} from './../../../../bl/module.js';
 
 angular
     .module('rad.stat')
-    .controller('commonAnalyticsController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState', 'vkApiFactory', 'memoryFactory', '$timeout', 'radCommonFunc', '$stateParams', 'notify',
-        function ($rootScope, $scope, $state, bus, statPopupsFactory, appState, vkApiFactory, memoryFactory, $timeout, radCommonFunc, $stateParams, notify) {
-            $scope.currentTab = 'catalog';
+    .controller('commonAnalyticsController', ['$rootScope', '$scope', '$state', 'bus', 'statPopupsFactory', 'appState', 'vkApiFactory', 'memoryFactory', '$timeout', 'radCommonFunc', '$stateParams', 'notify', 'permissionService',
+        function ($rootScope, $scope, $state, bus, statPopupsFactory, appState, vkApiFactory, memoryFactory, $timeout, radCommonFunc, $stateParams, notify, permissionService) {
 
             $scope.model = {
-                title: 'Аналитика сообщества',
                 groupAddress: '',
                 datePicker: {
                     dateFrom: '',
@@ -19,13 +18,13 @@ angular
                     popupTo: {
                         opened: false
                     }
-                }
-            };
-
-            $scope.stat = {
-                photos: {},
-                videos: {},
-                groupInfo: {}
+                },
+                wall: getNulledWall(),
+                postsFilter: "likes",
+                groupInfo: {
+                    screen_name: ""
+                },
+                stat: {}
             };
 
             $scope.error = {};
@@ -37,31 +36,43 @@ angular
             $scope.progressPercentSubscribers = 0.0;
             $scope.percentItem = (100 / 6).toFixed(2);
             $scope.adminGroups = [];
-            $scope.activeTab = 'dynamic';
+            $scope.activeTab = 'report';
             $scope.hiddenFilter = false;
 
-            $scope.getStat = getStat;
+            $scope.getStatWithCheck = getStatWithCheck;
             $scope.showGroupsMenu = showGroupsMenu;
-            $scope.setGroupLink = setGroupLink;
             $scope.nextProgressStep = nextProgressStep;
             $scope.showTab = showTab;
-            $scope.getStatExample = getStatExample;
             $scope.openDatepickerPopupFrom = openDatepickerPopupFrom;
             $scope.openDatepickerPopupTo = openDatepickerPopupTo;
-            $scope.goToPublishStat = goToPublishStat;
+            $scope.getDate = getDate;
+            $scope.sortPostsList = sortPostsList;
+            $scope.nextPosts = nextPosts;
+            $scope.getAuditory = getAuditory;
 
             $scope.$watch('isLoading', (newVal)=> {
                 $rootScope.globalLoading = newVal;
             });
 
-            $scope.$watch('model.datePicker.dateFrom', (newVal, oldVal)=> {
+            $scope.$watch('model.postsFilter', (newVal, oldVal)=> {
                 if (newVal != oldVal)
+                    sortPostsList(newVal);
+            });
+
+            $scope.$watch('model.datePicker.dateFrom', (newVal, oldVal)=> {
+                if (newVal != oldVal) {
                     $scope.error.datePickerFromError = "";
+                    var radios = $('input[name=checkDate]');
+                    radios.filter('[value=datePicker]').prop("checked", true);
+                }
             });
 
             $scope.$watch('model.datePicker.dateTo', (newVal, oldVal)=> {
-                if (newVal != oldVal)
+                if (newVal != oldVal) {
                     $scope.error.datePickerToError = "";
+                    var radios = $('input[name=checkDate]');
+                    radios.filter('[value=datePicker]').prop("checked", true);
+                }
             });
 
             var authData = {
@@ -73,10 +84,11 @@ angular
 
             var needGetStatFromParams = $stateParams.gid ? $stateParams.gid : false;
 
-            function defaultGraph() {
+            function defaultGraph(conf) {
                 var startRender = false,
                     currgraph,
                     chart;
+                var externalConfig = conf;
                 var showGraph = function (data) {
                     currgraph = data;
                     renderGraph(data);
@@ -118,7 +130,7 @@ angular
                 };
                 var graphConfig = function (data) {
                     return {
-                        type: 'line',
+                        type: externalConfig && externalConfig.type ? externalConfig.type : 'line',
                         data: {
                             labels: currgraph.labels,
                             datasets: currgraph.datasets
@@ -170,42 +182,10 @@ angular
                 }
             }
 
-            $scope.$watch('model.groupAddress', (newVal, oldVal)=> {
-                if (newVal != oldVal)
-                    $scope.urlError = "";
-            });
-
-            function getMemoryData() {
-                var lastData = memoryFactory.getMemory('mainStat');
-                if (lastData) {
-                    $scope.stat = lastData;
-                    $scope.model.groupAddress = lastData.groupAddress;
-
-                    $timeout(()=> {
-                        /*if (lastData.graph.graphPeopleStatData)
-                         peopleStatGraph.showGraph(lastData.graph.graphPeopleStatData);
-
-                         if (lastData.graph.subscribersStatData)
-                         subscribersStatGraph.showGraph(lastData.graph.subscribersStatData);
-
-                         if (lastData.graph.attendanceStatData)
-                         attendanceStatGraph.showGraph(lastData.graph.attendanceStatData);*/
-
-                        //Установка периода todo доделать
-                        /*$.each('input[name=checkDate]')(()=> {
-                         $(this).prop("checked", false);
-                         });
-                         var radios = $('input[name=checkDate]');
-                         radios.filter('[value="' + lastData.periodValue + '"]')[0].prop("checked", true);*/
-                    });
-
-                    $scope.statIsLoaded = true;
-                }
-            }
-
             function getCheckedDate() {
                 var checkDate = $('input[name=checkDate]:checked').val();
-                var currDate = new Date();
+                var currDate = new Date;
+                currDate.setHours(0, 0, 0, 0);
                 var dateTo = new Date();
                 var dateFrom;
 
@@ -258,45 +238,54 @@ angular
                 };
             }
 
-            function getStat(isExample) {
-                if (!appState.isActiveUser() && !isExample) {
-                    bus.publish(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL);
-                    return;
-                }
+            function getStatWithCheck() {
+                $scope.isLoading = true;
+                var vkGroupId = radCommonFunc.getGroupId($scope.model.groupAddress);
 
-                if (!$scope.model.groupAddress) {
-                    $scope.urlError = 'Укажите адрес или символьный код группы';
-                    return;
-                }
+                permissionService.canUseAnalytics({
+                    gid: vkGroupId
+                }).then((res)=> {
+                    if (res.success) {
+                        getStat();
+                    } else {
+                        $scope.isLoading = false;
+                        $state.go('index.analytics');
+                        if (res.error == "notSubscribeVk") {
+                            bus.publish(events.ACCOUNT.SHOW_NOT_SUBSCRIBE_MODAL);
+                            return;
+                        }
+                        bus.publish(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL);
+                    }
+                });
+            }
+
+            function getStat() {
+                var vkGroupId = radCommonFunc.getGroupId($scope.model.groupAddress);
 
                 $scope.groupIsFinded = false;
                 $scope.progressPercent = 0.0;
+                $scope.activeTab = 'report';
                 $scope.isLoading = true;
-                $scope.activeTab = 'activity';
 
+                var vkGid;
+                var groupInfo;
+                var ER = 0;
                 var parseDate = getCheckedDate();
                 if (!parseDate || (parseDate && parseDate.error)) {
+                    notify.error("Неверно указана дата для анализа. Пожалуйста, измените значения и повторите операцию");
                     return;
                 }
 
-                var vkGroupId = radCommonFunc.getGroupId($scope.model.groupAddress);
-                var vkGid;
-                var groupInfo;
-                var ER = parseFloat(0);
-
-                $scope.stat.groupAddress = $scope.model.groupAddress;
-                $scope.stat.periodValue = $('input[name=checkDate]:checked').val();
-                $scope.stat.periodLabels = {
+                $scope.model.groupInfo.groupAddress = $scope.model.groupAddress;
+                $scope.model.groupInfo.periodValue = $('input[name=checkDate]:checked').val();
+                $scope.model.groupInfo.periodLabels = {
                     from: parseDate.fromLabel,
                     to: parseDate.toLabel
                 };
-                $scope.stat.groupInfo.wallAnalysisCount = 0;
-                $scope.stat.groupInfo.ER = 0;
-                $scope.stat.groupInfo.ERMax = 0;
 
                 $scope.hiddenFilter = true;
 
-                vkApiFactory.getGroupInfo(authData, {
+                bus.request(topics.VK.GET_GROUP_INFO, authData, {
                     groupId: vkGroupId,
                     fields: "photo_big,photo_medium,photo,members_count,counters,description"
                 }).then(function (res) {
@@ -313,8 +302,8 @@ angular
 
                     if (res && res.error && res.error.error_code == 6) {
                         setTimeout(()=> {
-                            console.log("recursive!");
-                            getStat(isExample);
+                            //console.log("recursive!");
+                            getStat();
                         }, 1500);
                         return;
                     }
@@ -322,78 +311,68 @@ angular
                     $scope.$apply(function () {
                         $scope.statIsLoaded = true;
                         $scope.groupIsFinded = true;
-                        $scope.stat.membersCount = res.members_count;
-                        $scope.stat.groupCounters = {
-                            albums: res.counters && res.counters.albums ? res.counters.albums : 0,
-                            docs: res.counters && res.counters.docs ? res.counters.docs : 0,
-                            photos: res.counters && res.counters.photos ? res.counters.photos : 0,
-                            topics: res.counters && res.counters.topics ? res.counters.topics : 0,
-                            videos: res.counters && res.counters.videos ? res.counters.videos : 0
-                        };
-                        $scope.stat.groupName = res.name;
-                        $scope.stat.groupImage = res.photo_big || res.photo_medium || res.photo;
-                        $scope.stat.description = res.description;
-                        $scope.stat.groupInfo.screen_name = res.screen_name;
+                        $scope.model.groupInfo.membersCount = res.members_count;
+                        $scope.model.groupInfo.groupName = res.name;
+                        $scope.model.groupInfo.gid = res.gid;
+                        $scope.model.groupInfo.groupImage = res.photo_big || res.photo_medium || res.photo;
+                        $scope.model.groupInfo.description = res.description;
+                        $scope.model.groupInfo.screen_name = res.screen_name;
                         vkGid = res.gid;
                     });
                     groupInfo = res;
+
+                    var filter = {
+                        group: groupInfo,
+                        authData: authData,
+                        period: parseDate
+                    };
 
                     $.when(
                         getPeopleStat().always(()=> {
                             $scope.nextProgressStep($scope.percentItem);
                         }),
-                        getWallStat().always(()=> {
-                            $scope.nextProgressStep($scope.percentItem);
-                            $scope.stat.groupInfo.ER = (ER / $scope.stat.groupInfo.wallAnalysisCount).toFixed(3);
-                            var ERdayCount = 0;
-                            var activityDayCount = 0;
-                            $scope.stat.wall.summActions = 0;
-                            $scope.stat.wall.activityData.forEach((item)=> {
-                                ERdayCount = parseFloat(parseFloat(ERdayCount) + parseFloat(item.postER)).toFixed(3);
-                                activityDayCount = parseInt(activityDayCount) + parseInt(item.summActions);
-                                $scope.stat.wall.summActions += parseInt(item.summActions);
-                            });
-                            $scope.stat.groupInfo.ERday = (ERdayCount / $scope.stat.wall.activityData.length).toFixed(3);
-                            //Средняя активность за период по дням
-                            $scope.stat.wall.srDayActivity = (activityDayCount / $scope.stat.wall.activityData.length).toFixed(1);
-                            $scope.stat.wall.srPostActivity = (activityDayCount / $scope.stat.groupInfo.wallAnalysisCount).toFixed(1);
+                        bus.request(topics.STAT.GET_WALL, filter).then((data)=> {
+                            var wall = calculateWallStat(data);
+                            $scope.model.wall = wall;
+                            sortPostsList();
 
-                            if (!$scope.stat.wall.postsPeriod){
-                                $scope.stat.wall.indexLikes = 0;
-                            }
-                            else{
-                                //Индекс одобрения
-                                $scope.stat.wall.indexLikes = parseFloat($scope.stat.wall.likesPeriod / $scope.stat.wall.postsPeriod).toFixed(3);
-                                //Индекс усиления
-                                $scope.stat.wall.indexReposts = parseFloat($scope.stat.wall.repostsPeriod / $scope.stat.wall.postsPeriod).toFixed(3);
-                                //Индекс общения
-                                $scope.stat.wall.indexComments = parseFloat($scope.stat.wall.commentsPeriod / $scope.stat.wall.postsPeriod).toFixed(3);
-                            }
+                            $timeout(()=> {
+                                $scope.nextProgressStep($scope.percentItem);
+                            });
                         }),
-                        getAlbumsStat().always(()=> {
-                            $scope.nextProgressStep($scope.percentItem);
+                        bus.request(topics.STAT.GET_PHOTO, filter).then((data)=> {
+                            var photo = calculatePhotoStat(data);
+                            $scope.model.photo = photo;
+                            $timeout(()=> {
+                                $scope.nextProgressStep($scope.percentItem);
+                            });
                         }),
-                        getPhotoStat().always(()=> {
-                            $scope.nextProgressStep($scope.percentItem);
+                        bus.request(topics.STAT.GET_PHOTO_COMMENTS, filter).then((data)=> {
+                            var photoComments = calculatePhotoCommentsStat(data);
+                            $scope.model.photoComments = photoComments;
+                            $timeout(()=> {
+                                $scope.nextProgressStep($scope.percentItem);
+                            });
                         }),
-                        getPhotoCommentsStat().always(()=> {
-                            $scope.nextProgressStep($scope.percentItem);
-                        }),
-                        getVideoStat().always(()=> {
-                            $scope.nextProgressStep($scope.percentItem);
+                        bus.request(topics.STAT.GET_VIDEO, filter).then((data)=> {
+                            var video = calculateVideoStat(data);
+                            $scope.model.video = video;
+                            $timeout(()=> {
+                                $scope.nextProgressStep($scope.percentItem);
+                            });
                         })
                     )
-                        .then(function () {
+                        .then(()=> {
                             //Рисуем графики
                             renderAllGraphs();
-
-                            bus.publish(events.STAT.MAIN.FINISHED, $scope.stat);
-                            memoryFactory.setMemory('mainStat', $scope.stat);
-                        })
-                        .always(()=> {
+                            $scope.progressPercent = 100;
                             $timeout(()=> {
-                                $scope.progressPercent = 100;
-                                $(".nano").nanoScroller();
+                                $scope.isLoading = false;
+                            });
+                        })
+                        .error(()=> {
+                            $scope.progressPercent = 100;
+                            $timeout(()=> {
                                 $scope.isLoading = false;
                             });
                         });
@@ -417,6 +396,7 @@ angular
                                 subscribed: 0,
                                 unsubscribed: 0,
                                 subscribedSumm: 0,
+                                subscribedPercent: 0,
                                 reach: 0,
                                 reachSubscribers: 0
                             };
@@ -489,14 +469,15 @@ angular
                             });
 
                             $scope.$apply(function () {
-                                $scope.stat.views = stat.views;
-                                $scope.stat.visitors = stat.visitors;
-                                $scope.stat.subscribed = stat.subscribed;
-                                $scope.stat.unsubscribed = stat.unsubscribed;
-                                $scope.stat.subscribedSumm = stat.subscribed - stat.unsubscribed;
-                                $scope.stat.reachSubscribers = stat.reachSubscribers;
-                                $scope.stat.reach = stat.reach;
-                                $scope.stat.graph = {
+                                $scope.model.stat.views = stat.views;
+                                $scope.model.stat.visitors = stat.visitors;
+                                $scope.model.stat.subscribed = stat.subscribed;
+                                $scope.model.stat.unsubscribed = stat.unsubscribed;
+                                $scope.model.stat.subscribedSumm = stat.subscribed - stat.unsubscribed;
+                                $scope.model.stat.subscribedPercent = ($scope.model.groupInfo.membersCount ? ($scope.model.stat.subscribedSumm / $scope.model.groupInfo.membersCount) * 100 : 0).toFixed(2);
+                                $scope.model.stat.reachSubscribers = stat.reachSubscribers;
+                                $scope.model.stat.reach = stat.reach;
+                                $scope.model.stat.graph = {
                                     graphPeopleStatData: graphPeopleStatData,
                                     subscribersStatData: subscribersStatData,
                                     attendanceStatData: attendanceStatData
@@ -516,468 +497,10 @@ angular
 
                     return deferr.promise();
                 }
-
-                //Получение статистик по стене группы
-                function getWallStat() {
-                    var deferr = $.Deferred();
-                    var iteration = 0;
-                    var wallStat = {
-                        activity: {
-                            likesPeriodCount: 0,
-                            repostsPeriodCount: 0,
-                            commentsPeriodCount: 0
-                        },
-                        counters: {
-                            wallPostsPeriodCount: 0
-                        },
-                        statGraph: []
-                    };
-
-                    getWall();
-
-                    function calcER(post) {
-                        if ($scope.stat.membersCount && post.likes && post.reposts && post.comments) {
-                            var postER = (post.likes.count + post.reposts.count + post.comments.count) / $scope.stat.membersCount * 100;
-                            postER = postER.toFixed(3);
-
-                            return postER;
-                        }
-
-                        return (0).toFixed(3);
-                    }
-
-                    function getWall() {
-                        if (iteration >= 130) {
-                            deferr.resolve();
-                            return;
-                        }
-
-                        vkApiFactory.getWall(authData, {
-                            groupId: vkGid,
-                            offset: iteration * 100,
-                            fields: "views",
-                            count: 100
-                        }).then(function (res) {
-                            var flagStop = false;
-                            if (!res || res.error && res.error && res.error.error_code == 6) {
-                                setTimeout(function () {
-                                    getWall();
-                                }, 400);
-                                return;
-                            }
-
-                            if (res && res.length > 1) {
-                                wallStat.counters.allWallPostsCount = res[0];//Количество постов за период
-                                res.forEach(function (post) {
-                                    if (post.date > parseDate.unixFrom && post.date < parseDate.unixTo) {
-                                        wallStat.counters.wallPostsPeriodCount++;//Количество постов за период
-                                        wallStat.activity.likesPeriodCount += post.likes.count || 0;
-                                        wallStat.activity.repostsPeriodCount += post.reposts.count || 0;
-                                        wallStat.activity.commentsPeriodCount += post.comments.count || 0;
-
-                                        var date = new Date(post.date * 1000);
-                                        var postDate = date.getDate() + "." + (date.getMonth() + 1) + "." + date.getFullYear();
-                                        var postER = calcER(post);
-                                        ER += parseFloat(postER);
-                                        $scope.stat.groupInfo.wallAnalysisCount += 1;
-
-                                        if ($scope.stat.groupInfo.ERMax < postER) {
-                                            $scope.stat.groupInfo.ERMax = postER;
-                                        }
-
-
-                                        if (!wallStat.statGraph.length || (wallStat.statGraph[wallStat.statGraph.length - 1] && wallStat.statGraph[wallStat.statGraph.length - 1].date != postDate)) {
-                                            wallStat.statGraph.push({
-                                                likes: post.likes.count || 0,
-                                                reposts: post.reposts.count || 0,
-                                                comments: post.comments.count || 0,
-                                                summActions: (post.likes.count || 0) + (post.reposts.count || 0) + (post.comments.count || 0),
-                                                postER: postER,
-                                                date: postDate,
-                                                datetime: new Date(date.getFullYear(), date.getMonth(), date.getDate())
-                                            });
-                                        } else {
-                                            wallStat.statGraph[wallStat.statGraph.length - 1].likes += post.likes.count || 0;
-                                            wallStat.statGraph[wallStat.statGraph.length - 1].reposts += post.reposts.count || 0;
-                                            wallStat.statGraph[wallStat.statGraph.length - 1].comments += post.comments.count || 0;
-                                            wallStat.statGraph[wallStat.statGraph.length - 1].summActions += (post.likes.count || 0) + (post.reposts.count || 0) + (post.comments.count || 0);
-                                            var t = wallStat.statGraph[wallStat.statGraph.length - 1].postER;
-                                            wallStat.statGraph[wallStat.statGraph.length - 1].postER = (parseFloat(t) + parseFloat(postER)).toFixed(3);
-
-                                        }
-
-
-                                    } else if (post.date <= parseDate.unixFrom && !post.is_pinned) {
-                                        flagStop = true;
-                                    }
-                                });
-
-                                $scope.nextProgressStep(($scope.percentItem / wallStat.counters.allWallPostsCount) * (iteration * 100));
-                            } else {
-                                wallStat.counters.allWallPostsCount = 0;
-                                flagStop = true;
-                            }
-
-                            if (!flagStop) {
-                                iteration++;
-                                getWall();
-                            } else {
-                                /*console.log(wallStat);*/
-                                wallStat.statGraph.sort((a, b)=> {
-                                    if (new Date(a.datetime) > new Date(b.datetime))
-                                        return 1;
-                                    else return -1;
-                                });
-
-                                $scope.$apply(function () {
-                                    $scope.stat.wall = {
-                                        allPosts: wallStat.counters.allWallPostsCount,
-                                        postsPeriod: wallStat.counters.wallPostsPeriodCount,
-                                        likesPeriod: wallStat.activity.likesPeriodCount,
-                                        repostsPeriod: wallStat.activity.repostsPeriodCount,
-                                        commentsPeriod: wallStat.activity.commentsPeriodCount,
-                                        activityData: wallStat.statGraph
-                                    };
-                                });
-                                deferr.resolve();
-                            }
-                        }).fail(function () {
-                            deferr.reject();
-                        });
-                    }
-
-                    return deferr.promise();
-                }
-
-                function getAlbumsStat() {
-                    var deferr = $.Deferred();
-                    var maxIterations = 5,
-                        iteration = 0,
-                        newAlbums = 0;
-
-                    getAlbums();
-
-                    function getAlbums() {
-                        if (iteration >= maxIterations) {
-                            newAlbums = 0;
-                            deferr.resolve();
-                            return;
-                        }
-                        iteration++;
-                        vkApiFactory.getAlbums(authData, {
-                            groupId: "-" + vkGid
-                        }).then(function (res) {
-                            if (!res || res.error && res.error.error_code == 6) {
-                                setTimeout(function () {
-                                    getAlbums();
-                                }, 400);
-                                return;
-                            } else {
-                                if (res.error && res.error.error_code == 15) {
-                                    deferr.resolve();
-                                }
-                            }
-                            if (res && res.length > 0) {
-                                res.forEach(function (item) {
-                                    if (item.created > parseDate.unixFrom && item.created < parseDate.unixTo) {
-                                        newAlbums++;
-                                    }
-                                });
-                                $scope.$apply(function () {
-                                    $scope.stat.albums = {
-                                        albumsPeriod: newAlbums
-                                    };
-                                });
-                                deferr.resolve();
-                            }
-                        }).fail(function () {
-                            deferr.reject();
-                        });
-                    }
-
-                    return deferr.promise();
-                }
-
-                function getPhotoStat() {
-                    var deferr = $.Deferred();
-                    var maxIterations = 30,
-                        iteration = 0,
-                        photosStat = {
-                            allCount: 0,
-                            photoPeriodCount: 0,
-                            repostsPeriodCount: 0,
-                            likesPeriodCount: 0
-                        },
-                        flagStop = false;
-
-                    getPhotos();
-
-                    function getPhotos() {
-                        if (iteration >= maxIterations) {
-                            //newAlbums = 0;
-                            deferr.resolve();
-                            return;
-                        }
-                        vkApiFactory.getAllPhoto(authData, {
-                            groupId: "-" + vkGid,
-                            count: 200,
-                            offset: iteration * 200,
-                            extended: 1
-                        }).then(function (res) {
-                            /*console.log(res);*/
-                            if (!res || res.error && res.error && res.error.error_code == 6) {
-                                setTimeout(function () {
-                                    getPhotos();
-                                }, 400);
-                                return;
-                            }
-                            if (res && res.length > 0) {
-                                photosStat.allCount = res[0];//Количество постов за период
-                                if (res.length <= photosStat.allCount || photosStat.allCount == 0) {
-                                    flagStop = true;
-                                }
-
-                                res.forEach(function (photo) {
-                                    if (photo.created > parseDate.unixFrom && photo.created < parseDate.unixTo) {
-                                        photosStat.photoPeriodCount++;//Количество фото за период
-                                        photosStat.likesPeriodCount += photo.likes.count || 0;//Количество фото за период
-                                        photosStat.repostsPeriodCount += photo.reposts.count || 0;
-                                    } else if (photo.date <= parseDate.unixFrom) {
-                                        flagStop = true;
-                                    }
-                                });
-                            } else {
-                                flagStop = true;
-                            }
-
-                            if (!flagStop) {
-                                iteration++;
-                                getPhotos();
-                            } else {
-                                $scope.$apply(function () {
-                                    $scope.stat.photos.allCount = photosStat.allCount;
-                                    $scope.stat.photos.likesPeriodCount = photosStat.likesPeriodCount;
-                                    $scope.stat.photos.repostsPeriodCount = photosStat.repostsPeriodCount;
-                                    $scope.stat.photos.photoPeriodCount = photosStat.photoPeriodCount;
-                                });
-                                deferr.resolve();
-                            }
-                        }).fail(function () {
-                            deferr.reject();
-                        });
-
-                    }
-
-                    return deferr.promise();
-                }
-
-                function getPhotoCommentsStat() {
-                    var deferr = $.Deferred();
-                    var maxIterations = 30,
-                        iteration = 0,
-                        photosStat = {
-                            commentsPeriodCount: 0
-                        },
-                        flagStop = false;
-
-                    getPhotosComments();
-
-                    function getPhotosComments() {
-                        if (iteration >= maxIterations) {
-                            //newAlbums = 0;
-                            deferr.resolve();
-                            return;
-                        }
-                        vkApiFactory.getAllCommentsPhoto(authData, {
-                            groupId: "-" + vkGid,
-                            count: 100,
-                            offset: iteration * 100
-                        }).then(function (res) {
-                            if (res && res.error && res.error && res.error.error_code == 6) {
-                                setTimeout(function () {
-                                    getPhotosComments();
-                                }, 400);
-                                return;
-                            }
-
-                            res = res.items;
-                            if (res && res.length > 0) {
-                                res.forEach(function (comment) {
-                                    if (comment.date > parseDate.unixFrom && comment.date < parseDate.unixTo) {
-                                        photosStat.commentsPeriodCount++;//Количество комментариев за период
-                                    } else if (comment.date <= parseDate.unixFrom) {
-                                        flagStop = true;
-                                    }
-                                });
-                            } else {
-                                flagStop = true;
-                            }
-
-                            if (!flagStop) {
-                                iteration++;
-                                getPhotosComments();
-                            } else {
-                                $scope.$apply(function () {
-                                    $scope.stat.photos.commentsPeriodCount = photosStat.commentsPeriodCount
-                                });
-                                deferr.resolve();
-                            }
-                        }).fail(function () {
-                            deferr.reject();
-                        });
-
-                    }
-
-                    return deferr.promise();
-                }
-
-                function getVideoStat() {
-                    var deferr = $.Deferred();
-                    var maxIterations = 30,
-                        iteration = 0,
-                        videoStat = {
-                            allCount: 0,
-                            videoPeriodCount: 0,
-                            repostsPeriodCount: 0,
-                            likesPeriodCount: 0
-                        },
-                        flagStop = false;
-
-                    getVideo();
-
-                    function getVideo() {
-                        if (iteration >= maxIterations) {
-                            //newAlbums = 0;
-                            deferr.resolve();
-                            return;
-                        }
-                        vkApiFactory.getVideos(authData, {
-                            groupId: "-" + vkGid,
-                            count: 200,
-                            offset: iteration * 200,
-                            extended: 1
-                        }).then(function (res) {
-                            if (res && res.error && res.error && res.error.error_code == 6) {
-                                setTimeout(function () {
-                                    getVideo();
-                                }, 400);
-                                return;
-                            }
-
-                            var items = res.items;
-                            if (items && items.length > 0) {
-                                videoStat.allCount = res.count;//Количество постов за период
-                                if (items.length <= videoStat.allCount || videoStat.allCount == 0) {
-                                    flagStop = true;
-                                }
-
-                                items.forEach(function (video) {
-                                    if (video.date > parseDate.unixFrom && video.date < parseDate.unixTo) {
-                                        videoStat.videoPeriodCount++;//Количество фото за период
-                                        videoStat.likesPeriodCount += video.likes.count || 0;//Количество фото за период
-                                        videoStat.repostsPeriodCount += video.reposts && video.reposts.count ? video.reposts.count : 0;
-                                    } else if (video.date <= parseDate.unixFrom) {
-                                        flagStop = true;
-                                    }
-                                });
-                            } else {
-                                flagStop = true;
-                            }
-
-                            if (!flagStop) {
-                                iteration++;
-                                getVideo();
-                            } else {
-                                $scope.$apply(function () {
-                                    $scope.stat.videos.allCount = videoStat.allCount;
-                                    $scope.stat.videos.likesPeriodCount = videoStat.likesPeriodCount;
-                                    $scope.stat.videos.repostsPeriodCount = videoStat.repostsPeriodCount;
-                                    $scope.stat.videos.videoPeriodCount = videoStat.videoPeriodCount;
-                                });
-                                deferr.resolve();
-                            }
-                        }).fail(function () {
-                            deferr.reject();
-                        });
-
-                    }
-
-                    return deferr.promise();
-                }
-
-                /*function getGroupMembersStat() {
-                 var deferr = $.Deferred();
-                 var iteration = 0;
-                 var model = {
-                 deactivatedCount: 0,
-                 lastSeenMonthCount: 0
-                 };
-
-                 getGroupMembersFunc();
-
-                 return deferr.promise();
-
-                 function getGroupMembersFunc(currIteration) {
-                 currIteration = currIteration ? currIteration : 0;
-                 vkApiFactory.execute.getGroupMembers(authData, {
-                 groupId: vkGid,
-                 offset: currIteration * 25000,
-                 fields: "last_seen"
-                 }).then((res)=> {
-
-                 if (res && !res.error) {
-                 res.forEach((arr)=> {
-                 var deactivatedList = arr.users.filter((user)=> {
-                 return user.deactivated != null;
-                 });
-                 var lastSeenList = arr.users.filter((user)=> {
-                 return user.last_seen && user.last_seen.time && (user.last_seen.time > parseDate.unixFrom);
-                 });
-                 model.deactivatedCount += deactivatedList.length;
-                 model.lastSeenMonthCount += lastSeenList.length;
-                 });
-
-                 if ((currIteration + 1) * 25000 < $scope.stat.membersCount) {
-
-                 $scope.nextProgressStep($scope.percentItem / ($scope.stat.membersCount / 25000));
-                 $scope.nextProgressStepSubscribers(100 / ($scope.stat.membersCount / 25000));
-                 getGroupMembersFunc(currIteration + 1);
-                 } else {
-                 $scope.$apply(()=> {
-                 $scope.stat.deactivatedCount = model.deactivatedCount;
-                 $scope.stat.lastSeenMonthCount = model.lastSeenMonthCount;
-
-                 deferr.resolve();
-                 });
-                 }
-                 }
-
-                 /!*console.log(model);
-                 console.log(parseDate.unixFrom);*!/
-
-                 }).fail(()=> {
-                 deferr.reject();
-                 notify.error("Не удалось выгрузить статистику по подписчикам группы");
-                 });
-                 }
-                 }*/
             }
 
             function showGroupsMenu() {
                 $scope.isHiddenMenu = !$scope.isHiddenMenu;
-            }
-
-            function setGroupLink(group) {
-                $scope.model.groupAddress = "https://vk.com/" + group.screen_name;
-                $scope.isHiddenMenu = true;
-            }
-
-            function checkMainStatIsSaved() {
-                var stat = appState.getMainStat();
-
-                if (stat) {
-                    $scope.stat = stat;
-                }
             }
 
             function nextProgressStep(step) {
@@ -989,69 +512,45 @@ angular
                 progressPercent += parseFloat(step);
                 progressPercent = progressPercent.toFixed(2);
 
-                $timeout(()=> {
-                    if (progressPercent < 100) {
+                if (progressPercent < 100) {
+                    $timeout(()=> {
                         $scope.progressPercent = progressPercent;
-                    }
-                });
+                    });
+                }
             }
 
             function init() {
+                $rootScope.setTitle("Подробная статистика сообщества");
                 //createCharts
                 graphModel.wallActivityGraph = new defaultGraph();
+                graphModel.wallActivityGraphReport = new defaultGraph();
                 graphModel.wallLikesGraph = new defaultGraph();
                 graphModel.wallRepostsGraph = new defaultGraph();
                 graphModel.wallCommentsGraph = new defaultGraph();
                 graphModel.subscribersStatGraph = new defaultGraph();
+                graphModel.subscribersStatGraphReport = new defaultGraph();
                 graphModel.peopleStatGraph = new defaultGraph();
                 graphModel.attendanceStatGraph = new defaultGraph();
                 graphModel.wallERGraph = new defaultGraph();
-
-                checkMainStatIsSaved();
-                getMemoryData();
-
-                $('.icheck').iCheck({
-                    checkboxClass: 'icheckbox_flat-blue',
-                    radioClass: 'iradio_flat-blue'
+                graphModel.averageDayGraphReport = new defaultGraph({
+                    type: "bar"
                 });
-
-                $(function () {
-                    $('[data-toggle="tooltip"]').tooltip();
+                graphModel.postDayGraphReport = new defaultGraph({
+                    type: "bar"
                 });
-
-                $(".nano").nanoScroller();
+                graphModel.postDayGraph = new defaultGraph({
+                    type: "bar"
+                });
 
                 if (needGetStatFromParams) {
                     $scope.model.groupAddress = needGetStatFromParams;
-                    getStat();
+                    getStatWithCheck();
                 }
             }
 
             function showTab(tab) {
+                $scope.activeTab = tab;
                 bus.publish(events.STAT.MAIN.RESIZE_GRAPH);
-                switch (tab) {
-                    case 'activity':
-                        $scope.activeTab = 'activity';
-                        break;
-                    case 'dynamic':
-                        $scope.activeTab = 'dynamic';
-                        break;
-                    case 'er':
-                        $scope.activeTab = 'er';
-                        break;
-                    case 'content':
-                        $scope.activeTab = 'content';
-                        break;
-                }
-            }
-
-            function getStatExample(urlOrScreenName) {
-                if ($scope.isLoading) {
-                    notify.info("Дождитесь завершения получения статистики");
-                    return;
-                }
-                $scope.model.groupAddress = urlOrScreenName;
-                getStat(true);
             }
 
             function renderAllGraphs() {
@@ -1062,12 +561,12 @@ angular
 
                 graphModel.wallActivityGraph.showGraph({
                     element: "wallActivityGraph",
-                    labels: $scope.stat.wall.activityData.map((item)=> {
+                    labels: $scope.model.wall.dayGroups.map((item)=> {
                         return item.date;
                     }),
                     datasets: [{
                         label: "Реакции на контент",
-                        data: $scope.stat.wall.activityData.map((item)=> {
+                        data: $scope.model.wall.dayGroups.map((item)=> {
                             return item.summActions;
                         }),
                         fill: false,
@@ -1077,8 +576,39 @@ angular
                         pointHoverRadius: 3
                     }, {
                         label: "Средняя реакция в день за период",
-                        data: $scope.stat.wall.activityData.map((item)=> {
-                            return $scope.stat.wall.srDayActivity;
+                        data: $scope.model.wall.dayGroups.map((item)=> {
+                            return $scope.model.wall.srDayActivity;
+                        }),
+                        fill: false,
+                        borderColor: '#208e68',
+                        backgroundColor: '#208e68',
+                        pointBorderWidth: 0,
+                        pointHoverRadius: 3
+                    }]
+                });
+                if (graphModel.wallActivityGraphReport) {
+                    graphModel.wallActivityGraphReport.destroy();
+                }
+
+                graphModel.wallActivityGraphReport.showGraph({
+                    element: "wallActivityGraphReport",
+                    labels: $scope.model.wall.dayGroups.map((item)=> {
+                        return item.date;
+                    }),
+                    datasets: [{
+                        label: "Реакции на контент",
+                        data: $scope.model.wall.dayGroups.map((item)=> {
+                            return item.summActions;
+                        }),
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }, {
+                        label: "Средняя реакция в день за период",
+                        data: $scope.model.wall.dayGroups.map((item)=> {
+                            return $scope.model.wall.srDayActivity;
                         }),
                         fill: false,
                         borderColor: '#208e68',
@@ -1094,12 +624,12 @@ angular
 
                 graphModel.wallLikesGraph.showGraph({
                     element: "wallLikesGraph",
-                    labels: $scope.stat.wall.activityData.map((item)=> {
+                    labels: $scope.model.wall.dayGroups.map((item)=> {
                         return item.date;
                     }),
                     datasets: [{
                         label: "Лайки на стене",
-                        data: $scope.stat.wall.activityData.map((item)=> {
+                        data: $scope.model.wall.dayGroups.map((item)=> {
                             return item.likes;
                         }),
                         fill: false,
@@ -1117,12 +647,12 @@ angular
 
                 graphModel.wallRepostsGraph.showGraph({
                     element: "wallRepostsGraph",
-                    labels: $scope.stat.wall.activityData.map((item)=> {
+                    labels: $scope.model.wall.dayGroups.map((item)=> {
                         return item.date;
                     }),
                     datasets: [{
                         label: "Репосты со стены",
-                        data: $scope.stat.wall.activityData.map((item)=> {
+                        data: $scope.model.wall.dayGroups.map((item)=> {
                             return item.reposts;
                         }),
                         fill: false,
@@ -1139,12 +669,12 @@ angular
 
                 graphModel.wallCommentsGraph.showGraph({
                     element: "wallCommentsGraph",
-                    labels: $scope.stat.wall.activityData.map((item)=> {
+                    labels: $scope.model.wall.dayGroups.map((item)=> {
                         return item.date;
                     }),
                     datasets: [{
                         label: "Комментарии на стене",
-                        data: $scope.stat.wall.activityData.map((item)=> {
+                        data: $scope.model.wall.dayGroups.map((item)=> {
                             return item.comments;
                         }),
                         fill: false,
@@ -1161,10 +691,28 @@ angular
 
                 graphModel.subscribersStatGraph.showGraph({
                     element: "subscribersStatGraph",
-                    labels: $scope.stat.graph.subscribersStatData.labels,
+                    labels: $scope.model.stat.graph.subscribersStatData.labels,
                     datasets: [{
                         label: "Количество пользователей",
-                        data: $scope.stat.graph.subscribersStatData.membersCount,
+                        data: $scope.model.stat.graph.subscribersStatData.membersCount,
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }]
+                });
+
+                if (graphModel.subscribersStatGraphReport) {
+                    graphModel.subscribersStatGraphReport.destroy();
+                }
+
+                graphModel.subscribersStatGraphReport.showGraph({
+                    element: "subscribersStatGraphReport",
+                    labels: $scope.model.stat.graph.subscribersStatData.labels,
+                    datasets: [{
+                        label: "Количество пользователей",
+                        data: $scope.model.stat.graph.subscribersStatData.membersCount,
                         fill: false,
                         borderColor: '#597da3',
                         backgroundColor: '#597da3',
@@ -1179,10 +727,10 @@ angular
 
                 graphModel.peopleStatGraph.showGraph({
                     element: "graphPeopleStat",
-                    labels: $scope.stat.graph.graphPeopleStatData.labels,
+                    labels: $scope.model.stat.graph.graphPeopleStatData.labels,
                     datasets: [{
                         label: "Новых участников",
-                        data: $scope.stat.graph.graphPeopleStatData.subscribedDataSet,
+                        data: $scope.model.stat.graph.graphPeopleStatData.subscribedDataSet,
                         fill: false,
                         borderColor: '#597da3',
                         backgroundColor: '#597da3',
@@ -1190,7 +738,7 @@ angular
                         pointHoverRadius: 3
                     }, {
                         label: "Вышедших участников",
-                        data: $scope.stat.graph.graphPeopleStatData.unsubscribedDataSet,
+                        data: $scope.model.stat.graph.graphPeopleStatData.unsubscribedDataSet,
                         fill: false,
                         borderColor: '#b05c91',
                         backgroundColor: '#b05c91'
@@ -1203,10 +751,10 @@ angular
 
                 graphModel.attendanceStatGraph.showGraph({
                     element: "attendanceStatGraph",
-                    labels: $scope.stat.graph.attendanceStatData.labels,
+                    labels: $scope.model.stat.graph.attendanceStatData.labels,
                     datasets: [{
                         label: "Просмотров",
-                        data: $scope.stat.graph.attendanceStatData.viewsData,
+                        data: $scope.model.stat.graph.attendanceStatData.viewsData,
                         fill: false,
                         borderColor: '#597da3',
                         backgroundColor: '#597da3',
@@ -1214,7 +762,7 @@ angular
                         pointHoverRadius: 3
                     }, {
                         label: "Посещений",
-                        data: $scope.stat.graph.attendanceStatData.visitorsData,
+                        data: $scope.model.stat.graph.attendanceStatData.visitorsData,
                         fill: false,
                         borderColor: '#b05c91',
                         backgroundColor: '#b05c91'
@@ -1227,13 +775,80 @@ angular
 
                 graphModel.wallERGraph.showGraph({
                     element: "wallERGraph",
-                    labels: $scope.stat.wall.activityData.map((item)=> {
+                    labels: $scope.model.wall.dayGroups.map((item)=> {
                         return item.date;
                     }),
                     datasets: [{
                         label: "Суммарная вовлеченность за день",
-                        data: $scope.stat.wall.activityData.map((item)=> {
+                        data: $scope.model.wall.dayGroups.map((item)=> {
                             return item.postER;
+                        }),
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }]
+                });
+                //График среднего охвата постов
+                if (graphModel.averageDayGraphReport) {
+                    graphModel.averageDayGraphReport.destroy();
+                }
+
+                graphModel.averageDayGraphReport.showGraph({
+                    element: "averageDayGraphReport",
+                    labels: $scope.model.wall.dayGroups.map((item)=> {
+                        return item.date;
+                    }),
+                    datasets: [{
+                        label: "Средний охват постов в день",
+                        data: $scope.model.wall.dayGroups.map((item)=> {
+                            return item.viewsAverage;
+                        }),
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }]
+                });
+
+                //График добавления постов (отчет)
+                if (graphModel.postDayGraphReport) {
+                    graphModel.postDayGraphReport.destroy();
+                }
+
+                graphModel.postDayGraphReport.showGraph({
+                    element: "postDayGraphReport",
+                    labels: $scope.model.wall.dayGroups.map((item)=> {
+                        return item.date;
+                    }),
+                    datasets: [{
+                        label: "Постов добавлено",
+                        data: $scope.model.wall.dayGroups.map((item)=> {
+                            return item.postsCount;
+                        }),
+                        fill: false,
+                        borderColor: '#597da3',
+                        backgroundColor: '#597da3',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 3
+                    }]
+                });
+                //График добавления постов
+                if (graphModel.postDayGraph) {
+                    graphModel.postDayGraph.destroy();
+                }
+
+                graphModel.postDayGraph.showGraph({
+                    element: "postDayGraph",
+                    labels: $scope.model.wall.dayGroups.map((item)=> {
+                        return item.date;
+                    }),
+                    datasets: [{
+                        label: "Постов добавлено",
+                        data: $scope.model.wall.dayGroups.map((item)=> {
+                            return item.postsCount;
                         }),
                         fill: false,
                         borderColor: '#597da3',
@@ -1252,10 +867,302 @@ angular
                 $scope.model.datePicker.popupTo.opened = !$scope.model.datePicker.popupTo.opened;
             }
 
-            function goToPublishStat() {
-                $state.go('index.publishAnalysis', {
-                    getStatFromGroup: $scope.stat.groupInfo.screen_name
+            function getDate(date) {
+                return moment(date * 1000).format("DD.MM.YYYY HH:mm")
+            }
+
+            function calculateWallStat(data) {
+                var wall = getNulledWall();
+                wall.allPostsCount = data.count;//Всего записей на стене
+                wall.periodPostsCount = data.list.length;//Количество записей за период
+                var ER = 0;
+                data.list.forEach(function (post) {
+                    wall.list.push(post);
+
+                    wall.likes.count += post.likes.count || 0;
+                    wall.reposts.count += post.reposts.count || 0;
+                    wall.comments.count += post.comments.count || 0;
+                    wall.views.averageByPost += post.views && post.views.count ? post.views.count : 0;
+                    wall.views.max = post.views && post.views.count && post.views.count > wall.views.max ? post.views.count : wall.views.max;
+                    wall.views.min = post.views && post.views.count && post.views.count < wall.views.min ? post.views.count : wall.views.min;
+                    if (!wall.views.min && post.views && post.views.count) {
+                        wall.views.min = post.views.count;
+                    }
+                    if (post.marked_as_ads) {
+                        wall.ads.count++;
+                        wall.views.maxAds = post.views && post.views.count && post.views.count > wall.views.maxAds ? post.views.count : wall.views.maxAds;
+                    }
+
+                    var date = new Date(post.date * 1000);
+                    var postDate = date.getDate() + "." + (date.getMonth() + 1) + "." + date.getFullYear();
+                    var postER = calcERByMembers(post, undefined);
+                    ER += parseFloat(postER);
+
+                    if (wall.ERMax < postER) {
+                        wall.ERMax = postER;
+                    }
+
+                    var currDay = wall.dayGroups.filter((day)=> {
+                        return day.date == postDate;
+                    })[0];
+
+                    if (!currDay) {
+                        wall.dayGroups.push({
+                            likes: post.likes.count || 0,//Лайков
+                            reposts: post.reposts.count || 0,//Репостов
+                            comments: post.comments.count || 0,//комментариев
+                            summActions: (post.likes.count || 0) + (post.reposts.count || 0) + (post.comments.count || 0),//Суммарно реакций
+                            postER: postER,//вовлеченность постов суммарная
+                            viewsAverage: post.views && post.views.count ? post.views.count : 0,//Просмотров в среднем за день
+                            postsCount: 1,//Количество постов в текущий день
+                            date: postDate,
+                            datetime: new Date(date.getFullYear(), date.getMonth(), date.getDate())
+                        });
+                    } else {
+                        currDay.likes += post.likes.count || 0;//Лайков
+                        currDay.reposts += post.reposts.count || 0;//Репостов
+                        currDay.comments += post.comments.count || 0;//комментариев
+                        currDay.summActions += (post.likes.count || 0) + (post.reposts.count || 0) + (post.comments.count || 0);//Суммарно реакций
+                        var t = currDay.postER;
+                        currDay.postER = (parseFloat(t) + parseFloat(postER)).toFixed(3);//вовлеченность постов суммарная
+                        currDay.viewsAverage += post.views && post.views.count ? post.views.count : 0;//Просмотров в среднем за день
+                        currDay.postsCount++;//Количество постов в текущий день
+                    }
                 });
+
+                wall.averagePostsByDay = wall.dayGroups.length ? (wall.periodPostsCount / wall.dayGroups.length).toFixed(1) : 0;//В среднем постов день
+                wall.ERAverage = wall.periodPostsCount ? (ER / wall.periodPostsCount).toFixed(3) : 0;//Средняя вовлеченность на пост по количеству постов
+                wall.actionsCount = wall.likes.count + wall.reposts.count + wall.comments.count;//Суммарно реакций на стене
+                wall.views.averageByPost = wall.periodPostsCount ? (wall.views.averageByPost / wall.periodPostsCount).toFixed(1) : 0;//В среднем просмотров на запись
+                wall.actionsAverageByDay = wall.dayGroups.length ? (wall.actionsCount / wall.dayGroups.length).toFixed(1) : 0;//Среднее число реакций в день
+                wall.actionsAverageByPost = wall.periodPostsCount ? (wall.actionsCount / wall.periodPostsCount).toFixed(1) : 0;//Среднее число реакций на пост
+
+
+                wall.dayGroups.forEach((item)=> {
+                    item.viewsAverage = item.postsCount ? (item.viewsAverage / item.postsCount).toFixed(1) : 0;
+                });
+
+                wall.dayGroups.sort((a, b)=> {
+                    if (new Date(a.datetime) > new Date(b.datetime))
+                        return 1;
+                    else return -1;
+                });
+
+                return wall;
+            }
+
+            function calculatePhotoStat(data) {
+                var photo = getNulledPhoto();
+                photo.allCount = data.count;//Количество постов за период
+
+                data.list.forEach(function (item) {
+                    photo.photoPeriodCount++;//Количество фото за период
+                    photo.likesPeriodCount += item.likes.count || 0;//Количество фото за период
+                    photo.repostsPeriodCount += item.reposts.count || 0;
+                });
+
+                return photo;
+            }
+
+            function calcERByMembers(post, membersCount) {
+                if (!membersCount)
+                    membersCount = $scope.model.groupInfo.membersCount;
+
+                if (membersCount && post.likes && post.reposts && post.comments) {
+                    var postER = (post.likes.count + post.reposts.count + post.comments.count) / membersCount * 100;
+                    postER = postER.toFixed(3);
+
+                    return postER;
+                }
+
+                return (0).toFixed(3);
+            }
+
+            function calculatePhotoCommentsStat(data) {
+                return {
+                    allCount: data.allCount || 0,
+                    periodCount: data.periodCount || 0,
+                    list: data.list
+                }
+            }
+
+            function calculateVideoStat(data) {
+                var video = getNulledVideo();
+                video.allCount = data.count;
+
+                data.list.forEach(function (item) {
+                    video.videoPeriodCount++;//Количество фото за период
+                    video.likesPeriodCount += item.likes.count || 0;//Количество фото за период
+                    video.repostsPeriodCount += item.reposts.count || 0;
+                });
+
+                return video;
+            }
+
+            function getNulledWall() {
+                return {
+                    allPostsCount: 0,//Всего записей на стене
+                    averagePostsByDay: 0,//В среднем постов в день
+                    periodPostsCount: 0,//Записей за период
+                    list: [],//список записей
+                    showedList: [],//список отображаемых записей в анализе публикаций
+                    showedListPage: 1,//Номер отображаемой страницы
+                    likes: {
+                        count: 0,//Лайков за период
+                    },
+                    reposts: {
+                        count: 0,//Репостов за период
+                    },
+                    comments: {
+                        count: 0,//Комментариев за период
+                    },
+                    actionsCount: 0,//Суммарно реакций
+                    actionsAverageByDay: 0,//Средняя реакция в день
+                    actionsAverageByPost: 0,//Средняя реакция на пост
+                    views: {
+                        count: 0,//Просмотров за период
+                        max: 0,//Максимальное число просмотров у записи
+                        min: undefined,//Минимальное число просмотров у записи
+                        maxAds: 0,//Максимальное число просмотров рекламной записи,
+                        averageByPost: 0//Среднее число просмотров поста
+                    },
+                    ads: {
+                        count: 0//Количество рекламных записей
+                    },
+                    ERMax: 0,//Максимальная вовлеченность на пост
+                    ERAverage: 0,//Средняя вовлеченность на пост
+                    dayGroups: [],//Данные по дням
+                }
+            }
+
+            function getNulledPhoto() {
+                return {
+                    allCount: 0,
+                    photoPeriodCount: 0,
+                    likesPeriodCount: 0,
+                    repostsPeriodCount: 0
+                }
+            }
+
+            function getNulledVideo() {
+                return {
+                    allCount: 0,
+                    videoPeriodCount: 0,
+                    likesPeriodCount: 0,
+                    repostsPeriodCount: 0
+                }
+            }
+
+            function sortPostsList(filter) {
+                if (!filter) {
+                    filter = $scope.model.postsFilter;
+                }
+                if (filter == 'likes') {//Фильтр по лайкам
+                    $scope.model.wall.list = _.sortBy($scope.model.wall.list, function (o) {
+                        if (o.likes && o.likes.count)
+                            return o.likes.count;
+                        else
+                            return 0;
+                    }).reverse();
+                }
+                if (filter == 'reposts') {//Фильтр по лайкам
+                    $scope.model.wall.list = _.sortBy($scope.model.wall.list, function (o) {
+                        if (o.likes && o.reposts.count)
+                            return o.reposts.count;
+                        else
+                            return 0;
+                    }).reverse();
+                }
+                if (filter == 'comments') {//Фильтр по лайкам
+                    $scope.model.wall.list = _.sortBy($scope.model.wall.list, function (o) {
+                        if (o.likes && o.comments.count)
+                            return o.comments.count;
+                        else
+                            return 0;
+                    }).reverse();
+                }
+
+                if (filter == 'ER') {//Фильтр по ER
+                    $scope.model.wall.list = _.sortBy($scope.model.wall.list, function (o) {
+                        if (o.likes && o.ER)
+                            return o.ER;
+                        else
+                            return 0;
+                    }).reverse();
+                }
+
+                $scope.model.wall.showedList = [];
+                $scope.model.wall.showedListPage = 1;
+
+                $timeout(()=> {
+                    for (var i = 0; i < 20; i++) {
+                        if ($scope.model.wall.list[i])
+                            $scope.model.wall.showedList.push($scope.model.wall.list[i]);
+                        else i = 20;
+                    }
+                });
+            }
+
+            function nextPosts() {
+                if ($scope.model.wall.showedList.length < $scope.model.wall.list.length) {
+                    $scope.model.wall.showedListPage++;
+                    $timeout(()=> {
+                        for (var i = 20 * ($scope.model.wall.showedListPage - 1); i < 20 * $scope.model.wall.showedListPage; i++) {
+                            if ($scope.model.wall.list[i])
+                                $scope.model.wall.showedList.push($scope.model.wall.list[i]);
+                            else i = 20 * $scope.model.wall.showedListPage;
+                        }
+                    });
+                }
+            }
+
+            function getAuditory() {
+
+                var deferr = $.Deferred();
+                var userList = [];
+
+                recursive(0).then(()=> {
+                    console.log("Все ок!");
+                    console.log(userList);
+                });
+
+                function recursive(iteration) {
+                    vkApiFactory.execute.getGroupMembers(authData, {
+                        groupId: $scope.model.groupInfo.gid,
+                        offset: iteration * 25000,
+                        fields: 'first_name'
+                    }).then(function (res) {
+                        if (res && res.error && res.error && res.error.error_code == 6) {
+                            setTimeout(function () {
+                                recursive(iteration);
+                            }, 800);
+                            return;
+                        }
+
+                        console.log("Считано: " + (iteration + 1) * 25000 + " пользователей");
+
+                        if (res && !res.error) {
+                            res.forEach((item)=> {
+                                if (item.items && item.items.length)
+                                    Array.prototype.push.apply(userList, item.items);
+                            });
+
+                            if ((iteration * 25000) < $scope.model.groupInfo.membersCount) {
+                                recursive(iteration + 1);
+                            } else {
+                                deferr.resolve();
+                            }
+                        }
+
+                        if (!res) {
+                            deferr.reject();
+                        }
+                    }).fail(function (err) {
+                        deferr.reject();
+                    });
+
+                    return deferr.promise();
+                }
             }
 
             init();
@@ -1263,5 +1170,4 @@ angular
 
         }
 
-    ])
-;
+    ]);

@@ -3,16 +3,55 @@ import topics from './../../../bl/topics.js';
 
 angular
     .module('rad.account')
-    .controller('accountController', ['$rootScope', '$scope', 'bus', 'appState', 'vkApiFactory', '$timeout', 'radCommonFunc', 'notify', '$state',
-        function ($rootScope, $scope, bus, appState, vkApiFactory, $timeout, radCommonFunc, notify, $state) {
+    .controller('accountController', ['$rootScope', '$scope', 'bus', 'appState', '$timeout', 'radCommonFunc', 'notify', 'vkApiFactory',
+        function ($rootScope, $scope, bus, appState, $timeout, radCommonFunc, notify, vkApiFactory) {
 
             //vars
             $scope.model = {
-                title: 'Мои данные'
+                title: 'Мои данные',
+                vkUserInfo: "",
+                freeList: [],
+                freeWithSubscribe: [],
+                addGroupInfo: {}
             };
 
-            function init(){
+            $scope.logout = logout;
 
+            var authData = {
+                token: appState.getUserVkToken(),
+                login: appState.getUserVkLogin()
+            };
+
+
+            bus.subscribe(events.ACCOUNT.FREE_GROUP_ADDED, ()=> {
+                getFreeGroupsList();
+            });
+
+            function init() {
+                $rootScope.setTitle("Профиль и оплата");
+                $scope.model.vkUserInfo = appState.getUserVkInfo();
+                if (!$scope.model.vkUserInfo) {
+                    getMeInfo();
+                }
+
+            }
+
+            function getMeInfo() {
+                bus.request(topics.VK.USERS_GET, authData, {
+                    user_ids: undefined,
+                    fields: "photo_200,photo_100"
+                }).then((res)=> {
+                    $scope.model.vkUserInfo = res;
+                    $scope.$apply($scope.model.vkUserInfo);
+                }).fail(()=> {
+                    notify.error("Не удалось получить данные по профилю ВКонтакте")
+                });
+            }
+
+            function logout() {
+                bus.request(topics.ACCOUNT.LOGOUT).always(()=> {
+                    location.href = "/";
+                });
             }
 
             init();

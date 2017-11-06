@@ -12,8 +12,10 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
         restrict: 'EA',
         templateUrl: './templates/js/ui/stat/directives/radChooseGroupMain/radChooseGroupMain.html',
         scope: {
-            onAction: "=",
-            onIndex: "=?"
+            onAction: "=?",
+            onIndex: "=?",
+            onAddAction: "=?",
+            view: "=?"
         },
         link: function ($scope) {
             $scope.showList = showList;
@@ -21,11 +23,13 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
             $scope.addBookmark = addBookmark;
             $scope.removeBookmark = removeBookmark;
 
-            $scope.currentState = 'isMy';
+            $scope.currentState = 'admin';
             $scope.groupsLoading;
             $scope.bookmarkGroupUrl = '';
             $scope.bookmarksList = [];
             $scope.bookmarkError = "";
+            $scope.addActionTooltipText = '';
+            $scope.groupIsFree = groupIsFree;
 
             $scope.$watch('bookmarkGroupUrl', (newVal, oldVal)=> {
                 if (newVal != oldVal)
@@ -37,77 +41,82 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
                 login: appState.getUserVkLogin()
             };
 
-            function getAdminGroups(iteration) {
-                if (!iteration)
-                    iteration = 0;
+            function getAdminGroups() {
                 var deferr = $.Deferred();
-
-                if (iteration > 3) {
-                    deferr.reject();
-                    return deferr.promise();
-                }
-
-                vkApiFactory.getUserGroups(authData, {
-                    extended: 1,
-                    filter: "moder",
-                    count: 100,
-                    fields: "members_count"
-                }).then(function (res) {
-                    if (res && res[0] > 0) {
-                        res = res.slice(1);
-                        deferr.resolve();
-                        $timeout(()=> {
-                            $scope.adminGroups = res;
-                        });
-                    } else {
-                        setTimeout(()=> {
-                            getAdminGroups(iteration + 1);
-                        }, 300);
-                    }
-                }).fail(()=> {
-                    setTimeout(()=> {
-                        getAdminGroups(iteration + 1);
-                    }, 300);
-                });
-
+                getRecursive(0);
                 return deferr.promise();
+
+                function getRecursive(iteration){
+                    if (!iteration)
+                        iteration = 0;
+
+                    if (iteration > 9) {
+                        deferr.reject();
+                        return;
+                    }
+
+                    vkApiFactory.getUserGroups(authData, {
+                        extended: 1,
+                        filter: "moder",
+                        count: 100,
+                        fields: "members_count"
+                    }).then(function (res) {
+                        if (res && res[0] > 0) {
+                            res = res.slice(1);
+                            deferr.resolve();
+                            $timeout(()=> {
+                                $scope.adminGroups = res;
+                            });
+                        } else {
+                            $timeout(()=> {
+                                getRecursive(iteration + 1);
+                            }, 300);
+                        }
+                    }).fail(()=> {
+                        $timeout(()=> {
+                            getRecursive(iteration + 1);
+                        }, 300);
+                    });
+                }
             }
 
-            function getMyGroups(iteration) {
-                if (!iteration)
-                    iteration = 0;
-
+            function getMyGroups() {
                 var deferr = $.Deferred();
-
-                if (iteration > 3) {
-                    deferr.reject();
-                    return deferr.promise();
-                }
-
-                vkApiFactory.getUserGroups(authData, {
-                    extended: 1,
-                    filter: "",
-                    count: 100,
-                    fields: "members_count"
-                }).then(function (res) {
-                    if (res && res[0] > 0) {
-                        res = res.slice(1);
-                        deferr.resolve();
-                        $timeout(()=> {
-                            $scope.myGroups = res;
-                        });
-                    } else {
-                        setTimeout(()=> {
-                            getMyGroups(iteration + 1);
-                        }, 300);
-                    }
-                }).fail(()=> {
-                    setTimeout(()=> {
-                        getMyGroups(iteration + 1);
-                    }, 300);
-                });
-
+                getRecursive(0);
                 return deferr.promise();
+
+                function getRecursive(iteration){
+                    if (!iteration)
+                        iteration = 0;
+
+                    if (iteration > 9) {
+                        deferr.reject();
+                        return;
+                    }
+
+                    vkApiFactory.getUserGroups(authData, {
+                        extended: 1,
+                        filter: "",
+                        count: 100,
+                        fields: "members_count"
+                    }).then(function (res) {
+                        if (res && res[0] > 0) {
+                            res = res.slice(1);
+                            deferr.resolve();
+                            $timeout(()=> {
+                                $scope.myGroups = res;
+                            });
+                        } else {
+                            $timeout(()=> {
+                                getRecursive(iteration + 1);
+                            }, 300);
+                        }
+                    }).fail(()=> {
+                        $timeout(()=> {
+                            getRecursive(iteration + 1);
+                        }, 300);
+                    });
+                }
             }
 
             function showList(list) {
@@ -139,7 +148,7 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
                     .then((bookmarksList)=> {
                         var list = "";
                         if (!bookmarksList || !bookmarksList.bookmarks.length) {
-                            $scope.isLoading = false;
+                            $scope.groupsLoading = false;
                             deferr.resolve();
                             return deferr.promise();
                         }
@@ -148,13 +157,13 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
                             list += ",";
                         });
 
-                        getBookMarkRequest(0, list)
+                        getBookMarkRequest(0, list, deferr);
 
                     });
 
-                function getBookMarkRequest(requestIteration, list){
+                function getBookMarkRequest(requestIteration, list, def) {
                     if (requestIteration > 3) {
-                        deferr.reject();
+                        def.reject();
                         return;
                     }
 
@@ -163,18 +172,18 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
                         fields: "members_count,counters,photo"
                     }).then((groups)=> {
                         if (groups && groups.length) {
-                            deferr.resolve();
                             $timeout(()=> {
                                 $scope.bookmarksList = groups;
                             });
+                            def.resolve();
                         } else {
-                            setTimeout(()=> {
-                                getBookMarkRequest(iteration + 1, list);
+                            $timeout(()=> {
+                                getBookMarkRequest(requestIteration + 1, list, def);
                             }, 300);
                         }
                     }).fail(()=> {
-                        setTimeout(()=> {
-                            getBookMarkRequest(iteration + 1, list);
+                        $timeout(()=> {
+                            getBookMarkRequest(requestIteration + 1, list, def);
                         }, 300);
                     });
                 }
@@ -184,11 +193,25 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
 
             function init() {
                 $scope.groupsLoading = true;
+
+                switch ($scope.view) {
+                    case 'posts':
+                        $scope.addActionTooltipText = 'Нажмите, чтобы добавить группу к списку анализируемых';
+                        break;
+                    case 'compare':
+                        $scope.addActionTooltipText = 'Нажмите, чтобы добавить группу к сравнению';
+                        break;
+                    case 'payment':
+                        $scope.addActionTooltipText = 'Нажмите, чтобы добавить группу для бесплатной аналитики';
+                        break;
+                }
+
                 $.when(
                     getAdminGroups(),
                     getMyGroups(),
                     getBookmarkList()
-                ).then(()=> {
+                )
+                    .then(()=> {
                         $timeout(()=> {
                             $scope.groupsLoading = false;
                         });
@@ -201,7 +224,8 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
             }
 
             function setLink(group) {
-                $scope.onAction(group, $scope.onIndex);
+                if ($scope.onAction)
+                    $scope.onAction(group, $scope.onIndex);
             }
 
             function addBookmark() {
@@ -209,7 +233,7 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
                     $scope.bookmarkError = 'Укажите адрес или символьный код группы';
                     return;
                 }
-                $scope.isLoading = true;
+                $scope.groupsLoading = true;
 
                 vkApiFactory.getGroupInfo(authData, {
                     groupId: radCommonFunc.getGroupId($scope.bookmarkGroupUrl)
@@ -218,7 +242,7 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
                         if (groupInfo.error) {
                             $timeout(()=> {
                                 $scope.bookmarkError = "Введеная группа вконтакте не найдена";
-                                $scope.isLoading = false;
+                                $scope.groupsLoading = false;
                             });
                             return;
                         }
@@ -241,7 +265,7 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
             }
 
             function removeBookmark(index) {
-                $scope.isLoading = true;
+                $scope.groupsLoading = true;
                 bus.request(topics.BOOKMARK.REMOVE, {
                     index: index
                 })
@@ -250,6 +274,10 @@ function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc
                             getBookmarkList();
                         }
                     });
+            }
+
+            function groupIsFree(item) {
+                return appState.groupIsFree(item);
             }
 
             init();

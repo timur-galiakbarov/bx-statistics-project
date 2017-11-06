@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "gulpfile.js",
   "dependencies": {
+    "angular-local-storage": "^0.7.1",
     "angular-ui-bootstrap": "^2.2.0",
     "babelify": "^6.3.0",
     "bower": "^1.5.2",
@@ -40,7 +41,11 @@
     "postal.request-response": "./bower_components/postal.request-response/lib/postal.request-response.js",
     "promise": "./node_modules/q/q.js"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "gulp-rev-all": "^0.9.7",
+    "gulp-rev-delete-original": "^0.2.3",
+    "gulp-rimraf": "^0.2.1"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

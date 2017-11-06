@@ -8,14 +8,19 @@ angular
 
             $scope.model = {
                 searchString: '',
-                searchList: []
+                searchList: [],
+                compareList: []
             };
 
             var authData = appState.getAuthData();
 
             $scope.goToMainStat = goToMainStat;
+            $scope.addToCompareGroup = addToCompareGroup;
+            $scope.removeFromCompareGroup = removeFromCompareGroup;
+            $scope.compare = compare;
             $scope.search = search;
             $scope.noActiveTariff = !appState.isActiveUser();
+            $rootScope.setTitle("Подробная статистика сообщества");
 
             $scope.$watch('model.searchString', (newVal, oldVal)=> {
                 if (newVal != oldVal)
@@ -27,8 +32,6 @@ angular
             });
 
             //functions
-
-            init();
 
             function goToMainStat(group) {
                 if (!group) {
@@ -78,15 +81,35 @@ angular
 
             }
 
-            function init() {
-                $(".nano").nanoScroller();
-                initTooltips();
+            function addToCompareGroup(event, group) {
+                event.stopPropagation();
+                if (group) {
+                    var foundGroup = $scope.model.compareList.filter((item)=> {
+                        return item.gid == group.gid;
+                    });
+                    if (!foundGroup.length) {
+                        $scope.model.compareList.push(group);
+                        notify.success("Сообщество добавлено для сравнения");
+                    } else {
+                        notify.error("Сообщество уже находится в списке для сравнения");
+                    }
+                } else {
+                    notify.error("Ошибка. Группа отсутствует");
+                }
             }
 
-            function initTooltips() {
-                $(function () {
-                    $('[data-toggle="tooltip"]').tooltip();
+            function removeFromCompareGroup(group) {
+                $scope.model.compareList = $scope.model.compareList.filter((item)=> {
+                    return item.gid != group.gid;
                 });
+            }
+
+            function compare() {
+                if ($scope.model.compareList && $scope.model.compareList.length){
+                    $state.go('index.analytics.compare', {
+                        list: $scope.model.compareList
+                    });
+                }
             }
 
         }]);

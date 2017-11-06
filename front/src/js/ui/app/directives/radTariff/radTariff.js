@@ -5,16 +5,16 @@ angular
     .module('rad.ui.directives')
     .directive('radTariff', radTariff);
 
-radTariff.$inject = ['appState', '$timeout'];
+radTariff.$inject = ['appState', '$timeout', '$state'];
 
-function radTariff(appState, $timeout) {
+function radTariff(appState, $timeout, $state) {
     return {
         restrict: 'EA',
         templateUrl: './templates/js/ui/app/directives/radTariff/radTariff.html',
         controller: ['$scope', '$timeout', function ($scope, $timeout) {
 
         }],
-        scope:{
+        scope: {
             view: '=?'
         },
         link: function ($scope, attrs) {
@@ -27,15 +27,16 @@ function radTariff(appState, $timeout) {
                 userFullName: userData.userFullName
             };
             $scope.paymentInfo = {
-                period: '1 месяц',
-                summ: '199'
+                period: '3 месяца',
+                summ: '499'
             };
             $scope.noActiveTariff = !appState.isActiveUser();
+            $scope.goToProfile = goToProfile;
 
             $scope.$watch('paymentInfo.period', (newVal)=> {
-                switch (newVal){
+                switch (newVal) {
                     case '1 месяц':
-                        $timeout(()=>{
+                        $timeout(()=> {
                             $scope.paymentInfo.summ = 199;
                         });
                         break;
@@ -50,11 +51,16 @@ function radTariff(appState, $timeout) {
                         });
                     case '1 год':
                         $timeout(()=> {
-                            $scope.paymentInfo.summ = 999;
+                            $scope.paymentInfo.summ = 1399;
                         });
                         break;
                 }
             });
+
+            function goToProfile() {
+                $("#finishedPeriodModal").modal('hide');
+                $state.go("index.account");
+            }
         }
     };
 }

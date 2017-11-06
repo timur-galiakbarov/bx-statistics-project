@@ -3,6 +3,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 $APPLICATION->SetPageProperty("keywords", "Анализ групп вк, статистика групп вконтакте, статистика сообществ, вконтакте, анализ постов группы вконтакте");
 $APPLICATION->SetPageProperty("description", "Сервис socstat.ru - это инструмент smm-менеджера. С помощью нашего сервиса можно выполнить анализ любой группы «Вконтакте», узнать динамику активности и степень вовлеченности подписчиков");
 $APPLICATION->SetTitle("Аналитика и статистика групп вконтакте");
+
+global $USER;
+if ($USER->IsAuthorized()){
+    header("location: /lk/");
+}
+
 ?>
 
 <section class="slideshow-wrapper">

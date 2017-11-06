@@ -15,10 +15,13 @@ if (CModule::IncludeModule("iblock")) {
         'usersAllToday' => 0,
         "usersNewToday" => 0,
         "usersOldToday" => 0,
-        "usersAll" => 0,
+        "usersAll" => CUser::GetCount(),
         "usersList" => Array(),
         "usersRegisterList" => Array(),
-        "payCount" => 0
+        "payCount" => 0,
+        "payCountCurrentMonth" => 0,
+        "payCountLastMonth" => 0,
+        "payCountRur" => 0
     );
 
     $filter = Array
@@ -40,7 +43,8 @@ if (CModule::IncludeModule("iblock")) {
         $data["usersAllToday"]++;
     endwhile;
 
-    $rsUsers = CUser::GetList(($by = "last_login"), ($order = "desc"), Array()); // выбираем пользователей
+    $period = date("d.m.Y", mktime(0, 0, 0, date("m"), date("d") - 2, date("Y")));
+    $rsUsers = CUser::GetList(($by = "last_login"), ($order = "desc"), Array("LAST_LOGIN_1" => $period)); // выбираем пользователей за последние три дня
 
     while ($rsUsers->NavNext(true, "f_")) :
         $currUser = CUser::GetByID($f_ID)->GetNext();
@@ -52,26 +56,41 @@ if (CModule::IncludeModule("iblock")) {
             "dateRegister" => $f_DATE_REGISTER,
             "activeTo" => $currUser["UF_ACTIVE_TO"]
         ));
-        $data["usersAll"]++;
     endwhile;
 
-    $rsUsers = CUser::GetList(($by = "date_register"), ($order = "asc"), Array()); // выбираем пользователей
+    $arParams["NAV_PARAMS"] = array('nTopCount' => 200);
+    $rsUsers = CUser::GetList(($by = "date_register"), ($order = "desc"), false, $arParams); // выбираем пользователей
 
     while ($rsUsers->NavNext(true, "f_")) :
         $currUser = CUser::GetByID($f_ID)->GetNext();
         $currDate = date_parse_from_format("j.n.Y", $f_DATE_REGISTER);
         array_push($data["usersRegisterList"], Array(
-            "dateRegister" => $currDate["month"].".".$currDate["day"].".".$currDate["year"]
+            "dateRegister" => $currDate["month"] . "." . $currDate["day"] . "." . $currDate["year"]
         ));
 
     endwhile;
 
 
-    $arSelect = Array("ID", "NAME", "DATE_ACTIVE_FROM", "PROPERTY_AMOUNT");
+    $arSelect = Array("ID", "NAME", "DATE_ACTIVE_FROM", "PROPERTY_SUMM", "CREATED_DATE");
     $arFilter = Array("IBLOCK_ID" => 4);
     $res = CIBlockElement::GetList(Array(), $arFilter, false, Array("nPageSize" => 999), $arSelect);
+    $periodCurrentMonth = date_parse_from_format("j.n.Y", date("d.m.Y", mktime(0, 0, 0, date("m"), 1, date("Y"))));
+    $periodLasttMonth = date_parse_from_format("j.n.Y", date("d.m.Y", mktime(0, 0, 0, date("m") - 1, 1, date("Y"))));
     while ($ob = $res->GetNextElement()) {
-        /*print_r($ob);*/
+        $arFields = $ob->GetFields();
+        /*print_r($arFields);*/
+        $createdDate = date_parse_from_format("Y.n.j", $arFields["CREATED_DATE"]);
+        /*print_r($createdDate);*/
+
+        if ($createdDate >= $periodCurrentMonth) {
+            $data["payCountCurrentMonth"]++;
+        }
+        if ($createdDate >= $periodLasttMonth && $createdDate < $periodCurrentMonth) {
+            $data["payCountLastMonth"]++;
+        }
+
+
+        $data["payCountRur"] += $arFields["PROPERTY_SUMM_VALUE"];
         $data["payCount"]++;
     }
 

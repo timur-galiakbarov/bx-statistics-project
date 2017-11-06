@@ -1,20 +1,40 @@
 var gulp = require('gulp');
 var path = require('./path.js');
 var watch = require('gulp-watch');
-runSequence = require('gulp-run-sequence');
+var runSequence = require('gulp-run-sequence');
+var gulp_rimraf = require('gulp-rimraf');
+require('./build.js');
+require('./inject.js');
 
 
 gulp.task('watch', function () {
-    watch([path.watch.html], function (event, cb) {
+    gulp.watch([path.watch.html], function (event, cb) {
         gulp.start('html:build');
     });
-    watch([path.watch.css], function (event, cb) {
-        gulp.start('css:build');
+    gulp.watch([path.watch.css], function (event, cb) {
+        return runSequence(
+            ['css:clear'],
+            'build_all:css',
+            'rev:css',
+            'injectCss'
+        );
     });
-    watch([path.watch.js], function (event, cb) {
-        gulp.start('js:build');
+    gulp.watch([path.watch.js, path.watch.tpljs], function (event, cb) {
+        return runSequence(
+            ['js:clear'],
+            'build_all:js',
+            'rev:js',
+            'injectJs'
+        );
     });
-    watch([path.watch.tpljs], function (event, cb) {
-        gulp.start('js:tplbuild');
-    });
+});
+
+gulp.task('css:clear', function (cb) {
+    return gulp.src(path.build.css + '**', { read: false })
+        .pipe(gulp_rimraf());
+});
+
+gulp.task('js:clear', function (cb) {
+    return gulp.src(path.build.js + '**', { read: false })
+        .pipe(gulp_rimraf());
 });

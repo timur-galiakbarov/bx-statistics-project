@@ -1,83 +1,75 @@
 <div class="row">
-    <div class="col-md-8">
-        <h3 class="text-center m-top-0">Аналитика сообщества</h3>
-
-        <div class="relative m-top-20">
-
-            <form ng-submit="search()">
-                <div class="input-group">
-                    <input type="text" class="form-control" ng-model="model.searchString"
-                           placeholder="например 'https://vk.com/pikabu' или 'Пикабу'">
-                    <span class="input-group-btn">
-                        <button class="btn btn-search" type="submit">Найти сообщество</button>
-                    </span>
-                </div>
-                <ul class="parsley-errors-list filled">
-                    <li class="parsley-required" ng-bind="urlError"></li>
-                </ul>
-            </form>
-
-            <div ng-show="isSearchGroup">
-                <div class="block-flat" ng-show="model.searchList[0] && model.searchList[0].length>0">
-                    <table class="no-border hover list">
-                        <tbody class="no-border-y">
-                        <tr ng-repeat="item in model.searchList[0]" class="groupLink" ng-click="setGroup(item)"
-                            style="cursor:pointer;">
-                            <td width="30">
-                                <img ng-src="{{item.photo_200 || item.photo_100 || item.photo_50}}" width="40">
-                            </td>
-                            <td>
-                                <a tabindex="-1" ng-bind="item.name"></a>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="block-flat text-center"
-                     ng-show="!(model.searchList[0] && model.searchList[0].length>0)">
-                    По вашему запросу сообществ не найдено.
-                </div>
+    <div class="col-lg-8 col-md-9 col-sm-12">
+        <div class="card">
+            <div class="card-header card-header-icon" data-background-color="blue">
+                <i class="material-icons">show_chart</i>
             </div>
+            <div class="card-content">
+                <h4 class="card-title">Выбор сообщества</h4>
 
-            <div class="text-center relative m-top-25">или выберите из вашего списка сообществ</div>
+                <div class="row">
+                    <div class="col-xs-12">
 
-            <div class="m-top-25">
-                <rad-choose-group-main on-action="goToMainStat" ng-show="true"></rad-choose-group-main>
+                        <form ng-submit="search()">
+                            <div class="input-group">
+                                <div class="form-group label-floating is-empty">
+                                    <label class="control-label">Поисковой запрос</label>
+                                    <input type="text" class="form-control" ng-model="model.searchString">
+                                    <span class="material-input"></span>
+                                </div>
+
+                                <div class="input-group-btn">
+                                    <button class="btn btn-success" type="submit">
+                                        <span class="btn-label"><i class="material-icons">search</i></span>
+                                        <span class="hidden-xs">Найти</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <ul class="parsley-errors-list filled">
+                                <li class="parsley-required" ng-bind="urlError"></li>
+                            </ul>
+                        </form>
+
+                        <div ng-show="isSearchGroup">
+                            <div class="block-flat" ng-show="model.searchList[0] && model.searchList[0].length>0">
+                                <table class="no-border hover list">
+                                    <tbody class="no-border-y">
+                                    <tr ng-repeat="item in model.searchList[0]" class="groupLink"
+                                        ng-click="setGroup(item)"
+                                        style="cursor:pointer;">
+                                        <td width="30">
+                                            <img ng-src="{{item.photo_200 || item.photo_100 || item.photo_50}}"
+                                                 width="40">
+                                        </td>
+                                        <td>
+                                            <a tabindex="-1" ng-bind="item.name"></a>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="block-flat text-center"
+                                 ng-show="!(model.searchList[0] && model.searchList[0].length>0)">
+                                По вашему запросу сообществ не найдено.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div>или выберите из вашего списка сообществ</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <rad-choose-group-main view="'analytics'" on-action="goToMainStat"
+                                               ng-show="true"></rad-choose-group-main>
+                    </div>
+                </div>
+
             </div>
 
         </div>
-
-    </div>
-
-    <div class="col-md-4">
-
-        <div class="fd-tile detail clean tile-blue" ng-if="noActiveTariff">
-            <div class="content"><h1 class="text-left">199 <i class="fa fa-rub"></i></h1>
-
-                <p>Стоимость месяца</p></div>
-            <div class="icon"><i class="fa fa-reply"></i></div>
-            <a class="details" ng-click="openState('index.account')" style="cursor:pointer;">Продолжить работу <span><i
-                    class="fa fa-arrow-circle-right pull-right"></i></span></a>
-        </div>
-
-        <div class="block-flat additional">
-            <div class="header">
-                <h4>Последние запросы</h4>
-            </div>
-            <div class="content">
-                <ul class="list-group tickets">
-                    <li class="list-group-item" ng-click="goToFindContent()" style="cursor:pointer;">
-
-                        <img class="avatar" width="40" src="/lk/images/find-content-icon.png">
-
-                        <h4 class="name">Группа 1</h4>
-                    </li>
-                </ul>
-                <hr/>
-
-            </div>
-        </div>
-
     </div>
 
 </div>

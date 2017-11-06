@@ -83,25 +83,26 @@
             ["wall.get"]: (res)=> {
                 var arr = res.items.map((item)=> {
                     return {
-                        attachment: item.attachment,
                         attachments: item.attachments,
-                        can_delete: item.can_delete,
-                        can_pin: item.can_pin,
                         comments: item.comments,
                         date: item.date,
-                        from_id: item.form_id,
+                        from_id: item.from_id,
                         id: item.id,
-                        is_pinned: item.is_pinned,
                         likes: item.likes,
                         marked_as_ads: item.marked_as_ads,
-                        media: item.media,
-                        online: item.online,
-                        owner_id: item.to_id,
+                        owner_id: item.owner_id,
                         post_source: item.post_source,
                         post_type: item.post_type,
-                        reply_count: item.reply_count,
                         reposts: item.reposts,
-                        text: item.text
+                        signer_id: item.signer_id,
+                        text: item.text,
+                        views: item.views,
+                        can_delete: item.can_delete,
+                        can_pin: item.can_pin,
+                        is_pinned: item.is_pinned,
+                        media: item.media,
+                        online: item.online,
+                        reply_count: item.reply_count
                     }
                 });
                 arr.unshift(res.count);

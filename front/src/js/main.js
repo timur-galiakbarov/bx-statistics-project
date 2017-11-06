@@ -16,20 +16,26 @@ import vkApiMapper from './ui/app/factories/vkApi/vkApiMapper.js';
 
 /*Analytics controller*/
 import analyticsDashboardController from './ui/analytics/controllers/analyticsDashboardController.js';
-import commonAnalyticsController from './ui/analytics/controllers/commonAnalytics/commonAnalyticsController.js';
-
-/*Dashboard controller*/
 import dashboardController from './ui/dashboard/controllers/dashboardController.js';
+import compareDashboardController from './ui/analytics/controllers/compareDashboardController/compareDashboardController.js';
+import commonAnalyticsController from './ui/analytics/controllers/commonAnalytics/commonAnalyticsController.js';
+import compareController from './ui/analytics/controllers/compareController/compareController.js';
+import postsDashboardController from './ui/analytics/controllers/postsDashboardController/postsDashboardController.js';
+import postsController from './ui/analytics/controllers/postsController/postsController.js';
+
+/*Analytics directives*/
+import postDefault from './ui/analytics/directives/postDefault/postDefault.js';
 
 /*Account controller*/
 import accountController from './ui/account/controllers/accountController.js';
-import partnersController from './ui/account/controllers/partnersController.js';
 
 /*UI------------------------------------------------------------------------------------------------------------------*/
 import radAmountFilter from './ui/base/radAmountFilter.js';
+import radNumberFormatter from './ui/base/radNumberFormatter.js';
+import radTooltip from './ui/base/radTooltip.js';
 
 /*statController------------------------------------------------------------------------------------------------------*/
-import statController from './ui/stat/controllers/statController.js';
+/*import statController from './ui/stat/controllers/statController.js';
 import statMainController from './ui/stat/controllers/statMainController/statMainController.js';
 import statPublishAnalysisController from './ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.js';
 import findContentController from './ui/stat/controllers/findContentController/findContentController.js';
@@ -38,7 +44,7 @@ import favoritesController from './ui/favorites/controllers/favoritesController/
 import findBotsController from './ui/stat/controllers/findBotsController/findBotsController.js';
 import groupsAnalogController from './ui/stat/controllers/groupsAnalogController/groupsAnalogController.js';
 import findAdvPostsController from './ui/stat/controllers/findAdvPostsController/findAdvPostsController.js';
-import findActiveUsersController from './ui/stat/controllers/findActiveUsersController/findActiveUsersController.js';
+import findActiveUsersController from './ui/stat/controllers/findActiveUsersController/findActiveUsersController.js';*/
 
 
 import adminController from './ui/admin/controllers/adminController.js';
@@ -50,6 +56,7 @@ import crmController from './ui/admin/controllers/crmController/crmController.js
 import ngThumb from './ui/stat/uploader/radThumb.js';
 /*statServices*/
 import statPopupsFactory from './ui/stat/services/statPopupsFactory/statPopupsFactory.js';
+import permissionService from './ui/account/services/permissionService.js';
 import memoryFactory from './ui/stat/services/memoryFactory/memoryFactory.js';
 import radCommonFunc from './ui/app/factories/radCommonFunc.js';
 import notify from './ui/app/factories/notify.js';

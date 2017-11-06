@@ -1,6 +1,6 @@
 angular.module('app').config(['$stateProvider', '$urlRouterProvider',
     function ($stateProvider, $urlRouterProvider) {
-        $urlRouterProvider.otherwise("/");
+        $urlRouterProvider.otherwise("/dashboard/");
         //$urlRouterProvider.when('page-detail', '/contacts/:pageCode');
         $stateProvider
             .state('index', {
@@ -8,7 +8,19 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: './templates/template/app/template.html',
                 controller: 'appController'
             })
-            //Аналитика - Dashboard
+            //Dashboard-------------------------------------------------------------------------------------------------
+            .state('index.dashboard', {
+                url: 'dashboard/',
+                views: {
+                    'content': {
+                        templateUrl: './templates/js/ui/dashboard/controllers/dashboardController.html',
+                        controller: 'dashboardController'
+                    }
+                },
+                parent: 'index'
+            })
+            //Статистика сообществ--------------------------------------------------------------------------------------
+            //Статистика - Список
             .state('index.analytics', {
                 url: 'analytics/',
                 views: {
@@ -19,7 +31,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Аналитика
+            //Статистика - детальная страница
             .state('index.analytics.common', {
                 url: 'analytics/group/:gid',
                 views: {
@@ -30,6 +42,57 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
+            //Сравнение сообществ---------------------------------------------------------------------------------------
+            //Сравнение сообществ - Список
+            .state('index.compare', {
+                url: 'compare/',
+                views: {
+                    'content': {
+                        templateUrl: './templates/js/ui/analytics/controllers/compareDashboardController/compareDashboardController.html',
+                        controller: 'compareDashboardController'
+                    }
+                },
+                parent: 'index'
+            })
+            //Сравнение сообществ - таблица
+            .state('index.compare.detail', {
+                url: 'compare/detail',
+                views: {
+                    'content': {
+                        templateUrl: './templates/js/ui/analytics/controllers/compareController/compareController.html',
+                        controller: 'compareController'
+                    }
+                },
+                params: {
+                    list: ""
+                },
+                parent: 'index'
+            })
+            //Анализ публикаций
+            .state('index.posts', {
+                url: 'posts/',
+                views: {
+                    'content': {
+                        templateUrl: './templates/js/ui/analytics/controllers/postsDashboardController/postsDashboardController.html',
+                        controller: 'postsDashboardController'
+                    }
+                },
+                parent: 'index'
+            })
+            .state('index.posts.detail', {
+                url: 'posts/detail',
+                views: {
+                    'content': {
+                        templateUrl: './templates/js/ui/analytics/controllers/postsController/postsController.html',
+                        controller: 'postsController'
+                    }
+                },
+                params: {
+                    list: ""
+                },
+                parent: 'index'
+            })
+            //Оплата----------------------------------------------------------------------------------------------------
             .state('index.account', {
                 url: 'account/',
                 views: {
@@ -41,40 +104,8 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            .state('index.partners', {
-                url: 'partners/',
-                views: {
-                    'content': {
-                        url: 'partners/',
-                        templateUrl: './templates/js/ui/account/controllers/partnersController.html',
-                        controller: 'partnersController'
-                    }
-                },
-                parent: 'index'
-            })
-            .state('index.publishAnalysis', {
-                url: 'publishAnalysis/?getStatFromGroup',
-                views: {
-                    'content': {
-                        url: 'publishAnalysis/',
-                        templateUrl: './templates/js/ui/stat/controllers/statPublishAnalysisController/statPublishAnalysisController.html',
-                        controller: 'statPublishAnalysisController'
-                    }
-                },
-                parent: 'index'
-            })
-            .state('index.findContent', {
-                url: 'findContent/',
-                views: {
-                    'content': {
-                        url: 'findContent/',
-                        templateUrl: './templates/js/ui/stat/controllers/findContentController/findContentController.html',
-                        controller: 'findContentController'
-                    }
-                },
-                parent: 'index'
-            })
-            .state('index.publishFavorites', {
+
+            /*.state('index.publishFavorites', {
                 url: 'publishAnalysis/favorites',
                 views: {
                     'content': {
@@ -83,62 +114,7 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                     }
                 },
                 parent: 'index'
-            })
-            .state('index.auditoryCompare', {
-                url: 'auditoryCompare/?getStatFromGroup',
-                views: {
-                    'content': {
-                        url: 'auditoryCompare',
-                        templateUrl: './templates/js/ui/stat/controllers/statAuditoryCompareController/statAuditoryCompareController.html',
-                        controller: 'statAuditoryCompareController'
-                    }
-                },
-                parent: 'index'
-            })
-            .state('index.findBots', {
-                url: 'findBots/?getStatFromGroup',
-                views: {
-                    'content': {
-                        url: 'findBots',
-                        templateUrl: './templates/js/ui/stat/controllers/findBotsController/findBotsController.html',
-                        controller: 'findBotsController'
-                    }
-                },
-                parent: 'index'
-            })
-            .state('index.groupsAnalog', {
-                url: 'groupsAnalog/?getStatFromGroup',
-                views: {
-                    'content': {
-                        url: 'groupsAnalog',
-                        templateUrl: './templates/js/ui/stat/controllers/groupsAnalogController/groupsAnalogController.html',
-                        controller: 'groupsAnalogController'
-                    }
-                },
-                parent: 'index'
-            })
-            .state('index.findAdv', {
-                url: 'findAdv/?getStatFromGroup',
-                views: {
-                    'content': {
-                        url: 'findAdv',
-                        templateUrl: './templates/js/ui/stat/controllers/findAdvPostsController/findAdvPostsController.html',
-                        controller: 'findAdvPostsController'
-                    }
-                },
-                parent: 'index'
-            })
-            .state('index.findActiveUsers', {
-                url: 'findActiveUsers/?getStatFromGroup',
-                views: {
-                    'content': {
-                        url: 'findActiveUsers',
-                        templateUrl: './templates/js/ui/stat/controllers/findActiveUsersController/findActiveUsersController.html',
-                        controller: 'findActiveUsersController'
-                    }
-                },
-                parent: 'index'
-            })
+            })*/
             //----------------------------------------------------------------------------------------------------------
             .state('index.admin', {
                 url: 'admin/',

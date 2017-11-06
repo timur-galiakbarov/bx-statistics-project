@@ -1,0 +1,356 @@
+<div>
+
+    <div class="row">
+        <div class="col-sm-9">
+            <div class="card">
+                <div class="card-header card-header-icon" data-background-color="blue">
+                    <i class="material-icons">build</i>
+                </div>
+                <div class="card-content">
+                    <h4 class="card-title">Сравнение сообществ</h4>
+
+                    <p class="category">за период с {{ui.periodFrom}} по {{ui.periodTo}}</p>
+
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="row showFilterArea" ng-show="ui.hiddenFilter">
+                                <div class="col-xs-12">
+                                    <a ng-click="ui.hiddenFilter = false" class="btn btn-default showFilterLink">Раскрыть
+                                        фильтр</a>
+                                    <a ng-click="openState('index.compare')" class="btn btn-success showFilterLink">Выбрать
+                                        другие группы</a>
+                                </div>
+                            </div>
+
+                            <div class="block-flat" ng-hide="ui.hiddenFilter">
+                                <form role="form" class="form-horizontal filter">
+                                    <div class="row">
+                                        <div class="col-xs-12">
+                                            <h4>Фильтр - период анализа</h4>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+
+                                        <div class="col-sm-12 checkbox-radios">
+                                            <div class="radio">
+                                                <label>
+                                                    <input type="radio" name="checkDate" value="week">
+                                                    <span class="circle"></span>
+                                                    <span class="check"></span> Неделя
+                                                </label>
+                                            </div>
+                                            <div class="radio">
+                                                <label>
+                                                    <input type="radio" name="checkDate" value="twoWeek">
+                                                    <span class="circle"></span>
+                                                    <span class="check"></span> Две недели
+                                                </label>
+                                            </div>
+                                            <div class="radio">
+                                                <label>
+                                                    <input type="radio" name="checkDate" value="month"
+                                                           checked="checked">
+                                                    <span class="circle"></span>
+                                                    <span class="check"></span> Последние 30 дней
+                                                </label>
+                                            </div>
+                                            <div class="radio">
+                                                <label>
+                                                    <input type="radio" name="checkDate" value="datePicker">
+                                                    <span class="circle"></span>
+                                                    <span class="check"></span> За выбранный промежуток
+                                                </label>
+
+                                                <div class="row">
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label class="label-control text-left">Дата начала</label>
+
+                                                            <div class="input-group">
+                                                            <span class="input-group-addon"
+                                                                  ng-click="openDatepickerPopupFrom()">
+                                                                <button class="btn btn-success btn-open-date-picker">
+                                                                    <span class="glyphicon glyphicon-th"></span>
+                                                                </button>
+                                                            </span>
+
+                                                                <div class="form-group is-empty">
+                                                                    <input type="text"
+                                                                           class="form-control datepicker"
+                                                                           ui-mask="99.99.9999"
+                                                                           uib-datepicker-popup="ddMMyyyy"
+                                                                           ng-model="model.datePicker.dateFrom"
+                                                                           is-open="model.datePicker.popupFrom.opened"
+                                                                           datepicker-options="dateOptions"
+                                                                           show-button-bar="false"
+                                                                           close-on-date-selection="true"/>
+                                                                    <span class="material-input"></span>
+                                                                <span class="help-block">
+                                                                    <ul class="parsley-errors-list filled">
+                                                                        <li class="parsley-required"
+                                                                            ng-bind="error.datePickerFromError"></li>
+                                                                    </ul>
+                                                                </span>
+                                                                    <span class="material-input"></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-xs-6">
+                                                        <div class="form-group">
+                                                            <label class="label-control text-left">Дата
+                                                                окончания</label>
+
+                                                            <div class="input-group">
+                                                            <span class="input-group-addon"
+                                                                  ng-click="openDatepickerPopupTo()">
+                                                                <button class="btn btn-success btn-open-date-picker">
+                                                                    <span class="glyphicon glyphicon-th"></span>
+                                                                </button>
+                                                            </span>
+
+                                                                <div class="form-group is-empty">
+                                                                    <input type="text"
+                                                                           class="form-control"
+                                                                           ui-mask="99.99.9999"
+                                                                           uib-datepicker-popup="ddMMyyyy"
+                                                                           ng-model="model.datePicker.dateTo"
+                                                                           is-open="model.datePicker.popupTo.opened"
+                                                                           datepicker-options="dateOptions"
+                                                                           show-button-bar="false"/>
+                                                            <span class="help-block">
+                                                                <ul class="parsley-errors-list filled">
+                                                                    <li class="parsley-required"
+                                                                        ng-bind="error.datePickerToError"></li>
+                                                                </ul>
+                                                            </span>
+                                                                    <span class="material-input"></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-xs-12">
+                                            <button type="button" ng-disabled="ui.isLoading" class="btn btn-info btn-rad"
+                                                    ng-click="getAllStat()">Начать анализ
+                                            </button>
+
+                                            <a ng-click="ui.hiddenFilter = true" class="btn btn-default showFilterLink">Скрыть
+                                                фильтр</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="card">
+                <div class="card-header card-header-icon" data-background-color="blue">
+                    <i class="material-icons">assignment</i>
+                </div>
+                <div class="card-content">
+                    <h4 class="card-title">Сравнение групп по активности</h4>
+
+                    <div class="table-responsive" rad-loader="ui.isLoading">
+                        <table class="table table-striped compare-groups-table">
+                            <thead>
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th class="text-center">Группа</th>
+                                <th class="text-center">Количество реакций</th>
+                                <th class="text-center">Среднее количество реакций на пост</th>
+                                <th class="text-center">Среднее количество реакций в день</th>
+                                <th class="text-center">Лайков</th>
+                                <th class="text-right">Репостов</th>
+                                <th class="text-right">Комментариев</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="stat in model.groupsStat" ng-show="stat.visible">
+                                <td class="text-center">{{$index+1}}</td>
+                                <td class="text-center" width="50">
+                                    <img ng-src="{{stat.groupInfo.photo_small}}" width="40" rad-tooltip="{{stat.groupInfo.name}}" placement="top">
+                                </td>
+                                <td class="text-center" ng-bind-html="(stat.wall.actionsCount || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.actionsAverageByPost || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.actionsAverageByDay || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.likes.count || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.reposts.count || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.comments.count || 0) | radNumberFormatter:'withNbps'"></td>
+                            </tr>
+                            <!--<tr>
+                                <td colspan="2">Суммарно</td>
+                                <td>
+
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-center"></td>
+                                <td class="text-center"></td>
+                                <td class="text-center"></td>
+                            </tr>-->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="card">
+                <div class="card-header card-header-icon" data-background-color="blue">
+                    <i class="material-icons">assignment</i>
+                </div>
+                <div class="card-content">
+                    <h4 class="card-title">Сравнение групп по охвату</h4>
+
+                    <div class="table-responsive" rad-loader="ui.isLoading">
+                        <table class="table table-striped compare-groups-table">
+                            <thead>
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th class="text-center">Группа</th>
+                                <th class="text-center">Средний охват поста</th>
+                                <th class="text-center">Максимальный охват поста</th>
+                                <th class="text-center">Минимальный охват поста</th>
+                                <th class="text-right">Рекламных постов</th>
+                                <th class="text-right">Максимальный охват рекламного поста</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="stat in model.groupsStat" ng-show="stat.visible">
+                                <td class="text-center">{{$index+1}}</td>
+                                <td class="text-center" width="50">
+                                    <img ng-src="{{stat.groupInfo.photo_small}}" width="40" rad-tooltip="{{stat.groupInfo.name}}" placement="top">
+                                </td>
+                                <td class="text-center" ng-bind-html="(stat.wall.views.averageByPost || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.views.max || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.views.min || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.ads.count || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.views.minAds || 0) | radNumberFormatter:'withNbps'"></td>
+                            </tr>
+                            <!--<tr>
+                                <td colspan="2">Суммарно</td>
+                                <td>
+
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-center"></td>
+                                <td class="text-center"></td>
+                                <td class="text-center"></td>
+                            </tr>-->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="card">
+                <div class="card-header card-header-icon" data-background-color="blue">
+                    <i class="material-icons">assignment</i>
+                </div>
+                <div class="card-content">
+                    <h4 class="card-title">Сравнение групп по вовлеченности</h4>
+
+                    <div class="table-responsive" rad-loader="ui.isLoading">
+                        <table class="table table-striped compare-groups-table">
+                            <thead>
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th class="text-center">Группа</th>
+                                <th class="text-center">Средняя вовлеченность на пост</th>
+                                <th class="text-center">Максимальная вовлеченность поста</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="stat in model.groupsStat" ng-show="stat.visible">
+                                <td class="text-center">{{$index+1}}</td>
+                                <td class="text-center" width="50">
+                                    <img ng-src="{{stat.groupInfo.photo_small}}" width="40" rad-tooltip="{{stat.groupInfo.name}}" placement="top">
+                                </td>
+                                <td class="text-center" ng-bind-html="(stat.wall.ERAverage || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.ERMax || 0) | radNumberFormatter:'withNbps'"></td>
+                            </tr>
+                            <!--<tr>
+                                <td colspan="2">Суммарно</td>
+                                <td>
+
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>-->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="card">
+                <div class="card-header card-header-icon" data-background-color="blue">
+                    <i class="material-icons">assignment</i>
+                </div>
+                <div class="card-content">
+                    <h4 class="card-title">Сравнение групп по контенту</h4>
+
+                    <div class="table-responsive" rad-loader="ui.isLoading">
+                        <table class="table table-striped compare-groups-table">
+                            <thead>
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th class="text-center">Группа</th>
+                                <th class="text-center">Постов добавлено</th>
+                                <th class="text-center">Рекламных постов добавлено</th>
+                                <th class="text-center">Всего постов</th>
+                                <th class="text-center">Фотографий добавлено</th>
+                                <th class="text-center">Всего фотографий</th>
+                                <th class="text-center">Видео добавлено</th>
+                                <th class="text-center">Всего видео</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="stat in model.groupsStat" ng-show="stat.visible">
+                                <td class="text-center">{{$index+1}}</td>
+                                <td class="text-center" width="50">
+                                    <img ng-src="{{stat.groupInfo.photo_small}}" width="40" rad-tooltip="{{stat.groupInfo.name}}" placement="top">
+                                </td>
+                                <td class="text-center" ng-bind-html="(stat.wall.periodPostsCount || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.ads.count || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.wall.allPostsCount || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.photo.photoPeriodCount || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.photo.allCount || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.video.videoPeriodCount || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(stat.video.allCount || 0) | radNumberFormatter:'withNbps'"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -26,6 +26,15 @@ angular.module('app').run(['$rootScope', 'bus',
 
 app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notify',
     function ($rootScope, $scope, $state, bus, notify) {
+
+        $rootScope.tariffInfo = {
+            activeTo: "",
+            userName: ""
+        };
+
+        var mobile_menu_initialized;
+        var toggle_initialized;
+
         bus.subscribe(events.APP.READY, function () {
             $rootScope.$apply(function () {
                 $rootScope.isAuth = true;
@@ -36,8 +45,9 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notif
         });
         bus.request(topics.ACCOUNT.IS_AUTH, {notLogError: true}).then((res)=> {
             if (res.success) {
-
                 bus.request(topics.ACCOUNT.GET_USER_INFO).then((res)=> {
+                    $rootScope.tariffInfo.activeTo = res.user.activeTo;
+                    $rootScope.tariffInfo.userName = res.user.userFullName;
                     bus.publish(events.ACCOUNT.STATED, res);
                 });
 
@@ -54,20 +64,20 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notif
         });
 
         $rootScope.page = {
-            sectionTitle: '',
-            breadcrumb: []
+            sectionTitle: ''
         };
 
-        $scope.toggleMenu = function (e) {
-            var ul = $(".cl-vnavigation");
-            ul.slideToggle(300, 'swing', function () {
-            });
-            e.preventDefault();
-        };
+        $rootScope.setTitle = setTitle;
+        $rootScope.toggleMenu = toggleMenu;
 
         bus.subscribe(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL, ()=> {
             //Открыть попап для показа информации о просроченном периоде
             $("#finishedPeriodModal").modal();
+        });
+
+        bus.subscribe(events.ACCOUNT.SHOW_NOT_SUBSCRIBE_MODAL, ()=> {
+            //Открыть попап для показа информации, что пользователь вышел из группы
+            $("#userUnsubscribedPopup").modal();
         });
 
         $rootScope.$on('$stateChangeSuccess', function (evt, toState) {
@@ -78,7 +88,7 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notif
 
         $rootScope.openState = function (state) {
             if ($rootScope.globalLoading) {
-                notify.info("Пожалуйста, дождитесь загрузки данных, либо совершите действие в другой вкладке.");
+                notify.info("Пожалуйста, дождитесь загрузки данных.");
                 return;
             }
 
@@ -99,6 +109,61 @@ app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notif
             });
         }
 
+        function setTitle(title) {
+            $rootScope.page.sectionTitle = title;
+        }
+
+        function toggleMenu() {
+
+            var $toggle = $(".navbar-toggle");
+
+            if (mobile_menu_visible == 1) {
+                $('html').removeClass('nav-open');
+
+                $('.close-layer').remove();
+                setTimeout(function() {
+                    $toggle.removeClass('toggled');
+                }, 400);
+
+                mobile_menu_visible = 0;
+            } else {
+                setTimeout(function() {
+                    $toggle.addClass('toggled');
+                }, 430);
+
+                var $layer = $('<div class="close-layer"></div>');
+
+                if ($('body').find('.main-panel').length != 0) {
+                    $layer.appendTo(".main-panel");
+
+                } else if (($('body').hasClass('off-canvas-sidebar'))) {
+                    $layer.appendTo(".wrapper-full-page");
+                }
+
+                setTimeout(function() {
+                    $layer.addClass('visible');
+                }, 100);
+
+                $layer.click(function() {
+                    $('html').removeClass('nav-open');
+                    mobile_menu_visible = 0;
+
+                    $layer.removeClass('visible');
+
+                    setTimeout(function() {
+                        $layer.remove();
+                        $toggle.removeClass('toggled');
+
+                    }, 400);
+                });
+
+                $('html').addClass('nav-open');
+                mobile_menu_visible = 1;
+
+            }
+        }
+
         init();
+
 
     }]);

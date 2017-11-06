@@ -79,7 +79,7 @@ if (CModule::IncludeModule("iblock")) {
                 $activeTo = date("d.m.Y", mktime(0, 0, 0, $lastDate["month"] + 3, $lastDate["day"] + 1, $lastDate["year"]));
             }
         }
-        if ($_POST["withdraw_amount"] == 999) {
+        if ($_POST["withdraw_amount"] == 999 || $_POST["withdraw_amount"] == 1399) {
             $tariff = "Активный";
             if ($lastDate < $currentDate){
                 $activeTo = date("d.m.Y", mktime(0, 0, 0, date("m"), date("d") + 1, date("Y") + 1));

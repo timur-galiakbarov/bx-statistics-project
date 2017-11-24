@@ -182,7 +182,7 @@
                                 <td class="text-center" width="50">
                                     <img ng-src="{{group.groupInfo.photo_small}}" width="40" rad-tooltip="{{group.groupInfo.name}}" placement="top">
                                 </td>
-                                <td class="text-center" ng-bind-html="(group.stat.actionsCount || 0) | radNumberFormatter:'withNbps'"></td>
+                                <td class="text-center" ng-bind-html="(group.stat.periodPostsCount || 0) | radNumberFormatter:'withNbps'"></td>
                                 <td class="text-center" ng-bind-html="(group.stat.actionsAverageByPost || 0) | radNumberFormatter:'withNbps'"></td>
                             </tr>
                             </tbody>

@@ -6,8 +6,8 @@ $APPLICATION->SetTitle("Авторизация");
 
 global $USER;
 //$redirectUrl = "http://localhost:6450";
-$redirectUrl = "http://socstat.local:91";
-//$redirectUrl = "http://socstat.ru";
+//$redirectUrl = "http://socstat.local:91";
+$redirectUrl = "https://socstat.ru";
 if ($USER->IsAuthorized())
     header("location: /lk");
 ?>

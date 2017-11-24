@@ -115,12 +115,20 @@ angular
                     .then((myList)=> {
                         $scope.model.adminGroups = myList;
 
+                        if (!($scope.model.adminGroups && $scope.model.adminGroups.length)) {
+                            $timeout(()=> {
+                                $scope.ui.isLoading = false;
+                                $scope.model.adminGroups = myList;
+                            });
+                            return;
+                        }
+
                         myList = myList.map((item)=> {
                             var editSelected = false;
                             if (statList && statList.length) {
                                 editSelected = statList.filter((el)=> {
-                                    return el == item.gid;
-                                }).length > 0;
+                                        return el == item.gid;
+                                    }).length > 0;
                             } else {
                                 editSelected = true;
                             }
@@ -129,7 +137,7 @@ angular
                             });
                         });
 
-                        $scope.model.groups = myList.filter((el)=>{
+                        $scope.model.groups = myList.filter((el)=> {
                             return el.editSelected;
                         });
 
@@ -329,7 +337,12 @@ angular
                         count: 100,
                         fields: "members_count"
                     }).then(function (res) {
-                        if (res && res[0] > 0) {
+                        if (res) {
+                            if (res[0] == 0) {
+                                deferr.resolve([]);
+                                return;
+                            }
+
                             res = res.slice(1);
                             deferr.resolve(res);
                         } else {
@@ -697,7 +710,7 @@ angular
 
                 var list = [];
                 $scope.model.adminGroups.forEach((el)=> {
-                    if (el.editSelected){
+                    if (el.editSelected) {
                         list.push(el.gid);
                     }
                 });
@@ -722,8 +735,8 @@ angular
                     });
             }
 
-            function goToAnalytics(gid){
-                if ($scope.ui.isLoading){
+            function goToAnalytics(gid) {
+                if ($scope.ui.isLoading) {
                     notify.info("Пожалуйста, дождитесь загрузки всех данных");
                     return;
                 }

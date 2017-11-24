@@ -48,7 +48,7 @@ angular
 
             $scope.$watch('model.datePicker.dateFrom', (newVal, oldVal)=> {
                 if (newVal != oldVal) {
-                    $scope.error.datePickerFromError = "";
+                    $scope.ui.error.datePickerFromError = "";
                     var radios = $('input[name=checkDate]');
                     radios.filter('[value=datePicker]').prop("checked", true);
                 }
@@ -56,7 +56,7 @@ angular
 
             $scope.$watch('model.datePicker.dateTo', (newVal, oldVal)=> {
                 if (newVal != oldVal) {
-                    $scope.error.datePickerToError = "";
+                    $scope.ui.error.datePickerToError = "";
                     var radios = $('input[name=checkDate]');
                     radios.filter('[value=datePicker]').prop("checked", true);
                 }
@@ -70,6 +70,7 @@ angular
             function getCheckedDate() {
                 var checkDate = $('input[name=checkDate]:checked').val();
                 var currDate = new Date();
+                currDate.setHours(0, 0, 0, 0);
                 var dateTo = new Date();
                 var dateFrom;
 
@@ -85,19 +86,19 @@ angular
                         break;
                     case "datePicker":
                         if (!$scope.model.datePicker.dateFrom) {
-                            $scope.error.datePickerFromError = "Неверная дата";
+                            $scope.ui.error.datePickerFromError = "Неверная дата";
                             return {
                                 error: true
                             }
                         }
                         if (!$scope.model.datePicker.dateTo) {
-                            $scope.error.datePickerToError = "Неверная дата";
+                            $scope.ui.error.datePickerToError = "Неверная дата";
                             return {
                                 error: true
                             }
                         }
                         if ($scope.model.datePicker.dateFrom > $scope.model.datePicker.dateTo) {
-                            $scope.error.datePickerFromError = "Дата начала превышает дату окончания";
+                            $scope.ui.error.datePickerFromError = "Дата начала превышает дату окончания";
                             return {
                                 error: true
                             }
@@ -197,8 +198,11 @@ angular
                             period: parseDate
                         };
 
+                        console.log(filter);
+
                         $.when(
                             bus.request(topics.STAT.GET_WALL, filter).then((data)=> {
+                                console.log(data);
                                 $scope.model.groupsStat[index].wall = calculateWallStat(data, $scope.model.groupsStat[index].groupInfo.members_count);
                                 $scope.$apply($scope.model.groupsStat[index].wall);
                             }),

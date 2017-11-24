@@ -327,11 +327,14 @@ angular
                         period: parseDate
                     };
 
+                    console.log(filter);
+
                     $.when(
                         getPeopleStat().always(()=> {
                             $scope.nextProgressStep($scope.percentItem);
                         }),
                         bus.request(topics.STAT.GET_WALL, filter).then((data)=> {
+                            console.log(data);
                             var wall = calculateWallStat(data);
                             $scope.model.wall = wall;
                             sortPostsList();
@@ -520,6 +523,11 @@ angular
             }
 
             function init() {
+                if (!needGetStatFromParams){
+                    $state.go('index.analytics');
+                    return;
+                }
+
                 $rootScope.setTitle("Подробная статистика сообщества");
                 //createCharts
                 graphModel.wallActivityGraph = new defaultGraph();

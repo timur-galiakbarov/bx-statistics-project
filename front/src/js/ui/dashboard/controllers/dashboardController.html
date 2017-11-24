@@ -28,8 +28,9 @@
                         </button>
                     </div>
 
-                    <div class="table-responsive" rad-loader="ui.isLoading">
-                        <table class="table table-hover compare-groups-table">
+                    <div class="" rad-loader="ui.isLoading"
+                         ng-show="model.adminGroups && model.adminGroups.length">
+                        <table class="table table-responsive table-hover compare-groups-table">
                             <thead>
                             <tr>
                                 <th class="text-center">#</th>
@@ -42,7 +43,11 @@
                                        placement="top"
                                        rad-tooltip="В первой строке указывается охват подписчиков группы, во второй - полный охват"></i>
                                 </th>
-                                <th>Лайки/Репосты/<br>Комментарии</th>
+                                <th>Лайки/Репосты/<br>Комментарии
+                                    <i class="fa fa-info-circle"
+                                       placement="top"
+                                       rad-tooltip="Активности рассчитываются к постам, размещенным за выбранный период"></i>
+                                </th>
                                 <th></th>
                             </tr>
                             </thead>
@@ -100,7 +105,7 @@
                                                 </a>
                                             </li>
                                             <li>
-                                                <a ng-click="goToAnalytics(stat.groupInfo.gid)">
+                                                <a ng-click="goToAnalytics(stat.groupInfo.gid)" style="cursor: pointer">
                                                     Подробная статистика
                                                 </a>
                                             </li>
@@ -123,7 +128,12 @@
                         </table>
                     </div>
 
-                    <div>
+                    <div ng-show="!(model.adminGroups && model.adminGroups.length)" style="margin-top: 15px; margin-bottom: 15px;">
+                        У вас нет управляемых вами групп. Нам нечего показать вам :(<br/>
+                        Однако, вы можете проанализировать любые чужие группы в разделе "Анализ сообществ"
+                    </div>
+
+                    <div ng-show="!ui.isLoading && model.adminGroups && model.adminGroups.length">
                         <button class="btn btn-success" ng-click="refresh()">Обновить</button>
                         <button class="btn" ng-click="openEditGroupsModal()">Редактировать список</button>
                     </div>
@@ -215,17 +225,17 @@
 
         <div class="col-md-4">
 
-            <div class="card">
-                <div class="card-header card-header-icon" data-background-color="blue">
-                    <i class="material-icons">assignment</i>
-                </div>
-                <div class="card-content">
-                    <h4 class="card-title">Мой тариф</h4>
+            <!-- <div class="card">
+                 <div class="card-header card-header-icon" data-background-color="blue">
+                     <i class="material-icons">assignment</i>
+                 </div>
+                 <div class="card-content">
+                     <h4 class="card-title">Мой тариф</h4>
 
-                    Бесплатный
+                     Бесплатный
 
-                </div>
-            </div>
+                 </div>
+             </div>-->
 
             <div class="fd-tile detail clean tile-blue" ng-if="noActiveTariff">
                 <div class="content"><h1 class="text-left">199 <i class="fa fa-rub"></i></h1>
@@ -236,6 +246,8 @@
                     работу <span><i
                             class="fa fa-arrow-circle-right pull-right"></i></span></a>
             </div>
+
+            <vk-group-widget/>
 
         </div>
 
@@ -301,7 +313,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div ng-show="!(model.adminGroups && model.adminGroups.length)">
+                <div ng-show="!model.adminGroups || !(model.adminGroups && model.adminGroups.length)">
                     Нет администрируемых групп
                 </div>
             </div>

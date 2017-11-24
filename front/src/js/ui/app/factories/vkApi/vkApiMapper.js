@@ -48,7 +48,7 @@
                     count: res.count,
                     items: res.items.map((item)=> {
                         return {
-                            id: item.id,
+                            gid: item.id,
                             is_admin: item.is_admin,
                             is_closed: item.is_closed,
                             is_member: item.is_member,

@@ -195,7 +195,8 @@
     max-height: 600px;
     overflow-y: scroll;
 }
-.stat_icon{
+
+.stat_icon {
     font-size: 10px;
 }
 
@@ -208,7 +209,26 @@
     box-shadow: 0 4px 20px 0px rgba(0, 0, 0, 0.14), 0 7px 10px -5px rgba(76, 175, 80, 0.4);
 }
 
-.dashboard .btn-stat{
+.dashboard .btn-stat {
     margin-top: 2px !important;
     margin-bottom: 2px !important;
+}
+
+.groupLink td {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.groupLink .group-label span {
+    padding-left: 10px;
+    color: #006294;
+    font-weight: 500;
+}
+
+.w100{
+    width:100%;
+}
+
+.vk-group-widget{
+    margin-top: 24px;
 }

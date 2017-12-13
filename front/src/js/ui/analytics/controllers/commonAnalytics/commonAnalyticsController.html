@@ -19,7 +19,8 @@
                 <div class="card-content">
                     <h4 class="card-title">Сообщество &laquo;{{model.groupInfo.groupName}}&raquo;</h4>
 
-                    <p class="category">за период с {{model.groupInfo.periodLabels.from}} по {{model.groupInfo.periodLabels.to}}</p>
+                    <p class="category">за период с {{model.groupInfo.periodLabels.from}} по
+                        {{model.groupInfo.periodLabels.to}}</p>
 
                     <div class="row">
                         <div class="col-xs-12">
@@ -191,9 +192,9 @@
                             <i class="material-icons">accessibility</i> Вовлеченность
                         </a>
                     </li>
-                    <li ng-class="{active: activeTab == 'dynamic'}">
-                        <a role="tab" data-toggle="tab" ng-click="showTab('dynamic')">
-                            <i class="material-icons">account_box</i> Подписчики
+                    <li ng-class="{active: activeTab == 'subscribers'}">
+                        <a role="tab" data-toggle="tab" ng-click="showTab('subscribers')">
+                            <i class="material-icons">account_box</i> Посещаемость<br/>и просмотры
                         </a>
                     </li>
                     <li ng-class="{active: activeTab == 'content'}">
@@ -245,7 +246,11 @@
                             </div>
                             <div class="row">
                                 <div class="col-xs-12">
-                                    <h4>Охват рекламных постов</h4>
+                                    <h4>Охват рекламных постов
+                                        <i class="fa fa-question-circle"
+                                           rad-tooltip="Учитываются посты, помеченные как 'Рекламная запись'. Если рекламный пост был удален - пост не учитывается в отчете"
+                                           placement="top"></i>
+                                    </h4>
                                 </div>
                             </div>
                             <div class="row">
@@ -290,7 +295,8 @@
                                     <div class="details">Вступивших <span></span></div>
                                 </div>
                                 <div class="col-sm-3 text-center">
-                                    <div class="content"><h4 ng-bind="model.stat.unsubscribed | radNumberFormatter"></h4>
+                                    <div class="content"><h4
+                                            ng-bind="model.stat.unsubscribed | radNumberFormatter"></h4>
 
                                         <p></p></div>
                                     <div class="icon"><i class="fa fa-sign-out"></i></div>
@@ -326,6 +332,41 @@
                             <canvas id="subscribersStatGraphReport" height="300"></canvas>
                         </div>
                     </div>
+
+                    <!--<div class="card" ng-hide="statNotAccess">
+                        <div class="card-header card-header-icon" data-background-color="blue">
+                            <i class="material-icons">favorite</i>
+                        </div>
+                        <div class="card-content">
+                            <h4 class="card-title">Посещаемость и просмотры</h4>
+
+                            <div class="row">
+                                <div class="col-md-3 text-center">
+                                    <div class="content"><h4 ng-bind="model.stat.visitors | radNumberFormatter"></h4>
+                                    </div>
+                                    <div class="icon"><i class="fa fa-users"></i></div>
+                                    <div class="details">Посетители</div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="content"><h4 ng-bind="model.stat.views | radNumberFormatter"></h4></div>
+                                    <div class="icon"><i class="fa fa-eye"></i></div>
+                                    <div class="details">Просмотры <span></span></div>
+                                </div>
+                                &lt;!&ndash;<div class="col-md-3 text-center">
+                                    <div class="content"><h4>{{model.stat.reachSubscribers | radNumberFormatter}}</h4>
+                                    </div>
+                                    <div class="icon"><i class="fa fa-users"></i></div>
+                                    <div class="details">Охват подписчиков</div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="content"><h4>{{model.stat.reach | radNumberFormatter}}</h4></div>
+                                    <div class="icon"><i class="fa fa-users"></i></div>
+                                    <div class="details">Полный охват <span></span></div>
+                                </div>&ndash;&gt;
+                            </div>
+                            <canvas id="attendanceStatGraph" height="300"></canvas>
+                        </div>
+                    </div>-->
 
                     <div class="card">
                         <div class="card-header card-header-icon" data-background-color="blue">
@@ -437,7 +478,8 @@
                     </div>
                 </div>
 
-                <div ng-show="activeTab == 'dynamic'">
+                <div ng-show="activeTab == 'subscribers'">
+
                     <h3>Подписчики, посещаемость и просмотры</h3>
 
                     <div class="alert alert-info alert-with-icon" data-notify="container" ng-show="statNotAccess">
@@ -457,13 +499,15 @@
 
                                 <div class="row">
                                     <div class="col-sm-4 text-center">
-                                        <div class="content"><h4 ng-bind="model.stat.subscribed | radNumberFormatter"></h4>
+                                        <div class="content"><h4
+                                                ng-bind="model.stat.subscribed | radNumberFormatter"></h4>
                                         </div>
                                         <div class="icon"><i class="fa fa-sign-in"></i></div>
                                         <div class="details">Вступивших <span></span></div>
                                     </div>
                                     <div class="col-sm-4 text-center">
-                                        <div class="content"><h4 ng-bind="model.stat.unsubscribed | radNumberFormatter"></h4>
+                                        <div class="content"><h4
+                                                ng-bind="model.stat.unsubscribed | radNumberFormatter"></h4>
 
                                             <p></p></div>
                                         <div class="icon"><i class="fa fa-sign-out"></i></div>
@@ -500,18 +544,21 @@
 
                                 <div class="row">
                                     <div class="col-md-3 text-center">
-                                        <div class="content"><h4 ng-bind="model.stat.visitors | radNumberFormatter"></h4>
+                                        <div class="content"><h4
+                                                ng-bind="model.stat.visitors | radNumberFormatter"></h4>
                                         </div>
                                         <div class="icon"><i class="fa fa-users"></i></div>
                                         <div class="details">Посетители</div>
                                     </div>
                                     <div class="col-md-3 text-center">
-                                        <div class="content"><h4 ng-bind="model.stat.views | radNumberFormatter"></h4></div>
+                                        <div class="content"><h4 ng-bind="model.stat.views | radNumberFormatter"></h4>
+                                        </div>
                                         <div class="icon"><i class="fa fa-eye"></i></div>
                                         <div class="details">Просмотры <span></span></div>
                                     </div>
                                     <div class="col-md-3 text-center">
-                                        <div class="content"><h4>{{model.stat.reachSubscribers | radNumberFormatter}}</h4>
+                                        <div class="content"><h4>{{model.stat.reachSubscribers |
+                                            radNumberFormatter}}</h4>
                                         </div>
                                         <div class="icon"><i class="fa fa-users"></i></div>
                                         <div class="details">Охват подписчиков</div>
@@ -523,6 +570,86 @@
                                     </div>
                                 </div>
                                 <canvas id="attendanceStatGraph" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div ng-if="false">
+
+                        <h3>Анализ подписчиков</h3>
+
+                        <div class="alert alert-info alert-with-icon" data-notify="container">
+                            <i class="material-icons" data-notify="icon">notifications</i>
+                        <span data-notify="message">
+                            Нажмите на "Начать анализ", чтобы выгрузить всех подписчиков группы.<br/>
+                            Обратите внимание, что анализ подписчиков доступен для активного тарифа.
+                        </span>
+                        </div>
+
+                        <button class="btn btn-success"> Начать анализ подписчиков
+                            <div class="ripple-container"></div>
+                        </button>
+
+                        <div class="card">
+                            <div class="card-content">
+                                <h4 class="card-title">Выгрузка пользователей</h4>
+
+                                <div class="row">
+                                    <div class="col-sm-4 text-center">
+                                        <div style="height: 100px;" rad-loader="{{true}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4 text-center">
+                                        <div class="content">
+                                            <h4 ng-bind="(model.wall.actionsCount || 0) | radNumberFormatter"></h4>
+                                        </div>
+                                        <div class="details">Загружено<br/>подписчиков</div>
+                                    </div>
+                                    <div class="col-sm-4 text-center">
+                                        <div class="content">
+                                            <h4 ng-bind="model.groupInfo.membersCount | radNumberFormatter"></h4>
+                                        </div>
+                                        <div class="details">Из</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header card-header-icon" data-background-color="blue">
+                                <i class="material-icons">favorite</i>
+                            </div>
+                            <div class="card-content">
+                                <h4 class="card-title">Общая информация</h4>
+
+                                <div class="row">
+                                    <div class="col-sm-3 text-center">
+                                        <div class="content"><h4
+                                                ng-bind="(model.wall.actionsCount || 0) | radNumberFormatter"></h4>
+                                        </div>
+                                        <div class="details">Количество<br/>ботов</div>
+                                    </div>
+                                    <div class="col-sm-3 text-center">
+                                        <div class="content"><h4
+                                                ng-bind="(model.wall.likes.count || 0) | radNumberFormatter"></h4></div>
+                                        <div class="icon"><i class="fa fa-heart-o"></i></div>
+                                        <div class="details">Лайков</div>
+                                    </div>
+                                    <div class="col-sm-3 text-center">
+                                        <div class="content"><h4
+                                                ng-bind="(model.wall.reposts.count || 0) | radNumberFormatter"></h4>
+                                        </div>
+                                        <div class="icon"><i class="fa fa-share-alt"></i></div>
+                                        <div class="details">Репостов</div>
+                                    </div>
+                                    <div class="col-sm-3 text-center">
+                                        <div class="content"><h4
+                                                ng-bind="(model.wall.comments.count || 0) | radNumberFormatter"></h4>
+                                        </div>
+                                        <div class="icon"><i class="fa fa-comment-o"></i></div>
+                                        <div class="details">Комментариев</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

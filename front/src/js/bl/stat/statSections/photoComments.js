@@ -8,7 +8,7 @@ function getPhotoCommentsStat(data) {
     var period = data.period;
 
     var deferr = $.Deferred();
-    var maxIterations = 50,
+    var maxIterations = 150,
         iteration = 0,
         flagStop = false,
         list = [],
@@ -19,8 +19,9 @@ function getPhotoCommentsStat(data) {
     function getPhotosComments() {
         if (iteration >= maxIterations) {
             deferr.resolve({
-                allCount: 0,
-                list: []
+                allCount: list && list.length ? list.length : 0,
+                list: list,
+                periodCount: count
             });
             return;
         }

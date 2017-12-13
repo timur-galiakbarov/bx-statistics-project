@@ -12,14 +12,17 @@ function getPhotoStat(data) {
     var list = [];
     var flagStop = false;
     var iteration = 0;
-    var maxIterations = 30;
+    var maxIterations = 150;
 
     getPhotos();
 
     function getPhotos() {
         if (iteration >= maxIterations) {
             //newAlbums = 0;
-            deferr.resolve({});
+            deferr.resolve({
+                count: list && list.length ? list.length : 0,
+                list: list
+            });
             return;
         }
         bus.request(topics.VK.GET_ALL_PHOTO, authData, {

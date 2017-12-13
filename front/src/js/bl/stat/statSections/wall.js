@@ -16,7 +16,10 @@ function getWallStat(data) {
 
     function getWall() {
         if (iteration >= 130) {
-            deferr.resolve();
+            deferr.resolve({
+                count: wallList && wallList.length ? wallList.length : 0,
+                list: wallList
+            });
             return;
         }
 

@@ -17,7 +17,10 @@ function getVideoStat(data) {
 
     function getVideo() {
         if (iteration >= maxIterations) {
-            deferr.resolve();
+            deferr.resolve({
+                count: list && list.length ? list.length : 0,
+                list: list
+            });
             return;
         }
         bus.request(topics.VK.GET_VIDEO, authData, {

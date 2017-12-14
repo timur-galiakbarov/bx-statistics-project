@@ -14,6 +14,7 @@ angular
             };
             $scope.getColorStatus = getColorStatus;
             $scope.refresh = refresh;
+            $scope.getUserStatus = getUserStatus;
 
             bus.publish(events.ADMIN.STATE_CHANGED, "dashboard");
 
@@ -119,7 +120,9 @@ angular
                             $scope.stat.usersList = res.data.usersList;
                             $scope.stat.payCount = res.data.payCount;
                             $scope.stat.payCountCurrentMonth = res.data.payCountCurrentMonth;
+                            $scope.stat.payRurCurrentMonth = res.data.payRurCurrentMonth;
                             $scope.stat.payCountLastMonth = res.data.payCountLastMonth;
+                            $scope.stat.payRurLastMonth = res.data.payRurLastMonth;
                             $scope.stat.payCountRur = res.data.payCountRur;
 
                             $scope.stat.registerGraph = formatGraphData(res.data.usersRegisterList);
@@ -182,28 +185,68 @@ angular
                 return graphData;
             }
 
-            function getColorStatus(activeDate) {
+            function getColorStatus(activeDate, registerDate) {
                 if (!activeDate)
                     return "grey";
 
                 var parseDate = activeDate.split(".");
+                registerDate = registerDate.split(" ");
+                registerDate = registerDate[0].split(".");
                 var activeDateNormilize = new Date(parseDate[2], parseDate[1] - 1, parseDate[0]).getTime();
+                var registerDateNormilize = new Date(registerDate[2], registerDate[1] - 1, registerDate[0]).getTime();
                 var currentDate = (new Date()).getTime();
 
 
                 if (activeDateNormilize - currentDate > 0 && activeDateNormilize - currentDate < 2 * 24 * 60 * 60 * 1000) {
+                    //подписка скоро закончится
                     return "orange";
                 }
 
                 if (activeDateNormilize - currentDate > 6 * 24 * 60 * 60 * 1000) {
-                    return "blue";
+                    return "green";
                 }
 
                 if (activeDateNormilize - currentDate < 0) {
                     return "red";
                 }
 
+                if (currentDate - registerDateNormilize >= 0 && currentDate - registerDateNormilize < 24 * 60 * 60 * 1000) {
+                    //Новый юзер
+                    return "blue";
+                }
+
                 return "grey";
+            }
+
+            function getUserStatus(activeDate, registerDate) {
+                if (!activeDate)
+                    return "Нет лимита";
+
+                var parseDate = activeDate.split(".");
+                registerDate = registerDate.split(" ");
+                registerDate = registerDate[0].split(".");
+                var activeDateNormilize = new Date(parseDate[2], parseDate[1] - 1, parseDate[0]).getTime();
+                var registerDateNormilize = new Date(registerDate[2], registerDate[1] - 1, registerDate[0]).getTime();
+                var currentDate = (new Date()).getTime();
+
+
+                if (activeDateNormilize - currentDate > 0 && activeDateNormilize - currentDate < 2 * 24 * 60 * 60 * 1000) {
+                    return "Скоро достигнет лимита";
+                }
+
+                if (activeDateNormilize - currentDate > 6 * 24 * 60 * 60 * 1000) {
+                    return "Активный";
+                }
+
+                if (activeDateNormilize - currentDate < 0) {
+                    return "Подписка не оплачена";
+                }
+
+                if (currentDate - registerDateNormilize >= 0 && currentDate - registerDateNormilize < 24 * 60 * 60 * 1000) {
+                    return "Новый пользователь";
+                }
+
+                return "Тут непонятно что";
             }
 
             function init() {

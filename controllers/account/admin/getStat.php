@@ -20,7 +20,9 @@ if (CModule::IncludeModule("iblock")) {
         "usersRegisterList" => Array(),
         "payCount" => 0,
         "payCountCurrentMonth" => 0,
+        "payRurCurrentMonth" => 0,
         "payCountLastMonth" => 0,
+        "payRurLastMonth" => 0,
         "payCountRur" => 0
     );
 
@@ -84,9 +86,11 @@ if (CModule::IncludeModule("iblock")) {
 
         if ($createdDate >= $periodCurrentMonth) {
             $data["payCountCurrentMonth"]++;
+            $data["payRurCurrentMonth"] += $arFields["PROPERTY_SUMM_VALUE"];
         }
         if ($createdDate >= $periodLasttMonth && $createdDate < $periodCurrentMonth) {
             $data["payCountLastMonth"]++;
+            $data["payRurLastMonth"] += $arFields["PROPERTY_SUMM_VALUE"];
         }
 
 

@@ -232,3 +232,38 @@
 .vk-group-widget{
     margin-top: 24px;
 }
+
+.status-active-user{
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border-radius: 40px;
+    float:left;
+    font-size: 11px;
+}
+
+.status-active-user.grey{
+    background: #a1a1a1;
+    color: #333;
+}
+.status-active-user.blue{
+    background: #318ac6;
+    color: #fff;
+}
+.status-active-user.red{
+    background: #f16e3f;
+    color: #fff;
+}
+.status-active-user.green{
+    background: #008855;
+    color: #fff;
+}
+
+.status-active-user.orange{
+    background: #f16e3f;
+    color: #fff;
+}
+
+.status-active-user-text{
+    font-size: 11px;
+}

@@ -61,13 +61,15 @@
                                 <td class="text-center"
                                     ng-bind-html="(stat.groupInfo.members_count || 0) | radNumberFormatter:'withNbps'"></td>
                                 <td class="text-center">
-                                    {{(stat.groupStat.summ || 0) | radNumberFormatter:'withNbps'}}<br>
-                                <span class="stat_subscribed">
-                                    <i class="fa fa-arrow-up stat_icon"></i> {{(stat.groupStat.subscribed || 0) | radNumberFormatter:'withNbps'}}
-                                </span> |
-                                <span class="stat_unsubscribed">
-                                    <i class="fa fa-arrow-down stat_icon"></i> {{(stat.groupStat.unsubscribed || 0) | radNumberFormatter:'withNbps'}}
-                                </span>
+                                    <span ng-bind-html="(stat.groupStat.summ || 0) | radNumberFormatter:'withNbps'"></span><br>
+                                    <span class="stat_subscribed">
+                                        <i class="fa fa-arrow-up stat_icon"></i> <span
+                                            ng-bind-html="(stat.groupStat.subscribed || 0) | radNumberFormatter:'withNbps'"></span>
+                                    </span> |
+                                    <span class="stat_unsubscribed">
+                                        <i class="fa fa-arrow-down stat_icon"></i> <span
+                                            ng-bind-html="(stat.groupStat.unsubscribed || 0) | radNumberFormatter:'withNbps'"></span>
+                                    </span>
                                 </td>
                                 <td class="text-center">
                                     <i class="fa fa-users stat_icon"></i> {{(stat.groupStat.visitors || 0) |
@@ -76,8 +78,8 @@
                                     radNumberFormatter:'withNbps'}}
                                 </td>
                                 <td class="text-center">
-                                    {{(stat.groupStat.reach_subscribers || 0) | radNumberFormatter:'withNbps'}}<br>
-                                    {{(stat.groupStat.reach || 0) | radNumberFormatter:'withNbps'}}
+                                    <span ng-bind-html="(stat.groupStat.reach_subscribers || 0) | radNumberFormatter:'withNbps'"></span><br>
+                                    <span ng-bind-html="(stat.groupStat.reach || 0) | radNumberFormatter:'withNbps'"></span>
                                 </td>
                                 <td>
                                     <i class="fa fa-heart-o stat_icon"></i>
@@ -128,7 +130,8 @@
                         </table>
                     </div>
 
-                    <div ng-show="!(model.adminGroups && model.adminGroups.length)" style="margin-top: 15px; margin-bottom: 15px;">
+                    <div ng-show="!(model.adminGroups && model.adminGroups.length)"
+                         style="margin-top: 15px; margin-bottom: 15px;">
                         У вас нет управляемых вами групп. Нам нечего показать вам :(<br/>
                         Однако, вы можете проанализировать любые чужие группы в разделе "Анализ сообществ"
                     </div>

@@ -54,20 +54,24 @@
                         <tr>
                             <th>В этом месяце</th>
                             <th>{{stat.payCountCurrentMonth}}</th>
+                            <th>{{(stat.payRurCurrentMonth || 0) | radAmountFilter}} <i class="fa fa-ruble"></i></th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr>
                             <td>В предыдущем</td>
                             <td>{{stat.payCountLastMonth}}</td>
+                            <td>{{(stat.payRurLastMonth || 0) | radAmountFilter}} <i class="fa fa-ruble"></i></td>
                         </tr>
                         <tr>
                             <td>Всего выплат</td>
                             <td>{{stat.payCount}}</td>
+                            <td></td>
                         </tr>
                         <tr>
                             <td>Всего в рублях</td>
                             <td>{{stat.payCountRur | radAmountFilter}} <i class="fa fa-ruble"></i></td>
+                            <td></td>
                         </tr>
                         </tbody>
                     </table>
@@ -81,7 +85,7 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header" data-background-color="blue">
-                    <h4 class="title"><i class="fa fa-vk"></i> Пользователи за 2 дня</h4>
+                    <h4 class="title"><i class="fa fa-vk"></i> Пользователи за 48 часов ({{stat.usersList ? stat.usersList.length : 0}})</h4>
                 </div>
                 <div class="card-content admin-user-table">
 
@@ -103,7 +107,8 @@
                                 <span style="font-size: 12px;">{{user.lastAuth}}</span>
                             </td>
                             <td>
-                                <div class="status-active-user {{getColorStatus(user.activeTo)}}"></div>
+                                <div class="status-active-user {{getColorStatus(user.activeTo, user.dateRegister)}}"></div>
+                                <div class="status-active-user-text" ng-bind="getUserStatus(user.activeTo, user.dateRegister)"></div>
                             </td>
                             <td>{{user.dateRegister}}</td>
                             <td>{{user.activeTo}}</td>

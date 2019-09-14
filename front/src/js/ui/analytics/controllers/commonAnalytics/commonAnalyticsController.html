@@ -184,17 +184,17 @@
                     </li>
                     <li ng-class="{active: activeTab == 'activity'}">
                         <a role="tab" data-toggle="tab" ng-click="showTab('activity')">
-                            <i class="material-icons">favorite</i> Активность<br>аудитории
+                            <i class="material-icons">favorite</i> Активность<br>и вовлеченность
                         </a>
                     </li>
-                    <li ng-class="{active: activeTab == 'er'}">
+                    <!--<li ng-class="{active: activeTab == 'er'}">
                         <a role="tab" data-toggle="tab" ng-click="showTab('er')">
                             <i class="material-icons">accessibility</i> Вовлеченность
                         </a>
-                    </li>
+                    </li>-->
                     <li ng-class="{active: activeTab == 'subscribers'}">
                         <a role="tab" data-toggle="tab" ng-click="showTab('subscribers')">
-                            <i class="material-icons">account_box</i> Посещаемость<br/>и просмотры
+                            <i class="material-icons">account_box</i> Информация<br/>об аудитории
                         </a>
                     </li>
                     <li ng-class="{active: activeTab == 'content'}">
@@ -480,9 +480,9 @@
 
                 <div ng-show="activeTab == 'subscribers'">
 
-                    <h3>Подписчики, посещаемость и просмотры</h3>
+                    <!--<h3>Подписчики, посещаемость и просмотры</h3>-->
 
-                    <div class="alert alert-info alert-with-icon" data-notify="container" ng-show="statNotAccess">
+                    <!--<div class="alert alert-info alert-with-icon" data-notify="container" ng-show="statNotAccess">
                         <i class="material-icons" data-notify="icon">visibility_off</i>
                             <span data-notify="message">
                                 <strong>Статистика этой группы закрыта</strong><br/>
@@ -572,82 +572,283 @@
                                 <canvas id="attendanceStatGraph" height="300"></canvas>
                             </div>
                         </div>
+                    </div>-->
+
+
+                    <h3>Общая информация об аудитории</h3>
+
+                    <div class="alert alert-info alert-with-icon" ng-show="model.groupInfo.membersCount >= 100000">
+                        <i class="material-icons" data-notify="icon">notifications</i>
+                        <span data-notify="message">
+                            Обратите внимание. Так как в группе большое количество подписчиков,
+                            то может потребоваться продолжительное время для сбора и анализа всей аудитории.
+                            <br>
+                            Результаты будут отображаться сразу, на каждом шаге получения и анализа подписчиков.
+                        </span>
                     </div>
 
-                    <div ng-if="false">
+                    <button class="btn btn-success" ng-click="getAuditory()" ng-hide="model.auditoryInfo.loading">
+                        Получить инфо по аудитории
+                        <div class="ripple-container"></div>
+                    </button>
 
-                        <h3>Анализ подписчиков</h3>
+                    <button class="btn btn-danger"
+                            ng-click="!model.auditoryInfo.stopped && stopCollectingAuditory()"
+                            rad-loader="model.auditoryInfo.stopped"
+                            ng-show="model.auditoryInfo.loading">
+                        Остановить сбор
+                    </button>
 
-                        <div class="alert alert-info alert-with-icon" data-notify="container">
-                            <i class="material-icons" data-notify="icon">notifications</i>
-                        <span data-notify="message">
-                            Нажмите на "Начать анализ", чтобы выгрузить всех подписчиков группы.<br/>
-                            Обратите внимание, что анализ подписчиков доступен для активного тарифа.
-                        </span>
+                    <div class="card">
+                        <div class="card-content">
+                            <h4 class="card-title">Выгрузка пользователей</h4>
+
+                            <div class="row">
+                                <div class="col-sm-4 text-center" ng-show="model.auditoryInfo.loading">
+                                    <div style="height: 100px;" rad-loader="{{true}}">
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 text-center">
+                                    <div class="content">
+                                        <h4 ng-bind="(model.auditoryInfo.loadedUsersCount || 0) | radNumberFormatter"></h4>
+                                    </div>
+                                    <div class="details">Загружено<br/>подписчиков</div>
+                                </div>
+                                <div class="col-sm-4 text-center">
+                                    <div class="content">
+                                        <h4 ng-bind="model.groupInfo.membersCount | radNumberFormatter"></h4>
+                                    </div>
+                                    <div class="details">Всего<br/>подписчиков</div>
+                                </div>
+                            </div>
                         </div>
+                    </div>
 
-                        <button class="btn btn-success"> Начать анализ подписчиков
-                            <div class="ripple-container"></div>
-                        </button>
+                    <div class="card">
+                        <div class="card-header card-header-icon" data-background-color="blue">
+                            <i class="material-icons">wc</i>
+                        </div>
+                        <div class="card-content">
+                            <h4 class="card-title">Пол</h4>
 
-                        <div class="card">
-                            <div class="card-content">
-                                <h4 class="card-title">Выгрузка пользователей</h4>
-
-                                <div class="row">
-                                    <div class="col-sm-4 text-center">
-                                        <div style="height: 100px;" rad-loader="{{true}}">
-                                        </div>
+                            <div class="row">
+                                <div class="col-sm-4 text-center">
+                                    <div class="content">
+                                        <h4>{{model.auditoryInfo.mensCountPercent || 0}}%</h4>
+                                        <br/>
+                                        <span ng-bind="(model.auditoryInfo.mensCount || 0) | radNumberFormatter"></span>
                                     </div>
-                                    <div class="col-sm-4 text-center">
-                                        <div class="content">
-                                            <h4 ng-bind="(model.wall.actionsCount || 0) | radNumberFormatter"></h4>
-                                        </div>
-                                        <div class="details">Загружено<br/>подписчиков</div>
+                                    <div class="details">Мужчины</div>
+                                </div>
+                                <div class="col-sm-4 text-center">
+                                    <div class="content">
+                                        <h4>{{model.auditoryInfo.womansCountPercent || 0}}%</h4>
+                                        <br/>
+                                        <span ng-bind="(model.auditoryInfo.womansCount || 0) | radNumberFormatter"></span>
                                     </div>
-                                    <div class="col-sm-4 text-center">
-                                        <div class="content">
-                                            <h4 ng-bind="model.groupInfo.membersCount | radNumberFormatter"></h4>
-                                        </div>
-                                        <div class="details">Из</div>
+                                    <div class="details">Женщины</div>
+                                </div>
+                                <div class="col-sm-4 text-center">
+                                    <div class="content">
+                                        <h4>{{model.auditoryInfo.withoutSexCountPercent || 0}}%</h4>
+                                        <br/>
+                                        <span ng-bind="(model.auditoryInfo.withoutSexCount || 0) | radNumberFormatter"></span>
+                                    </div>
+                                    <div class="details">Не указано</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header card-header-icon" data-background-color="blue">
+                            <i class="material-icons">thumb_down</i>
+                        </div>
+                        <div class="card-content">
+                            <h4 class="card-title">Неактивные</h4>
+
+                            <div class="row">
+                                <div class="col-sm-12 text-center">
+                                    <div class="content">
+                                        <h4>{{model.auditoryInfo.deactivatedPercent || 0}}%</h4>
+                                        <br/>
+                                        <span ng-bind="(model.auditoryInfo.deactivated || 0) | radNumberFormatter"></span>
+                                    </div>
+                                    <div class="details">Забаненные пользователи</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header card-header-icon" data-background-color="blue">
+                            <i class="material-icons">list</i>
+                        </div>
+                        <div class="card-content">
+                            <h4 class="card-title">Возраст</h4>
+
+                            <div class="row">
+                                <div class="col-sm-6 text-center m-bottom-15">
+                                    <div class="content">
+                                        <h4 ng-bind="model.auditoryInfo.bdate.adsValue"></h4>
+                                    </div>
+                                    <div class="details">Средний возраст, лет</div>
+                                </div>
+                                <div class="col-sm-6 text-center m-bottom-15">
+                                    <div class="content">
+                                        <h4 ng-bind="model.auditoryInfo.bdate.withoutAge"></h4>
+                                    </div>
+                                    <div class="details">Не указали возраст, человек</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-12 text-center">
+                                    <div class="content">
+                                        <table class="table table-responsive table-hover">
+                                            <tr>
+                                                <th class="text-left">Диапазон</th>
+                                                <th class="text-center">Значение</th>
+                                                <th class="text-center">Процент</th>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-left">до 18 лет</td>
+                                                <td class="text-center"
+                                                    ng-bind="(model.auditoryInfo.bdate.before18 || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">{{(model.auditoryInfo.bdate.before18Percent ||
+                                                    0)}}%
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-left">от 18 до 23 лет</td>
+                                                <td class="text-center"
+                                                    ng-bind="(model.auditoryInfo.bdate.after18before23 || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">
+                                                    {{(model.auditoryInfo.bdate.after18before23Percent || 0)}}%
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-left">от 23 до 35 лет</td>
+                                                <td class="text-center"
+                                                    ng-bind="(model.auditoryInfo.bdate.after23before35 || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">
+                                                    {{(model.auditoryInfo.bdate.after23before35Percent || 0)}}%
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-left">от 35 до 50 лет</td>
+                                                <td class="text-center"
+                                                    ng-bind="(model.auditoryInfo.bdate.after35before50 || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">
+                                                    {{(model.auditoryInfo.bdate.after35before50Percent || 0)}}%
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-left">от 50 лет и старше</td>
+                                                <td class="text-center"
+                                                    ng-bind="(model.auditoryInfo.bdate.after50 || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">{{(model.auditoryInfo.bdate.after50Percent ||
+                                                    0)}}%
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="card">
-                            <div class="card-header card-header-icon" data-background-color="blue">
-                                <i class="material-icons">favorite</i>
+                    <div class="card">
+                        <div class="card-header card-header-icon" data-background-color="blue">
+                            <i class="material-icons">remove_red_eye</i>
+                        </div>
+                        <div class="card-content">
+                            <h4 class="card-title">Когда были "ВКонтакте"?</h4>
+
+                            <div class="row">
+                                <div class="col-sm-12 text-center m-bottom-15">
+                                    <div class="content">
+                                        <h4 ng-bind="(model.auditoryInfo.lastSeen.online || 0) | radNumberFormatter"></h4>
+                                    </div>
+                                    <div class="details">Сейчас онлайн</div>
+                                </div>
                             </div>
-                            <div class="card-content">
-                                <h4 class="card-title">Общая информация</h4>
 
-                                <div class="row">
-                                    <div class="col-sm-3 text-center">
-                                        <div class="content"><h4
-                                                ng-bind="(model.wall.actionsCount || 0) | radNumberFormatter"></h4>
-                                        </div>
-                                        <div class="details">Количество<br/>ботов</div>
+                            <div class="row">
+                                <div class="col-sm-12 text-center">
+                                    <div class="content">
+                                        <table class="table table-responsive table-hover">
+                                            <tr>
+                                                <th class="text-left">Диапазон</th>
+                                                <th class="text-center">Значение</th>
+                                                <th class="text-center">Процент</th>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-left">до суток назад (включая онлайн)</td>
+                                                <td class="text-center"
+                                                    ng-bind="(model.auditoryInfo.lastSeen.today || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">{{(model.auditoryInfo.lastSeen.todayPercent || 0) | radNumberFormatter}}%</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-left">до двух суток назад</td>
+                                                <td class="text-center"
+                                                    ng-bind="(model.auditoryInfo.lastSeen.yesterday || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">{{(model.auditoryInfo.lastSeen.yesterdayPercent || 0) | radNumberFormatter}}%</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-left">от 2 до 7 дней назад</td>
+                                                <td class="text-center"
+                                                    ng-bind="(model.auditoryInfo.lastSeen.after2before7 || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">{{(model.auditoryInfo.lastSeen.after2before7Percent || 0) | radNumberFormatter}}%</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-left">от 7 дней до месяца</td>
+                                                <td class="text-center"
+                                                    ng-bind="(model.auditoryInfo.lastSeen.after7before30 || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">{{(model.auditoryInfo.lastSeen.after7before30Percent || 0) | radNumberFormatter}}%</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-left">заходили больше месяца назад</td>
+                                                <td class="text-center"
+                                                    ng-bind="(model.auditoryInfo.lastSeen.after30 || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">{{(model.auditoryInfo.lastSeen.after30Percent || 0) | radNumberFormatter}}%</td>
+                                            </tr>
+                                        </table>
                                     </div>
-                                    <div class="col-sm-3 text-center">
-                                        <div class="content"><h4
-                                                ng-bind="(model.wall.likes.count || 0) | radNumberFormatter"></h4></div>
-                                        <div class="icon"><i class="fa fa-heart-o"></i></div>
-                                        <div class="details">Лайков</div>
-                                    </div>
-                                    <div class="col-sm-3 text-center">
-                                        <div class="content"><h4
-                                                ng-bind="(model.wall.reposts.count || 0) | radNumberFormatter"></h4>
-                                        </div>
-                                        <div class="icon"><i class="fa fa-share-alt"></i></div>
-                                        <div class="details">Репостов</div>
-                                    </div>
-                                    <div class="col-sm-3 text-center">
-                                        <div class="content"><h4
-                                                ng-bind="(model.wall.comments.count || 0) | radNumberFormatter"></h4>
-                                        </div>
-                                        <div class="icon"><i class="fa fa-comment-o"></i></div>
-                                        <div class="details">Комментариев</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header card-header-icon" data-background-color="blue">
+                            <i class="material-icons">navigation</i>
+                        </div>
+                        <div class="card-content">
+                            <h4 class="card-title">География подписчиков</h4>
+
+                            <div class="row">
+                                <div class="col-sm-12 text-center">
+                                    <div class="content">
+                                        <table class="table table-responsive table-hover">
+                                            <tr>
+                                                <th class="text-left">Диапазон</th>
+                                                <th class="text-center">Значение</th>
+                                                <th class="text-center">Процент</th>
+                                            </tr>
+                                            <tr ng-show="!(model.auditoryInfo.geo.rate && model.auditoryInfo.geo.rate.length)">
+                                                <td class="text-left" colspan="3">Данных пока нет.</td>
+                                            </tr>
+                                            <tr ng-show="model.auditoryInfo.geo.rate && model.auditoryInfo.geo.rate.length"
+                                                ng-repeat="geo in model.auditoryInfo.geo.rate">
+                                                <td class="text-left">
+                                                    {{geo.name}} <small ng-show="geo.id">(id {{geo.id}})</small>
+                                                </td>
+                                                <td class="text-center"
+                                                    ng-bind="(geo.count || 0) | radNumberFormatter"></td>
+                                                <td class="text-center">{{(geo.percent || 0) | radNumberFormatter}}%</td>
+                                            </tr>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -657,7 +858,7 @@
                 </div>
 
                 <div ng-show="activeTab == 'activity'">
-                    <h3>Активность</h3>
+                    <h3>Активность и вовлеченность</h3>
 
                     <div class="card">
                         <div class="card-header card-header-icon" data-background-color="blue">
@@ -693,6 +894,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="card">
                         <div class="card-header card-header-icon" data-background-color="blue">
                             <i class="material-icons">show_chart</i>
@@ -715,6 +917,43 @@
                                 </div>
                             </div>
                             <canvas id="wallActivityGraphReport" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header card-header-icon" data-background-color="blue">
+                            <i class="material-icons">show_chart</i>
+                        </div>
+                        <div class="card-content">
+                            <h4 class="card-title">Вовлеченность аудитории
+                                <i class="fa fa-question-circle"
+                                   rad-tooltip="Расчитывается как отношение суммы реакций на пост к количеству подписчиков"
+                                   placement="top"></i></h4>
+
+                            <div class="row">
+                                <div class="col-sm-4 text-center">
+                                    <div class="content"><h4
+                                            ng-bind="(model.wall.ERAverage || 0) | radNumberFormatter"></h4></div>
+                                    <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                    <div class="details">Средняя вовлеченность на пост (ER), %</div>
+                                </div>
+                                <div class="col-sm-4 text-center">
+                                    <div class="content"><h4
+                                            ng-bind="(model.wall.ERMax || 0) | radNumberFormatter"></h4></div>
+                                    <div class="icon"><i class="fa fa-list-alt"></i></div>
+                                    <div class="details">Максимальная вовлеченность поста (ER), %</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h4 class="text-left">
+                                        Динамика вовлеченности по контенту
+                                    </h4>
+                                </div>
+                                <div class="col-xs-12">
+                                    <canvas id="wallERGraph" height="300"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -829,47 +1068,6 @@
                         </div>
                     </div>
 
-                </div>
-
-                <div ng-show="activeTab == 'er'">
-                    <h3>Вовлеченность</h3>
-
-                    <div class="card">
-                        <div class="card-header card-header-icon" data-background-color="blue">
-                            <i class="material-icons">show_chart</i>
-                        </div>
-                        <div class="card-content">
-                            <h4 class="card-title">Вовлеченность аудитории
-                                <i class="fa fa-question-circle"
-                                   rad-tooltip="Расчитывается как отношение суммы реакций на пост к количеству подписчиков"
-                                   placement="top"></i></h4>
-
-                            <div class="row">
-                                <div class="col-sm-4 text-center">
-                                    <div class="content"><h4
-                                            ng-bind="(model.wall.ERAverage || 0) | radNumberFormatter"></h4></div>
-                                    <div class="icon"><i class="fa fa-list-alt"></i></div>
-                                    <div class="details">Средняя вовлеченность на пост (ER), %</div>
-                                </div>
-                                <div class="col-sm-4 text-center">
-                                    <div class="content"><h4
-                                            ng-bind="(model.wall.ERMax || 0) | radNumberFormatter"></h4></div>
-                                    <div class="icon"><i class="fa fa-list-alt"></i></div>
-                                    <div class="details">Максимальная вовлеченность поста (ER), %</div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <h4 class="text-left">
-                                        Динамика вовлеченности по контенту
-                                    </h4>
-                                </div>
-                                <div class="col-xs-12">
-                                    <canvas id="wallERGraph" height="300"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div ng-show="activeTab == 'content'">

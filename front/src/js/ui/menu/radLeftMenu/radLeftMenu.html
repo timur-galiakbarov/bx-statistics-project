@@ -10,14 +10,14 @@
         <a ng-click="openState('index.analytics')" class="link">
             <i class="material-icons">multiline_chart</i>
 
-            <p>Анализ сообществ</p>
+            <p>Анализ сообщества</p>
         </a>
     </li>
-    <li ng-class="currentState('index.compare')?'active':''">
-        <a ng-click="openState('index.compare')" class="link">
-            <i class="material-icons">compare</i>
+    <li ng-class="currentState('index.parsers')?'active':''">
+        <a ng-click="openState('index.parsers')" class="link">
+            <i class="material-icons">people</i>
 
-            <p>Сравнение сообществ</p>
+            <p>Инструменты поиска ЦА</p>
         </a>
     </li>
     <li ng-class="currentState('index.posts')?'active':''">
@@ -25,6 +25,13 @@
             <i class="material-icons">find_in_page</i>
 
             <p>Анализ публикаций</p>
+        </a>
+    </li>
+    <li ng-class="currentState('index.compare')?'active':''">
+        <a ng-click="openState('index.compare')" class="link">
+            <i class="material-icons">compare</i>
+
+            <p>Сравнение сообществ</p>
         </a>
     </li>
     <li ng-class="currentState('index.account')?'active':''">

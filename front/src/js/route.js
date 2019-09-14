@@ -92,7 +92,19 @@ angular.module('app').config(['$stateProvider', '$urlRouterProvider',
                 },
                 parent: 'index'
             })
-            //Оплата----------------------------------------------------------------------------------------------------
+            //Парсеры------------------------------------------------------------------------------------------------
+            .state('index.parsers', {
+                url: 'parsers/',
+                views: {
+                    'content': {
+                        url: 'parsers/',
+                        templateUrl: 'js/ui/analytics/controllers/parsersController/parsersController.html',
+                        controller: 'parsersController'
+                    }
+                },
+                parent: 'index'
+            })
+            //Оплата-------------------------------------------------------------------------------------------------
             .state('index.account', {
                 url: 'account/',
                 views: {

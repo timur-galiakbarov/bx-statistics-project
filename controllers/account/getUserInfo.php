@@ -45,6 +45,21 @@ if (CModule::IncludeModule("iblock")) {
         )
     );
 
+    //Проверка на имя и фамилию - если нет, то надо запросить и записать
+    //if (!$USER->GetFirstName() || !$USER->GetLastName()) {
+        $auth_data = json_decode(file_get_contents("https://api.vk.com/method/users.get?v=5.73&user_ids=" . $arUser["UF_VK_LOGIN"] . "&fields=photo_200&access_token=" . $arUser["UF_VK_TOKEN"]), true);
+
+        $user = new CUser;
+        $fields = Array(
+            "NAME" => $auth_data["response"][0]["first_name"],
+            "LAST_NAME" => $auth_data["response"][0]["last_name"],
+            "PERSONAL_PHOTO" => CFile::MakeFileArray($auth_data["response"][0]["photo_200"]),
+        );
+        $user->Update($userId, $fields);
+
+        $data['vk'] = $auth_data;
+    //}
+
     print_r(json_encode(Array("data" => $data)));
 }
 ?>

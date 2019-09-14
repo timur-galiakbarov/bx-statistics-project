@@ -46,6 +46,15 @@ export default {
             return res;
         });
     },
+    getCompareListTxt(options){
+        return serverApi.request({
+            url: '/controllers/common/generateTXT_getCompareList.php',
+            type: 'POST',
+            data: options
+        }).then((res)=> {
+            return res;
+        });
+    },
     getFindAnalogList(options){
         return serverApi.request({
             url: '/controllers/common/generateXLSX_getFindAnalogList.php',

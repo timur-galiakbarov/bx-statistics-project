@@ -1,0 +1,48 @@
+<div>
+    <div class="header text-center">
+        <h3 class="title">Набор инструментов для поиска целевой аудитории ВК</h3>
+        <p class="category">Выберите инструмент в левом столбце для начала работы </p>
+    </div>
+    <div class="row">
+        <div class="col-sm-4 col-md-4 col-lg-3">
+            <div class="card">
+                <div class="card-header card-header-icon" data-background-color="blue">
+                    <i class="material-icons">list</i>
+                </div>
+                <div class="card-content">
+                    <h4 class="card-title">Меню</h4>
+
+                    <table class="table table-hover table-responsive">
+                        <tbody>
+                        <tr ng-class="{info: model.state == 'auditoryCompare'}"
+                            class="groupLink"
+                            ng-click="changeParser('auditoryCompare')">
+                            <td width="20">
+                                <i class="material-icons" style="font-size: 14px">arrow_forward</i>
+                            </td>
+                            <td>
+                                Пересечение аудиторий
+                            </td>
+                        </tr>
+                        <tr ng-class="{info: model.state == 'similarGroups'}"
+                            class="groupLink"
+                            ng-click="changeParser('similarGroups')">
+                            <td width="20">
+                                <i class="material-icons" style="font-size: 14px">arrow_forward</i>
+                            </td>
+                            <td>
+                                Похожие группы
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-8 col-md-8 col-lg-9">
+            <p-auditory-compare ng-show="model.state == 'auditoryCompare'"></p-auditory-compare>
+            <p-similar-groups ng-show="model.state == 'similarGroups'"></p-similar-groups>
+        </div>
+    </div>
+
+</div>

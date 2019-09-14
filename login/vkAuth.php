@@ -3,7 +3,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.
 //------------------------------------------------------------------------------?>
 
 <?
-$auth_data = json_decode(file_get_contents("https://api.vk.com/method/users.get?user_ids=" . $_GET["user_id"] . "&fields=photo_200"), true);
+$auth_data = json_decode(file_get_contents("https://api.vk.com/method/users.get?v=5.73&user_ids=" . $_GET["user_id"] . "&fields=photo_200&access_token=" . $_GET["access_token"]), true);
 
 if ($_GET["user_id"] != NULL) {//Если получен Uid пользователя ВК
     global $USER;

@@ -354,6 +354,7 @@ import events from './../../../../bl/events.js';
                         groupId: params.groupId,
                         offset: params.offset,
                         fields: params.fields,
+                        maxIteration: params.maxIteration || 25,
                         access_token: authData.token,//Токен
                         v: config.v
                     }

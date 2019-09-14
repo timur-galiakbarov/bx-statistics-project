@@ -29,6 +29,7 @@ export default {
         GET_BANNED_LIST: 'REPORTS.GET_BANNED_LIST', //Получить XLSX отчет для мертвых участников
         GET_COMPARE_LIST: 'REPORTS.GET_COMPARE_LIST', //Получить XLSX отчет для сравнения аудитории
         GET_FIND_ANALOG_LIST: 'REPORTS.GET_FIND_ANALOG_LIST',
+        GET_COMPARE_LIST_TXT: 'REPORTS.GET_COMPARE_LIST_TXT',//Получить отчет сравнения групп в txt
     },
     ADMIN: {
         GET_STAT: 'ADMIN.GET_STAT' //Общая админская статистика

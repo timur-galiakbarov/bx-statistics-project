@@ -1,7 +1,7 @@
-<div class="panel-group accordion changeGroupAccordion">
+<div class="panel-group accordion groups-area">
 
     <div class="tab-container">
-        <ul class="nav nav-tabs">
+        <ul class="nav nav-pills nav-pills-info">
             <li ng-class="{active: currentState == 'admin'}"><a ng-click="showList('admin')">Администрируемые</a></li>
             <li ng-class="{active: currentState == 'isMy'}"><a ng-click="showList('isMy')">Все мои группы</a></li>
             <li ng-class="{active: currentState == 'bookmark'}"><a ng-click="showList('bookmark')">Закладки</a></li>
@@ -10,11 +10,11 @@
         <div class="groups-tab-area" rad-loader="groupLoading">
 
             <div class="tab-pane cont" ng-show="currentState == 'admin'">
-                <table class="no-border hover list">
+                <table class="table table-hover table-responsive">
                     <tbody class="no-border-y">
                     <tr ng-repeat="item in adminGroups" class="groupLink" ng-click="setLink(item)">
                         <td width="30">
-                            <img ng-src="{{item.photo}}" width="40">
+                            <img ng-src="{{item.photo}}" width="30">
                         </td>
                         <td>
                             <a tabindex="-1" ng-bind="item.name"></a>
@@ -27,11 +27,11 @@
             </div>
 
             <div class="tab-pane cont" ng-show="currentState == 'isMy'">
-                <table class="no-border hover list">
+                <table class="table table-hover table-responsive">
                     <tbody class="no-border-y">
                     <tr ng-repeat="item in myGroups" class="groupLink" ng-click="setLink(item)">
                         <td width="30">
-                            <img ng-src="{{item.photo}}" width="40">
+                            <img ng-src="{{item.photo}}" width="30">
                         </td>
                         <td>
                             <a tabindex="-1" ng-bind="item.name"></a>
@@ -44,11 +44,11 @@
             </div>
 
             <div class="tab-pane cont" ng-show="currentState == 'bookmark'">
-                <table class="no-border hover list">
+                <table class="table table-hover table-responsive">
                     <tbody class="table-hover">
                     <tr ng-repeat="bookmark in bookmarksList" class="groupLink" ng-click="setLink(bookmark)">
                         <td width="30">
-                            <img ng-src="{{bookmark.photo}}" width="40">
+                            <img ng-src="{{bookmark.photo}}" width="30">
                         </td>
                         <td>
                             <a tabindex="-1" ng-bind="bookmark.name"></a>

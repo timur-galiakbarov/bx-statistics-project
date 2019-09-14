@@ -22,16 +22,19 @@ import commonAnalyticsController from './ui/analytics/controllers/commonAnalytic
 import compareController from './ui/analytics/controllers/compareController/compareController.js';
 import postsDashboardController from './ui/analytics/controllers/postsDashboardController/postsDashboardController.js';
 import postsController from './ui/analytics/controllers/postsController/postsController.js';
+import './ui/analytics/controllers/parsersController/parsersController.js';
 
 /*Analytics directives*/
 import postDefault from './ui/analytics/directives/postDefault/postDefault.js';
-
+import './ui/analytics/directives/pAuditoryCompare/pAuditoryCompare.js';
+import './ui/analytics/directives/radChooseGroup/radChooseGroup.js';
 /*Account controller*/
 import accountController from './ui/account/controllers/accountController.js';
 
 /*UI------------------------------------------------------------------------------------------------------------------*/
 import radAmountFilter from './ui/base/radAmountFilter.js';
 import radNumberFormatter from './ui/base/radNumberFormatter.js';
+import radNumbersOnly from './ui/base/radNumbersOnly.js';
 import radTooltip from './ui/base/radTooltip.js';
 
 /*statController------------------------------------------------------------------------------------------------------*/
@@ -60,7 +63,6 @@ import permissionService from './ui/account/services/permissionService.js';
 import memoryFactory from './ui/stat/services/memoryFactory/memoryFactory.js';
 import radCommonFunc from './ui/app/factories/radCommonFunc.js';
 import notify from './ui/app/factories/notify.js';
-import radChooseGroup from './ui/stat/directives/radChooseGroup/radChooseGroup.js';
 import radChooseGroupMain from './ui/stat/directives/radChooseGroupMain/radChooseGroupMain.js';
 /*--------------------------------------------------------------------------------------------------------------------*/
 

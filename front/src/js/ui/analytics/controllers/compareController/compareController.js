@@ -170,12 +170,12 @@ angular
                     }).then(function (res) {
 
                         if (!res || (res && res.error)) {
-                            if (repeatIndex && repeatIndex > 3) {
+                            if (repeatIndex && repeatIndex > 10) {
                                 deferr.reject();
                             } else {
                                 setTimeout(()=> {
                                     getCurrentStat(index, (repeatIndex || 0) + 1);
-                                }, 500);
+                                }, 1500);
                             }
                             return;
                         }

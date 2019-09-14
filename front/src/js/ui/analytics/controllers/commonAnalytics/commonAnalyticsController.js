@@ -38,6 +38,10 @@ angular
             $scope.adminGroups = [];
             $scope.activeTab = 'report';
             $scope.hiddenFilter = false;
+            $scope.model.auditoryInfo = {
+                loading: false,
+                stopped: false
+            };
 
             $scope.getStatWithCheck = getStatWithCheck;
             $scope.showGroupsMenu = showGroupsMenu;
@@ -49,6 +53,7 @@ angular
             $scope.sortPostsList = sortPostsList;
             $scope.nextPosts = nextPosts;
             $scope.getAuditory = getAuditory;
+            $scope.stopCollectingAuditory = stopCollectingAuditory;
 
             $scope.$watch('isLoading', (newVal)=> {
                 $rootScope.globalLoading = newVal;
@@ -327,14 +332,12 @@ angular
                         period: parseDate
                     };
 
-                    console.log(filter);
-
                     $.when(
                         getPeopleStat().always(()=> {
                             $scope.nextProgressStep($scope.percentItem);
                         }),
                         bus.request(topics.STAT.GET_WALL, filter).then((data)=> {
-                            console.log(data);
+                            //console.log(data);
                             var wall = calculateWallStat(data);
                             $scope.model.wall = wall;
                             sortPostsList();
@@ -523,7 +526,7 @@ angular
             }
 
             function init() {
-                if (!needGetStatFromParams){
+                if (!needGetStatFromParams) {
                     $state.go('index.analytics');
                     return;
                 }
@@ -1124,21 +1127,85 @@ angular
                 }
             }
 
+            function stopCollectingAuditory() {
+                $scope.model.auditoryInfo.stopped = true;
+            }
+
             function getAuditory() {
 
-                var deferr = $.Deferred();
-                var userList = [];
+                $scope.model.auditoryInfo.loading = true;
+                $scope.model.auditoryInfo.stopped = false;
 
-                recursive(0).then(()=> {
-                    console.log("Все ок!");
-                    console.log(userList);
-                });
+                var deferr = $.Deferred();
+                var auditoryData = {
+                    deactivated: 0,
+                    mensCount: 0,
+                    mensCountPercent: 0,
+                    womansCount: 0,
+                    womansCountPercent: 0,
+                    withoutSexCount: 0,
+                    withoutSexCountPercent: 0,
+                    bdate: {
+                        summValue: 0,
+                        adsValue: 0,
+                        before18: 0,
+                        after18before23: 0,
+                        after23before35: 0,
+                        after35before50: 0,
+                        after50: 0,
+                        withoutAge: 0,
+                        withAge: 0,
+                        before18Percent: 0,
+                        after18before23Percent: 0,
+                        after23before35Percent: 0,
+                        after35before50Percent: 0,
+                        after50Percent: 0,
+                    },
+                    lastSeen: {
+                        today: 0,
+                        yesterday: 0,
+                        after2before7: 0,
+                        after7before30: 0,
+                        after30: 0,
+                        online: 0,
+                        todayPercent: 0,
+                        yesterdayPercent: 0,
+                        after2before7Percent: 0,
+                        after7before30Percent: 0,
+                        after30Percent: 0,
+                    },
+                    geo: {
+                        rate: [],
+                        all: []
+                    },
+                    loadedUsersCount: 0
+                };
+
+                $scope.model.auditoryInfo = angular.extend($scope.model.auditoryInfo, auditoryData);
+
+
+                recursive(0)
+                    .then(()=> {
+                        $timeout(()=> {
+                            $scope.model.auditoryInfo.loading = false;
+                            $scope.model.auditoryInfo.stopped = false;
+                        });
+                    })
+                    .fail(()=> {
+                        $timeout(()=> {
+                            $scope.model.auditoryInfo.loading = false;
+                            $scope.model.auditoryInfo.stopped = false;
+                        });
+                    });
 
                 function recursive(iteration) {
+                    var maxIteration = 2;
+
                     vkApiFactory.execute.getGroupMembers(authData, {
                         groupId: $scope.model.groupInfo.gid,
-                        offset: iteration * 25000,
-                        fields: 'first_name'
+                        offset: iteration * maxIteration * 1000,
+                        maxIteration: maxIteration,
+                        fields: 'bdate,last_seen,online,sex,city'//relation,
                     }).then(function (res) {
                         if (res && res.error && res.error && res.error.error_code == 6) {
                             setTimeout(function () {
@@ -1147,15 +1214,23 @@ angular
                             return;
                         }
 
-                        console.log("Считано: " + (iteration + 1) * 25000 + " пользователей");
+                        var count = (iteration + 1) * maxIteration * 1000;
+                        if (count > $scope.model.groupInfo.membersCount) {
+                            count = $scope.model.groupInfo.membersCount;
+                        }
+                        $scope.model.auditoryInfo.loadedUsersCount = count;
 
+                        //console.log("Считано: " + (iteration + 1) * maxIteration * 1000 + " пользователей");
+
+                        if ($scope.model.auditoryInfo.stopped) {
+                            //Если процесс сбора был остановлен
+                            deferr.resolve();
+                            return;
+                        }
                         if (res && !res.error) {
-                            res.forEach((item)=> {
-                                if (item.items && item.items.length)
-                                    Array.prototype.push.apply(userList, item.items);
-                            });
+                            setAuditoryDataByStep(res);
 
-                            if ((iteration * 25000) < $scope.model.groupInfo.membersCount) {
+                            if ((iteration * maxIteration * 1000) < $scope.model.groupInfo.membersCount) {
                                 recursive(iteration + 1);
                             } else {
                                 deferr.resolve();
@@ -1171,6 +1246,149 @@ angular
 
                     return deferr.promise();
                 }
+            }
+
+            function setAuditoryDataByStep(res) {
+                if (!(res && !res.error)) {
+                    return;
+                }
+
+                var userList = [];
+                var currentYear = new Date().getFullYear();
+
+                res.forEach((item)=> {
+                    if (item.items && item.items.length)
+                        Array.prototype.push.apply(userList, item.items);
+                });
+
+                userList.forEach((item)=> {
+
+                    $scope.model.auditoryInfo.deactivated += item.deactivated ? 1 : 0;
+                    $scope.model.auditoryInfo.mensCount += item.sex == 2 ? 1 : 0;
+                    $scope.model.auditoryInfo.womansCount += item.sex == 1 ? 1 : 0;
+                    $scope.model.auditoryInfo.withoutSexCount += item.sex == 0 ? 1 : 0;
+
+                    /*Когда были в сети?*/
+                    $scope.model.auditoryInfo.lastSeen.online += item.online ? 1 : 0;
+                    if (item.last_seen && item.last_seen.time) {
+                        let time = new Date().getTime() - item.last_seen.time * 1000;
+                        if (time < 24 * 60 * 60 * 1000) {//Меньше суток
+                            $scope.model.auditoryInfo.lastSeen.today++;
+                        } else if (time < 48 * 60 * 60 * 1000) {//Вчера
+                            $scope.model.auditoryInfo.lastSeen.yesterday++;
+                        } else if (time < 7 * 24 * 60 * 60 * 1000) {
+                            $scope.model.auditoryInfo.lastSeen.after2before7++;
+                        } else if (time < 30 * 24 * 60 * 60 * 1000) {
+                            $scope.model.auditoryInfo.lastSeen.after7before30++;
+                        } else {
+                            $scope.model.auditoryInfo.lastSeen.after30++;
+                        }
+                    } else {
+                        $scope.model.auditoryInfo.lastSeen.after30++;
+                    }
+
+                    /*Возраст аудитории*/
+                    if (item.bdate) {
+                        var bdate = item.bdate.split(".");
+                        if (bdate.length == 3) {//Значит есть день, месяц и год - тот что нужно
+                            //вычисляем возраст пользователя
+                            var old = currentYear - bdate[2];
+
+                            $scope.model.auditoryInfo.bdate.summValue += (old || 0);
+                            $scope.model.auditoryInfo.bdate.withAge++;
+                            if (old < 18) {
+                                $scope.model.auditoryInfo.bdate.before18 += 1;
+                            }
+                            if (old >= 18 && old < 23) {
+                                $scope.model.auditoryInfo.bdate.after18before23 += 1;
+                            }
+                            if (old >= 23 && old < 35) {
+                                $scope.model.auditoryInfo.bdate.after23before35 += 1;
+                            }
+                            if (old >= 35 && old < 50) {
+                                $scope.model.auditoryInfo.bdate.after35before50 += 1;
+                            }
+                            if (old >= 50) {
+                                $scope.model.auditoryInfo.bdate.after50 += 1;
+                            }
+                        } else {
+                            $scope.model.auditoryInfo.bdate.withoutAge++;
+                        }
+                    } else {
+                        $scope.model.auditoryInfo.bdate.withoutAge++;
+                    }
+
+                    if (item.last_seen) {
+                        if (item.last_seen.time) {
+
+                        }
+                    }
+
+                    //География подписчиков
+                    if (item.city && item.city.id) {
+                        var t = $scope.model.auditoryInfo.geo.all.filter((i)=> {
+                            return i.id == item.city.id;
+                        })[0];
+                        if (t) {
+                            t.count++;
+                        } else {
+                            $scope.model.auditoryInfo.geo.all.push({
+                                count: 1,
+                                name: item.city.title,
+                                id: item.city.id
+                            })
+                        }
+                    }
+                });
+
+                var loadedUserCount = $scope.model.auditoryInfo.loadedUsersCount;
+                $scope.model.auditoryInfo.deactivatedPercent = ((($scope.model.auditoryInfo.deactivated || 0) / loadedUserCount) * 100).toFixed(2);
+                $scope.model.auditoryInfo.mensCountPercent = ((($scope.model.auditoryInfo.mensCount || 0) / loadedUserCount) * 100).toFixed(2);
+                $scope.model.auditoryInfo.womansCountPercent = ((($scope.model.auditoryInfo.womansCount || 0) / loadedUserCount) * 100).toFixed(2);
+                $scope.model.auditoryInfo.withoutSexCountPercent = ((($scope.model.auditoryInfo.withoutSexCount || 0) / loadedUserCount) * 100).toFixed(2);
+                $scope.model.auditoryInfo.bdate.adsValue = ($scope.model.auditoryInfo.bdate.summValue / $scope.model.auditoryInfo.bdate.withAge).toFixed(1);
+                if ($scope.model.auditoryInfo.bdate.withAge) {
+                    $scope.model.auditoryInfo.bdate.before18Percent = (($scope.model.auditoryInfo.bdate.before18 / $scope.model.auditoryInfo.bdate.withAge) * 100).toFixed(2);
+                    $scope.model.auditoryInfo.bdate.after18before23Percent = (($scope.model.auditoryInfo.bdate.after18before23 / $scope.model.auditoryInfo.bdate.withAge) * 100).toFixed(2);
+                    $scope.model.auditoryInfo.bdate.after23before35Percent = (($scope.model.auditoryInfo.bdate.after23before35 / $scope.model.auditoryInfo.bdate.withAge) * 100).toFixed(2);
+                    $scope.model.auditoryInfo.bdate.after35before50Percent = (($scope.model.auditoryInfo.bdate.after35before50 / $scope.model.auditoryInfo.bdate.withAge) * 100).toFixed(2);
+                    $scope.model.auditoryInfo.bdate.after50Percent = (($scope.model.auditoryInfo.bdate.after50 / $scope.model.auditoryInfo.bdate.withAge) * 100).toFixed(2);
+                }
+                $scope.model.auditoryInfo.lastSeen.todayPercent = ((($scope.model.auditoryInfo.lastSeen.today || 0) / loadedUserCount) * 100).toFixed(2);
+                $scope.model.auditoryInfo.lastSeen.yesterdayPercent = ((($scope.model.auditoryInfo.lastSeen.yesterday || 0) / loadedUserCount) * 100).toFixed(2);
+                $scope.model.auditoryInfo.lastSeen.after2before7Percent = ((($scope.model.auditoryInfo.lastSeen.after2before7 || 0) / loadedUserCount) * 100).toFixed(2);
+                $scope.model.auditoryInfo.lastSeen.after7before30Percent = ((($scope.model.auditoryInfo.lastSeen.after7before30 || 0) / loadedUserCount) * 100).toFixed(2);
+                $scope.model.auditoryInfo.lastSeen.after30Percent = ((($scope.model.auditoryInfo.lastSeen.after30 || 0) / loadedUserCount) * 100).toFixed(2);
+
+                $scope.model.auditoryInfo.geo.all.sort((a, b)=> {
+                    if (a.count < b.count)
+                        return 1;
+                    else if (a.count > b.count)
+                        return -1;
+                    else
+                        return 0;
+                });
+                $scope.model.auditoryInfo.geo.rate = $scope.model.auditoryInfo.geo.all.slice(0, 10);
+                $scope.model.auditoryInfo.geo.rate.map((item)=> {
+                    return _.assign(item, {
+                        percent: (((item.count || 0) / loadedUserCount) * 100).toFixed(2)
+                    });
+                });
+                var inListPersent = {
+                    percent: 0,
+                    count: 0
+                };
+                $scope.model.auditoryInfo.geo.rate.forEach((i)=> {
+                    inListPersent.percent = parseFloat(inListPersent.percent) + parseFloat(i.percent);
+                    inListPersent.count += i.count;
+                });
+                $scope.model.auditoryInfo.geo.rate.push({
+                    percent: (100 - inListPersent.percent).toFixed(2),
+                    count: loadedUserCount - inListPersent.count,
+                    name: 'Остальные (в т.ч. не указавшие город)'
+                });
+                //console.log($scope.model.auditoryInfo.geo.rate);
+                $scope.$apply($scope.model.auditoryInfo);
             }
 
             init();

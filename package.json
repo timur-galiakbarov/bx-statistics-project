@@ -26,7 +26,7 @@
     "gulp-uglify": "^1.4.0",
     "gulp-util": "^3.0.7",
     "gulp-watch": "^4.3.5",
-    "lodash": "^3.10.1",
+    "lodash": "^4.17.19",
     "main-bower-files": "^2.11.1",
     "ng-sanitize": "0.0.2",
     "q": "^1.4.1",

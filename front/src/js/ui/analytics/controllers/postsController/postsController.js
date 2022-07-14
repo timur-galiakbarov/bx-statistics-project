@@ -1,3 +1,5 @@
+import moment from "moment";
+
 import events from './../../../../bl/events.js';
 import topics from './../../../../bl/topics.js';
 import {enums} from './../../../../bl/module.js';
@@ -246,7 +248,7 @@ angular
                     getAllStat();
                 } else {
                     notify.info("Нет групп для анализа, произошел переход к выбору групп.");
-                    $state.go("index.posts");
+                    $state.go("index/posts");
                 }
             }
 

@@ -19,14 +19,14 @@ angular
 
             function goToDefaultState() {
                 if ($scope.isAdmin) {
-                    $state.go('index.admin.dashboard');
+                    $state.go('index/admin/dashboard');
                 }
             }
 
             goToDefaultState();
 
             $rootScope.$on('$stateChangeSuccess', function (evt, toState) {
-                if (toState.name === 'index.admin') {
+                if (toState.name === 'index/admin') {
                     goToDefaultState();
                 }
             });

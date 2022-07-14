@@ -10,7 +10,7 @@ radProfileMenu.inject = ['appState'];
 function radProfileMenu(appState) {
     return {
         restrict: 'EA',
-        templateUrl: 'js/ui/menu/radProfileMenu/radProfileMenu.html',
+        templateUrl: '/js/ui/menu/radProfileMenu/radProfileMenu.html',
         controller: ['$scope', 'bus', 'appState', function ($scope, bus, appState) {
 
         }],

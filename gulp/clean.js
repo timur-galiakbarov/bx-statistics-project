@@ -1,6 +1,5 @@
 var gulp = require('gulp');
 var rimraf = require('rimraf');
-var runSequence = require('gulp-run-sequence');
 
 var path = require('./path.js');
 var config = require('./config.js');
@@ -19,7 +18,7 @@ gulp.task('clean:bxdata', function(cb){
 
 gulp.task('clean', function (cb) {
     if (config.buildBitrix){
-        return runSequence('clean:bxdata', cb);
+        return gulp.series('clean:bxdata', cb);
     } else {
         return rimraf(path.clean, cb);
     }

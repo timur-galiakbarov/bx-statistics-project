@@ -1,65 +1,58 @@
-var gulp = require('gulp');
-var runSequence = require('gulp-run-sequence');
-var inject = require('gulp-inject');
-var path = require('./path.js');
-var gulpFilter = require('gulp-filter');
-var bowerFiles = require('main-bower-files');
+const gulp = require('gulp');
+const inject = require('gulp-inject');
 
-gulp.task('injectBower', function () {
-    return gulp.src(path.build.dir + 'index.html')
-        .pipe(inject(gulp.src(bowerFiles({
-                paths: {
-                    bowerJson: './bower.json',
-                    bowerDirectory: path.build.bower
-                }
-            })),
-            {
-                name: 'bower',
-
-            }))
-        .pipe(gulp.dest(path.build.dir + ''));
-});
+const path = require('./path.js');
+const { prefix } = path;
 
 gulp.task('injectJs', function () {
-    return gulp.src(path.build.dir + 'index.html')
-        .pipe(inject(gulp.src(path.build.js + '*.js'),
-            {
-                name: 'app',
-                transform: function (filepath, file, i, length) {
-                    return '<script src="'+filepath.replace(path.build.dir,'')+'"></script>';
-                }
-            }))
-        .pipe(gulp.dest(path.build.dir + ''));
+	return gulp.src(path.build.dir + 'index.html')
+		.pipe(inject(gulp.src(path.build.js + '*.js'),
+			{
+				name: 'app',
+				transform: function (filepath, file, i, length) {
+					return `<script src="${prefix}${filepath.replace(path.build.dir, '')}"></script>`;
+				}
+			}))
+		.pipe(gulp.dest(path.build.dir + ''));
 });
 
 gulp.task('injectCss', function () {
-    return gulp.src(path.build.dir + 'index.html')
-        .pipe(inject(gulp.src(path.build.css + '*.css'),{
-            name: 'template',
-            transform: function (filepath, file, i, length) {
-                return '<link rel="stylesheet" href="'+filepath.replace(path.build.dir,'')+'">';
-            }
-        }))
-        .pipe(gulp.dest(path.build.dir + ''));
+	return gulp.src(path.build.dir + 'index.html')
+		.pipe(inject(gulp.src(path.build.css + '*.css'), {
+			name: 'template',
+			transform: function (filepath, file, i, length) {
+				return `<link rel="stylesheet" href="${prefix}${filepath.replace(path.build.dir, '')}" />`;
+			}
+		}))
+		.pipe(gulp.dest(path.build.dir + ''));
 });
 
 gulp.task('injectHtml', function () {
-    return gulp.src(path.build.dir + 'index.html')
-        .pipe(inject(gulp.src(path.build.html + '*.js'),{
-            name: 'templateJs',
-            transform: function (filepath, file, i, length) {
-                return '<script src="'+filepath.replace(path.build.dir,'')+'"></script>';
-            }
-        }))
-        .pipe(gulp.dest(path.build.dir + ''));
+	return gulp.src(path.build.dir + 'index.html')
+		.pipe(inject(gulp.src(path.build.html + '*.js'), {
+			name: 'templateJs',
+			transform: function (filepath, file, i, length) {
+				return `<script src="${prefix}${filepath.replace(path.build.dir, '')}"></script>`;
+			}
+		}))
+		.pipe(gulp.dest(path.build.dir + ''));
 });
 
-gulp.task('injects', function (done) {
-    runSequence(
-        'injectJs',
-        'injectCss',
-        'injectBower',
-        'injectHtml',
-        done
-    );
+gulp.task('injectCommonJs', function () {
+	return gulp.src(path.build.dir + 'index.html')
+		.pipe(inject(gulp.src(path.build.commonjs + '*.js'),
+			{
+				name: 'common',
+				transform: function (filepath, file, i, length) {
+					return `<script src="${prefix}${filepath.replace(path.build.dir, '')}"></script>`;
+				}
+			}))
+		.pipe(gulp.dest(path.build.dir + ''));
 });
+
+gulp.task('injects', gulp.series(
+	'injectCommonJs',
+	'injectJs',
+	'injectCss',
+	'injectHtml')
+);

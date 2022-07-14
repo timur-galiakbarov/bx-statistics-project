@@ -1,3 +1,5 @@
+import Spinner from "spin.js";
+
 (function (module) {
 
     var opts = {//settings for spinner

@@ -60,18 +60,18 @@ export default {
     ["stats.get"]: (res)=> {
         return res.map((item)=> {
             return {
-                age: item.age,
-                cities: item.cities,
-                countries: item.countries,
-                day: item.day,
-                reach: item.reach || 0,
-                reach_subscribers: item.reach_subscribers || 0,
-                sex: item.sex,
-                sex_age: item.sex_age,
-                subscribed: item.subscribed || 0,
-                unsubscribed: item.unsubscribed || 0,
-                views: item.views || 0,
-                visitors: item.visitors || 0
+                age: item.reach.age && item.reach.age,
+                cities: item.visitors.cities,
+                countries: item.visitors.countries,
+                day: new Date(item.period_from),
+                reach: item.reach.reach || 0,
+                reach_subscribers: item.reach.reach_subscribers || 0,
+                sex: item.reach.sex,
+                sex_age: item.reach.sex_age,
+                subscribed: item.activity && item.activity.subscribed || 0,
+                unsubscribed: item.activity && item.activity.unsubscribed || 0,
+                views: item.visitors.views || 0,
+                visitors: item.visitors.visitors || 0
             }
         })
     },

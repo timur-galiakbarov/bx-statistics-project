@@ -1,3 +1,5 @@
+import moment from "moment";
+
 import events from './../../../../bl/events.js';
 import topics from './../../../../bl/topics.js';
 

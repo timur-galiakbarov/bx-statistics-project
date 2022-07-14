@@ -102,7 +102,7 @@ angular
 
             function compare() {
                 if ($scope.model.compareList && $scope.model.compareList.length){
-                    $state.go('index.posts.detail', {
+                    $state.go('index/posts/detail', {
                         list: $scope.model.compareList
                     });
                 }

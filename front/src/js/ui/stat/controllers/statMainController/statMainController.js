@@ -1,3 +1,6 @@
+import Chart from "chart.js";
+import moment from "moment";
+
 import events from './../../../../bl/events.js';
 import {enums} from './../../../../bl/module.js';
 
@@ -313,7 +316,6 @@ angular
 
                     if (res && res.error && res.error.error_code == 6) {
                         setTimeout(()=> {
-                            console.log("recursive!");
                             getStat(isExample);
                         }, 1500);
                         return;
@@ -1250,7 +1252,7 @@ angular
             }
 
             function goToPublishStat() {
-                $state.go('index.publishAnalysis', {
+                $state.go('index/publishAnalysis', {
                     getStatFromGroup: $scope.stat.groupInfo.screen_name
                 });
             }

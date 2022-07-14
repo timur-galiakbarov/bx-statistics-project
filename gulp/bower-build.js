@@ -1,15 +1,15 @@
+
 var gulp = require('gulp');
 var rigger = require('rigger');
 var browserSync = require("browser-sync");
 var concat = require('gulp-concat');
 var sourcemaps = require('gulp-sourcemaps');
 var reload = browserSync.reload;
-var runSequence = require('gulp-run-sequence');
-var requireDir = require('require-dir')();
+//var requireDir = require('require-dir')();
 
 var path = require('./path.js');
 /**
- * Перенос зависимостей bower_components
+ * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ bower_components
  */
 gulp.task('bower_components', function () {
     return gulp.src(path.src.bower)

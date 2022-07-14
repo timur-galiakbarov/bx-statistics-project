@@ -10,7 +10,7 @@ import events from './../../../../bl/events.js';
 
         var config = {
             appId: "5358505",
-            v: "5.65"
+            v: "5.131"
         };
 
         var getGroupInfo = function (authData, params) {
@@ -55,7 +55,6 @@ import events from './../../../../bl/events.js';
                 dataType: 'jsonp',
                 data: {
                     access_token: authData.token,//Токен
-                    v: "5.53",
                     q: params.q,
                     type: params.type,
                     country_id: params.country_id,
@@ -77,8 +76,10 @@ import events from './../../../../bl/events.js';
                 data: {
                     access_token: authData.token,//Токен
                     group_id: params.groupId,//Список групп
-                    date_from: params.dateFrom,
-                    date_to: params.dateTo,
+                    timestamp_from: new Date(params.dateFrom).getTime() / 1000,
+                    timestamp_to: new Date(params.dateTo).getTime() / 1000,
+                    //extended: true,
+                    stats_groups: "visitors,reach,activity",
                     v: config.v
                 }
             }).then(function (res) {

@@ -1,3 +1,5 @@
+import moment from "moment";
+
 import events from './../../../../bl/events.js';
 import topics from './../../../../bl/topics.js';
 import {enums} from './../../../../bl/module.js';
@@ -130,15 +132,12 @@ angular
                 $scope.wallListView = [];
                 $scope.model.groupsList = [];
                 var step = (1 / section.groups.length) * 100;
-                console.log(section);
                 getContentPromise(0);
 
                 function getContentPromise(index) {
                     if (section.groups.length) {
                         getStat(section.groups[index])
                             .then((result)=> {
-                                console.log(result);
-
                                 result.wallList.forEach((item)=> {
                                     item.group = {
                                         name: result.name,
@@ -200,7 +199,6 @@ angular
                         groupInfo.ER = 0;
                         groupInfo.wallAnalysisCount = 0;
                         $scope.model.groupsList.push(groupInfo);
-                        console.log(groupInfo);
                     });
 
                     $.when(

@@ -1,3 +1,5 @@
+import postal from "postal";
+
 var channel = postal.channel('app.channel');
 import requertResponse from 'postal.request-response';
 import Q from './Q.js'
@@ -5,10 +7,10 @@ import Q from './Q.js'
 requertResponse(postal);
 
 postal.configuration.promise.createDeferred = function () {
-    return new $.Deferred();
+	return new $.Deferred();
 };
 postal.configuration.promise.getPromise = function (dfd) {
-    return dfd.promise();
+	return dfd.promise();
 };
 
 var wrapper = function (func) {
@@ -38,25 +40,25 @@ var wrapper = function (func) {
 
 export default {
 
-    publish(event, data){
-        channel.publish(event, data);
-    },
+	publish(event, data) {
+		channel.publish(event, data);
+	},
 
-    document(event, data){
-        channel.document(event, data);
-    },
+	document(event, data) {
+		channel.document(event, data);
+	},
 
-    subscribe(event, func) {
-        if (typeof func !== 'function') {
-            throw '`func` parameter must be function';
-        }
-        return channel.subscribe(event, wrapper(func));
-    },
-    unsubscribe(subscription) {
-        if (subscription.unsubscribe)
-            subscription.unsubscribe();
-    },
-    request() {
-        return channel.request({topic: arguments[0], data: Array.prototype.slice.call(arguments, 1)});
-    }
+	subscribe(event, func) {
+		if (typeof func !== 'function') {
+			throw '`func` parameter must be function';
+		}
+		return channel.subscribe(event, wrapper(func));
+	},
+	unsubscribe(subscription) {
+		if (subscription.unsubscribe)
+			subscription.unsubscribe();
+	},
+	request() {
+		return channel.request({ topic: arguments[0], data: Array.prototype.slice.call(arguments, 1) });
+	}
 }

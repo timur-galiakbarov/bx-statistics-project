@@ -1,10 +1,10 @@
 <div ng-if="isAdmin">
     <button type="button" class="btn btn-default btn-rad" ng-class="{'btn-success': adminTab == 'dashboard'}"
-            ng-click="openState('index.admin.dashboard')">Dashboard</button>
+            ng-click="openState('index/admin/dashboard')">Dashboard</button>
     <button type="button" class="btn btn-default btn-rad" ng-class="{'btn-success': adminTab == 'crm'}"
-            ng-click="openState('index.admin.crm')">CRM</button>
+            ng-click="openState('index/admin/crm')">CRM</button>
     <!--<button type="button" class="btn btn-default btn-rad" ng-class="{'btn-info': adminTab == 'vksync'}"
-            ng-click="openState('index.admin.vksync')">Vk Sync</button>-->
+            ng-click="openState('index/admin/vksync')">Vk Sync</button>-->
     <div ui-view="admin">
 
     </div>

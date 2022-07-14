@@ -3,7 +3,6 @@ var browserSync = require("browser-sync");
 var concat = require('gulp-concat');
 var sourcemaps = require('gulp-sourcemaps');
 var reload = browserSync.reload;
-var runSequence = require('gulp-run-sequence');
 var browserify = require('browserify');
 var babelify = require('babelify');
 var source = require('vinyl-source-stream');
@@ -28,7 +27,7 @@ var ftpControllersConfig = {
 };
 
 gulp.task('ftpFront:deploy', function () {
-        runSequence(
+        return gulp.series(
             'ftpFront:bowerComponents',
             'ftpFront:lk'
         );

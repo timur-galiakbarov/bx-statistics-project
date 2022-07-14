@@ -7,7 +7,7 @@ radLeftMenu.$inject = ['$state', '$rootScope', 'notify', 'appState'];
 function radLeftMenu($state, $rootScope, notify, appState) {
     return {
         restrict: 'EA',
-        templateUrl: 'js/ui/menu/radLeftMenu/radLeftMenu.html',
+        templateUrl: '/js/ui/menu/radLeftMenu/radLeftMenu.html',
         controller: ['$scope', '$state', function ($scope, $state) {
             $scope.currentState = function (state) {
                 //console.log($state);

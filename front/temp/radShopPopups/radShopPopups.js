@@ -28,7 +28,6 @@ function radShopPopupsController($scope){
     };
 
     $scope.close = function(){
-        console.log('close');
         $scope.popup.isOpen = false;
     }
 }

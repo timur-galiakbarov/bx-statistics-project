@@ -10,7 +10,7 @@ radChooseGroupMain.$inject = ['$timeout', 'vkApiFactory', 'appState', 'bus', 'ra
 function radChooseGroupMain($timeout, vkApiFactory, appState, bus, radCommonFunc) {
     return {
         restrict: 'EA',
-        templateUrl: 'js/ui/stat/directives/radChooseGroupMain/radChooseGroupMain.html',
+        templateUrl: '/js/ui/stat/directives/radChooseGroupMain/radChooseGroupMain.html',
         scope: {
             onAction: "=?",
             onIndex: "=?",

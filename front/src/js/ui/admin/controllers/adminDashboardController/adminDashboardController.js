@@ -1,3 +1,5 @@
+import Chart from "chart.js";
+
 import events from './../../../../bl/events.js';
 import topics from './../../../../bl/topics.js';
 import {enums} from './../../../../bl/module.js';

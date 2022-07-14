@@ -14,7 +14,7 @@
         Безлимитный период действует до - {{model.activeTo}}
 
 
-        <form method="POST" action="https://money.yandex.ru/quickpay/confirm.xml" target="_blank">
+        <form method="POST" action="https://yoomoney.ru/quickpay/confirm.xml" target="_blank">
 
             <input type="hidden" name="receiver" value="410011867702471">
             <input type="hidden" name="formcomment" value="socstat.ru">
@@ -76,7 +76,7 @@
                 </tr>
                 <tr>
                     <td class="text-center">
-                        199
+                        299
                         <small><i class="fa fa-rub"></i></small>
                     </td>
                     <td class="text-center">
@@ -140,13 +140,13 @@
         <form method="POST" action="https://money.yandex.ru/quickpay/confirm.xml" target="_blank">
 
             <input type="hidden" name="receiver" value="410011867702471">
+            <input type="hidden" name="quickpay-form" value="shop">
+            <input type="hidden" name="targets" value="Для пользователя {{model.userFullName}}">
+            <input type="hidden" name="sum" value="{{paymentInfo.summ}}" data-type="number">
             <input type="hidden" name="formcomment" value="socstat.ru">
             <input type="hidden" name="short-dest" value="оплата периода {{paymentInfo.period}}">
             <input type="hidden" name="label" value="user{{model.userId}}">
-            <input type="hidden" name="quickpay-form" value="shop">
-            <input type="hidden" name="targets" value="Для пользователя {{model.userFullName}}">
             <input type="hidden" name="successURL" value="http://socstat.ru/successPayment.php">
-            <input type="hidden" name="sum" value="{{paymentInfo.summ}}" data-type="number">
             <input type="hidden" name="need-fio" value="false">
             <input type="hidden" name="need-email" value="false">
             <input type="hidden" name="need-phone" value="false">
@@ -199,7 +199,7 @@
                 </tr>
                 <tr>
                     <td class="text-center">
-                        199
+                        299
                         <small><i class="fa fa-rub"></i></small>
                     </td>
                     <td class="text-center">

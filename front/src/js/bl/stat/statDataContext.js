@@ -12,7 +12,7 @@ var serverApi = server;
 
 var config = {
     appId: "5358505",
-    v: "5.65"
+    v: "5.131"
 };
 
 function errorAction(res) {
@@ -108,8 +108,10 @@ export default {
                 data: {
                     access_token: authData.token,//Токен
                     group_id: params.groupId,//Список групп
-                    date_from: params.dateFrom,
-                    date_to: params.dateTo,
+                    timestamp_from: new Date(params.dateFrom).getTime() / 1000,
+                    timestamp_to: new Date(params.dateTo).getTime() / 1000,
+                    //extended: true,
+                    stats_groups: "visitors,reach,activity",
                     v: config.v
                 }
             }).then(function (res) {

@@ -436,7 +436,7 @@ if ($USER->IsAuthorized()){
                         <hr>
                     </div>
                     <div class="icn-main-container">
-                        <span class="icn-container">199 <i class="fa fa-rub"></i></span>
+                        <span class="icn-container">299 <i class="fa fa-rub"></i></span>
                     </div>
                     <p>Подписка на 1 месяц с момента оплаты.</p>
                     <ul class="pricing">

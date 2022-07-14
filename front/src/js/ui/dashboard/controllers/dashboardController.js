@@ -1,3 +1,5 @@
+import moment from "moment";
+
 import events from './../../../bl/events.js';
 import topics from './../../../bl/topics.js';
 
@@ -741,7 +743,7 @@ angular
                     return;
                 }
 
-                $state.go('index.analytics.common', {
+                $state.go('index/analytics/common', {
                     gid: gid
                 })
             }

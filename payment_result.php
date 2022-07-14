@@ -23,7 +23,7 @@ if (CModule::IncludeModule("iblock")) {
         $_POST["datetime"] . "&" .
         $_POST["sender"] . "&" .
         $_POST["codepro"] . "&" .
-        "RU9XTm8MxyfRyhhJ2uTkPcHJ" . "&" .
+        "6dTqoYvp/OlV+MS2LmfGYATk" . "&" .
         $_POST["label"];
 
     $sha1 = sha1($secure);
@@ -63,7 +63,7 @@ if (CModule::IncludeModule("iblock")) {
         $lastDate = date_parse_from_format("j.n.Y", $arUser["UF_ACTIVE_TO"]);
         $currentDate = date_parse_from_format("j.n.Y", date("d").".".date("m").".".date("Y"));
 
-        if ($_POST["withdraw_amount"] == 99 || $_POST["withdraw_amount"] == 199) {
+        if ($_POST["withdraw_amount"] == 99 || $_POST["withdraw_amount"] == 199 || $_POST["withdraw_amount"] == 299) {
             $tariff = "Активный";
             if ($lastDate < $currentDate){
                 $activeTo = date("d.m.Y", mktime(0, 0, 0, date("m") + 1, date("d") + 1, date("Y")));

@@ -1,3 +1,5 @@
+import moment from "moment";
+
 import events from './../../../../bl/events.js';
 import topics from './../../../../bl/topics.js';
 import {enums} from './../../../../bl/module.js';
@@ -198,11 +200,8 @@ angular
                             period: parseDate
                         };
 
-                        console.log(filter);
-
                         $.when(
                             bus.request(topics.STAT.GET_WALL, filter).then((data)=> {
-                                console.log(data);
                                 $scope.model.groupsStat[index].wall = calculateWallStat(data, $scope.model.groupsStat[index].groupInfo.members_count);
                                 $scope.$apply($scope.model.groupsStat[index].wall);
                             }),
@@ -245,7 +244,7 @@ angular
                     getAllStat();
                 } else {
                     notify.info("Нет групп для сравнения, произошел переход к выбору групп.");
-                    $state.go("index.compare");
+                    $state.go("index/compare");
                 }
             }
 

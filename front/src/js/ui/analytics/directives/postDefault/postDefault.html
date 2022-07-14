@@ -2,7 +2,7 @@
     <div class="card-image video-preview"
          ng-if="wallPost.firstImage || wallPost.firstDoc || wallPost.firstVideo">
         <a ng-if="wallPost.firstImage">
-            <img ng-src="{{wallPost.firstImage.photo.photo_604}}" style="max-width: 100%;"/>
+            <img ng-src="{{wallPost.imageUrl}}" style="max-width: 100%;"/>
         </a>
 
         <a ng-if="wallPost.firstDoc" class="text-center">

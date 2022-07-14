@@ -37,7 +37,7 @@ angular
                 if (!group) {
                     return;
                 }
-                $state.go('index.analytics.common', {
+                $state.go('index/analytics/common', {
                     gid: group.gid
                 });
             }
@@ -106,7 +106,7 @@ angular
 
             function compare() {
                 if ($scope.model.compareList && $scope.model.compareList.length){
-                    $state.go('index.analytics.compare', {
+                    $state.go('index/analytics/compare', {
                         list: $scope.model.compareList
                     });
                 }

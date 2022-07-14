@@ -10,7 +10,7 @@ radTariff.$inject = ['appState', '$timeout', '$state'];
 function radTariff(appState, $timeout, $state) {
     return {
         restrict: 'EA',
-        templateUrl: 'js/ui/app/directives/radTariff/radTariff.html',
+        templateUrl: '/js/ui/app/directives/radTariff/radTariff.html',
         controller: ['$scope', '$timeout', function ($scope, $timeout) {
 
         }],
@@ -37,7 +37,7 @@ function radTariff(appState, $timeout, $state) {
                 switch (newVal) {
                     case '1 месяц':
                         $timeout(()=> {
-                            $scope.paymentInfo.summ = 199;
+                            $scope.paymentInfo.summ = 299;
                         });
                         break;
                     case '3 месяца':
@@ -59,7 +59,7 @@ function radTariff(appState, $timeout, $state) {
 
             function goToProfile() {
                 $("#finishedPeriodModal").modal('hide');
-                $state.go("index.account");
+                $state.go("index/account");
             }
         }
     };

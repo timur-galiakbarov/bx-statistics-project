@@ -1,3 +1,6 @@
+import moment from "moment";
+import Chart from "chart.js";
+
 import events from './../../../../bl/events.js';
 import topics from './../../../../bl/topics.js';
 import {enums} from './../../../../bl/module.js';
@@ -147,22 +150,22 @@ angular
                             hover: {
                                 mode: 'dataset'
                             },
-                            scales: {
-                                xAxes: [{
+                            /*scales: {
+                                x: [{
                                     display: true,
                                     scaleLabel: {
                                         show: true,
                                         labelString: 'Дата'
                                     }
                                 }],
-                                yAxes: [{
+                                y: [{
                                     display: true,
                                     scaleLabel: {
                                         show: true,
                                         labelString: 'Значение'
                                     }
                                 }]
-                            },
+                            },*/
                             legend: {
                                 display: false,
                                 labelspadding: 0
@@ -249,7 +252,7 @@ angular
                         getStat();
                     } else {
                         $scope.isLoading = false;
-                        $state.go('index.analytics');
+                        $state.go('index/analytics');
                         if (res.error == "notSubscribeVk") {
                             bus.publish(events.ACCOUNT.SHOW_NOT_SUBSCRIBE_MODAL);
                             return;
@@ -327,14 +330,11 @@ angular
                         period: parseDate
                     };
 
-                    console.log(filter);
-
-                    $.when(
+                    Promise.all([
                         getPeopleStat().always(()=> {
                             $scope.nextProgressStep($scope.percentItem);
                         }),
                         bus.request(topics.STAT.GET_WALL, filter).then((data)=> {
-                            console.log(data);
                             var wall = calculateWallStat(data);
                             $scope.model.wall = wall;
                             sortPostsList();
@@ -363,7 +363,7 @@ angular
                             $timeout(()=> {
                                 $scope.nextProgressStep($scope.percentItem);
                             });
-                        })
+                        })]
                     )
                         .then(()=> {
                             //Рисуем графики
@@ -373,7 +373,8 @@ angular
                                 $scope.isLoading = false;
                             });
                         })
-                        .error(()=> {
+                        .catch((error)=> {
+                            console.error(error);
                             $scope.progressPercent = 100;
                             $timeout(()=> {
                                 $scope.isLoading = false;
@@ -490,8 +491,7 @@ angular
                             deferr.resolve();
 
                             function getDateFromVk(dateVk) {
-                                var normilizedDate = new Date(dateVk);
-                                return ('0' + normilizedDate.getDate()).slice(-2) + "." + ('0' + (normilizedDate.getMonth() + 1)).slice(-2);
+                                return moment(dateVk).format("DD.MM");
                             }
                         }).fail(function () {
                             deferr.reject();
@@ -524,7 +524,7 @@ angular
 
             function init() {
                 if (!needGetStatFromParams){
-                    $state.go('index.analytics');
+                    $state.go('index/analytics');
                     return;
                 }
 
@@ -1130,8 +1130,7 @@ angular
                 var userList = [];
 
                 recursive(0).then(()=> {
-                    console.log("Все ок!");
-                    console.log(userList);
+                    //console.log(userList);
                 });
 
                 function recursive(iteration) {

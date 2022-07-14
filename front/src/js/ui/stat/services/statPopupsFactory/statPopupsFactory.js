@@ -110,7 +110,7 @@ import events from './../../../../bl/events.js';
 
         var openEditItemPopup = function (id) {
             bus.request(topics.SHOP.GET_ITEM, {id: id}).then((res)=> {
-                console.log(res);
+                //console.log(res);
             });
         };
 
@@ -123,7 +123,6 @@ import events from './../../../../bl/events.js';
 
                     bus.request(topics.SHOP.GET_ITEM, {id: id}).then((res)=> {
                         res = res.data;
-                        console.log(res);
                         $scope.$apply(function(){
                             $scope.model = {
                                 name: res.name,

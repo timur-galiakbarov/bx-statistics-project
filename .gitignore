@@ -32,3 +32,4 @@ lk/
 upload/
 .idea/
 .idea/*
+build/

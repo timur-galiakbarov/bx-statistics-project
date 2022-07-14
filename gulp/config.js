@@ -6,7 +6,7 @@ var config = {
     host: 'localhost',
     port: 6800,
     logPrefix: "Frontend_Devil",
-    buildBitrix: true,
+    buildBitrix: false,
     uploadData: {
         needUpload: false,
         host: '77.222.56.183',

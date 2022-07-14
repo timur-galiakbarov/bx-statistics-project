@@ -7,7 +7,8 @@ var path = {
         bower: 'build/bower_components/',
         fonts: 'build/fonts/',
         tpljs: 'build/js/',
-        images: 'build/images/'
+        images: 'build/images/',
+        commonjs: "build/commonjs/"
     },
     bitrix: {
         dir: './lk/',
@@ -29,7 +30,8 @@ var path = {
         tpljs: './front/src/js/template/**/*.*',
         libcss: './front/src/lib/**/*.css',
         libjs: './front/src/lib/**/*.js',
-        images: './front/images/**/*.*'
+        images: './front/images/**/*.*',
+        commonjs: "./front/src/common.js"
     },
     watch: {
         html: './front/src/**/*.html',
@@ -38,7 +40,8 @@ var path = {
         bower: './front/src/**/*.*',
         tpljs: './front/src/js/template/**/*.js'
     },
-    clean: './build'
+    clean: './build',
+    prefix: "/lk"
 };
 
 module.exports = path;

@@ -23,7 +23,6 @@ function controller($scope) {
 
     $("#modalAddItem").modal();//Jquery открытие модального окна
     $('#modalAddItem').on('hidden.bs.modal', function (e) {//Событие, вызываемое при закрытии окна
-        console.log($scope.closePopup);
         $scope.closePopup();
     });
 

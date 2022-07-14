@@ -1,172 +1,182 @@
+import angular from "angular";
 import topics from './bl/topics.js';
 import events from './bl/events.js';
 import ui from 'angular-ui-bootstrap';
 import LocalStorageModule from 'angular-local-storage';
+import moment from "moment";
+import ngRoute from "angular-route";
+import uiRouter from "angular-ui-router";
+import ngSanitize from "angular-sanitize";
+import uiMask from "angular-ui-mask";
+
+import bootstrap from "bootstrap";
+import "icheck";
 
 /*Инициализация приложения*/
-var app = angular.module('app', [
-    'ngRoute',
-    'ngSanitize',
-    'ui.router',
-    'rad.menu',
-    'rad.stat',
-    'rad.dashboard',
-    'rad.account',
-    'rad.favorites',
-    'ui.bootstrap',
-    'ui.bootstrap.tpls',
-    'ui.mask',
-    'LocalStorageModule',
-    'templates'
+const app = angular.module('app', [
+	'ngRoute',
+	'ngSanitize',
+	'ui.router',
+	'rad.menu',
+	'rad.stat',
+	'rad.dashboard',
+	'rad.account',
+	'rad.favorites',
+	'ui.bootstrap',
+	'ui.bootstrap.tpls',
+	'ui.mask',
+	'LocalStorageModule',
+	'templates'
 ]);
 
 moment.locale('ru');
 
 /*angular.module('app').run(['$rootScope', 'bus', '$templateCache',
-    function ($rootScope, bus, $templateCache) {
-
-    }]);*/
+	function ($rootScope, bus, $templateCache) {
+		//$templateCache.put("/template/app/template.html");
+	}]);*/
 
 app.controller('appController', ['$rootScope', '$scope', '$state', 'bus', 'notify',
-    function ($rootScope, $scope, $state, bus, notify) {
+	function ($rootScope, $scope, $state, bus, notify) {
 
-        $rootScope.tariffInfo = {
-            activeTo: "",
-            userName: ""
-        };
+		$rootScope.tariffInfo = {
+			activeTo: "",
+			userName: ""
+		};
 
-        var mobile_menu_initialized;
-        var toggle_initialized;
+		bus.subscribe(events.APP.READY, function () {
+			$rootScope.$apply(function () {
+				$rootScope.isAuth = true;
+			});
+			//Открываем раздел по умолчанию
+			if ($state.current.name == 'index')
+				goToDefaultState();
+		});
+		bus.request(topics.ACCOUNT.IS_AUTH, { notLogError: true }).then((res) => {
+			if (res.success) {
+				bus.request(topics.ACCOUNT.GET_USER_INFO).then((res) => {
+					$rootScope.tariffInfo.activeTo = res.user.activeTo;
+					$rootScope.tariffInfo.userName = res.user.userFullName;
+					bus.publish(events.ACCOUNT.STATED, res);
+				});
 
-        bus.subscribe(events.APP.READY, function () {
-            $rootScope.$apply(function () {
-                $rootScope.isAuth = true;
-            });
-            //Открываем раздел по умолчанию
-            if ($state.current.name == 'index')
-                goToDefaultState();
-        });
-        bus.request(topics.ACCOUNT.IS_AUTH, {notLogError: true}).then((res)=> {
-            if (res.success) {
-                bus.request(topics.ACCOUNT.GET_USER_INFO).then((res)=> {
-                    $rootScope.tariffInfo.activeTo = res.user.activeTo;
-                    $rootScope.tariffInfo.userName = res.user.userFullName;
-                    bus.publish(events.ACCOUNT.STATED, res);
-                });
+			} else {
+				$scope.isAuth = false;
+				location.href = '/login/';
+			}
+		});
 
-            } else {
-                $scope.isAuth = false;
-                location.href = '/login/';
-            }
-        });
+		bus.subscribe(events.ACCOUNT.LOGOUT, function () {
+			bus.request(topics.ACCOUNT.LOGOUT).then((res) => {
+				location.href = '/login/';
+			});
+		});
 
-        bus.subscribe(events.ACCOUNT.LOGOUT, function () {
-            bus.request(topics.ACCOUNT.LOGOUT).then((res)=> {
-                location.href = '/login/';
-            });
-        });
+		$rootScope.page = {
+			sectionTitle: ''
+		};
 
-        $rootScope.page = {
-            sectionTitle: ''
-        };
+		$rootScope.setTitle = setTitle;
+		$rootScope.toggleMenu = toggleMenu;
 
-        $rootScope.setTitle = setTitle;
-        $rootScope.toggleMenu = toggleMenu;
+		bus.subscribe(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL, () => {
+			//Открыть попап для показа информации о просроченном периоде
+			$("#finishedPeriodModal").modal();
+		});
 
-        bus.subscribe(events.ACCOUNT.SHOW_PERIOD_FINISHED_MODAL, ()=> {
-            //Открыть попап для показа информации о просроченном периоде
-            $("#finishedPeriodModal").modal();
-        });
+		bus.subscribe(events.ACCOUNT.SHOW_NOT_SUBSCRIBE_MODAL, () => {
+			//Открыть попап для показа информации, что пользователь вышел из группы
+			$("#userUnsubscribedPopup").modal();
+		});
 
-        bus.subscribe(events.ACCOUNT.SHOW_NOT_SUBSCRIBE_MODAL, ()=> {
-            //Открыть попап для показа информации, что пользователь вышел из группы
-            $("#userUnsubscribedPopup").modal();
-        });
+		$rootScope.$on('$stateChangeSuccess', function (evt, toState) {
+			if (toState.name === 'index') {
+				goToDefaultState();
+			}
+		});
 
-        $rootScope.$on('$stateChangeSuccess', function (evt, toState) {
-            if (toState.name === 'index') {
-                goToDefaultState();
-            }
-        });
+		$rootScope.openState = function (state) {
+			if ($rootScope.globalLoading) {
+				notify.info("Пожалуйста, дождитесь загрузки данных.");
+				return;
+			}
 
-        $rootScope.openState = function (state) {
-            if ($rootScope.globalLoading) {
-                notify.info("Пожалуйста, дождитесь загрузки данных.");
-                return;
-            }
+			$state.go(state);
+		};
 
-            $state.go(state);
-        };
+		function goToDefaultState() {
+			$state.go('index/dashboard');
+		}
 
-        function goToDefaultState() {
-            $state.go('index.dashboard');
-        }
+		function init() {
+			try {
+				VK.Observer.subscribe("widgets.subscribed", function f() {
+					$("#vk_subscribe").html("");
+				});
 
-        function init() {
-            VK.Observer.subscribe("widgets.subscribed", function f() {
-                $("#vk_subscribe").html("");
-            });
+				VK.Observer.subscribe("widgets.groups.joined", function f() {
+					$("#vk_subscribe").html("");
+				});
+			} catch (e) {
+				console.error(e);
+			}
+		}
 
-            VK.Observer.subscribe("widgets.groups.joined", function f() {
-                $("#vk_subscribe").html("");
-            });
-        }
+		function setTitle(title) {
+			$rootScope.page.sectionTitle = title;
+		}
 
-        function setTitle(title) {
-            $rootScope.page.sectionTitle = title;
-        }
+		function toggleMenu() {
 
-        function toggleMenu() {
+			var $toggle = $(".navbar-toggle");
 
-            var $toggle = $(".navbar-toggle");
+			if (mobile_menu_visible == 1) {
+				$('html').removeClass('nav-open');
 
-            if (mobile_menu_visible == 1) {
-                $('html').removeClass('nav-open');
+				$('.close-layer').remove();
+				setTimeout(function () {
+					$toggle.removeClass('toggled');
+				}, 400);
 
-                $('.close-layer').remove();
-                setTimeout(function() {
-                    $toggle.removeClass('toggled');
-                }, 400);
+				mobile_menu_visible = 0;
+			} else {
+				setTimeout(function () {
+					$toggle.addClass('toggled');
+				}, 430);
 
-                mobile_menu_visible = 0;
-            } else {
-                setTimeout(function() {
-                    $toggle.addClass('toggled');
-                }, 430);
+				var $layer = $('<div class="close-layer"></div>');
 
-                var $layer = $('<div class="close-layer"></div>');
+				if ($('body').find('.main-panel').length != 0) {
+					$layer.appendTo(".main-panel");
 
-                if ($('body').find('.main-panel').length != 0) {
-                    $layer.appendTo(".main-panel");
+				} else if (($('body').hasClass('off-canvas-sidebar'))) {
+					$layer.appendTo(".wrapper-full-page");
+				}
 
-                } else if (($('body').hasClass('off-canvas-sidebar'))) {
-                    $layer.appendTo(".wrapper-full-page");
-                }
+				setTimeout(function () {
+					$layer.addClass('visible');
+				}, 100);
 
-                setTimeout(function() {
-                    $layer.addClass('visible');
-                }, 100);
+				$layer.click(function () {
+					$('html').removeClass('nav-open');
+					mobile_menu_visible = 0;
 
-                $layer.click(function() {
-                    $('html').removeClass('nav-open');
-                    mobile_menu_visible = 0;
+					$layer.removeClass('visible');
 
-                    $layer.removeClass('visible');
+					setTimeout(function () {
+						$layer.remove();
+						$toggle.removeClass('toggled');
 
-                    setTimeout(function() {
-                        $layer.remove();
-                        $toggle.removeClass('toggled');
+					}, 400);
+				});
 
-                    }, 400);
-                });
+				$('html').addClass('nav-open');
+				mobile_menu_visible = 1;
 
-                $('html').addClass('nav-open');
-                mobile_menu_visible = 1;
+			}
+		}
 
-            }
-        }
-
-        init();
+		init();
 
 
-    }]);
+	}]);

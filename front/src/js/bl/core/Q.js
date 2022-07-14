@@ -1,4 +1,4 @@
-import Q from 'promise';
+import Q from 'q';
 import bus from './busModule.js';
 
 var promisePrototype = Q.makePromise.prototype;

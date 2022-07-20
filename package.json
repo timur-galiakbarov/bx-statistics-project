@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "main": "gulpfile.js",
     "dependencies": {
-        "angular": "1.4.5",
+        "angular": "1.8.3",
         "angular-bootstrap": "0.12.2",
         "angular-i18n": "^1.5.8",
         "angular-local-storage": "^0.7.1",

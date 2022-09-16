@@ -12,7 +12,7 @@
         "angular-ui-bootstrap": "^2.5.6",
         "angular-ui-mask": "^1.8.7",
         "angular-ui-router": "0.3.1",
-        "bootstrap": "~3.3.5",
+        "bootstrap": "~3.4.1",
         "chart.js": "^3.8.0",
         "flot": "0.8.3",
         "font-awesome": "~4.4.0",

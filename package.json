@@ -2,6 +2,10 @@
     "name": "cos-stat",
     "version": "1.0.0",
     "main": "gulpfile.js",
+    "workspaces": [
+        "apps/api",
+        "apps/frontend"
+    ],
     "dependencies": {
         "angular": "1.4.5",
         "angular-bootstrap": "0.12.2",
@@ -68,8 +72,13 @@
         "vinyl-source-stream": "2.0.0"
     },
     "scripts": {
-        "start": "gulp",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "start": "npm run dev",
+        "dev": "npm run dev --workspace @socstat/api & npm run dev --workspace @socstat/frontend",
+        "dev:api": "npm run dev --workspace @socstat/api",
+        "dev:frontend": "npm run dev --workspace @socstat/frontend",
+        "build": "npm run build --workspace @socstat/api && npm run build --workspace @socstat/frontend",
+        "legacy:start": "gulp",
+        "test": "npm run test --workspaces --if-present"
     },
     "author": "",
     "license": "ISC"

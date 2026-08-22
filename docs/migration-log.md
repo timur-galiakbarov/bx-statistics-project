@@ -163,3 +163,88 @@
 Следующие шаги:
 
 - Перед коммитом проверить `git status --short --ignored apps`.
+
+## 2026-08-23 - Runtime-проверка MongoDB слоя
+
+Запрос пользователя:
+
+- Проверить MongoDB-слой вживую.
+
+Результат:
+
+- Проверено, что MongoDB на `27017` не запущена.
+- Проверено, что Docker daemon в текущем окружении недоступен.
+- Проверено, что локальные команды `mongod`, `mongosh` и `mongo` не установлены.
+- API запущен для проверки поведения без MongoDB.
+- API ожидаемо не открыл HTTP-порт и упал на `ECONNREFUSED` к `localhost:27017`.
+- Добавлена настройка `MONGO_SERVER_SELECTION_TIMEOUT_MS`, чтобы ошибка подключения появлялась быстро.
+
+Изменённые файлы:
+
+- `apps/api/src/config/env.ts`
+- `apps/api/src/db/database.ts`
+- `apps/api/.env.example`
+- `apps/README.md`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `lsof -i :27017`
+- `docker ps --format '{{.Names}} {{.Ports}}'`
+- `command -v mongod`
+- `command -v mongosh`
+- `command -v mongo`
+- `npm run dev:api`
+- `npm run build`
+
+Следующие шаги:
+
+- Поднять MongoDB локально через Docker Desktop или установленный `mongod`.
+- После запуска MongoDB повторить проверку endpoints `/api/health`, `/api/account/me` и `/api/account/groups`.
+
+## 2026-08-23 - Успешная проверка MongoDB runtime
+
+Запрос пользователя:
+
+- Повторить проверку после запуска MongoDB и API.
+
+Результат:
+
+- API успешно запустился на `http://localhost:4000`.
+- Dev seed создал demo-пользователя и тестовые группы в MongoDB.
+- `/api/health` вернул статус `ok`.
+- `/api/account/me` вернул demo-пользователя из MongoDB.
+- `/api/account/groups` вернул управляемую и бесплатную группы из MongoDB.
+
+Проверка:
+
+- `curl -s http://localhost:4000/api/health`
+- `curl -s -H 'x-socstat-session: dev' http://localhost:4000/api/account/me`
+- `curl -s -H 'x-socstat-session: dev' http://localhost:4000/api/account/groups`
+
+Следующие шаги:
+
+- Запустить frontend и проверить, что React shell читает профиль и группы через Vite proxy.
+- После этого переходить к VK-авторизации и реальным сессиям.
+
+## 2026-08-23 - Проверка frontend через Vite proxy
+
+Запрос пользователя:
+
+- Проверить, что запущенный frontend читает данные.
+
+Результат:
+
+- Vite frontend отвечает на `http://localhost:5173`.
+- Запросы `/api/account/me` и `/api/account/groups` через порт `5173` успешно проксируются на API.
+- React shell получает профиль demo-пользователя и группы из MongoDB через frontend dev server.
+
+Проверка:
+
+- `curl -s -I http://localhost:5173`
+- `curl -s -H 'x-socstat-session: dev' http://localhost:5173/api/account/me`
+- `curl -s -H 'x-socstat-session: dev' http://localhost:5173/api/account/groups`
+
+Следующие шаги:
+
+- Переходить к VK-авторизации и реальным сессиям.

@@ -99,4 +99,5 @@ cp apps/api/.env.example apps/api/.env
 - `WEB_ORIGIN` - адрес фронта для CORS, по умолчанию `http://localhost:5173`
 - `SESSION_COOKIE` - имя cookie сессии
 - `MONGO_URI` - строка подключения к MongoDB
+- `MONGO_SERVER_SELECTION_TIMEOUT_MS` - таймаут подключения к MongoDB, по умолчанию `5000`
 - `VK_CLIENT_ID` - ID VK-приложения

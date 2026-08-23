@@ -248,3 +248,116 @@
 Следующие шаги:
 
 - Переходить к VK-авторизации и реальным сессиям.
+
+## 2026-08-23 - VK OAuth skeleton и cookie-сессии
+
+Запрос пользователя:
+
+- Сделать следующий шаг после проверки MongoDB: перейти к авторизации и реальным сессиям.
+
+Решение:
+
+- Добавлены маршруты авторизации в `apps/api/src/routes/auth.ts`.
+- Реальная сессия хранится в MongoDB и выдаётся через HTTP-only cookie.
+- Фронт больше не отправляет постоянный dev-заголовок `x-socstat-session: dev`.
+- Для локальной разработки добавлен `POST /api/auth/dev`, который создаёт cookie-сессию для demo-пользователя.
+- Добавлены VK OAuth маршруты `GET /api/auth/vk/start` и `GET /api/auth/vk/callback`.
+
+Изменённые файлы:
+
+- `apps/api/.env.example`
+- `apps/api/src/config/env.ts`
+- `apps/api/src/repositories/accountRepository.ts`
+- `apps/api/src/routes/auth.ts`
+- `apps/api/src/routes/account.ts`
+- `apps/api/src/routes/legacy.ts`
+- `apps/api/src/app.ts`
+- `apps/frontend/src/api/client.ts`
+- `apps/frontend/src/App.tsx`
+- `apps/frontend/src/pages/LoginPage.tsx`
+- `apps/frontend/src/styles.css`
+- `apps/README.md`
+
+Проверка:
+
+- `npm run build`
+- `curl -s -o /tmp/socstat-no-cookie.json -w '%{http_code}' http://localhost:4000/api/account/me` вернул `401`.
+- `curl -s -c /tmp/socstat-cookies.txt -X POST http://localhost:4000/api/auth/dev` создал dev-сессию.
+- `curl -s -b /tmp/socstat-cookies.txt http://localhost:4000/api/account/me` вернул demo-пользователя.
+- `curl -s -b /tmp/socstat-cookies.txt http://localhost:4000/api/account/groups` вернул группы.
+- `curl -s -b /tmp/socstat-cookies.txt -X POST http://localhost:4000/api/auth/logout` удалил сессию.
+- Повторный `/api/account/me` с той же cookie вернул `401`.
+
+Ограничения проверки:
+
+- VK OAuth callback не проверялся с реальным VK-приложением, потому что для этого нужны актуальные `VK_CLIENT_SECRET` и redirect URL в настройках VK.
+- Проверка через `http://localhost:5173` не выполнена, потому что frontend dev server на момент проверки не отвечал.
+
+Следующие шаги:
+
+- Запустить frontend и проверить экран входа.
+- Указать реальные `VK_CLIENT_ID`, `VK_CLIENT_SECRET`, `VK_REDIRECT_URL`.
+- Проверить полный VK OAuth flow в браузере.
+
+## 2026-08-23 - Успешная проверка VK OAuth
+
+Запрос пользователя:
+
+- Проверить вход через VK после добавления `VK_CLIENT_SECRET`.
+
+Результат:
+
+- VK redirect URI настроен корректно.
+- Callback дошёл до нового backend.
+- После добавления `VK_CLIENT_SECRET` server-side OAuth flow сработал.
+- Новый backend смог пройти обмен `code -> access_token`.
+
+Проверка:
+
+- Ручная проверка входа через VK в браузере.
+
+Следующие шаги:
+
+- Проверить, что после VK-входа frontend показывает кабинет без dev-входа.
+- Начать перенос backend-слоя для VK API: группы, wall, stats, photos, video.
+
+## 2026-08-23 - Gitignore для dist новых приложений
+
+Запрос пользователя:
+
+- Добавить в `.gitignore` пути `apps/api/dist` и `apps/frontend/dist`.
+
+Результат:
+
+- В `.gitignore` добавлены правила для `apps/api/dist/` и `apps/frontend/dist/`.
+
+Проверка:
+
+- Правила добавлены в файл `.gitignore`.
+
+Следующие шаги:
+
+- Если `dist` уже был добавлен в git index, удалить его из индекса отдельной командой `git rm --cached`, не удаляя локальные файлы.
+
+## 2026-08-23 - Gitignore для env-файлов новых приложений
+
+Запрос пользователя:
+
+- Добавить `apps/api/.env` в `.gitignore`.
+
+Результат:
+
+- В `.gitignore` добавлены env-файлы для `apps/api` и `apps/frontend`.
+- `.env.example` не игнорируется и остаётся шаблоном для git.
+- `apps/api/.env` был снят с git index без удаления локального файла.
+- `apps/api/.env.example` восстановлен как шаблон без секретов.
+
+Проверка:
+
+- Правила добавлены в `.gitignore`.
+- `git status --short --ignored apps/api/.env apps/api/.env.example apps/frontend/.env`
+- `git ls-files apps/api/.env apps/api/.env.example apps/frontend/.env apps/frontend/.env.example`
+
+Следующие шаги:
+
+- Перед коммитом убедиться, что `apps/api/.env` отображается только как ignored.

@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { addGroup, getAdminStat, getGroups, getNews } from '../repositories/accountRepository.js';
+import { addGroup, getAdminStat, getGroups, getNews, removeSession } from '../repositories/accountRepository.js';
 import { requireUser } from '../middleware/auth.js';
+import { env } from '../config/env.js';
 
 export const legacyRouter = Router();
 
@@ -108,8 +109,14 @@ legacyRouter.get('/account/admin/getStat.php', requireUser, async (req, res, nex
   }
 });
 
-legacyRouter.get('/account/logout.php', (_req, res) => {
-  res.json({ success: true });
+legacyRouter.get('/account/logout.php', async (req, res, next) => {
+  try {
+    await removeSession(req.cookies?.[env.sessionCookie]);
+    res.clearCookie(env.sessionCookie, { path: '/' });
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
 });
 
 legacyRouter.post('/stat/getContentSections.php', (_req, res) => {

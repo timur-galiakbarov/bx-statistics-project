@@ -1,6 +1,14 @@
 import { Router } from 'express';
-import { addGroup, getAdminStat, getGroups, getNews, removeGroup } from '../repositories/accountRepository.js';
+import {
+  addGroup,
+  getAdminStat,
+  getGroups,
+  getNews,
+  removeGroup,
+  removeSession
+} from '../repositories/accountRepository.js';
 import { requireUser } from '../middleware/auth.js';
+import { env } from '../config/env.js';
 
 export const accountRouter = Router();
 
@@ -27,8 +35,14 @@ accountRouter.get('/me', requireUser, (req, res) => {
   });
 });
 
-accountRouter.post('/logout', (_req, res) => {
-  res.json({ success: true });
+accountRouter.post('/logout', async (req, res, next) => {
+  try {
+    await removeSession(req.cookies?.[env.sessionCookie]);
+    res.clearCookie(env.sessionCookie, { path: '/' });
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
 });
 
 accountRouter.get('/news', async (_req, res, next) => {

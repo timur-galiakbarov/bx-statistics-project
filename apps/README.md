@@ -98,6 +98,21 @@ cp apps/api/.env.example apps/api/.env
 - `PORT` - порт API, по умолчанию `4000`
 - `WEB_ORIGIN` - адрес фронта для CORS, по умолчанию `http://localhost:5173`
 - `SESSION_COOKIE` - имя cookie сессии
+- `OAUTH_STATE_COOKIE` - имя cookie для проверки OAuth state
 - `MONGO_URI` - строка подключения к MongoDB
 - `MONGO_SERVER_SELECTION_TIMEOUT_MS` - таймаут подключения к MongoDB, по умолчанию `5000`
 - `VK_CLIENT_ID` - ID VK-приложения
+- `VK_CLIENT_SECRET` - секрет VK-приложения для обмена code на token
+- `VK_REDIRECT_URL` - callback URL для VK OAuth
+- `AUTH_SUCCESS_REDIRECT_URL` - куда вернуть пользователя после успешного входа
+
+## Авторизация
+
+Основные маршруты:
+
+- `GET /api/auth/vk/start` - начать вход через VK
+- `GET /api/auth/vk/callback` - callback VK OAuth
+- `POST /api/auth/logout` - выйти
+- `POST /api/auth/dev` - локальный dev-вход, доступен только не в production
+
+После успешного входа API выставляет HTTP-only cookie `socstat_session`.

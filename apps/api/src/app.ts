@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import { env } from './config/env.js';
 import { attachUser } from './middleware/auth.js';
 import { accountRouter } from './routes/account.js';
+import { authRouter } from './routes/auth.js';
 import { legacyRouter } from './routes/legacy.js';
 import { paymentsRouter } from './routes/payments.js';
 
@@ -24,6 +25,7 @@ export function createApp() {
     res.json({ status: 'ok', service: 'socstat-api' });
   });
 
+  app.use('/api/auth', authRouter);
   app.use('/api/account', accountRouter);
   app.use('/api/payments', paymentsRouter);
   app.use('/controllers', legacyRouter);

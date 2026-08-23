@@ -23,6 +23,37 @@ a {
   place-items: center;
 }
 
+.login-page {
+  align-items: center;
+  background: #17372f;
+  display: flex;
+  min-height: 100vh;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-panel {
+  background: #fff;
+  border-radius: 8px;
+  max-width: 420px;
+  padding: 28px;
+  width: 100%;
+}
+
+.login-brand {
+  color: #17372f;
+  margin-bottom: 26px;
+}
+
+.login-brand span {
+  color: #60716b;
+}
+
+.login-actions {
+  display: grid;
+  gap: 12px;
+}
+
 .app-shell {
   display: grid;
   grid-template-columns: 264px minmax(0, 1fr);
@@ -211,6 +242,7 @@ a {
 }
 
 .plans button,
+.primary-button,
 .secondary-button {
   align-items: center;
   background: #2f9f7b;
@@ -221,6 +253,7 @@ a {
   display: inline-flex;
   gap: 8px;
   padding: 10px 14px;
+  text-decoration: none;
 }
 
 .secondary-button {

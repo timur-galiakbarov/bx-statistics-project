@@ -1,8 +1,10 @@
 import type { Types } from 'mongoose';
+import { randomBytes } from 'node:crypto';
 import { NewsModel } from '../models/News.js';
 import { SavedGroupModel } from '../models/SavedGroup.js';
 import { SessionModel } from '../models/Session.js';
 import { UserModel } from '../models/User.js';
+import { VkTokenModel } from '../models/VkToken.js';
 import type { SavedGroup } from '../store/types.js';
 
 type UserDocument = {
@@ -58,8 +60,12 @@ function mapGroup(group: GroupDocument): SavedGroup {
 }
 
 export async function getUserBySession(sessionId?: string) {
+  if (!sessionId) {
+    return undefined;
+  }
+
   const session = await SessionModel.findOne({
-    token: sessionId ?? 'dev',
+    token: sessionId,
     expiresAt: { $gt: new Date() }
   })
     .populate<{ userId: UserDocument }>('userId')
@@ -70,6 +76,77 @@ export async function getUserBySession(sessionId?: string) {
   }
 
   return mapUser(session.userId);
+}
+
+export async function getDemoUser() {
+  const user = await UserModel.findOne({ vkId: '1' }).lean<UserDocument>();
+  return user ? mapUser(user) : undefined;
+}
+
+export async function createSession(userId: string) {
+  const token = randomBytes(32).toString('hex');
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 30);
+
+  await SessionModel.create({ userId, token, expiresAt });
+  return { token, expiresAt };
+}
+
+export async function removeSession(token?: string) {
+  if (!token) {
+    return;
+  }
+
+  await SessionModel.deleteOne({ token });
+}
+
+export async function upsertVkUser(profile: {
+  vkId: string;
+  firstName: string;
+  lastName: string;
+  photo?: string;
+}) {
+  const fallbackActiveTo = new Date();
+  fallbackActiveTo.setDate(fallbackActiveTo.getDate() + 14);
+
+  const user = await UserModel.findOneAndUpdate(
+    { vkId: profile.vkId },
+    {
+      $set: {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        photo: profile.photo
+      },
+      $setOnInsert: {
+        activeTo: fallbackActiveTo,
+        isAdmin: false
+      }
+    },
+    { new: true, upsert: true }
+  ).lean<UserDocument>();
+
+  return mapUser(user);
+}
+
+export async function saveVkToken(options: {
+  userId: string;
+  accessToken: string;
+  scopes: string[];
+  expiresIn?: number;
+}) {
+  const expiresAt = options.expiresIn
+    ? new Date(Date.now() + options.expiresIn * 1000)
+    : undefined;
+
+  await VkTokenModel.findOneAndUpdate(
+    { userId: options.userId },
+    {
+      accessToken: options.accessToken,
+      scopes: options.scopes,
+      expiresAt
+    },
+    { upsert: true }
+  );
 }
 
 export async function getGroups(userId: string, source?: SavedGroup['source']) {

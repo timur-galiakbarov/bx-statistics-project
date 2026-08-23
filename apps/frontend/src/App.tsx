@@ -6,6 +6,7 @@ import type { SavedGroup, User } from './api/types';
 import { DashboardPage } from './pages/DashboardPage';
 import { AccountPage } from './pages/AccountPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
+import { LoginPage } from './pages/LoginPage';
 
 const navItems = [
   { to: '/dashboard', label: 'Главная', icon: Home },
@@ -20,8 +21,9 @@ export function App() {
   const [user, setUser] = useState<User | null>(null);
   const [groups, setGroups] = useState<SavedGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUnauthorized, setIsUnauthorized] = useState(false);
 
-  useEffect(() => {
+  const loadAccount = () =>
     Promise.all([
       apiGet<{ user: User }>('/api/account/me'),
       apiGet<SavedGroup[]>('/api/account/groups')
@@ -29,8 +31,17 @@ export function App() {
       .then(([profile, nextGroups]) => {
         setUser(profile.user);
         setGroups(nextGroups);
+        setIsUnauthorized(false);
+      })
+      .catch(() => {
+        setUser(null);
+        setGroups([]);
+        setIsUnauthorized(true);
       })
       .finally(() => setIsLoading(false));
+
+  useEffect(() => {
+    loadAccount();
   }, []);
 
   const title = useMemo(() => {
@@ -40,6 +51,10 @@ export function App() {
 
   if (isLoading) {
     return <div className="boot">Загрузка socstat...</div>;
+  }
+
+  if (isUnauthorized) {
+    return <LoginPage onDevLogin={loadAccount} />;
   }
 
   return (

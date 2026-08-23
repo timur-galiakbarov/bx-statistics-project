@@ -6,6 +6,9 @@ import { SessionModel } from '../models/Session.js';
 import { UserModel } from '../models/User.js';
 import { VkTokenModel } from '../models/VkToken.js';
 import type { SavedGroup } from '../store/types.js';
+import { DomainError } from '../errors/domainError.js';
+
+const FREE_GROUP_LIMIT = 3;
 
 type UserDocument = {
   _id: Types.ObjectId;
@@ -173,6 +176,21 @@ export async function getGroups(userId: string, source?: SavedGroup['source']) {
 export async function addGroup(userId: string, group: Partial<SavedGroup>) {
   const source = group.source ?? 'free';
   const vkGroupId = group.vkGroupId ?? String(group.name ?? 'unknown');
+
+  if (source === 'free') {
+    const [existingGroup, freeGroupsCount] = await Promise.all([
+      SavedGroupModel.exists({ userId, source, vkGroupId }),
+      SavedGroupModel.countDocuments({ userId, source })
+    ]);
+
+    if (!existingGroup && freeGroupsCount >= FREE_GROUP_LIMIT) {
+      throw new DomainError('Можно добавить не больше 3 бесплатных групп.', {
+        status: 409,
+        code: 'FREE_GROUP_LIMIT_REACHED'
+      });
+    }
+  }
+
   const createdGroup = await SavedGroupModel.findOneAndUpdate(
     { userId, source, vkGroupId },
     {

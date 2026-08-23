@@ -11,6 +11,7 @@ import { legacyRouter } from './routes/legacy.js';
 import { paymentsRouter } from './routes/payments.js';
 import { vkRouter } from './routes/vk.js';
 import { VkApiError } from './services/vkClient.js';
+import { DomainError } from './errors/domainError.js';
 
 export function createApp() {
   const app = express();
@@ -34,6 +35,15 @@ export function createApp() {
   app.use('/controllers', legacyRouter);
 
   app.use((error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (error instanceof DomainError) {
+      res.status(error.status).json({
+        success: false,
+        error: error.code,
+        message: error.message
+      });
+      return;
+    }
+
     if (error instanceof VkApiError) {
       res.status(error.status).json({
         success: false,

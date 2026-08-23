@@ -1,6 +1,6 @@
-import { ExternalLink, Plus, RefreshCw, Search } from 'lucide-react';
+import { ExternalLink, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { FormEvent, useState } from 'react';
-import { apiGet, apiPost } from '../api/client';
+import { apiDelete, apiGet, apiPost } from '../api/client';
 import type { SavedGroup, VkGroup, VkListResponse } from '../api/types';
 
 type Props = {
@@ -64,6 +64,21 @@ export function DashboardPage({ groups, onGroupsChanged }: Props) {
     }
   };
 
+  const removeSavedGroup = async (group: SavedGroup) => {
+    setStatus('saving');
+    setMessage('');
+
+    try {
+      await apiDelete(`/api/account/groups/${group.id}`);
+      await onGroupsChanged();
+      setMessage(`Группа "${group.name}" удалена.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Не удалось удалить группу.');
+    } finally {
+      setStatus('idle');
+    }
+  };
+
   return (
     <div className="page-grid">
       <section className="panel span-2">
@@ -98,12 +113,38 @@ export function DashboardPage({ groups, onGroupsChanged }: Props) {
       </section>
 
       <section className="panel">
-        <h2>Бесплатные группы</h2>
+        <div className="panel-header compact">
+          <h2>Бесплатные группы</h2>
+          <span className="limit-badge">{freeGroups.length} из 3</span>
+        </div>
         <div className="stack">
+          {freeGroups.length === 0 && <div className="empty-state">Бесплатные группы пока не добавлены.</div>}
           {freeGroups.map((group) => (
             <div className="group-line" key={group.id}>
-              <strong>{group.name}</strong>
-              <span>{group.membersCount?.toLocaleString('ru-RU') ?? '-'} участников</span>
+              <div>
+                <strong>{group.name}</strong>
+                <span>{group.membersCount?.toLocaleString('ru-RU') ?? '-'} участников</span>
+              </div>
+              <div className="group-actions">
+                <a
+                  className="icon-button"
+                  href={`https://vk.com/${group.vkGroupId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Открыть VK"
+                >
+                  <ExternalLink size={17} />
+                </a>
+                <button
+                  className="icon-button danger"
+                  type="button"
+                  aria-label="Удалить группу"
+                  disabled={status === 'saving'}
+                  onClick={() => removeSavedGroup(group)}
+                >
+                  <Trash2 size={17} />
+                </button>
+              </div>
             </div>
           ))}
         </div>

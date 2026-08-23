@@ -161,9 +161,28 @@ a {
   gap: 18px;
 }
 
+.panel-header.compact {
+  align-items: center;
+  margin-bottom: 14px;
+}
+
 .panel h2 {
   font-size: 18px;
   margin: 0 0 8px;
+}
+
+.panel-header.compact h2 {
+  margin: 0;
+}
+
+.limit-badge {
+  background: #eef7f4;
+  border: 1px solid #cfe8df;
+  border-radius: 999px;
+  color: #246b58;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 9px;
 }
 
 .panel p {
@@ -181,6 +200,10 @@ a {
   height: 38px;
   justify-content: center;
   width: 38px;
+}
+
+.icon-button.danger {
+  color: #b42318;
 }
 
 .table {
@@ -226,6 +249,18 @@ a {
 
 .group-line {
   justify-content: space-between;
+}
+
+.group-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty-state {
+  border: 1px dashed #cfd8e3;
+  border-radius: 8px;
+  color: #687684;
+  padding: 14px;
 }
 
 .group-line span,

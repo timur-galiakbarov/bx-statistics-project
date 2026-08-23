@@ -9,6 +9,8 @@ import { accountRouter } from './routes/account.js';
 import { authRouter } from './routes/auth.js';
 import { legacyRouter } from './routes/legacy.js';
 import { paymentsRouter } from './routes/payments.js';
+import { vkRouter } from './routes/vk.js';
+import { VkApiError } from './services/vkClient.js';
 
 export function createApp() {
   const app = express();
@@ -28,9 +30,20 @@ export function createApp() {
   app.use('/api/auth', authRouter);
   app.use('/api/account', accountRouter);
   app.use('/api/payments', paymentsRouter);
+  app.use('/api/vk', vkRouter);
   app.use('/controllers', legacyRouter);
 
   app.use((error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (error instanceof VkApiError) {
+      res.status(error.status).json({
+        success: false,
+        error: error.code,
+        message: error.message,
+        vkCode: error.vkCode
+      });
+      return;
+    }
+
     console.error(error);
     res.status(500).json({ success: false, error: 'INTERNAL_SERVER_ERROR' });
   });

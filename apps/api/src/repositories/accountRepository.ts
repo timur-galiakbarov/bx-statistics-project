@@ -149,6 +149,17 @@ export async function saveVkToken(options: {
   );
 }
 
+export async function getVkAccessToken(userId: string) {
+  const token = await VkTokenModel.findOne({
+    userId,
+    $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }, { expiresAt: { $gt: new Date() } }]
+  })
+    .sort({ updatedAt: -1 })
+    .lean<{ accessToken: string }>();
+
+  return token?.accessToken;
+}
+
 export async function getGroups(userId: string, source?: SavedGroup['source']) {
   const query = {
     userId,
@@ -160,14 +171,24 @@ export async function getGroups(userId: string, source?: SavedGroup['source']) {
 }
 
 export async function addGroup(userId: string, group: Partial<SavedGroup>) {
-  const createdGroup = await SavedGroupModel.create({
-    userId,
-    source: group.source ?? 'free',
-    vkGroupId: group.vkGroupId ?? String(group.name ?? 'unknown'),
-    name: group.name ?? group.vkGroupId ?? 'Новая группа',
-    photo: group.photo,
-    membersCount: group.membersCount
-  });
+  const source = group.source ?? 'free';
+  const vkGroupId = group.vkGroupId ?? String(group.name ?? 'unknown');
+  const createdGroup = await SavedGroupModel.findOneAndUpdate(
+    { userId, source, vkGroupId },
+    {
+      $set: {
+        name: group.name ?? group.vkGroupId ?? 'Новая группа',
+        photo: group.photo,
+        membersCount: group.membersCount
+      },
+      $setOnInsert: {
+        userId,
+        source,
+        vkGroupId
+      }
+    },
+    { new: true, upsert: true }
+  );
 
   return mapGroup(createdGroup);
 }

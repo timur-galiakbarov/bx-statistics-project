@@ -116,3 +116,18 @@ cp apps/api/.env.example apps/api/.env
 - `POST /api/auth/dev` - локальный dev-вход, доступен только не в production
 
 После успешного входа API выставляет HTTP-only cookie `socstat_session`.
+
+## VK API
+
+Новый бэкенд-слой VK API берёт access token из MongoDB, из коллекции `vkTokens`.
+
+Маршруты:
+
+- `GET /api/vk/groups/search?q=...` - поиск групп
+- `GET /api/vk/groups/:groupId` - информация о группе
+- `GET /api/vk/groups/:groupId/stats?dateFrom=YYYY-MM-DD&dateTo=YYYY-MM-DD` - статистика группы
+- `GET /api/vk/groups/:groupId/wall` - записи стены
+- `GET /api/vk/groups/:groupId/photos` - фотографии
+- `GET /api/vk/groups/:groupId/videos` - видео
+
+Если пользователь вошёл через dev-вход и у него нет VK token, API вернёт `VK_TOKEN_REQUIRED`.

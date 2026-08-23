@@ -88,7 +88,7 @@ export function App() {
 
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<DashboardPage groups={groups} />} />
+          <Route path="/dashboard" element={<DashboardPage groups={groups} onGroupsChanged={loadAccount} />} />
           <Route path="/account" element={<AccountPage user={user} groups={groups} />} />
           <Route path="/analytics" element={<PlaceholderPage title="Анализ сообществ" />} />
           <Route path="/compare" element={<PlaceholderPage title="Сравнение сообществ" />} />

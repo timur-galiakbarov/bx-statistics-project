@@ -361,3 +361,119 @@
 Следующие шаги:
 
 - Перед коммитом убедиться, что `apps/api/.env` отображается только как ignored.
+
+## 2026-08-23 - Бэкенд-слой VK API
+
+Запрос пользователя:
+
+- Перейти к этапу переноса backend-слоя VK API.
+
+Результат:
+
+- Добавлен общий VK API клиент `apps/api/src/services/vkClient.ts`.
+- Добавлена нормализация VK-ошибок через `VkApiError`.
+- Добавлены маршруты `apps/api/src/routes/vk.ts`.
+- API берёт access token из MongoDB, из коллекции `vkTokens`.
+- Подключён router `/api/vk`.
+- В `apps/README.md` добавлено описание VK API routes.
+
+Добавленные маршруты:
+
+- `GET /api/vk/groups/search?q=...`
+- `GET /api/vk/groups/:groupId`
+- `GET /api/vk/groups/:groupId/stats`
+- `GET /api/vk/groups/:groupId/wall`
+- `GET /api/vk/groups/:groupId/photos`
+- `GET /api/vk/groups/:groupId/videos`
+
+Изменённые файлы:
+
+- `apps/api/src/services/vkClient.ts`
+- `apps/api/src/routes/vk.ts`
+- `apps/api/src/repositories/accountRepository.ts`
+- `apps/api/src/app.ts`
+- `apps/api/src/routes/auth.ts`
+- `apps/README.md`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `npm run build`
+- `curl -s -c /tmp/socstat-vk-cookies.txt -X POST http://localhost:4000/api/auth/dev`
+- `curl -s -b /tmp/socstat-vk-cookies.txt 'http://localhost:4000/api/vk/groups/search?q=socstat'` вернул `VK_TOKEN_REQUIRED`.
+- `curl -s -o /tmp/socstat-vk-no-cookie.json -w '%{http_code}' 'http://localhost:4000/api/vk/groups/search?q=socstat'` вернул `401`.
+
+Ограничения проверки:
+
+- Реальный вызов VK API нужно проверить после входа через VK, чтобы у пользователя был сохранённый `vkTokens.accessToken`.
+
+Следующие шаги:
+
+- Проверить `/api/vk/groups/search` в браузере после реального VK-входа.
+- Начать подключать новый VK API слой к React-экрану поиска и добавления группы.
+
+## 2026-08-23 - Успешная проверка VK API route
+
+Запрос пользователя:
+
+- Проверить новый backend-слой VK API после реального VK-входа.
+
+Результат:
+
+- В MongoDB найден сохранённый `vkTokens` для пользователя после VK OAuth.
+- Найдена активная сессия этого пользователя.
+- `/api/vk/groups/search?q=socstat` успешно отработал через новый backend-слой.
+- Ответ VK API пришёл через Node backend со статусом `200`.
+- Токены и session id в вывод не печатались.
+
+Проверка:
+
+- `curl -s -o /tmp/socstat-health.json -w '%{http_code}' http://localhost:4000/api/health`
+- Node-скрипт подключился к MongoDB, нашёл пользователя с VK token и сделал локальный запрос к `/api/vk/groups/search?q=socstat`.
+
+Итог проверки:
+
+- `status: 200`
+- `success: true`
+- `dataKeys: ["count", "items"]`
+
+Следующие шаги:
+
+- Подключить `/api/vk/groups/search` к React-экрану поиска группы.
+- Сделать добавление выбранной группы в `savedGroups`.
+
+## 2026-08-23 - React-поиск и добавление VK-группы
+
+Запрос пользователя:
+
+- Подключить backend VK API к React-экрану поиска и добавления группы.
+
+Результат:
+
+- На dashboard добавлена форма поиска групп ВКонтакте.
+- Фронт вызывает `GET /api/vk/groups/search?q=...`.
+- Результаты поиска отображаются списком с названием, ссылочным именем и аватаром.
+- Добавлена кнопка сохранения группы в бесплатные группы через `POST /api/account/groups/free`.
+- После добавления фронт обновляет список групп через `onGroupsChanged`.
+- Добавление группы на backend сделано идемпотентным: повторное добавление той же группы обновляет и возвращает существующую запись, а не падает из-за уникального индекса.
+
+Изменённые файлы:
+
+- `apps/frontend/src/api/types.ts`
+- `apps/frontend/src/pages/DashboardPage.tsx`
+- `apps/frontend/src/App.tsx`
+- `apps/frontend/src/styles.css`
+- `apps/api/src/repositories/accountRepository.ts`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `npm run build`
+- Node-скрипт проверил путь `VK search -> POST /api/account/groups/free -> GET /api/account/groups`.
+- Повторное добавление той же группы вернуло успешный ответ `201`, без ошибки уникального индекса.
+
+Следующие шаги:
+
+- Проверить новый UI вручную в браузере.
+- Добавить удаление/управление сохранёнными группами.
+- Начать перенос dashboard summary на новые VK endpoints.

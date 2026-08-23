@@ -1,13 +1,68 @@
-import { ExternalLink, RefreshCw } from 'lucide-react';
-import type { SavedGroup } from '../api/types';
+import { ExternalLink, Plus, RefreshCw, Search } from 'lucide-react';
+import { FormEvent, useState } from 'react';
+import { apiGet, apiPost } from '../api/client';
+import type { SavedGroup, VkGroup, VkListResponse } from '../api/types';
 
 type Props = {
   groups: SavedGroup[];
+  onGroupsChanged: () => Promise<void>;
 };
 
-export function DashboardPage({ groups }: Props) {
+export function DashboardPage({ groups, onGroupsChanged }: Props) {
   const managedGroups = groups.filter((group) => group.source === 'managed');
   const freeGroups = groups.filter((group) => group.source === 'free');
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<VkGroup[]>([]);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'saving'>('idle');
+  const [message, setMessage] = useState('');
+
+  const searchGroups = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!query.trim()) {
+      setMessage('Введите название группы.');
+      return;
+    }
+
+    setStatus('loading');
+    setMessage('');
+
+    try {
+      const data = await apiGet<VkListResponse<VkGroup>>(
+        `/api/vk/groups/search?q=${encodeURIComponent(query.trim())}`
+      );
+      setResults(data.items ?? []);
+      setMessage(data.items?.length ? '' : 'Ничего не найдено.');
+    } catch (error) {
+      setResults([]);
+      setMessage(error instanceof Error ? error.message : 'Не удалось найти группы.');
+    } finally {
+      setStatus('idle');
+    }
+  };
+
+  const addFreeGroup = async (group: VkGroup) => {
+    setStatus('saving');
+    setMessage('');
+
+    try {
+      await apiPost('/api/account/groups/free', {
+        group: {
+          id: group.id,
+          screen_name: group.screen_name,
+          name: group.name,
+          photo: group.photo_100 ?? group.photo_50 ?? group.photo_200,
+          members_count: group.members_count
+        }
+      });
+      await onGroupsChanged();
+      setMessage(`Группа "${group.name}" добавлена.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Не удалось добавить группу.');
+    } finally {
+      setStatus('idle');
+    }
+  };
 
   return (
     <div className="page-grid">
@@ -49,6 +104,43 @@ export function DashboardPage({ groups }: Props) {
             <div className="group-line" key={group.id}>
               <strong>{group.name}</strong>
               <span>{group.membersCount?.toLocaleString('ru-RU') ?? '-'} участников</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <h2>Поиск группы</h2>
+        <p>Найдите группу ВКонтакте и добавьте её в список бесплатных.</p>
+        <form className="search-form" onSubmit={searchGroups}>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Название или короткое имя группы"
+          />
+          <button type="submit" disabled={status === 'loading'}>
+            <Search size={17} />
+            Найти
+          </button>
+        </form>
+        {message && <div className="form-message">{message}</div>}
+        <div className="search-results">
+          {results.map((group) => (
+            <div className="search-result" key={group.id}>
+              <img src={group.photo_100 ?? group.photo_50 ?? group.photo_200} alt="" />
+              <div>
+                <strong>{group.name}</strong>
+                <span>{group.screen_name ? `vk.com/${group.screen_name}` : `club${group.id}`}</span>
+              </div>
+              <button
+                className="icon-button"
+                type="button"
+                aria-label="Добавить группу"
+                disabled={status === 'saving'}
+                onClick={() => addFreeGroup(group)}
+              >
+                <Plus size={17} />
+              </button>
             </div>
           ))}
         </div>

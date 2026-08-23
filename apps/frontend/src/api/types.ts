@@ -18,6 +18,21 @@ export type SavedGroup = {
   membersCount?: number;
 };
 
+export type VkGroup = {
+  id: number;
+  name: string;
+  screen_name?: string;
+  photo_50?: string;
+  photo_100?: string;
+  photo_200?: string;
+  members_count?: number;
+};
+
+export type VkListResponse<T> = {
+  count: number;
+  items: T[];
+};
+
 export type NewsItem = {
   id: string;
   title: string;

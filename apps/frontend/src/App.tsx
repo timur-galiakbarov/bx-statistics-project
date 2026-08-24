@@ -9,7 +9,7 @@ import {
   Shield,
   Users
 } from 'lucide-react';
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { apiGet, apiPost } from './api/client';
 import type { SavedGroup, User } from './api/types';
@@ -36,6 +36,7 @@ const navItems = [
 const adminNavItem = { to: '/admin', label: 'Админка', icon: Shield };
 
 export function App() {
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [groups, setGroups] = useState<SavedGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,14 +71,13 @@ export function App() {
   };
 
   const title = useMemo(() => {
-    const path = window.location.pathname;
-    return [...navItems, adminNavItem].find((item) => path.startsWith(item.to))?.label ?? 'Socstat';
-  }, [window.location.pathname]);
+    return [...navItems, adminNavItem].find((item) => location.pathname.startsWith(item.to))?.label ?? 'Socstat';
+  }, [location.pathname]);
   const visibleNavItems = user?.isAdmin ? [...navItems, adminNavItem] : navItems;
   const hasPaidAccess = user?.isAdmin || isAccessActive(user?.activeTo);
   const paidRoute = (element: JSX.Element) => (hasPaidAccess ? element : <AccessLock activeTo={user?.activeTo} />);
 
-  if (window.location.pathname === '/auth/vk/implicit-callback') {
+  if (location.pathname === '/auth/vk/implicit-callback') {
     return <VkImplicitCallbackPage />;
   }
 
@@ -85,7 +85,7 @@ export function App() {
     return <div className="boot">Загрузка socstat...</div>;
   }
 
-  if (isUnauthorized || window.location.pathname === '/login') {
+  if (isUnauthorized || location.pathname === '/login') {
     return <LoginPage onDevLogin={loadAccount} />;
   }
 

@@ -1,5 +1,7 @@
 const VK_API_BASE_URL = 'https://api.vk.com/method';
 const VK_API_VERSION = '5.131';
+const VK_TOO_MANY_REQUESTS_CODE = 6;
+const VK_RETRY_DELAYS_MS = [450, 900, 1500];
 
 type VkApiPayload<T> = {
   response?: T;
@@ -24,7 +26,13 @@ export class VkApiError extends Error {
   }
 }
 
-export async function vkApiRequest<T>(
+function delay(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function performVkApiRequest<T>(
   method: string,
   accessToken: string,
   params: Record<string, string | number | boolean | undefined>
@@ -54,4 +62,29 @@ export async function vkApiRequest<T>(
   }
 
   return payload.response;
+}
+
+export async function vkApiRequest<T>(
+  method: string,
+  accessToken: string,
+  params: Record<string, string | number | boolean | undefined>
+) {
+  for (let attempt = 0; attempt <= VK_RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      return await performVkApiRequest<T>(method, accessToken, params);
+    } catch (error) {
+      if (
+        error instanceof VkApiError &&
+        error.vkCode === VK_TOO_MANY_REQUESTS_CODE &&
+        attempt < VK_RETRY_DELAYS_MS.length
+      ) {
+        await delay(VK_RETRY_DELAYS_MS[attempt]);
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new VkApiError('VK API request failed');
 }

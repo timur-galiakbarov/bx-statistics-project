@@ -1,7 +1,8 @@
-import { ExternalLink, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { BarChart3, ExternalLink, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { FormEvent, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiDelete, apiGet, apiPost } from '../api/client';
-import type { SavedGroup, VkGroup, VkListResponse } from '../api/types';
+import type { DashboardPeriod, DashboardSummary, SavedGroup, VkGroup, VkListResponse } from '../api/types';
 
 type Props = {
   groups: SavedGroup[];
@@ -11,10 +12,58 @@ type Props = {
 export function DashboardPage({ groups, onGroupsChanged }: Props) {
   const managedGroups = groups.filter((group) => group.source === 'managed');
   const freeGroups = groups.filter((group) => group.source === 'free');
+  const [subscriptions, setSubscriptions] = useState<VkGroup[]>([]);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<VkGroup[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'saving'>('idle');
   const [message, setMessage] = useState('');
+  const [subscriptionsStatus, setSubscriptionsStatus] = useState<'idle' | 'loading'>('idle');
+  const [subscriptionsMessage, setSubscriptionsMessage] = useState('');
+  const [period, setPeriod] = useState<DashboardPeriod>('last7days');
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [summaryStatus, setSummaryStatus] = useState<'idle' | 'loading'>('idle');
+  const [summaryMessage, setSummaryMessage] = useState('');
+
+  const loadSummary = async (nextPeriod = period) => {
+    setSummaryStatus('loading');
+    setSummaryMessage('');
+
+    try {
+      const data = await apiGet<DashboardSummary>(`/api/dashboard/summary?period=${nextPeriod}`);
+      setSummary(data);
+    } catch (error) {
+      setSummary(null);
+      setSummaryMessage(error instanceof Error ? error.message : 'Не удалось загрузить статистику.');
+    } finally {
+      setSummaryStatus('idle');
+    }
+  };
+
+  const loadSubscriptions = async () => {
+    setSubscriptionsStatus('loading');
+    setSubscriptionsMessage('');
+
+    try {
+      const data = await apiGet<VkListResponse<VkGroup>>('/api/vk/groups/subscriptions');
+      setSubscriptions(data.items ?? []);
+      setSubscriptionsMessage(data.items?.length ? '' : 'Подписок на группы не найдено.');
+    } catch (error) {
+      setSubscriptions([]);
+      setSubscriptionsMessage(error instanceof Error ? error.message : 'Не удалось загрузить подписки.');
+    } finally {
+      setSubscriptionsStatus('idle');
+    }
+  };
+
+  useEffect(() => {
+    loadSummary();
+    loadSubscriptions();
+  }, [groups.length]);
+
+  const setSummaryPeriod = (nextPeriod: DashboardPeriod) => {
+    setPeriod(nextPeriod);
+    loadSummary(nextPeriod);
+  };
 
   const searchGroups = async (event: FormEvent) => {
     event.preventDefault();
@@ -85,28 +134,93 @@ export function DashboardPage({ groups, onGroupsChanged }: Props) {
         <div className="panel-header">
           <div>
             <h2>Статистика моих сообществ</h2>
-            <p>Базовая витрина для переноса старого dashboardController</p>
+            <p>
+              {summary
+                ? `${summary.period.dateFrom} - ${summary.period.dateTo}`
+                : 'Сводка по сохранённым группам'}
+            </p>
           </div>
-          <button className="icon-button" aria-label="Обновить">
+          <button className="icon-button" aria-label="Обновить" onClick={() => loadSummary()}>
             <RefreshCw size={18} />
           </button>
         </div>
 
+        <div className="period-tabs">
+          <button className={period === 'last7days' ? 'active' : ''} onClick={() => setSummaryPeriod('last7days')}>
+            7 дней
+          </button>
+          <button className={period === 'today' ? 'active' : ''} onClick={() => setSummaryPeriod('today')}>
+            Сегодня
+          </button>
+          <button className={period === 'yesterday' ? 'active' : ''} onClick={() => setSummaryPeriod('yesterday')}>
+            Вчера
+          </button>
+          <button className={period === 'currentMonth' ? 'active' : ''} onClick={() => setSummaryPeriod('currentMonth')}>
+            Месяц
+          </button>
+        </div>
+
+        {summaryMessage && <div className="form-message">{summaryMessage}</div>}
+
         <div className="table">
-          <div className="table-row table-head">
+          <div className="table-row dashboard-row table-head">
             <span>Группа</span>
             <span>Участников</span>
-            <span>Источник</span>
+            <span>Прирост</span>
+            <span>Посещения</span>
+            <span>Охват</span>
+            <span>Активность</span>
             <span />
           </div>
-          {managedGroups.map((group) => (
-            <div className="table-row" key={group.id}>
-              <strong>{group.name}</strong>
-              <span>{group.membersCount?.toLocaleString('ru-RU') ?? '-'}</span>
-              <span>Управляемая</span>
-              <a href={`https://vk.com/${group.vkGroupId}`} target="_blank" rel="noreferrer" aria-label="Открыть VK">
-                <ExternalLink size={17} />
-              </a>
+          {summaryStatus === 'loading' && <div className="empty-state table-empty">Загружаем статистику...</div>}
+          {summary?.groups.length === 0 && <div className="empty-state table-empty">Сохранённые группы пока не добавлены.</div>}
+          {summary?.groups.map((item) => (
+            <div className="table-row dashboard-row" key={item.savedGroupId}>
+              <div className="summary-group">
+                {item.group.photo && <img src={item.group.photo} alt="" />}
+                <strong>{item.group.name}</strong>
+                {item.error && <span>{item.error.message}</span>}
+                {!item.error && item.warnings.map((warning) => <span key={warning}>{warning}</span>)}
+              </div>
+              <span>{item.membersCount.toLocaleString('ru-RU')}</span>
+              <span>
+                {item.growth.total.toLocaleString('ru-RU')}
+                <small>+{item.growth.subscribed} / -{item.growth.unsubscribed}</small>
+              </span>
+              <span>
+                {item.traffic.visitors.toLocaleString('ru-RU')}
+                <small>{item.traffic.views.toLocaleString('ru-RU')} просмотров</small>
+              </span>
+              <span>
+                {item.reach.subscribers.toLocaleString('ru-RU')}
+                <small>{item.reach.total.toLocaleString('ru-RU')} всего</small>
+              </span>
+              <span>
+                {item.activity.likes.toLocaleString('ru-RU')}
+                <small>
+                  {item.activity.reposts} / {item.activity.comments}
+                </small>
+              </span>
+              <div className="group-actions">
+                <Link
+                  className="icon-button has-tooltip"
+                  to={`/analytics?groupId=${item.group.id}`}
+                  aria-label="Открыть аналитику"
+                  data-tooltip="Открыть аналитику группы"
+                >
+                  <BarChart3 size={17} />
+                </Link>
+                <a
+                  className="icon-button has-tooltip"
+                  href={`https://vk.com/${item.group.screenName ?? `club${item.group.id}`}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Открыть VK"
+                  data-tooltip="Открыть страницу VK"
+                >
+                  <ExternalLink size={17} />
+                </a>
+              </div>
             </div>
           ))}
         </div>
@@ -126,12 +240,21 @@ export function DashboardPage({ groups, onGroupsChanged }: Props) {
                 <span>{group.membersCount?.toLocaleString('ru-RU') ?? '-'} участников</span>
               </div>
               <div className="group-actions">
+                <Link
+                  className="icon-button has-tooltip"
+                  to={`/analytics?groupId=${group.vkGroupId}`}
+                  aria-label="Открыть аналитику"
+                  data-tooltip="Открыть аналитику группы"
+                >
+                  <BarChart3 size={17} />
+                </Link>
                 <a
-                  className="icon-button"
+                  className="icon-button has-tooltip"
                   href={`https://vk.com/${group.vkGroupId}`}
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Открыть VK"
+                  data-tooltip="Открыть страницу VK"
                 >
                   <ExternalLink size={17} />
                 </a>
@@ -148,6 +271,54 @@ export function DashboardPage({ groups, onGroupsChanged }: Props) {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header compact">
+          <h2>Мои подписки VK</h2>
+          <button className="icon-button" aria-label="Обновить подписки" onClick={loadSubscriptions}>
+            <RefreshCw size={18} />
+          </button>
+        </div>
+        {subscriptionsMessage && <div className="form-message">{subscriptionsMessage}</div>}
+        {subscriptionsStatus === 'loading' && <div className="empty-state">Загружаем подписки...</div>}
+        {subscriptionsStatus !== 'loading' && subscriptions.length > 0 && (
+          <div className="subscription-list">
+            {subscriptions.map((group) => (
+              <div className="group-line" key={group.id}>
+                <div className="summary-group">
+                  {(group.photo_100 ?? group.photo_50 ?? group.photo_200) && (
+                    <img src={group.photo_100 ?? group.photo_50 ?? group.photo_200} alt="" />
+                  )}
+                  <div>
+                    <strong>{group.name}</strong>
+                    <span>{group.members_count?.toLocaleString('ru-RU') ?? '-'} участников</span>
+                  </div>
+                </div>
+                <div className="group-actions">
+                  <Link
+                    className="icon-button has-tooltip"
+                    to={`/analytics?groupId=${group.id}`}
+                    aria-label="Открыть аналитику"
+                    data-tooltip="Открыть аналитику группы"
+                  >
+                    <BarChart3 size={17} />
+                  </Link>
+                  <a
+                    className="icon-button has-tooltip"
+                    href={`https://vk.com/${group.screen_name ?? `club${group.id}`}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Открыть VK"
+                    data-tooltip="Открыть страницу VK"
+                  >
+                    <ExternalLink size={17} />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="panel">

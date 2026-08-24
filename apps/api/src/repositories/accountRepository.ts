@@ -7,6 +7,7 @@ import { UserModel } from '../models/User.js';
 import { VkTokenModel } from '../models/VkToken.js';
 import type { SavedGroup } from '../store/types.js';
 import { DomainError } from '../errors/domainError.js';
+import { env } from '../config/env.js';
 
 const FREE_GROUP_LIMIT = 3;
 
@@ -111,6 +112,7 @@ export async function upsertVkUser(profile: {
 }) {
   const fallbackActiveTo = new Date();
   fallbackActiveTo.setDate(fallbackActiveTo.getDate() + 14);
+  const isAdmin = env.adminVkIds.includes(profile.vkId);
 
   const user = await UserModel.findOneAndUpdate(
     { vkId: profile.vkId },
@@ -118,11 +120,12 @@ export async function upsertVkUser(profile: {
       $set: {
         firstName: profile.firstName,
         lastName: profile.lastName,
-        photo: profile.photo
+        photo: profile.photo,
+        ...(isAdmin ? { isAdmin: true } : {})
       },
       $setOnInsert: {
         activeTo: fallbackActiveTo,
-        isAdmin: false
+        ...(isAdmin ? {} : { isAdmin: false })
       }
     },
     { new: true, upsert: true }
@@ -137,16 +140,20 @@ export async function saveVkToken(options: {
   scopes: string[];
   expiresIn?: number;
 }) {
-  const expiresAt = options.expiresIn
-    ? new Date(Date.now() + options.expiresIn * 1000)
+  const expiresIn = Number(options.expiresIn);
+  const expiresAt = Number.isFinite(expiresIn) && expiresIn > 0
+    ? new Date(Date.now() + expiresIn * 1000)
     : undefined;
 
   await VkTokenModel.findOneAndUpdate(
     { userId: options.userId },
     {
-      accessToken: options.accessToken,
-      scopes: options.scopes,
-      expiresAt
+      $set: {
+        accessToken: options.accessToken,
+        scopes: options.scopes,
+        ...(expiresAt ? { expiresAt } : {})
+      },
+      ...(expiresAt ? {} : { $unset: { expiresAt: 1 } })
     },
     { upsert: true }
   );

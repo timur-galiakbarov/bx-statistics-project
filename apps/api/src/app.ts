@@ -6,9 +6,13 @@ import morgan from 'morgan';
 import { env } from './config/env.js';
 import { attachUser } from './middleware/auth.js';
 import { accountRouter } from './routes/account.js';
+import { analyticsRouter } from './routes/analytics.js';
 import { authRouter } from './routes/auth.js';
+import { compareRouter } from './routes/compare.js';
+import { dashboardRouter } from './routes/dashboard.js';
 import { legacyRouter } from './routes/legacy.js';
 import { paymentsRouter } from './routes/payments.js';
+import { postsRouter } from './routes/posts.js';
 import { vkRouter } from './routes/vk.js';
 import { VkApiError } from './services/vkClient.js';
 import { DomainError } from './errors/domainError.js';
@@ -30,7 +34,11 @@ export function createApp() {
 
   app.use('/api/auth', authRouter);
   app.use('/api/account', accountRouter);
+  app.use('/api/analytics', analyticsRouter);
+  app.use('/api/compare', compareRouter);
+  app.use('/api/dashboard', dashboardRouter);
   app.use('/api/payments', paymentsRouter);
+  app.use('/api/posts', postsRouter);
   app.use('/api/vk', vkRouter);
   app.use('/controllers', legacyRouter);
 

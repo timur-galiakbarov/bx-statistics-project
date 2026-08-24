@@ -27,8 +27,19 @@ type YooMoneyCallback = {
   sha1_hash?: string;
 };
 
+type PaymentActionResult = {
+  status: string;
+  activeTo?: string;
+};
+
+type AdminUserAccessAction = 'set' | 'add_days' | 'add_months';
+
 function findPlanByAmount(amount: number) {
   return plans.find((plan) => plan.priceRub === amount);
+}
+
+function findPlanByPeriod(period: string) {
+  return plans.find((plan) => plan.title === period);
 }
 
 function getPaymentIdFromLabel(label?: string) {
@@ -90,6 +101,204 @@ function extendActiveTo(currentActiveTo: Date, months: number) {
   return base;
 }
 
+function extendActiveToByDays(currentActiveTo: Date, days: number) {
+  const now = new Date();
+  const base = currentActiveTo > now ? new Date(currentActiveTo) : now;
+
+  base.setDate(base.getDate() + days);
+  base.setHours(0, 0, 0, 0);
+
+  return base;
+}
+
+function parseAccessDate(value: unknown) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return undefined;
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function mapAdminUser(user: {
+  _id: Types.ObjectId;
+  vkId: string;
+  firstName: string;
+  lastName: string;
+  activeTo: Date;
+}) {
+  return {
+    id: user._id.toString(),
+    vkId: user.vkId,
+    name: `${user.firstName} ${user.lastName}`,
+    activeTo: user.activeTo.toISOString().slice(0, 10)
+  };
+}
+
+function ensureAdmin(req: Parameters<Parameters<typeof paymentsRouter.get>[1]>[0], res: Parameters<Parameters<typeof paymentsRouter.get>[1]>[1]) {
+  if (req.user!.isAdmin) {
+    return true;
+  }
+
+  res.status(403).json({ success: false, error: 'FORBIDDEN' });
+  return false;
+}
+
+function mapAdminPayment(payment: {
+  _id: Types.ObjectId;
+  provider: string;
+  amount: number;
+  period: string;
+  status: string;
+  providerTransactionId?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  userId?: {
+    _id: Types.ObjectId;
+    vkId: string;
+    firstName: string;
+    lastName: string;
+    activeTo: Date;
+  } | null;
+}) {
+  return {
+    id: payment._id.toString(),
+    provider: payment.provider,
+    amount: payment.amount,
+    period: payment.period,
+    status: payment.status,
+    providerTransactionId: payment.providerTransactionId,
+    createdAt: payment.createdAt.toISOString(),
+    updatedAt: payment.updatedAt.toISOString(),
+    user: payment.userId
+      ? mapAdminUser(payment.userId)
+      : null
+  };
+}
+
+async function updateUserAccess(
+  userId: string,
+  options: { action: AdminUserAccessAction; value?: unknown }
+) {
+  const user = await UserModel.findById(userId);
+
+  if (!user) {
+    return null;
+  }
+
+  if (options.action === 'set') {
+    const nextDate = parseAccessDate(options.value);
+
+    if (!nextDate) {
+      return { error: 'INVALID_ACCESS_DATE' as const };
+    }
+
+    user.activeTo = nextDate;
+  } else if (options.action === 'add_days') {
+    const days = Number(options.value);
+
+    if (!Number.isInteger(days) || days < 1 || days > 3660) {
+      return { error: 'INVALID_ACCESS_DAYS' as const };
+    }
+
+    user.activeTo = extendActiveToByDays(user.activeTo, days);
+  } else if (options.action === 'add_months') {
+    const months = Number(options.value);
+
+    if (!Number.isInteger(months) || months < 1 || months > 120) {
+      return { error: 'INVALID_ACCESS_MONTHS' as const };
+    }
+
+    user.activeTo = extendActiveTo(user.activeTo, months);
+  } else {
+    return { error: 'INVALID_ACCESS_ACTION' as const };
+  }
+
+  await user.save();
+
+  return {
+    user: mapAdminUser({
+      _id: user._id,
+      vkId: user.vkId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      activeTo: user.activeTo
+    })
+  };
+}
+
+async function confirmPayment(paymentId: string, options: { operationId?: string; rawPayload?: unknown } = {}): Promise<PaymentActionResult> {
+  const payment = await PaymentModel.findById(paymentId);
+
+  if (!payment) {
+    return { status: 'not_found' };
+  }
+
+  if (payment.status === 'paid') {
+    return { status: 'already_paid' };
+  }
+
+  const plan = findPlanByPeriod(payment.period);
+
+  if (!plan || payment.amount !== plan.priceRub) {
+    payment.status = 'failed';
+    payment.rawCallbackPayload = options.rawPayload ?? {
+      source: 'admin',
+      reason: 'PAYMENT_PLAN_MISMATCH'
+    };
+    await payment.save();
+    return { status: 'amount_mismatch' };
+  }
+
+  const user = await UserModel.findById(payment.userId);
+
+  if (!user) {
+    return { status: 'user_not_found' };
+  }
+
+  user.activeTo = extendActiveTo(user.activeTo, plan.months);
+  payment.status = 'paid';
+  payment.providerTransactionId = options.operationId ?? payment.providerTransactionId;
+  payment.rawCallbackPayload = options.rawPayload ?? {
+    source: 'admin',
+    confirmedAt: new Date().toISOString()
+  };
+
+  await Promise.all([user.save(), payment.save()]);
+
+  return {
+    status: 'paid',
+    activeTo: user.activeTo.toISOString().slice(0, 10)
+  };
+}
+
+async function cancelPayment(paymentId: string, reason?: string): Promise<PaymentActionResult> {
+  const payment = await PaymentModel.findById(paymentId);
+
+  if (!payment) {
+    return { status: 'not_found' };
+  }
+
+  if (payment.status === 'failed') {
+    return { status: 'already_failed' };
+  }
+
+  payment.status = 'failed';
+  payment.rawCallbackPayload = {
+    ...(typeof payment.rawCallbackPayload === 'object' && payment.rawCallbackPayload !== null
+      ? payment.rawCallbackPayload
+      : {}),
+    adminCancel: {
+      reason: reason?.trim() || 'Отменено администратором',
+      canceledAt: new Date().toISOString()
+    }
+  };
+  await payment.save();
+
+  return { status: 'failed' };
+}
+
 paymentsRouter.get('/plans', (_req, res) => {
   res.json({
     success: true,
@@ -120,8 +329,7 @@ paymentsRouter.get('/history', requireUser, async (req, res, next) => {
 });
 
 paymentsRouter.get('/admin/history', requireUser, async (req, res, next) => {
-  if (!req.user!.isAdmin) {
-    res.status(403).json({ success: false, error: 'FORBIDDEN' });
+  if (!ensureAdmin(req, res)) {
     return;
   }
 
@@ -161,24 +369,124 @@ paymentsRouter.get('/admin/history', requireUser, async (req, res, next) => {
 
     res.json({
       success: true,
-      data: filteredPayments.map((payment) => ({
-        id: payment._id.toString(),
-        provider: payment.provider,
-        amount: payment.amount,
-        period: payment.period,
-        status: payment.status,
-        providerTransactionId: payment.providerTransactionId,
-        createdAt: payment.createdAt.toISOString(),
-        updatedAt: payment.updatedAt.toISOString(),
-        user: payment.userId
-          ? {
-              id: payment.userId._id.toString(),
-              vkId: payment.userId.vkId,
-              name: `${payment.userId.firstName} ${payment.userId.lastName}`,
-              activeTo: payment.userId.activeTo.toISOString().slice(0, 10)
-            }
-          : null
-      }))
+      data: filteredPayments.map(mapAdminPayment)
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+paymentsRouter.post('/admin/users/:userId/access', requireUser, async (req, res, next) => {
+  if (!ensureAdmin(req, res)) {
+    return;
+  }
+
+  try {
+    const action = req.body?.action as AdminUserAccessAction;
+    const result = await updateUserAccess(req.params.userId, {
+      action,
+      value: req.body?.value
+    });
+
+    if (!result) {
+      res.status(404).json({ success: false, error: 'USER_NOT_FOUND' });
+      return;
+    }
+
+    if ('error' in result) {
+      res.status(400).json({ success: false, error: result.error });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+paymentsRouter.post('/admin/:paymentId/confirm', requireUser, async (req, res, next) => {
+  if (!ensureAdmin(req, res)) {
+    return;
+  }
+
+  try {
+    const result = await confirmPayment(req.params.paymentId, {
+      operationId: typeof req.body?.operationId === 'string' ? req.body.operationId.trim() || undefined : undefined,
+      rawPayload: {
+        source: 'admin',
+        confirmedBy: req.user!.id,
+        confirmedAt: new Date().toISOString(),
+        note: typeof req.body?.note === 'string' ? req.body.note.trim() : undefined
+      }
+    });
+
+    if (result.status === 'not_found') {
+      res.status(404).json({ success: false, error: 'PAYMENT_NOT_FOUND' });
+      return;
+    }
+
+    if (result.status === 'user_not_found') {
+      res.status(404).json({ success: false, error: 'PAYMENT_USER_NOT_FOUND' });
+      return;
+    }
+
+    if (result.status === 'amount_mismatch') {
+      res.status(400).json({ success: false, error: 'PAYMENT_AMOUNT_MISMATCH' });
+      return;
+    }
+
+    const payment = await PaymentModel.findById(req.params.paymentId)
+      .populate<{ userId: { _id: Types.ObjectId; vkId: string; firstName: string; lastName: string; activeTo: Date } }>(
+        'userId',
+        'vkId firstName lastName activeTo'
+      )
+      .lean();
+
+    res.json({
+      success: true,
+      data: {
+        status: result.status,
+        activeTo: result.activeTo,
+        payment: payment ? mapAdminPayment(payment) : null
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+paymentsRouter.post('/admin/:paymentId/cancel', requireUser, async (req, res, next) => {
+  if (!ensureAdmin(req, res)) {
+    return;
+  }
+
+  try {
+    const result = await cancelPayment(
+      req.params.paymentId,
+      typeof req.body?.reason === 'string' ? req.body.reason : undefined
+    );
+
+    if (result.status === 'not_found') {
+      res.status(404).json({ success: false, error: 'PAYMENT_NOT_FOUND' });
+      return;
+    }
+
+    const payment = await PaymentModel.findById(req.params.paymentId)
+      .populate<{ userId: { _id: Types.ObjectId; vkId: string; firstName: string; lastName: string; activeTo: Date } }>(
+        'userId',
+        'vkId firstName lastName activeTo'
+      )
+      .lean();
+
+    res.json({
+      success: true,
+      data: {
+        status: result.status,
+        payment: payment ? mapAdminPayment(payment) : null
+      }
     });
   } catch (error) {
     next(error);
@@ -293,25 +601,21 @@ paymentsRouter.post('/callback', async (req, res, next) => {
       return;
     }
 
-    const user = await UserModel.findById(payment.userId);
+    const result = await confirmPayment(payment.id, {
+      operationId: payload.operation_id,
+      rawPayload: payload
+    });
 
-    if (!user) {
+    if (result.status === 'user_not_found') {
       res.status(404).json({ success: false, error: 'PAYMENT_USER_NOT_FOUND' });
       return;
     }
 
-    user.activeTo = extendActiveTo(user.activeTo, plan.months);
-    payment.status = 'paid';
-    payment.providerTransactionId = payload.operation_id;
-    payment.rawCallbackPayload = payload;
-
-    await Promise.all([user.save(), payment.save()]);
-
     res.json({
       success: true,
       data: {
-        status: 'paid',
-        activeTo: user.activeTo.toISOString().slice(0, 10)
+        status: result.status,
+        activeTo: result.activeTo
       }
     });
   } catch (error) {

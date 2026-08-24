@@ -6,10 +6,11 @@ import type { DashboardPeriod, DashboardSummary, SavedGroup, VkGroup, VkListResp
 
 type Props = {
   groups: SavedGroup[];
+  hasPaidAccess: boolean;
   onGroupsChanged: () => Promise<void>;
 };
 
-export function DashboardPage({ groups, onGroupsChanged }: Props) {
+export function DashboardPage({ groups, hasPaidAccess, onGroupsChanged }: Props) {
   const managedGroups = groups.filter((group) => group.source === 'managed');
   const freeGroups = groups.filter((group) => group.source === 'free');
   const [subscriptions, setSubscriptions] = useState<VkGroup[]>([]);
@@ -25,6 +26,12 @@ export function DashboardPage({ groups, onGroupsChanged }: Props) {
   const [summaryMessage, setSummaryMessage] = useState('');
 
   const loadSummary = async (nextPeriod = period) => {
+    if (!hasPaidAccess) {
+      setSummary(null);
+      setSummaryMessage('Доступ к сводной статистике истёк. Продлите доступ в разделе оплаты.');
+      return;
+    }
+
     setSummaryStatus('loading');
     setSummaryMessage('');
 
@@ -40,6 +47,12 @@ export function DashboardPage({ groups, onGroupsChanged }: Props) {
   };
 
   const loadSubscriptions = async () => {
+    if (!hasPaidAccess) {
+      setSubscriptions([]);
+      setSubscriptionsMessage('Список моих сообществ доступен после продления доступа.');
+      return;
+    }
+
     setSubscriptionsStatus('loading');
     setSubscriptionsMessage('');
 
@@ -58,7 +71,7 @@ export function DashboardPage({ groups, onGroupsChanged }: Props) {
   useEffect(() => {
     loadSummary();
     loadSubscriptions();
-  }, [groups.length]);
+  }, [groups.length, hasPaidAccess]);
 
   const setSummaryPeriod = (nextPeriod: DashboardPeriod) => {
     setPeriod(nextPeriod);
@@ -161,6 +174,11 @@ export function DashboardPage({ groups, onGroupsChanged }: Props) {
         </div>
 
         {summaryMessage && <div className="form-message">{summaryMessage}</div>}
+        {!hasPaidAccess && (
+          <Link className="secondary-button" to="/account">
+            Перейти к оплате
+          </Link>
+        )}
 
         <div className="table">
           <div className="table-row dashboard-row table-head">

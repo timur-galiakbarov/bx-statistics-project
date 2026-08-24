@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
+import { requireActiveAccess } from '../middleware/access.js';
 import { requireUser } from '../middleware/auth.js';
-import { getVkAccessToken } from '../repositories/accountRepository.js';
+import { getVkAccessToken, getVkTokenStatus } from '../repositories/accountRepository.js';
 import { VkApiError, vkApiRequest } from '../services/vkClient.js';
 import { buildVkAuthorizeUrl } from './auth.js';
 
@@ -119,6 +120,16 @@ vkRouter.get('/permissions', requireUser, async (req, res, next) => {
   }
 });
 
+vkRouter.get('/token-status', requireUser, async (req, res, next) => {
+  try {
+    const data = await getVkTokenStatus(req.user!.id);
+
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
 vkRouter.post('/debug/permissions', requireUser, async (req, res, next) => {
   try {
     const accessToken = getManualAccessToken(req.body?.accessToken);
@@ -200,7 +211,7 @@ vkRouter.get('/oauth-debug', requireUser, (_req, res) => {
   });
 });
 
-vkRouter.get('/groups/:groupId/channel-debug', requireUser, async (req, res, next) => {
+vkRouter.get('/groups/:groupId/channel-debug', requireUser, requireActiveAccess, async (req, res, next) => {
   try {
     const accessToken = await getRequiredVkToken(req.user!.id);
     const warnings: string[] = [];
@@ -286,7 +297,7 @@ vkRouter.get('/groups/search', requireUser, async (req, res, next) => {
   }
 });
 
-vkRouter.get('/groups/subscriptions', requireUser, async (req, res, next) => {
+vkRouter.get('/groups/subscriptions', requireUser, requireActiveAccess, async (req, res, next) => {
   try {
     const accessToken = await getRequiredVkToken(req.user!.id);
     const count = 1000;
@@ -337,7 +348,7 @@ vkRouter.get('/groups/:groupId', requireUser, async (req, res, next) => {
   }
 });
 
-vkRouter.get('/groups/:groupId/stats', requireUser, async (req, res, next) => {
+vkRouter.get('/groups/:groupId/stats', requireUser, requireActiveAccess, async (req, res, next) => {
   try {
     const accessToken = await getRequiredVkToken(req.user!.id);
     const data = await vkApiRequest('stats.get', accessToken, {
@@ -353,7 +364,7 @@ vkRouter.get('/groups/:groupId/stats', requireUser, async (req, res, next) => {
   }
 });
 
-vkRouter.get('/groups/:groupId/wall', requireUser, async (req, res, next) => {
+vkRouter.get('/groups/:groupId/wall', requireUser, requireActiveAccess, async (req, res, next) => {
   try {
     const accessToken = await getRequiredVkToken(req.user!.id);
     const data = await vkApiRequest('wall.get', accessToken, {
@@ -368,7 +379,7 @@ vkRouter.get('/groups/:groupId/wall', requireUser, async (req, res, next) => {
   }
 });
 
-vkRouter.get('/groups/:groupId/photos', requireUser, async (req, res, next) => {
+vkRouter.get('/groups/:groupId/photos', requireUser, requireActiveAccess, async (req, res, next) => {
   try {
     const accessToken = await getRequiredVkToken(req.user!.id);
     const data = await vkApiRequest('photos.getAll', accessToken, {
@@ -385,7 +396,7 @@ vkRouter.get('/groups/:groupId/photos', requireUser, async (req, res, next) => {
   }
 });
 
-vkRouter.get('/groups/:groupId/videos', requireUser, async (req, res, next) => {
+vkRouter.get('/groups/:groupId/videos', requireUser, requireActiveAccess, async (req, res, next) => {
   try {
     const accessToken = await getRequiredVkToken(req.user!.id);
     const data = await vkApiRequest('video.get', accessToken, {

@@ -1,7 +1,16 @@
-import { Bug, CreditCard, Info, Link, RefreshCw, Search } from 'lucide-react';
+import { Bug, CheckCircle2, CreditCard, Info, Link, RefreshCw, Search, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../api/client';
-import type { AdminPaymentHistoryItem, VkAppInfo, VkManualStatsResult, VkOAuthDebug, VkPermissions } from '../api/types';
+import type {
+  AdminPaymentActionResult,
+  AdminPaymentHistoryItem,
+  AdminUserAccessResult,
+  VkAppInfo,
+  VkManualStatsResult,
+  VkOAuthDebug,
+  VkPermissions,
+  VkTokenStatus
+} from '../api/types';
 
 const paymentStatusOptions = [
   { key: 'all', label: 'Все' },
@@ -14,6 +23,7 @@ type PaymentStatusFilter = (typeof paymentStatusOptions)[number]['key'];
 
 export function AdminPage() {
   const [permissions, setPermissions] = useState<VkPermissions | null>(null);
+  const [tokenStatus, setTokenStatus] = useState<VkTokenStatus | null>(null);
   const [appInfo, setAppInfo] = useState<VkAppInfo | null>(null);
   const [oauthDebug, setOauthDebug] = useState<VkOAuthDebug | null>(null);
   const [manualToken, setManualToken] = useState('');
@@ -24,11 +34,16 @@ export function AdminPage() {
   const [manualPermissions, setManualPermissions] = useState<VkPermissions | null>(null);
   const [manualStats, setManualStats] = useState<VkManualStatsResult | null>(null);
   const [permissionsError, setPermissionsError] = useState<string | null>(null);
+  const [tokenStatusError, setTokenStatusError] = useState<string | null>(null);
   const [appInfoError, setAppInfoError] = useState<string | null>(null);
   const [oauthDebugError, setOauthDebugError] = useState<string | null>(null);
   const [paymentsError, setPaymentsError] = useState<string | null>(null);
   const [manualError, setManualError] = useState<string | null>(null);
+  const [paymentActionId, setPaymentActionId] = useState<string | null>(null);
+  const [accessActionUserId, setAccessActionUserId] = useState<string | null>(null);
+  const [accessDates, setAccessDates] = useState<Record<string, string>>({});
   const [isPermissionsLoading, setIsPermissionsLoading] = useState(false);
+  const [isTokenStatusLoading, setIsTokenStatusLoading] = useState(false);
   const [isAppInfoLoading, setIsAppInfoLoading] = useState(false);
   const [isOauthDebugLoading, setIsOauthDebugLoading] = useState(false);
   const [isPaymentsLoading, setIsPaymentsLoading] = useState(false);
@@ -53,6 +68,28 @@ export function AdminPage() {
     return status;
   };
 
+  const updatePaymentRow = (nextPayment: AdminPaymentHistoryItem | null) => {
+    if (!nextPayment) {
+      return;
+    }
+
+    setPayments((items) => items.map((item) => (item.id === nextPayment.id ? nextPayment : item)));
+  };
+
+  const updateUserRows = (user: AdminUserAccessResult['user']) => {
+    setPayments((items) =>
+      items.map((item) =>
+        item.user?.id === user.id
+          ? {
+              ...item,
+              user
+            }
+          : item
+      )
+    );
+    setAccessDates((items) => ({ ...items, [user.id]: user.activeTo }));
+  };
+
   const loadPermissions = async () => {
     setIsPermissionsLoading(true);
     setPermissionsError(null);
@@ -65,6 +102,21 @@ export function AdminPage() {
       setPermissionsError(nextError instanceof Error ? nextError.message : 'Не удалось получить permissions');
     } finally {
       setIsPermissionsLoading(false);
+    }
+  };
+
+  const loadTokenStatus = async () => {
+    setIsTokenStatusLoading(true);
+    setTokenStatusError(null);
+
+    try {
+      const data = await apiGet<VkTokenStatus>('/api/vk/token-status');
+      setTokenStatus(data);
+    } catch (nextError) {
+      setTokenStatus(null);
+      setTokenStatusError(nextError instanceof Error ? nextError.message : 'Не удалось получить статус VK token');
+    } finally {
+      setIsTokenStatusLoading(false);
     }
   };
 
@@ -155,6 +207,57 @@ export function AdminPage() {
     }
   };
 
+  const confirmPayment = async (payment: AdminPaymentHistoryItem) => {
+    setPaymentActionId(payment.id);
+    setPaymentsError(null);
+
+    try {
+      const data = await apiPost<AdminPaymentActionResult>(`/api/payments/admin/${payment.id}/confirm`, {
+        note: 'Ручное подтверждение из админки'
+      });
+      updatePaymentRow(data.payment);
+      await loadPayments();
+    } catch (nextError) {
+      setPaymentsError(nextError instanceof Error ? nextError.message : 'Не удалось подтвердить оплату');
+    } finally {
+      setPaymentActionId(null);
+    }
+  };
+
+  const cancelPayment = async (payment: AdminPaymentHistoryItem) => {
+    setPaymentActionId(payment.id);
+    setPaymentsError(null);
+
+    try {
+      const data = await apiPost<AdminPaymentActionResult>(`/api/payments/admin/${payment.id}/cancel`, {
+        reason: 'Отменено из админки'
+      });
+      updatePaymentRow(data.payment);
+      await loadPayments();
+    } catch (nextError) {
+      setPaymentsError(nextError instanceof Error ? nextError.message : 'Не удалось отменить оплату');
+    } finally {
+      setPaymentActionId(null);
+    }
+  };
+
+  const updateUserAccess = async (
+    userId: string,
+    payload: { action: 'set' | 'add_days' | 'add_months'; value: string | number }
+  ) => {
+    setAccessActionUserId(userId);
+    setPaymentsError(null);
+
+    try {
+      const data = await apiPost<AdminUserAccessResult>(`/api/payments/admin/users/${userId}/access`, payload);
+      updateUserRows(data.user);
+    } catch (nextError) {
+      setPaymentsError(nextError instanceof Error ? nextError.message : 'Не удалось изменить дату доступа');
+    } finally {
+      setAccessActionUserId(null);
+    }
+  };
+
   useEffect(() => {
     loadPayments();
   }, []);
@@ -211,6 +314,7 @@ export function AdminPage() {
               <span>Сумма</span>
               <span>Статус</span>
               <span>Операция</span>
+              <span>Действия</span>
             </div>
             {payments.map((payment) => (
               <div className="table-row admin-payment-row" key={payment.id}>
@@ -221,6 +325,45 @@ export function AdminPage() {
                     <>
                       <small>id: {payment.user.id}</small>
                       <small>vk id: {payment.user.vkId} / до {payment.user.activeTo}</small>
+                      <span className="admin-access-actions">
+                        <button
+                          className="mini-button"
+                          type="button"
+                          disabled={accessActionUserId === payment.user.id}
+                          onClick={() => updateUserAccess(payment.user!.id, { action: 'add_days', value: 7 })}
+                        >
+                          +7 дней
+                        </button>
+                        <button
+                          className="mini-button"
+                          type="button"
+                          disabled={accessActionUserId === payment.user.id}
+                          onClick={() => updateUserAccess(payment.user!.id, { action: 'add_months', value: 1 })}
+                        >
+                          +1 месяц
+                        </button>
+                        <input
+                          type="date"
+                          value={accessDates[payment.user.id] ?? payment.user.activeTo}
+                          disabled={accessActionUserId === payment.user.id}
+                          onChange={(event) =>
+                            setAccessDates((items) => ({ ...items, [payment.user!.id]: event.target.value }))
+                          }
+                        />
+                        <button
+                          className="mini-button"
+                          type="button"
+                          disabled={accessActionUserId === payment.user.id}
+                          onClick={() =>
+                            updateUserAccess(payment.user!.id, {
+                              action: 'set',
+                              value: accessDates[payment.user!.id] ?? payment.user!.activeTo
+                            })
+                          }
+                        >
+                          Задать
+                        </button>
+                      </span>
                     </>
                   ) : (
                     <small>{payment.id}</small>
@@ -230,6 +373,32 @@ export function AdminPage() {
                 <span>{payment.amount} ₽</span>
                 <span className={`payment-status ${payment.status}`}>{getPaymentStatusLabel(payment.status)}</span>
                 <span>{payment.providerTransactionId ?? '-'}</span>
+                <span className="admin-payment-actions">
+                  {payment.status !== 'paid' && (
+                    <button
+                      className="icon-button has-tooltip"
+                      type="button"
+                      aria-label="Подтвердить оплату"
+                      data-tooltip="Подтвердить оплату"
+                      disabled={paymentActionId === payment.id}
+                      onClick={() => confirmPayment(payment)}
+                    >
+                      {paymentActionId === payment.id ? <RefreshCw className="spin" size={17} /> : <CheckCircle2 size={17} />}
+                    </button>
+                  )}
+                  {payment.status !== 'failed' && (
+                    <button
+                      className="icon-button has-tooltip"
+                      type="button"
+                      aria-label="Отменить оплату"
+                      data-tooltip="Отменить оплату"
+                      disabled={paymentActionId === payment.id}
+                      onClick={() => cancelPayment(payment)}
+                    >
+                      {paymentActionId === payment.id ? <RefreshCw className="spin" size={17} /> : <XCircle size={17} />}
+                    </button>
+                  )}
+                </span>
               </div>
             ))}
           </div>
@@ -252,6 +421,15 @@ export function AdminPage() {
               {isPermissionsLoading ? <RefreshCw className="spin" size={18} /> : <Bug size={18} />}
               {isPermissionsLoading ? 'Проверяем' : 'Получить permissions'}
             </button>
+            <button
+              className="secondary-button inline"
+              type="button"
+              onClick={loadTokenStatus}
+              disabled={isTokenStatusLoading}
+            >
+              {isTokenStatusLoading ? <RefreshCw className="spin" size={18} /> : <Info size={18} />}
+              {isTokenStatusLoading ? 'Проверяем' : 'Статус token'}
+            </button>
             <button className="secondary-button inline" type="button" onClick={loadAppInfo} disabled={isAppInfoLoading}>
               {isAppInfoLoading ? <RefreshCw className="spin" size={18} /> : <Info size={18} />}
               {isAppInfoLoading ? 'Проверяем' : 'Информация о приложении'}
@@ -269,8 +447,28 @@ export function AdminPage() {
         </div>
 
         {permissionsError && <div className="debug-error">{permissionsError}</div>}
+        {tokenStatusError && <div className="debug-error">{tokenStatusError}</div>}
         {appInfoError && <div className="debug-error">{appInfoError}</div>}
         {oauthDebugError && <div className="debug-error">{oauthDebugError}</div>}
+
+        {tokenStatus && (
+          <div className="debug-grid">
+            <div className="debug-summary">
+              <strong>VK token</strong>
+              <span>
+                сохранён: {String(tokenStatus.hasToken)} / истёк: {String(tokenStatus.isExpired)}
+              </span>
+            </div>
+            <div className="debug-summary">
+              <strong>Срок</strong>
+              <span>
+                expiresAt: {tokenStatus.expiresAt ?? 'без срока'} / updatedAt:{' '}
+                {tokenStatus.updatedAt ?? 'не указан'}
+              </span>
+            </div>
+            <pre className="debug-json">{JSON.stringify(tokenStatus, null, 2)}</pre>
+          </div>
+        )}
 
         {permissions && (
           <div className="debug-grid">

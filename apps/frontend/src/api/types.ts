@@ -114,6 +114,15 @@ export type VkOAuthDebug = {
   productionLegacyAuthorizeUrl: string;
 };
 
+export type VkTokenStatus = {
+  hasToken: boolean;
+  isExpired: boolean;
+  expiresAt: string | null;
+  scopes: string[];
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
 export type VkManualStatsResult = unknown;
 
 export type VkChannelDebug = {
@@ -330,6 +339,21 @@ export type PaymentHistoryItem = {
 
 export type AdminPaymentHistoryItem = PaymentHistoryItem & {
   user: null | {
+    id: string;
+    vkId: string;
+    name: string;
+    activeTo: string;
+  };
+};
+
+export type AdminPaymentActionResult = {
+  status: string;
+  activeTo?: string;
+  payment: AdminPaymentHistoryItem | null;
+};
+
+export type AdminUserAccessResult = {
+  user: {
     id: string;
     vkId: string;
     name: string;

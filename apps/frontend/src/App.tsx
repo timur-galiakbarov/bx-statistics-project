@@ -13,6 +13,7 @@ import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { apiGet, apiPost } from './api/client';
 import type { SavedGroup, User } from './api/types';
+import { AccessLock, isAccessActive } from './components/AccessLock';
 import { DashboardPage } from './pages/DashboardPage';
 import { AccountPage } from './pages/AccountPage';
 import { AdminPage } from './pages/AdminPage';
@@ -73,6 +74,8 @@ export function App() {
     return [...navItems, adminNavItem].find((item) => path.startsWith(item.to))?.label ?? 'Socstat';
   }, [window.location.pathname]);
   const visibleNavItems = user?.isAdmin ? [...navItems, adminNavItem] : navItems;
+  const hasPaidAccess = user?.isAdmin || isAccessActive(user?.activeTo);
+  const paidRoute = (element: JSX.Element) => (hasPaidAccess ? element : <AccessLock activeTo={user?.activeTo} />);
 
   if (window.location.pathname === '/auth/vk/implicit-callback') {
     return <VkImplicitCallbackPage />;
@@ -111,7 +114,7 @@ export function App() {
               <div className="profile-pill">
                 <Users size={17} />
                 <span>{user.userFullName}</span>
-                <small>до {user.activeTo}</small>
+                <small className={hasPaidAccess ? undefined : 'expired'}>до {user.activeTo}</small>
               </div>
               <button className="icon-button" type="button" aria-label="Выйти" onClick={logout}>
                 <LogOut size={17} />
@@ -122,12 +125,21 @@ export function App() {
 
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<DashboardPage groups={groups} onGroupsChanged={loadAccount} />} />
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardPage
+                groups={groups}
+                hasPaidAccess={Boolean(hasPaidAccess)}
+                onGroupsChanged={loadAccount}
+              />
+            }
+          />
           <Route path="/account" element={<AccountPage user={user} groups={groups} onAccountChanged={loadAccount} />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/compare" element={<ComparePage />} />
-          <Route path="/posts" element={<PostsPage />} />
-          <Route path="/channels" element={<ChannelsPage />} />
+          <Route path="/analytics" element={paidRoute(<AnalyticsPage />)} />
+          <Route path="/compare" element={paidRoute(<ComparePage />)} />
+          <Route path="/posts" element={paidRoute(<PostsPage />)} />
+          <Route path="/channels" element={paidRoute(<ChannelsPage />)} />
           <Route path="/admin" element={user?.isAdmin ? <AdminPage /> : <Navigate to="/dashboard" replace />} />
         </Routes>
       </main>

@@ -2628,3 +2628,221 @@
 
 - Уже запущенный API должен снова видеть текущий token сразу после исправления записи в MongoDB.
 - Для применения новой логики сохранения token при следующих авторизациях API нужно перезапустить.
+
+## 2026-08-24 - Диагностика статуса VK token
+
+Запрос пользователя:
+
+- После исправления `VK_TOKEN_REQUIRED` продолжить стабилизацию VK token flow.
+
+Решение:
+
+- Добавлен безопасный backend route `GET /api/vk/token-status`.
+- Route показывает только технический статус сохранённого token:
+  - есть ли token;
+  - истёк ли token;
+  - `expiresAt`;
+  - сохранённые scopes;
+  - `createdAt`;
+  - `updatedAt`.
+- Сам `accessToken` route не возвращает.
+- В админской debug-панели добавлена кнопка `Статус token`.
+- На фронте добавлен тип `VkTokenStatus`.
+
+Изменённые файлы:
+
+- `apps/api/src/repositories/accountRepository.ts`
+- `apps/api/src/routes/vk.ts`
+- `apps/frontend/src/api/types.ts`
+- `apps/frontend/src/pages/AdminPage.tsx`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `npm run build`
+- Прямая проверка `getVkTokenStatus` через MongoDB без вывода `accessToken`.
+- HTTP smoke-test `GET /api/vk/token-status` на временном Express-сервере со временной сессией.
+
+Итог проверки:
+
+- `hasToken: true`
+- `isExpired: false`
+- `expiresAt: null`
+- HTTP status: `200`
+- Временная тестовая сессия удалена после проверки.
+
+Следующие шаги:
+
+- Перезапустить основной API, чтобы новый route появился в запущенном dev-сервере.
+- Открыть `/admin` и проверить кнопку `Статус token` в debug-панели.
+- Если `permissions` остаются без `stats/groups/wall`, продолжать перенос без зацикливания на dashboard-статистике и возвращаться к VK permissions отдельно.
+
+## 2026-08-24 - Ограничения доступа к аналитике
+
+Запрос пользователя:
+
+- Перейти к шагу `Ограничения доступа`.
+
+Решение:
+
+- Добавлен backend middleware `requireActiveAccess`.
+- Активный доступ считается по `User.activeTo` включительно до конца дня.
+- Администраторы обходят ограничение доступа, даже если `activeTo` в прошлом.
+- При истёкшем доступе backend возвращает `402 ACCESS_EXPIRED`.
+- Ограничение поставлено на платные аналитические endpoints:
+  - `GET /api/dashboard/summary`;
+  - `GET /api/analytics/community/:groupId`;
+  - `GET /api/compare`;
+  - `GET /api/posts/analyze`;
+  - `GET /api/vk/groups/subscriptions`;
+  - `GET /api/vk/groups/:groupId/channel-debug`;
+  - `GET /api/vk/groups/:groupId/stats`;
+  - `GET /api/vk/groups/:groupId/wall`;
+  - `GET /api/vk/groups/:groupId/photos`;
+  - `GET /api/vk/groups/:groupId/videos`.
+- Профиль, оплата, админка, поиск групп и управление бесплатными группами не блокируются.
+- На фронте добавлен `AccessLock` для платных разделов:
+  - `Анализ сообществ`;
+  - `Сравнение`;
+  - `Публикации`;
+  - `Каналы`.
+- Dashboard остаётся доступным, но платная сводка и список моих сообществ не запрашиваются при истёкшем доступе.
+- В верхней панели дата доступа подсвечивается красным, если доступ истёк.
+
+Изменённые файлы:
+
+- `apps/api/src/middleware/access.ts`
+- `apps/api/src/routes/analytics.ts`
+- `apps/api/src/routes/compare.ts`
+- `apps/api/src/routes/dashboard.ts`
+- `apps/api/src/routes/posts.ts`
+- `apps/api/src/routes/vk.ts`
+- `apps/frontend/src/App.tsx`
+- `apps/frontend/src/components/AccessLock.tsx`
+- `apps/frontend/src/pages/DashboardPage.tsx`
+- `apps/frontend/src/styles.css`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `npm run build`
+- HTTP smoke-test на временном Express-сервере с временным пользователем, у которого `activeTo` в прошлом.
+
+Итог проверки:
+
+- Истёкший пользователь получил `402 ACCESS_EXPIRED`.
+- Пользователь с будущим `activeTo` считается активным.
+- Администратор с истёкшим `activeTo` считается активным.
+- Временные тестовые записи удалены из MongoDB.
+
+Следующие шаги:
+
+- Перезапустить API и frontend dev-серверы.
+- Проверить в браузере активного пользователя и сценарий с истёкшим `activeTo`.
+- При необходимости добавить разные уровни тарифов, если появятся тарифы с разными лимитами, а не только `активен/истёк`.
+
+## 2026-08-24 - Админские действия по оплатам
+
+Запрос пользователя:
+
+- Перейти к шагу `Админские действия по оплатам`.
+
+Решение:
+
+- Добавлен общий backend helper ручного подтверждения оплаты.
+- Callback ЮMoney теперь использует ту же функцию подтверждения, что и админка.
+- Ручное подтверждение:
+  - переводит payment в `paid`;
+  - продлевает `User.activeTo` по периоду платежа;
+  - сохраняет audit payload с источником `admin`;
+  - не продлевает доступ повторно, если payment уже `paid`.
+- Ручная отмена:
+  - переводит payment в `failed`;
+  - сохраняет причину отмены в `rawCallbackPayload.adminCancel`;
+  - не делает автоматический откат `activeTo` для уже оплаченных платежей, чтобы не ошибиться при нескольких продлениях.
+- Добавлены admin routes:
+  - `POST /api/payments/admin/:paymentId/confirm`;
+  - `POST /api/payments/admin/:paymentId/cancel`.
+- В админской таблице оплат добавлены icon-кнопки:
+  - подтвердить;
+  - отменить.
+- После действия строка платежа и список оплат обновляются.
+
+Изменённые файлы:
+
+- `apps/api/src/routes/payments.ts`
+- `apps/frontend/src/api/types.ts`
+- `apps/frontend/src/pages/AdminPage.tsx`
+- `apps/frontend/src/styles.css`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `npm run build`
+- HTTP smoke-test на временном Express-сервере с временным пользователем и временными платежами.
+
+Итог проверки:
+
+- Первое ручное подтверждение вернуло `status: paid`.
+- `activeTo` тестового пользователя продлён до `2026-09-24`.
+- Повторное подтверждение того же платежа вернуло `already_paid`.
+- После повторного подтверждения `activeTo` не изменился.
+- Ручная отмена второго pending-платежа перевела payment в `failed`.
+- Временные тестовые записи удалены из MongoDB.
+
+Следующие шаги:
+
+- Перезапустить API и frontend dev-серверы.
+- Проверить кнопки в `/admin` на реальных pending/failed платежах.
+- Добавить отдельное админское действие ручного изменения `activeTo`, если нужен безопасный способ компенсировать ошибочно подтверждённые оплаты.
+
+## 2026-08-24 - Ручное изменение `activeTo` из админки
+
+Запрос пользователя:
+
+- Сделать ручное изменение даты доступа пользователя из админки.
+
+Решение:
+
+- Добавлен admin route `POST /api/payments/admin/users/:userId/access`.
+- Route доступен только администраторам.
+- Поддержаны действия:
+  - `set` - выставить точную дату `activeTo` в формате `YYYY-MM-DD`;
+  - `add_days` - продлить на N дней;
+  - `add_months` - продлить на N месяцев.
+- Для `add_days` и `add_months` продление считается от текущего активного периода, а если доступ уже истёк - от текущей даты.
+- Изменение `activeTo` не меняет статусы платежей.
+- В админской таблице оплат под пользователем добавлены быстрые действия:
+  - `+7 дней`;
+  - `+1 месяц`;
+  - поле даты;
+  - кнопка `Задать`.
+- После изменения даты обновляются все строки оплат этого пользователя в текущей таблице.
+
+Изменённые файлы:
+
+- `apps/api/src/routes/payments.ts`
+- `apps/frontend/src/api/types.ts`
+- `apps/frontend/src/pages/AdminPage.tsx`
+- `apps/frontend/src/styles.css`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `npm run build`
+- HTTP smoke-test на временном Express-сервере с временными пользователями.
+
+Итог проверки:
+
+- Не-админ получил `403 FORBIDDEN`.
+- Админ успешно выставил дату `activeTo`.
+- Админ успешно продлил доступ на 7 дней.
+- Админ успешно продлил доступ на 1 месяц.
+- Некорректная дата вернула `400 INVALID_ACCESS_DATE`.
+- Временные тестовые записи удалены из MongoDB.
+
+Следующие шаги:
+
+- Перезапустить API и frontend dev-серверы.
+- Проверить в браузере действия `+7 дней`, `+1 месяц` и `Задать` на `/admin`.
+- Позже добавить audit log админских изменений доступа, если понадобится история ручных действий.

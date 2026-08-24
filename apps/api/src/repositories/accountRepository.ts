@@ -170,6 +170,29 @@ export async function getVkAccessToken(userId: string) {
   return token?.accessToken;
 }
 
+export async function getVkTokenStatus(userId: string) {
+  const token = await VkTokenModel.findOne({ userId })
+    .sort({ updatedAt: -1 })
+    .lean<{
+      scopes?: string[];
+      expiresAt?: Date | null;
+      createdAt?: Date;
+      updatedAt?: Date;
+    }>();
+  const now = Date.now();
+  const expiresAt = token?.expiresAt;
+  const isExpired = Boolean(expiresAt && expiresAt.getTime() <= now);
+
+  return {
+    hasToken: Boolean(token),
+    isExpired,
+    expiresAt: expiresAt?.toISOString() ?? null,
+    scopes: token?.scopes ?? [],
+    createdAt: token?.createdAt?.toISOString() ?? null,
+    updatedAt: token?.updatedAt?.toISOString() ?? null
+  };
+}
+
 export async function getGroups(userId: string, source?: SavedGroup['source']) {
   const query = {
     userId,

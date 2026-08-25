@@ -32,9 +32,10 @@ jobs:
 
       - name: Upload application
         run: |
-          SSH_OPTIONS="-i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
-          ssh $SSH_OPTIONS -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH'"
-          rsync -az --delete -e "ssh $SSH_OPTIONS -p $DEPLOY_PORT" \
+          ssh -i "$HOME/.ssh/id_ed25519" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH'"
+          rsync -az --delete \
+            -e "ssh -i $HOME/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -p $DEPLOY_PORT" \
             --exclude '.git/' \
             --exclude '.github/' \
             --exclude '.idea/' \
@@ -47,8 +48,8 @@ jobs:
 
       - name: Restart services and check health
         run: |
-          SSH_OPTIONS="-i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
-          ssh $SSH_OPTIONS -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" << EOF
+          ssh -i "$HOME/.ssh/id_ed25519" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" << EOF
             set -eu
             cd "$DEPLOY_PATH"
             if [ ! -f api/.env ]; then

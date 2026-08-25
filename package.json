@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "dev:api": "npm run dev --workspace @socstat/api",
+    "build:frontend": "tsc -b && vite build",
     "build": "npm run build --workspace @socstat/api && tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "npm run test --workspace @socstat/api && tsc -b --noEmit"

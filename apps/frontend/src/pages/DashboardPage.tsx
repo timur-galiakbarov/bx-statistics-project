@@ -1,380 +1,90 @@
-import { BarChart3, ExternalLink, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
-import { FormEvent, useEffect, useState } from 'react';
+import { AlertTriangle, BarChart3, ExternalLink, Plus, RefreshCw, Search, Sparkles, Users } from 'lucide-react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { apiDelete, apiGet, apiPost } from '../api/client';
-import type { DashboardPeriod, DashboardSummary, SavedGroup, VkGroup, VkListResponse } from '../api/types';
+import { apiGet, apiPost } from '../api/client';
+import type { DashboardPeriod, DashboardSummary, DashboardSummaryItem, SavedGroup, VkGroup, VkListResponse } from '../api/types';
 
-type Props = {
-  groups: SavedGroup[];
-  hasPaidAccess: boolean;
-  onGroupsChanged: () => Promise<void>;
-};
+type Props = { groups: SavedGroup[]; hasPaidAccess: boolean; onGroupsChanged: () => Promise<void> };
+type Filter = 'all' | 'managed' | 'saved' | 'attention' | 'data';
+type Sort = 'priority' | 'growth' | 'members';
+
+function format(value: number) { return new Intl.NumberFormat('ru-RU').format(value); }
+function getAttention(item: DashboardSummaryItem) {
+  if (item.error) return { priority: 4, text: item.error.message, action: 'Обновить данные' };
+  if (item.warnings.length) return { priority: 3, text: item.warnings[0], action: 'Проверить доступ VK' };
+  if (item.growth.total < 0) return { priority: 2, text: `Прирост ${format(item.growth.total)} за период`, action: 'Посмотреть динамику' };
+  if (item.activity.likes + item.activity.reposts + item.activity.comments === 0) return { priority: 1, text: 'Нет реакций за период', action: 'Анализировать сообщество' };
+  return null;
+}
 
 export function DashboardPage({ groups, hasPaidAccess, onGroupsChanged }: Props) {
-  const managedGroups = groups.filter((group) => group.source === 'managed');
-  const freeGroups = groups.filter((group) => group.source === 'free');
-  const [subscriptions, setSubscriptions] = useState<VkGroup[]>([]);
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<VkGroup[]>([]);
-  const [status, setStatus] = useState<'idle' | 'loading' | 'saving'>('idle');
-  const [message, setMessage] = useState('');
-  const [subscriptionsStatus, setSubscriptionsStatus] = useState<'idle' | 'loading'>('idle');
-  const [subscriptionsMessage, setSubscriptionsMessage] = useState('');
   const [period, setPeriod] = useState<DashboardPeriod>('last7days');
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [summaryStatus, setSummaryStatus] = useState<'idle' | 'loading'>('idle');
-  const [summaryMessage, setSummaryMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [sort, setSort] = useState<Sort>('priority');
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<VkGroup[]>([]);
 
   const loadSummary = async (nextPeriod = period) => {
-    if (!hasPaidAccess) {
-      setSummary(null);
-      setSummaryMessage('Доступ к сводной статистике истёк. Продлите доступ в разделе оплаты.');
-      return;
-    }
+    if (!hasPaidAccess) { setSummary(null); setMessage('Детальная статистика недоступна: срок доступа истёк.'); return; }
+    setLoading(true); setMessage('');
+    try { setSummary(await apiGet<DashboardSummary>(`/api/dashboard/summary?period=${nextPeriod}`)); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось загрузить портфель сообществ.'); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { loadSummary(); }, [groups.length, hasPaidAccess]);
 
-    setSummaryStatus('loading');
-    setSummaryMessage('');
+  const portfolio = useMemo(() => {
+    const items = summary?.groups ?? [];
+    return items.filter((item) => {
+      const attention = Boolean(getAttention(item));
+      if (filter === 'managed') return item.source === 'managed';
+      if (filter === 'saved') return item.source !== 'managed';
+      if (filter === 'attention') return attention;
+      if (filter === 'data') return Boolean(item.error || item.warnings.length);
+      return true;
+    }).sort((left, right) => {
+      if (sort === 'growth') return right.growth.total - left.growth.total;
+      if (sort === 'members') return right.membersCount - left.membersCount;
+      return (getAttention(right)?.priority ?? 0) - (getAttention(left)?.priority ?? 0);
+    });
+  }, [filter, sort, summary]);
+  const attention = useMemo(() => (summary?.groups ?? []).map((item) => ({ item, signal: getAttention(item) })).filter((value): value is { item: DashboardSummaryItem; signal: NonNullable<ReturnType<typeof getAttention>> } => Boolean(value.signal)).sort((left, right) => right.signal.priority - left.signal.priority).slice(0, 5), [summary]);
+  const portfolioKpi = useMemo(() => {
+    const items = summary?.groups ?? [];
+    const statsItems = items.filter((item) => !item.error && !item.warnings.length);
+    return { count: items.length, members: items.reduce((sum, item) => sum + item.membersCount, 0), growth: statsItems.reduce((sum, item) => sum + item.growth.total, 0), statsCount: statsItems.length };
+  }, [summary]);
 
-    try {
-      const data = await apiGet<DashboardSummary>(`/api/dashboard/summary?period=${nextPeriod}`);
-      setSummary(data);
-    } catch (error) {
-      setSummary(null);
-      setSummaryMessage(error instanceof Error ? error.message : 'Не удалось загрузить статистику.');
-    } finally {
-      setSummaryStatus('idle');
-    }
+  const search = async (event: FormEvent) => {
+    event.preventDefault(); if (!query.trim()) return;
+    try { const data = await apiGet<VkListResponse<VkGroup>>(`/api/vk/groups/search?q=${encodeURIComponent(query.trim())}`); setResults(data.items); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось найти сообщество.'); }
+  };
+  const add = async (group: VkGroup) => {
+    try { await apiPost('/api/account/groups/free', { group: { id: group.id, name: group.name, screen_name: group.screen_name, photo: group.photo_100 ?? group.photo_50, members_count: group.members_count } }); await onGroupsChanged(); setResults([]); setMessage(`«${group.name}» добавлено.`); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось добавить сообщество.'); }
   };
 
-  const loadSubscriptions = async () => {
-    if (!hasPaidAccess) {
-      setSubscriptions([]);
-      setSubscriptionsMessage('Список моих сообществ доступен после продления доступа.');
-      return;
-    }
+  if (!groups.length && !loading) return <div className="page-grid dashboard-page"><section className="panel span-2 dashboard-onboarding"><Sparkles size={28} /><h2>Добавьте первое сообщество</h2><p>Socstat покажет динамику аудитории, сильные публикации и точки роста.</p><div className="dashboard-quick-actions"><Link className="primary-button" to="/analytics">Выбрать из моих сообществ VK</Link><button className="secondary-button" onClick={() => document.getElementById('dashboard-management')?.scrollIntoView()}>Найти любое сообщество</button></div><Management query={query} setQuery={setQuery} results={results} search={search} add={add} /></section></div>;
 
-    setSubscriptionsStatus('loading');
-    setSubscriptionsMessage('');
+  return <div className="page-grid dashboard-page">
+    <section className="panel span-2 dashboard-overview">
+      <div className="panel-header"><div><h2>Главная</h2><p>{summary ? `${summary.period.dateFrom} — ${summary.period.dateTo}` : 'Обзор отслеживаемых сообществ'}</p></div><button className="icon-button" onClick={() => loadSummary()} aria-label="Обновить данные"><RefreshCw size={18} /></button></div>
+      <div className="period-tabs">{([{ key: 'last7days', label: '7 дней' }, { key: 'currentMonth', label: 'Текущий месяц' }, { key: 'today', label: 'Сегодня' }] as const).map((item) => <button key={item.key} className={period === item.key ? 'active' : ''} onClick={() => { setPeriod(item.key); loadSummary(item.key); }}>{item.label}</button>)}</div>
+      {message && <div className="form-message">{message}</div>}
+      {!hasPaidAccess && <Link className="primary-button" to="/account">Продлить доступ</Link>}
+      {loading ? <div className="dashboard-skeleton"><span /><span /><span /><span /></div> : <div className="dashboard-kpis"><div><span>Отслеживаемые сообщества</span><strong>{portfolioKpi.count}</strong></div><div><span>Суммарная аудитория</span><strong>{format(portfolioKpi.members)}</strong></div><div><span>Чистый прирост</span><strong>{portfolioKpi.statsCount ? `${portfolioKpi.growth > 0 ? '+' : ''}${format(portfolioKpi.growth)}` : 'Недоступно'}</strong><small>{`по ${portfolioKpi.statsCount} из ${portfolioKpi.count} сообществ`}</small></div><div><span>Требуют внимания</span><strong>{attention.length}</strong></div></div>}
+    </section>
+    <section className="panel span-2"><div className="section-title"><div><h2>Требует внимания</h2><p>Сигналы с конкретным следующим действием.</p></div></div>{loading ? <div className="empty-state">Обновляем сигналы…</div> : attention.length ? <div className="attention-list">{attention.map(({ item, signal }) => <article key={item.savedGroupId} className="attention-item"><AlertTriangle size={18} /><div><strong>{item.group.name}</strong><span>{signal.text}</span></div><Link className="secondary-button" to={`/analytics?groupId=${item.group.id}`}>{signal.action}</Link></article>)}</div> : <div className="empty-state">В портфеле нет срочных сигналов. Можно перейти к сильному контенту или продолжить анализ.</div>}</section>
+    <section className="panel span-2"><div className="dashboard-quick-actions"><Link className="primary-button" to="/analytics"><BarChart3 size={17} />Анализировать сообщество</Link><Link className="secondary-button" to="/compare">Сравнить сообщества</Link><button className="secondary-button" onClick={() => document.getElementById('dashboard-management')?.scrollIntoView()}><Plus size={17} />Добавить сообщество</button></div></section>
+    <section className="panel span-2"><div className="section-title"><div><h2>Портфель сообществ</h2><p>Сначала — сообщества с сигналами или проблемами данных.</p></div><div className="content-controls"><label>Фильтр<select value={filter} onChange={(event) => setFilter(event.target.value as Filter)}><option value="all">Все</option><option value="managed">Мои</option><option value="saved">Сохранённые</option><option value="attention">Требующие внимания</option><option value="data">Проблемы с данными</option></select></label><label>Сортировка<select value={sort} onChange={(event) => setSort(event.target.value as Sort)}><option value="priority">По важности</option><option value="growth">По приросту</option><option value="members">По подписчикам</option></select></label></div></div>{portfolio.length ? <div className="portfolio-grid">{portfolio.map((item) => <article className="portfolio-card" key={item.savedGroupId}><div className="summary-group">{item.group.photo && <img src={item.group.photo} alt="" />}<div><strong>{item.group.name}</strong><span>{item.source === 'managed' ? 'Управляемое' : item.source}</span></div></div>{item.error ? <div className="portfolio-warning">{item.error.message}</div> : <><div className="portfolio-metrics"><span>Подписчики<strong>{format(item.membersCount)}</strong></span><span>Прирост<strong>{item.warnings.length ? 'Недоступно' : format(item.growth.total)}</strong></span><span>Реакции<strong>{format(item.activity.likes + item.activity.reposts + item.activity.comments)}</strong></span></div>{item.warnings.map((warning) => <div className="portfolio-warning" key={warning}>{warning}</div>)}</>}<div className="group-actions"><Link className="secondary-button" to={`/analytics?groupId=${item.group.id}`}>Анализировать</Link><a className="icon-button" aria-label="Открыть сообщество VK" href={`https://vk.com/${item.group.screenName ?? `club${item.group.id}`}`} target="_blank" rel="noreferrer"><ExternalLink size={17} /></a></div></article>)}</div> : <div className="empty-state">Нет сообществ по выбранному фильтру.</div>}</section>
+    <section className="panel span-2" id="dashboard-management"><details><summary>Управление сообществами</summary><p>Поиск и добавление вынесены из основного рабочего сценария.</p><Management query={query} setQuery={setQuery} results={results} search={search} add={add} /></details></section>
+  </div>;
+}
 
-    try {
-      const data = await apiGet<VkListResponse<VkGroup>>('/api/vk/groups/subscriptions');
-      setSubscriptions(data.items ?? []);
-      setSubscriptionsMessage(data.items?.length ? '' : 'Подписок на группы не найдено.');
-    } catch (error) {
-      setSubscriptions([]);
-      setSubscriptionsMessage(error instanceof Error ? error.message : 'Не удалось загрузить подписки.');
-    } finally {
-      setSubscriptionsStatus('idle');
-    }
-  };
-
-  useEffect(() => {
-    loadSummary();
-    loadSubscriptions();
-  }, [groups.length, hasPaidAccess]);
-
-  const setSummaryPeriod = (nextPeriod: DashboardPeriod) => {
-    setPeriod(nextPeriod);
-    loadSummary(nextPeriod);
-  };
-
-  const searchGroups = async (event: FormEvent) => {
-    event.preventDefault();
-
-    if (!query.trim()) {
-      setMessage('Введите название группы.');
-      return;
-    }
-
-    setStatus('loading');
-    setMessage('');
-
-    try {
-      const data = await apiGet<VkListResponse<VkGroup>>(
-        `/api/vk/groups/search?q=${encodeURIComponent(query.trim())}`
-      );
-      setResults(data.items ?? []);
-      setMessage(data.items?.length ? '' : 'Ничего не найдено.');
-    } catch (error) {
-      setResults([]);
-      setMessage(error instanceof Error ? error.message : 'Не удалось найти группы.');
-    } finally {
-      setStatus('idle');
-    }
-  };
-
-  const addFreeGroup = async (group: VkGroup) => {
-    setStatus('saving');
-    setMessage('');
-
-    try {
-      await apiPost('/api/account/groups/free', {
-        group: {
-          id: group.id,
-          screen_name: group.screen_name,
-          name: group.name,
-          photo: group.photo_100 ?? group.photo_50 ?? group.photo_200,
-          members_count: group.members_count
-        }
-      });
-      await onGroupsChanged();
-      setMessage(`Группа "${group.name}" добавлена.`);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось добавить группу.');
-    } finally {
-      setStatus('idle');
-    }
-  };
-
-  const removeSavedGroup = async (group: SavedGroup) => {
-    setStatus('saving');
-    setMessage('');
-
-    try {
-      await apiDelete(`/api/account/groups/${group.id}`);
-      await onGroupsChanged();
-      setMessage(`Группа "${group.name}" удалена.`);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Не удалось удалить группу.');
-    } finally {
-      setStatus('idle');
-    }
-  };
-
-  return (
-    <div className="page-grid">
-      <section className="panel span-2">
-        <div className="panel-header">
-          <div>
-            <h2>Статистика моих сообществ</h2>
-            <p>
-              {summary
-                ? `${summary.period.dateFrom} - ${summary.period.dateTo}`
-                : 'Сводка по сохранённым группам'}
-            </p>
-          </div>
-          <button className="icon-button" aria-label="Обновить" onClick={() => loadSummary()}>
-            <RefreshCw size={18} />
-          </button>
-        </div>
-
-        <div className="period-tabs">
-          <button className={period === 'last7days' ? 'active' : ''} onClick={() => setSummaryPeriod('last7days')}>
-            7 дней
-          </button>
-          <button className={period === 'today' ? 'active' : ''} onClick={() => setSummaryPeriod('today')}>
-            Сегодня
-          </button>
-          <button className={period === 'yesterday' ? 'active' : ''} onClick={() => setSummaryPeriod('yesterday')}>
-            Вчера
-          </button>
-          <button className={period === 'currentMonth' ? 'active' : ''} onClick={() => setSummaryPeriod('currentMonth')}>
-            Месяц
-          </button>
-        </div>
-
-        {summaryMessage && <div className="form-message">{summaryMessage}</div>}
-        {!hasPaidAccess && (
-          <Link className="secondary-button" to="/account">
-            Перейти к оплате
-          </Link>
-        )}
-
-        <div className="table">
-          <div className="table-row dashboard-row table-head">
-            <span>Группа</span>
-            <span>Участников</span>
-            <span>Прирост</span>
-            <span>Посещения</span>
-            <span>Охват</span>
-            <span>Активность</span>
-            <span />
-          </div>
-          {summaryStatus === 'loading' && <div className="empty-state table-empty">Загружаем статистику...</div>}
-          {summary?.groups.length === 0 && <div className="empty-state table-empty">Сохранённые группы пока не добавлены.</div>}
-          {summary?.groups.map((item) => (
-            <div className="table-row dashboard-row" key={item.savedGroupId}>
-              <div className="summary-group">
-                {item.group.photo && <img src={item.group.photo} alt="" />}
-                <strong>{item.group.name}</strong>
-                {item.error && <span>{item.error.message}</span>}
-                {!item.error && item.warnings.map((warning) => <span key={warning}>{warning}</span>)}
-              </div>
-              <span>{item.membersCount.toLocaleString('ru-RU')}</span>
-              <span>
-                {item.growth.total.toLocaleString('ru-RU')}
-                <small>+{item.growth.subscribed} / -{item.growth.unsubscribed}</small>
-              </span>
-              <span>
-                {item.traffic.visitors.toLocaleString('ru-RU')}
-                <small>{item.traffic.views.toLocaleString('ru-RU')} просмотров</small>
-              </span>
-              <span>
-                {item.reach.subscribers.toLocaleString('ru-RU')}
-                <small>{item.reach.total.toLocaleString('ru-RU')} всего</small>
-              </span>
-              <span>
-                {item.activity.likes.toLocaleString('ru-RU')}
-                <small>
-                  {item.activity.reposts} / {item.activity.comments}
-                </small>
-              </span>
-              <div className="group-actions">
-                <Link
-                  className="icon-button has-tooltip"
-                  to={`/analytics?groupId=${item.group.id}`}
-                  aria-label="Открыть аналитику"
-                  data-tooltip="Открыть аналитику группы"
-                >
-                  <BarChart3 size={17} />
-                </Link>
-                <a
-                  className="icon-button has-tooltip"
-                  href={`https://vk.com/${item.group.screenName ?? `club${item.group.id}`}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Открыть VK"
-                  data-tooltip="Открыть страницу VK"
-                >
-                  <ExternalLink size={17} />
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-header compact">
-          <h2>Бесплатные группы</h2>
-          <span className="limit-badge">{freeGroups.length} из 3</span>
-        </div>
-        <div className="stack">
-          {freeGroups.length === 0 && <div className="empty-state">Бесплатные группы пока не добавлены.</div>}
-          {freeGroups.map((group) => (
-            <div className="group-line" key={group.id}>
-              <div>
-                <strong>{group.name}</strong>
-                <span>{group.membersCount?.toLocaleString('ru-RU') ?? '-'} участников</span>
-              </div>
-              <div className="group-actions">
-                <Link
-                  className="icon-button has-tooltip"
-                  to={`/analytics?groupId=${group.vkGroupId}`}
-                  aria-label="Открыть аналитику"
-                  data-tooltip="Открыть аналитику группы"
-                >
-                  <BarChart3 size={17} />
-                </Link>
-                <a
-                  className="icon-button has-tooltip"
-                  href={`https://vk.com/${group.vkGroupId}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Открыть VK"
-                  data-tooltip="Открыть страницу VK"
-                >
-                  <ExternalLink size={17} />
-                </a>
-                <button
-                  className="icon-button danger"
-                  type="button"
-                  aria-label="Удалить группу"
-                  disabled={status === 'saving'}
-                  onClick={() => removeSavedGroup(group)}
-                >
-                  <Trash2 size={17} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-header compact">
-          <h2>Мои подписки VK</h2>
-          <button className="icon-button" aria-label="Обновить подписки" onClick={loadSubscriptions}>
-            <RefreshCw size={18} />
-          </button>
-        </div>
-        {subscriptionsMessage && <div className="form-message">{subscriptionsMessage}</div>}
-        {subscriptionsStatus === 'loading' && <div className="empty-state">Загружаем подписки...</div>}
-        {subscriptionsStatus !== 'loading' && subscriptions.length > 0 && (
-          <div className="subscription-list">
-            {subscriptions.map((group) => (
-              <div className="group-line" key={group.id}>
-                <div className="summary-group">
-                  {(group.photo_100 ?? group.photo_50 ?? group.photo_200) && (
-                    <img src={group.photo_100 ?? group.photo_50 ?? group.photo_200} alt="" />
-                  )}
-                  <div>
-                    <strong>{group.name}</strong>
-                    <span>{group.members_count?.toLocaleString('ru-RU') ?? '-'} участников</span>
-                  </div>
-                </div>
-                <div className="group-actions">
-                  <Link
-                    className="icon-button has-tooltip"
-                    to={`/analytics?groupId=${group.id}`}
-                    aria-label="Открыть аналитику"
-                    data-tooltip="Открыть аналитику группы"
-                  >
-                    <BarChart3 size={17} />
-                  </Link>
-                  <a
-                    className="icon-button has-tooltip"
-                    href={`https://vk.com/${group.screen_name ?? `club${group.id}`}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Открыть VK"
-                    data-tooltip="Открыть страницу VK"
-                  >
-                    <ExternalLink size={17} />
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="panel">
-        <h2>Поиск группы</h2>
-        <p>Найдите группу ВКонтакте и добавьте её в список бесплатных.</p>
-        <form className="search-form" onSubmit={searchGroups}>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Название или короткое имя группы"
-          />
-          <button type="submit" disabled={status === 'loading'}>
-            <Search size={17} />
-            Найти
-          </button>
-        </form>
-        {message && <div className="form-message">{message}</div>}
-        <div className="search-results">
-          {results.map((group) => (
-            <div className="search-result" key={group.id}>
-              <img src={group.photo_100 ?? group.photo_50 ?? group.photo_200} alt="" />
-              <div>
-                <strong>{group.name}</strong>
-                <span>{group.screen_name ? `vk.com/${group.screen_name}` : `club${group.id}`}</span>
-              </div>
-              <button
-                className="icon-button"
-                type="button"
-                aria-label="Добавить группу"
-                disabled={status === 'saving'}
-                onClick={() => addFreeGroup(group)}
-              >
-                <Plus size={17} />
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
+function Management({ query, setQuery, results, search, add }: { query: string; setQuery: (value: string) => void; results: VkGroup[]; search: (event: FormEvent) => Promise<void>; add: (group: VkGroup) => Promise<void> }) {
+  return <div className="dashboard-management"><form className="search-form" onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Название или screen name сообщества" /><button type="submit"><Search size={17} />Найти</button></form><div className="search-results">{results.map((group) => <div className="search-result" key={group.id}><img src={group.photo_100 ?? group.photo_50} alt="" /><span><strong>{group.name}</strong><small>{group.screen_name ? `vk.com/${group.screen_name}` : `club${group.id}`}</small></span><button className="icon-button" onClick={() => add(group)} aria-label="Добавить сообщество"><Plus size={17} /></button></div>)}</div></div>;
 }

@@ -8,7 +8,9 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
-    "test": "tsc -p tsconfig.json --noEmit"
+    "test": "tsx --test src/**/*.test.ts && tsc -p tsconfig.json --noEmit",
+    "import:legacy-users": "tsx src/scripts/importLegacyBitrixUsers.ts",
+    "import:legacy-payments": "tsx src/scripts/importLegacyBitrixPayments.ts"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",

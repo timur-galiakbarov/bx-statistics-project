@@ -34,6 +34,11 @@ type PaymentActionResult = {
 
 type AdminUserAccessAction = 'set' | 'add_days' | 'add_months';
 
+type AdminPaymentsMonthlySummary = {
+  current: { count: number; amount: number };
+  previous: { count: number; amount: number };
+};
+
 function findPlanByAmount(amount: number) {
   return plans.find((plan) => plan.priceRub === amount);
 }
@@ -145,6 +150,59 @@ function ensureAdmin(req: Parameters<Parameters<typeof paymentsRouter.get>[1]>[0
   return false;
 }
 
+function getMonthRange() {
+  const now = new Date();
+  const currentStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const previousStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const nextStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+
+  return { previousStart, currentStart, nextStart };
+}
+
+async function getAdminPaymentsMonthlySummary(): Promise<AdminPaymentsMonthlySummary> {
+  const { previousStart, currentStart, nextStart } = getMonthRange();
+  const totals = await PaymentModel.aggregate<{
+    _id: 'current' | 'previous';
+    count: number;
+    amount: number;
+  }>([
+    {
+      $addFields: {
+        paymentDate: { $ifNull: ['$paidAt', '$createdAt'] }
+      }
+    },
+    {
+      $match: {
+        status: 'paid',
+        paymentDate: { $gte: previousStart, $lt: nextStart }
+      }
+    },
+    {
+      $project: {
+        amount: 1,
+        period: {
+          $cond: [{ $gte: ['$paymentDate', currentStart] }, 'current', 'previous']
+        }
+      }
+    },
+    {
+      $group: {
+        _id: '$period',
+        count: { $sum: 1 },
+        amount: { $sum: '$amount' }
+      }
+    }
+  ]);
+
+  const byPeriod = new Map(totals.map((item) => [item._id, item]));
+  const empty = { count: 0, amount: 0 };
+
+  return {
+    current: byPeriod.get('current') ?? empty,
+    previous: byPeriod.get('previous') ?? empty
+  };
+}
+
 function mapAdminPayment(payment: {
   _id: Types.ObjectId;
   provider: string;
@@ -220,7 +278,7 @@ async function updateUserAccess(
   return {
     user: mapAdminUser({
       _id: user._id,
-      vkId: user.vkId,
+      vkId: user.vkId ?? '',
       firstName: user.firstName,
       lastName: user.lastName,
       activeTo: user.activeTo
@@ -371,6 +429,18 @@ paymentsRouter.get('/admin/history', requireUser, async (req, res, next) => {
       success: true,
       data: filteredPayments.map(mapAdminPayment)
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+paymentsRouter.get('/admin/summary', requireUser, async (req, res, next) => {
+  if (!ensureAdmin(req, res)) {
+    return;
+  }
+
+  try {
+    res.json({ success: true, data: await getAdminPaymentsMonthlySummary() });
   } catch (error) {
     next(error);
   }

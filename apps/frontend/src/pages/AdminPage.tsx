@@ -1,10 +1,12 @@
-import { Bug, CheckCircle2, CreditCard, Info, Link, RefreshCw, Search, XCircle } from 'lucide-react';
+import { Bug, CheckCircle2, CreditCard, Info, Link, RefreshCw, Search, Users, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../api/client';
 import type {
   AdminPaymentActionResult,
   AdminPaymentHistoryItem,
+  AdminPaymentsMonthlySummary,
   AdminUserAccessResult,
+  RecentAdminUser,
   VkAppInfo,
   VkManualStatsResult,
   VkOAuthDebug,
@@ -21,6 +23,30 @@ const paymentStatusOptions = [
 
 type PaymentStatusFilter = (typeof paymentStatusOptions)[number]['key'];
 
+const dateFormatter = new Intl.DateTimeFormat('ru-RU', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  timeZone: 'UTC'
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'UTC'
+});
+
+function formatAdminDate(value: string) {
+  return dateFormatter.format(new Date(value));
+}
+
+function formatAdminDateTime(value: string) {
+  return dateTimeFormatter.format(new Date(value));
+}
+
 export function AdminPage() {
   const [permissions, setPermissions] = useState<VkPermissions | null>(null);
   const [tokenStatus, setTokenStatus] = useState<VkTokenStatus | null>(null);
@@ -31,6 +57,8 @@ export function AdminPage() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusFilter>('all');
   const [paymentQuery, setPaymentQuery] = useState('');
   const [payments, setPayments] = useState<AdminPaymentHistoryItem[]>([]);
+  const [paymentsMonthlySummary, setPaymentsMonthlySummary] = useState<AdminPaymentsMonthlySummary | null>(null);
+  const [recentUsers, setRecentUsers] = useState<RecentAdminUser[]>([]);
   const [manualPermissions, setManualPermissions] = useState<VkPermissions | null>(null);
   const [manualStats, setManualStats] = useState<VkManualStatsResult | null>(null);
   const [permissionsError, setPermissionsError] = useState<string | null>(null);
@@ -38,6 +66,8 @@ export function AdminPage() {
   const [appInfoError, setAppInfoError] = useState<string | null>(null);
   const [oauthDebugError, setOauthDebugError] = useState<string | null>(null);
   const [paymentsError, setPaymentsError] = useState<string | null>(null);
+  const [paymentsMonthlySummaryError, setPaymentsMonthlySummaryError] = useState<string | null>(null);
+  const [recentUsersError, setRecentUsersError] = useState<string | null>(null);
   const [manualError, setManualError] = useState<string | null>(null);
   const [paymentActionId, setPaymentActionId] = useState<string | null>(null);
   const [accessActionUserId, setAccessActionUserId] = useState<string | null>(null);
@@ -47,10 +77,17 @@ export function AdminPage() {
   const [isAppInfoLoading, setIsAppInfoLoading] = useState(false);
   const [isOauthDebugLoading, setIsOauthDebugLoading] = useState(false);
   const [isPaymentsLoading, setIsPaymentsLoading] = useState(false);
+  const [isPaymentsMonthlySummaryLoading, setIsPaymentsMonthlySummaryLoading] = useState(false);
+  const [isRecentUsersLoading, setIsRecentUsersLoading] = useState(false);
   const [isManualPermissionsLoading, setIsManualPermissionsLoading] = useState(false);
   const [isManualStatsLoading, setIsManualStatsLoading] = useState(false);
 
   const app = appInfo?.items?.[0];
+  const displayedPaymentsAmount = payments.reduce((total, payment) => total + payment.amount, 0);
+  const displayedPaidPayments = payments.filter((payment) => payment.status === 'paid').length;
+  const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const currentMonthName = monthFormatter.format(new Date());
+  const previousMonthName = monthFormatter.format(new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - 1, 1)));
 
   const getPaymentStatusLabel = (status: string) => {
     if (status === 'paid') {
@@ -207,6 +244,36 @@ export function AdminPage() {
     }
   };
 
+  const loadPaymentsMonthlySummary = async () => {
+    setIsPaymentsMonthlySummaryLoading(true);
+    setPaymentsMonthlySummaryError(null);
+
+    try {
+      const data = await apiGet<AdminPaymentsMonthlySummary>('/api/payments/admin/summary');
+      setPaymentsMonthlySummary(data);
+    } catch (nextError) {
+      setPaymentsMonthlySummary(null);
+      setPaymentsMonthlySummaryError(nextError instanceof Error ? nextError.message : 'Не удалось загрузить сводку платежей');
+    } finally {
+      setIsPaymentsMonthlySummaryLoading(false);
+    }
+  };
+
+  const loadRecentUsers = async () => {
+    setIsRecentUsersLoading(true);
+    setRecentUsersError(null);
+
+    try {
+      const data = await apiGet<RecentAdminUser[]>('/api/account/admin/users/recent');
+      setRecentUsers(data);
+    } catch (nextError) {
+      setRecentUsers([]);
+      setRecentUsersError(nextError instanceof Error ? nextError.message : 'Не удалось загрузить пользователей');
+    } finally {
+      setIsRecentUsersLoading(false);
+    }
+  };
+
   const confirmPayment = async (payment: AdminPaymentHistoryItem) => {
     setPaymentActionId(payment.id);
     setPaymentsError(null);
@@ -260,6 +327,8 @@ export function AdminPage() {
 
   useEffect(() => {
     loadPayments();
+    loadPaymentsMonthlySummary();
+    loadRecentUsers();
   }, []);
 
   return (
@@ -267,8 +336,85 @@ export function AdminPage() {
       <div className="panel span-2">
         <div className="panel-header compact">
           <div>
-            <h2>Оплаты</h2>
-            <p>Последние платежи, статусы и пользователи.</p>
+            <h2>Платежи по месяцам</h2>
+            <p>Только оплаченные платежи за текущий и предыдущий календарные месяцы.</p>
+          </div>
+          <button
+            className="secondary-button inline"
+            type="button"
+            onClick={loadPaymentsMonthlySummary}
+            disabled={isPaymentsMonthlySummaryLoading}
+          >
+            {isPaymentsMonthlySummaryLoading ? <RefreshCw className="spin" size={18} /> : <RefreshCw size={18} />}
+            Обновить
+          </button>
+        </div>
+        {paymentsMonthlySummaryError && <div className="debug-error">{paymentsMonthlySummaryError}</div>}
+        {paymentsMonthlySummary && (
+          <div className="admin-monthly-payments">
+            <div>
+              <span>{currentMonthName}</span>
+              <strong>{paymentsMonthlySummary.current.amount.toLocaleString('ru-RU')} ₽</strong>
+              <small>{paymentsMonthlySummary.current.count} оплат</small>
+            </div>
+            <div>
+              <span>{previousMonthName}</span>
+              <strong>{paymentsMonthlySummary.previous.amount.toLocaleString('ru-RU')} ₽</strong>
+              <small>{paymentsMonthlySummary.previous.count} оплат</small>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="panel span-2">
+        <div className="panel-header compact">
+          <div>
+            <h2>Последние активные пользователи</h2>
+            <p>До 300 пользователей, отсортированных по времени последнего входа.</p>
+          </div>
+          <button className="secondary-button inline" type="button" onClick={loadRecentUsers} disabled={isRecentUsersLoading}>
+            {isRecentUsersLoading ? <RefreshCw className="spin" size={18} /> : <Users size={18} />}
+            {isRecentUsersLoading ? 'Загружаем' : 'Обновить'}
+          </button>
+        </div>
+
+        {recentUsersError && <div className="debug-error">{recentUsersError}</div>}
+        {recentUsers.length === 0 && !recentUsersError && !isRecentUsersLoading && (
+          <div className="empty-state">Пользователей со входами пока нет.</div>
+        )}
+        {recentUsers.length > 0 && (
+          <div className="table analytics-posts recent-users-table">
+            <div className="table-row table-head admin-recent-users-row">
+              <span>Последний вход</span>
+              <span>Пользователь</span>
+              <span>VK ID</span>
+              <span>Bitrix ID</span>
+              <span>Доступ</span>
+              <span>Доступ до</span>
+            </div>
+            {recentUsers.map((user) => (
+              <div className="table-row admin-recent-users-row" key={user.id}>
+                <span data-label="Последний вход">{formatAdminDateTime(user.lastLoginAt)}</span>
+                <span data-label="Пользователь">
+                  <strong>{user.name}</strong>
+                </span>
+                <span data-label="VK ID">{user.vkId ?? '—'}</span>
+                <span data-label="Bitrix ID">{user.bitrixId ?? '—'}</span>
+                <span data-label="Доступ" className={`user-active-status ${user.hasActiveAccess ? 'active' : 'inactive'}`}>
+                  {user.hasActiveAccess ? 'Активен' : 'Не активен'}
+                </span>
+                <span data-label="Доступ до">{formatAdminDate(user.activeTo)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="panel span-2">
+        <div className="panel-header compact">
+          <div>
+            <h2>Последние 100 платежей</h2>
+            <p>Статусы, суммы и пользователи. Лимит применяется на сервере.</p>
           </div>
           <button className="primary-button" type="button" onClick={loadPayments} disabled={isPaymentsLoading}>
             {isPaymentsLoading ? <RefreshCw className="spin" size={18} /> : <CreditCard size={18} />}
@@ -303,10 +449,18 @@ export function AdminPage() {
 
         {paymentsError && <div className="debug-error">{paymentsError}</div>}
 
+        {payments.length > 0 && (
+          <div className="admin-payments-summary" aria-label="Сводка по показанным платежам">
+            <span>Показано: <strong>{payments.length}</strong></span>
+            <span>Оплачено: <strong>{displayedPaidPayments}</strong></span>
+            <span>Сумма: <strong>{displayedPaymentsAmount.toLocaleString('ru-RU')} ₽</strong></span>
+          </div>
+        )}
+
         {payments.length === 0 && !paymentsError && <div className="empty-state">Оплаты ещё не загружены.</div>}
 
         {payments.length > 0 && (
-          <div className="table analytics-posts">
+          <div className="table analytics-posts payments-table">
             <div className="table-row table-head admin-payment-row">
               <span>Дата</span>
               <span>Пользователь</span>
@@ -318,13 +472,13 @@ export function AdminPage() {
             </div>
             {payments.map((payment) => (
               <div className="table-row admin-payment-row" key={payment.id}>
-                <span>{new Date(payment.createdAt).toLocaleString('ru-RU')}</span>
+                <span>{formatAdminDate(payment.createdAt)}</span>
                 <span>
                   <strong>{payment.user?.name ?? 'Пользователь не найден'}</strong>
                   {payment.user ? (
                     <>
                       <small>id: {payment.user.id}</small>
-                      <small>vk id: {payment.user.vkId} / до {payment.user.activeTo}</small>
+                      <small>vk id: {payment.user.vkId} / до {formatAdminDate(payment.user.activeTo)}</small>
                       <span className="admin-access-actions">
                         <button
                           className="mini-button"

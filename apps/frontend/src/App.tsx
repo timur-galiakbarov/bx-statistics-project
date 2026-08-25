@@ -4,7 +4,6 @@ import {
   GitCompare,
   Home,
   LogOut,
-  MessageSquareText,
   Newspaper,
   Shield,
   Users
@@ -19,7 +18,6 @@ import { AccountPage } from './pages/AccountPage';
 import { AdminPage } from './pages/AdminPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { ComparePage } from './pages/ComparePage';
-import { ChannelsPage } from './pages/ChannelsPage';
 import { LoginPage } from './pages/LoginPage';
 import { PostsPage } from './pages/PostsPage';
 import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
@@ -29,7 +27,6 @@ const navItems = [
   { to: '/analytics', label: 'Анализ сообществ', icon: BarChart3 },
   { to: '/compare', label: 'Сравнение', icon: GitCompare },
   { to: '/posts', label: 'Публикации', icon: Newspaper },
-  { to: '/channels', label: 'Каналы', icon: MessageSquareText },
   { to: '/account', label: 'Профиль и оплата', icon: CreditCard }
 ];
 
@@ -136,12 +133,18 @@ export function App() {
             }
           />
           <Route path="/account" element={<AccountPage user={user} groups={groups} onAccountChanged={loadAccount} />} />
-          <Route path="/analytics" element={paidRoute(<AnalyticsPage />)} />
+          <Route path="/analytics" element={paidRoute(<AnalyticsPage groups={groups} />)} />
           <Route path="/compare" element={paidRoute(<ComparePage />)} />
           <Route path="/posts" element={paidRoute(<PostsPage />)} />
-          <Route path="/channels" element={paidRoute(<ChannelsPage />)} />
           <Route path="/admin" element={user?.isAdmin ? <AdminPage /> : <Navigate to="/dashboard" replace />} />
         </Routes>
+        <footer className="app-footer">
+          Нашли ошибку?{' '}
+          <a href="https://vk.com/socstat_ru" target="_blank" rel="noreferrer">
+            Сообщите нам
+          </a>
+          .
+        </footer>
       </main>
     </div>
   );

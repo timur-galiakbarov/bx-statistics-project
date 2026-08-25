@@ -30,6 +30,9 @@ export type PostCardData = {
   views: number;
   er: number;
   isAd: boolean;
+  contentType?: string;
+  resultBadge?: string;
+  resultReason?: string;
 };
 
 type Props = {
@@ -82,7 +85,15 @@ export function PostCard({ post }: Props) {
           </a>
         </div>
 
+        <div className="post-card-tags">
+          <span>{post.contentType ?? (preview ? preview.title : 'Текст')}</span>
+          <span className={post.isAd ? 'post-ad-badge' : 'post-organic-badge'}>{post.isAd ? 'Реклама' : 'Органический'}</span>
+          {post.resultBadge && <strong className="post-result-badge">{post.resultBadge}</strong>}
+        </div>
+
         <p>{post.text || 'Без текста'}</p>
+
+        {post.resultReason && <small className="post-result-reason">{post.resultReason}</small>}
 
         <div className="post-metrics">
           <span title="Лайки" aria-label={`Лайки: ${formatNumber(post.likes)}`}>
@@ -105,7 +116,6 @@ export function PostCard({ post }: Props) {
             <Activity size={15} />
             {post.er}%
           </span>
-          {post.isAd && <span>Реклама</span>}
         </div>
       </div>
     </article>

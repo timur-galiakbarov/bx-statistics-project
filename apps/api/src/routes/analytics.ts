@@ -7,7 +7,13 @@ export const analyticsRouter = Router();
 
 analyticsRouter.get('/community/:groupId', requireUser, requireActiveAccess, async (req, res, next) => {
   try {
-    const data = await getCommunityAnalytics(req.user!.id, req.params.groupId, req.query.period);
+    const data = await getCommunityAnalytics(
+      req.user!.id,
+      req.params.groupId,
+      req.query.period,
+      req.query.dateFrom,
+      req.query.dateTo
+    );
     res.json({ success: true, data });
   } catch (error) {
     next(error);

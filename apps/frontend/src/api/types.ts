@@ -144,7 +144,7 @@ export type VkChannelDebug = {
   warnings: string[];
 };
 
-export type AnalyticsPeriod = 'week' | 'twoWeek' | 'month';
+export type AnalyticsPeriod = 'week' | 'twoWeek' | 'month' | 'currentMonth' | 'previousMonth' | 'custom';
 
 export type CommunityAnalytics = {
   period: {
@@ -187,17 +187,19 @@ export type CommunityAnalytics = {
     adsPosts: number;
     erAverage: number;
     erMax: number;
+    isComplete: boolean;
     dayGroups: Array<{
       date: string;
+      dayIndex: number;
       posts: number;
       likes: number;
       reposts: number;
       comments: number;
       actions: number;
       views: number;
-      er: number;
-      averageViews: number;
-      averageActionsPerPost: number;
+      er: number | null;
+      averageViews: number | null;
+      averageActionsPerPost: number | null;
     }>;
     topPosts: Array<{
       id: number;
@@ -215,7 +217,20 @@ export type CommunityAnalytics = {
       views: number;
       er: number;
       isAd: boolean;
+      contentType: string;
     }>;
+  };
+  previous: {
+    period: {
+      dateFrom: string;
+      dateTo: string;
+    };
+    stats: null | {
+      growth: number;
+      visitors: number;
+      reach: number;
+    };
+    wall: CommunityAnalytics['wall'] & { available: boolean };
   };
   photos: {
     total: number;
@@ -352,6 +367,11 @@ export type AdminPaymentActionResult = {
   payment: AdminPaymentHistoryItem | null;
 };
 
+export type AdminPaymentsMonthlySummary = {
+  current: { count: number; amount: number };
+  previous: { count: number; amount: number };
+};
+
 export type AdminUserAccessResult = {
   user: {
     id: string;
@@ -359,4 +379,14 @@ export type AdminUserAccessResult = {
     name: string;
     activeTo: string;
   };
+};
+
+export type RecentAdminUser = {
+  id: string;
+  bitrixId?: number;
+  vkId?: string;
+  name: string;
+  hasActiveAccess: boolean;
+  lastLoginAt: string;
+  activeTo: string;
 };

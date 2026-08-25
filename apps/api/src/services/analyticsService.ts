@@ -1,7 +1,11 @@
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { VkApiError, vkApiRequest } from './vkClient.js';
-
-type AnalyticsPeriod = 'week' | 'twoWeek' | 'month';
+import {
+  buildDailySeries,
+  getAnalyticsPeriod,
+  getPreviousAnalyticsPeriod,
+  getWallCompleteness
+} from './analyticsUtils.js';
 
 type VkGroupInfo = {
   id: number;
@@ -114,34 +118,6 @@ type VkListResponse<T> = {
   items: T[];
 };
 
-function getPeriod(value: unknown) {
-  const normalized: AnalyticsPeriod = value === 'week' || value === 'twoWeek' || value === 'month' ? value : 'month';
-  const now = new Date();
-  const start = new Date(now);
-
-  if (normalized === 'week') {
-    start.setDate(start.getDate() - 6);
-  }
-
-  if (normalized === 'twoWeek') {
-    start.setDate(start.getDate() - 13);
-  }
-
-  if (normalized === 'month') {
-    start.setDate(start.getDate() - 29);
-  }
-
-  start.setHours(0, 0, 0, 0);
-  now.setHours(23, 59, 59, 999);
-
-  return {
-    key: normalized,
-    dateFrom: start,
-    dateTo: now,
-    unixFrom: Math.floor(start.getTime() / 1000),
-    unixTo: Math.floor(now.getTime() / 1000)
-  };
-}
 
 function formatDate(date: Date) {
   const year = date.getFullYear();
@@ -232,6 +208,16 @@ function mapPostMedia(post: VkWallPost) {
     .slice(0, 4);
 }
 
+function getPostContentType(post: VkWallPost) {
+  const types = new Set((post.attachments ?? []).map((attachment) => attachment.type));
+  if (types.has('video')) return 'Видео';
+  if (types.has('photo')) return 'Фото';
+  if (types.has('doc') && post.attachments?.some((attachment) => attachment.doc?.ext === 'gif')) return 'GIF';
+  if (types.has('poll')) return 'Опрос';
+  if (types.has('link')) return 'Ссылка';
+  return post.text ? 'Текст' : 'Без вложений';
+}
+
 function summarizeWall(
   wall: VkWallResponse,
   unixFrom: number,
@@ -251,51 +237,18 @@ function summarizeWall(
   );
   const actions = totals.likes + totals.reposts + totals.comments;
   const postErs = posts.map((post) => getPostEr(post, membersCount));
-  const dayGroupsMap = new Map<
-    string,
-    {
-      date: string;
-      posts: number;
-      likes: number;
-      reposts: number;
-      comments: number;
-      actions: number;
-      views: number;
-      er: number;
-      timestamp: number;
-    }
-  >();
-
-  for (const post of posts) {
-    const label = formatDayLabel(post.date);
-    const existing = dayGroupsMap.get(label);
-    const postActions = getPostActions(post);
-    const postViews = post.views?.count ?? 0;
-    const postEr = getPostEr(post, membersCount);
-
-    if (existing) {
-      existing.posts += 1;
-      existing.likes += post.likes?.count ?? 0;
-      existing.reposts += post.reposts?.count ?? 0;
-      existing.comments += post.comments?.count ?? 0;
-      existing.actions += postActions;
-      existing.views += postViews;
-      existing.er = round(existing.er + postEr, 3);
-      continue;
-    }
-
-    dayGroupsMap.set(label, {
-      date: label,
-      posts: 1,
-      likes: post.likes?.count ?? 0,
-      reposts: post.reposts?.count ?? 0,
-      comments: post.comments?.count ?? 0,
-      actions: postActions,
-      views: postViews,
-      er: postEr,
-      timestamp: new Date(new Date(post.date * 1000).setHours(0, 0, 0, 0)).getTime()
-    });
-  }
+  const period = {
+    key: 'custom' as const,
+    dateFrom: new Date(unixFrom * 1000),
+    dateTo: new Date(unixTo * 1000),
+    unixFrom,
+    unixTo
+  };
+  const dayGroups = buildDailySeries(period, posts, (post) => ({
+    actions: getPostActions(post),
+    views: post.views?.count ?? 0,
+    er: getPostEr(post, membersCount)
+  }));
 
   return {
     totalPosts: wall.count,
@@ -306,8 +259,8 @@ function summarizeWall(
     comments: totals.comments,
     views: totals.views,
     averageActionsPerPost: posts.length ? Number((actions / posts.length).toFixed(1)) : 0,
-    averageActionsPerDay: dayGroupsMap.size ? round(actions / dayGroupsMap.size, 1) : 0,
-    averagePostsPerDay: dayGroupsMap.size ? round(posts.length / dayGroupsMap.size, 1) : 0,
+    averageActionsPerDay: dayGroups.length ? round(actions / dayGroups.length, 1) : 0,
+    averagePostsPerDay: dayGroups.length ? round(posts.length / dayGroups.length, 1) : 0,
     averageViewsPerPost: posts.length ? round(totals.views / posts.length, 1) : 0,
     maxViews: posts.reduce((max, post) => Math.max(max, post.views?.count ?? 0), 0),
     minViews: posts.reduce<number | null>((min, post) => {
@@ -321,13 +274,7 @@ function summarizeWall(
     adsPosts: posts.filter((post) => Boolean(post.marked_as_ads)).length,
     erAverage: posts.length ? round(postErs.reduce((sum, er) => sum + er, 0) / posts.length, 3) : 0,
     erMax: postErs.length ? Math.max(...postErs) : 0,
-    dayGroups: [...dayGroupsMap.values()]
-      .sort((a, b) => a.timestamp - b.timestamp)
-      .map(({ timestamp, ...day }) => ({
-        ...day,
-        averageViews: day.posts ? round(day.views / day.posts, 1) : 0,
-        averageActionsPerPost: day.posts ? round(day.actions / day.posts, 1) : 0
-      })),
+    dayGroups,
     topPosts: [...posts]
       .sort((a, b) => {
         return getPostActions(b) - getPostActions(a);
@@ -343,7 +290,8 @@ function summarizeWall(
         views: post.views?.count ?? 0,
         er: getPostEr(post, membersCount),
         isAd: Boolean(post.marked_as_ads),
-        media: mapPostMedia(post)
+        media: mapPostMedia(post),
+        contentType: getPostContentType(post)
       }))
   };
 }
@@ -425,7 +373,36 @@ async function optionalVkRequest<T>(
   }
 }
 
-export async function getCommunityAnalytics(userId: string, groupId: string, periodValue: unknown) {
+async function getStatsForPeriod(
+  accessToken: string,
+  groupId: number,
+  period: ReturnType<typeof getAnalyticsPeriod>,
+  onUnavailable: () => void
+) {
+  const stats = await vkApiRequest<VkStatsDay[]>('stats.get', accessToken, {
+    group_id: groupId,
+    timestamp_from: period.unixFrom,
+    timestamp_to: period.unixTo,
+    stats_groups: 'visitors,reach,activity'
+  }).catch((error) => {
+    if (error instanceof VkApiError && error.vkCode === 7) {
+      onUnavailable();
+      return [] as VkStatsDay[];
+    }
+
+    throw error;
+  });
+
+  return sumStats(stats);
+}
+
+export async function getCommunityAnalytics(
+  userId: string,
+  groupId: string,
+  periodValue: unknown,
+  dateFromValue?: unknown,
+  dateToValue?: unknown
+) {
   const accessToken = await getVkAccessToken(userId);
 
   if (!accessToken) {
@@ -435,7 +412,14 @@ export async function getCommunityAnalytics(userId: string, groupId: string, per
     });
   }
 
-  const period = getPeriod(periodValue);
+  let period: ReturnType<typeof getAnalyticsPeriod>;
+  try {
+    period = getAnalyticsPeriod(periodValue, dateFromValue, dateToValue);
+  } catch (error) {
+    const code = error instanceof Error ? error.message : 'INVALID_ANALYTICS_PERIOD';
+    throw new VkApiError(code === 'ANALYTICS_PERIOD_TOO_LONG' ? 'Произвольный период не может быть длиннее 93 дней.' : 'Укажите корректный период без будущих дат.', { status: 400, code });
+  }
+  const previousPeriod = getPreviousAnalyticsPeriod(period);
   const warnings: string[] = [];
   const groupInfoList = await vkApiRequest<VkGroupInfo[]>('groups.getById', accessToken, {
     group_id: groupId,
@@ -451,26 +435,40 @@ export async function getCommunityAnalytics(userId: string, groupId: string, per
   }
 
   let statsUnavailable = false;
-  const stats = await vkApiRequest<VkStatsDay[]>('stats.get', accessToken, {
-    group_id: groupInfo.id,
-    timestamp_from: period.unixFrom,
-    timestamp_to: period.unixTo,
-    stats_groups: 'visitors,reach,activity'
-  }).catch((error) => {
-    if (error instanceof VkApiError && error.vkCode === 7) {
-      statsUnavailable = true;
-      warnings.push('VK не выдал право stats, статистика посещений и охвата недоступна.');
-      return [] as VkStatsDay[];
-    }
-
-    throw error;
+  const stats = await getStatsForPeriod(accessToken, groupInfo.id, period, () => {
+    statsUnavailable = true;
   });
-
-  const wall = await vkApiRequest<VkWallResponse>('wall.get', accessToken, {
-    owner_id: -groupInfo.id,
-    count: 100,
-    offset: 0
+  const previousStats = await getStatsForPeriod(accessToken, groupInfo.id, previousPeriod, () => {
+    statsUnavailable = true;
   });
+  if (statsUnavailable) {
+    warnings.push('VK не выдал право stats, прирост, посещения и охват сообщества недоступны.');
+  }
+
+  const WALL_PAGE_SIZE = 100;
+  const WALL_MAX_POSTS = 1_000;
+  let wallCount = 0;
+  const wallPosts: VkWallPost[] = [];
+  let offset = 0;
+  let needMore = true;
+  while (needMore && offset < WALL_MAX_POSTS) {
+    const page = await vkApiRequest<VkWallResponse>('wall.get', accessToken, {
+      owner_id: -groupInfo.id,
+      count: WALL_PAGE_SIZE,
+      offset
+    });
+    wallCount = page.count;
+    wallPosts.push(...page.items);
+    offset += page.items.length;
+    const oldestLoadedPostDate = wallPosts.reduce((oldest, post) => Math.min(oldest, post.date), Number.POSITIVE_INFINITY);
+    needMore = page.items.length === WALL_PAGE_SIZE && wallPosts.length < wallCount && oldestLoadedPostDate > previousPeriod.unixFrom;
+  }
+  const wall = { count: wallCount, items: wallPosts };
+  const currentWallAvailable = getWallCompleteness(wall.count, wall.items, period);
+  const previousWallAvailable = getWallCompleteness(wall.count, wall.items, previousPeriod);
+  if (!currentWallAvailable || !previousWallAvailable) {
+    warnings.push('Для выбранного сравнения VK не отдал достаточно публикаций из истории стены. Метрики неполной выборки не используются в сравнениях и выводах.');
+  }
   const photos = await optionalVkRequest(
     warnings,
     'Фотографии VK недоступны',
@@ -505,7 +503,6 @@ export async function getCommunityAnalytics(userId: string, groupId: string, per
     { count: 0, items: [] }
   );
 
-  const stat = sumStats(stats);
   const photoSummary = summarizePhotos(photos, period.unixFrom, period.unixTo);
   photoSummary.comments = summarizePhotoComments(photoComments, period.unixFrom, period.unixTo);
 
@@ -525,15 +522,36 @@ export async function getCommunityAnalytics(userId: string, groupId: string, per
     },
     stats: {
       unavailable: statsUnavailable,
-      growth: stat.subscribed - stat.unsubscribed,
-      subscribed: stat.subscribed,
-      unsubscribed: stat.unsubscribed,
-      visitors: stat.visitors,
-      views: stat.views,
-      reach: stat.reach,
-      reachSubscribers: stat.reachSubscribers
+      growth: stats.subscribed - stats.unsubscribed,
+      subscribed: stats.subscribed,
+      unsubscribed: stats.unsubscribed,
+      visitors: stats.visitors,
+      views: stats.views,
+      reach: stats.reach,
+      reachSubscribers: stats.reachSubscribers
     },
-    wall: summarizeWall(wall, period.unixFrom, period.unixTo, groupInfo.members_count ?? 0, groupInfo.id),
+    wall: {
+      ...summarizeWall(wall, period.unixFrom, period.unixTo, groupInfo.members_count ?? 0, groupInfo.id),
+      isComplete: currentWallAvailable
+    },
+    previous: {
+      period: {
+        dateFrom: formatDate(previousPeriod.dateFrom),
+        dateTo: formatDate(previousPeriod.dateTo)
+      },
+      stats: statsUnavailable
+        ? null
+        : {
+            growth: previousStats.subscribed - previousStats.unsubscribed,
+            visitors: previousStats.visitors,
+            reach: previousStats.reach
+          },
+      wall: {
+        ...summarizeWall(wall, previousPeriod.unixFrom, previousPeriod.unixTo, groupInfo.members_count ?? 0, groupInfo.id),
+        isComplete: previousWallAvailable,
+        available: previousWallAvailable
+      }
+    },
     photos: photoSummary,
     videos: summarizeVideos(videos, period.unixFrom, period.unixTo),
     warnings

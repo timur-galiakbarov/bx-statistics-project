@@ -13,7 +13,7 @@ const FREE_GROUP_LIMIT = 3;
 
 type UserDocument = {
   _id: Types.ObjectId;
-  vkId: string;
+  vkId?: string;
   firstName: string;
   lastName: string;
   photo?: string;
@@ -40,10 +40,20 @@ export type AccountUser = {
   isAdmin: boolean;
 };
 
+export type RecentAdminUser = {
+  id: string;
+  bitrixId?: number;
+  vkId?: string;
+  name: string;
+  hasActiveAccess: boolean;
+  lastLoginAt: string;
+  activeTo: string;
+};
+
 export function mapUser(user: UserDocument): AccountUser {
   return {
     id: user._id.toString(),
-    vkId: user.vkId,
+    vkId: user.vkId ?? '',
     firstName: user.firstName,
     lastName: user.lastName,
     photo: user.photo,
@@ -121,6 +131,7 @@ export async function upsertVkUser(profile: {
         firstName: profile.firstName,
         lastName: profile.lastName,
         photo: profile.photo,
+        lastLoginAt: new Date(),
         ...(isAdmin ? { isAdmin: true } : {})
       },
       $setOnInsert: {
@@ -264,4 +275,34 @@ export async function getAdminStat(userId: string) {
   ]);
 
   return { users, paidUsers, savedGroups };
+}
+
+export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[]> {
+  const users = await UserModel.find({ lastLoginAt: { $exists: true, $ne: null } })
+    .sort({ lastLoginAt: -1 })
+    .limit(Math.min(limit, 300))
+    .select({ legacy: 1, vkId: 1, firstName: 1, lastName: 1, lastLoginAt: 1, activeTo: 1 })
+    .lean<
+      Array<{
+        _id: Types.ObjectId;
+        legacy?: { bitrixId?: number };
+        vkId?: string;
+        firstName?: string;
+        lastName?: string;
+        lastLoginAt: Date;
+        activeTo: Date;
+      }>
+    >();
+
+  const now = new Date();
+
+  return users.map((user) => ({
+    id: user._id.toString(),
+    bitrixId: user.legacy?.bitrixId,
+    vkId: user.vkId,
+    name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени',
+    hasActiveAccess: user.activeTo > now,
+    lastLoginAt: user.lastLoginAt.toISOString(),
+    activeTo: user.activeTo.toISOString().slice(0, 10)
+  }));
 }

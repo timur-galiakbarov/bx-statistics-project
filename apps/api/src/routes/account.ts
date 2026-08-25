@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   addGroup,
+  getRecentAdminUsers,
   getAdminStat,
   getGroups,
   getNews,
@@ -116,6 +117,19 @@ accountRouter.get('/admin/stat', requireUser, async (req, res, next) => {
 
   try {
     res.json({ success: true, data: await getAdminStat(req.user!.id) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.get('/admin/users/recent', requireUser, async (req, res, next) => {
+  if (!req.user!.isAdmin) {
+    res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    return;
+  }
+
+  try {
+    res.json({ success: true, data: await getRecentAdminUsers(300) });
   } catch (error) {
     next(error);
   }

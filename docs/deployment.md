@@ -1,6 +1,6 @@
 # Деплой production через GitHub Actions
 
-Workflow `.github/workflows/deploy.yml` запускается после каждого push в `main`.
+Workflow `.github/workflows/deploy.yml` запускается после каждого push в `master`.
 Он загружает на VPS только новую версию приложения, поэтому `legacy/` на сервер не
 синхронизируется и не удаляется.
 
@@ -47,7 +47,7 @@ VK-приложения.
 Публичную часть SSH-ключа добавьте в `~/.ssh/authorized_keys` этого пользователя на
 сервере.
 
-После push в `main` Actions пересобирает контейнеры. Проверка успешного деплоя:
+После push в `master` Actions пересобирает контейнеры. Проверка успешного деплоя:
 
 ```bash
 curl https://socstat.example.com/api/health

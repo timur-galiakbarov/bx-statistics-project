@@ -2,7 +2,7 @@ name: Deploy production
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 concurrency:
   group: socstat-production

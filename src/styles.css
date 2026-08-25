@@ -28,7 +28,7 @@ a {
   align-items: center;
   background:
     linear-gradient(rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.68)),
-    url("../../../front/images/sidebar-1.jpg") center / cover;
+    url("/sidebar-1.jpg") center / cover;
   display: flex;
   min-height: 100vh;
   justify-content: center;
@@ -85,7 +85,7 @@ a {
 .sidebar {
   background:
     linear-gradient(rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.92)),
-    url("../../../front/images/sidebar-1.jpg");
+    url("/sidebar-1.jpg");
   background-color: #f5f7f8;
   background-position: center top, center bottom;
   background-repeat: no-repeat;

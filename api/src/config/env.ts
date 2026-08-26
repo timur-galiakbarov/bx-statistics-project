@@ -21,6 +21,10 @@ export const env = {
   vkImplicitRedirectUrl:
     process.env.VK_IMPLICIT_REDIRECT_URL ?? 'http://localhost:5173/auth/vk/implicit-callback',
   authSuccessRedirectUrl: process.env.AUTH_SUCCESS_REDIRECT_URL ?? 'http://localhost:5173/dashboard',
+  yoomoneyReceiver: process.env.YOOMONEY_RECEIVER ?? '',
+  yoomoneyFormComment: process.env.YOOMONEY_FORM_COMMENT ?? 'socstat-lab.ru',
+  yoomoneyNotificationUrl: process.env.YOOMONEY_NOTIFICATION_URL ?? 'http://localhost:4000/api/payments/callback',
+  yoomoneySuccessUrl: process.env.YOOMONEY_SUCCESS_URL ?? 'http://localhost:5173/account?payment=success',
   yoomoneyNotificationSecret: process.env.YOOMONEY_NOTIFICATION_SECRET ?? '',
   adminVkIds: (process.env.ADMIN_VK_IDS ?? '30647716')
     .split(',')

@@ -573,6 +573,11 @@ paymentsRouter.post('/create', requireUser, async (req, res, next) => {
       return;
     }
 
+    if (!env.yoomoneyReceiver) {
+      res.status(503).json({ success: false, error: 'PAYMENTS_NOT_CONFIGURED', message: 'Оплата временно недоступна.' });
+      return;
+    }
+
     const payment = await PaymentModel.create({
       userId: req.user!.id,
       provider: 'yoomoney',
@@ -580,8 +585,6 @@ paymentsRouter.post('/create', requireUser, async (req, res, next) => {
       period: plan.title,
       status: 'pending'
     });
-    const origin = typeof req.headers.origin === 'string' ? req.headers.origin : 'http://localhost:5173';
-
     res.status(201).json({
       success: true,
       data: {
@@ -590,13 +593,13 @@ paymentsRouter.post('/create', requireUser, async (req, res, next) => {
         action: 'https://yoomoney.ru/quickpay/confirm.xml',
         method: 'POST',
         fields: {
-          receiver: '410011867702471',
-          formcomment: 'socstat.ru',
+          receiver: env.yoomoneyReceiver,
+          formcomment: env.yoomoneyFormComment,
           'short-dest': `оплата периода ${plan.title}`,
           label: `socstat-payment:${payment.id}`,
           'quickpay-form': 'shop',
           targets: `Для пользователя ${req.user!.firstName} ${req.user!.lastName}`,
-          successURL: `${origin}/account?payment=success`,
+          successURL: env.yoomoneySuccessUrl,
           sum: String(plan.priceRub),
           'need-fio': 'false',
           'need-email': 'false',

@@ -110,6 +110,10 @@ cp api/.env.example api/.env
 - `VK_PUBLIC_REDIRECT_URL` - публичный callback URL, который отправляется в VK authorize
 - `VK_IMPLICIT_REDIRECT_URL` - frontend callback для legacy VK implicit flow
 - `AUTH_SUCCESS_REDIRECT_URL` - куда вернуть пользователя после успешного входа
+- `YOOMONEY_RECEIVER` - номер кошелька ЮMoney, который принимает платежи
+- `YOOMONEY_FORM_COMMENT` - подпись платежа в форме ЮMoney
+- `YOOMONEY_NOTIFICATION_URL` - URL HTTP-уведомлений, который нужно указать в кабинете ЮMoney
+- `YOOMONEY_SUCCESS_URL` - URL возврата пользователя после оплаты
 - `YOOMONEY_NOTIFICATION_SECRET` - секрет уведомлений ЮMoney для проверки `sha1_hash` в callback оплаты
 - `ADMIN_VK_IDS` - список VK id администраторов через запятую, по умолчанию `30647716`
 

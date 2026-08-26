@@ -18,8 +18,8 @@ sudo chown -R "$USER" /opt/socstat
 ```
 
 Первый запуск workflow загрузит шаблон и остановится, если `api/.env` ещё нет.
-На сервере заполните созданный `/opt/socstat/api/.env`: замените
-`socstat.example.com` на свой домен и задайте `VK_CLIENT_SECRET` и
+На сервере заполните созданный `/opt/socstat/api/.env`: задайте
+`VK_CLIENT_SECRET`, `YOOMONEY_RECEIVER` (номер кошелька ЮMoney) и
 `YOOMONEY_NOTIFICATION_SECRET`. Затем перезапустите workflow.
 
 Скопируйте `deploy/nginx/socstat.conf.example` в `/etc/nginx/sites-available/socstat`,
@@ -28,11 +28,25 @@ sudo chown -R "$USER" /opt/socstat
 ```bash
 sudo ln -s /etc/nginx/sites-available/socstat /etc/nginx/sites-enabled/socstat
 sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d socstat.example.com
+sudo certbot --nginx -d socstat-lab.ru -d www.socstat-lab.ru
 ```
 
 Настройте DNS-запись домена на IP VPS и добавьте production callback URL в настройках
 VK-приложения.
+
+## Оплата ЮMoney
+
+В кабинете ЮMoney включите HTTP-уведомления и укажите адрес:
+
+```text
+значение YOOMONEY_NOTIFICATION_URL из /opt/socstat/api/.env
+```
+
+Секрет уведомлений из кабинета должен в точности совпадать со значением
+`YOOMONEY_NOTIFICATION_SECRET` в `/opt/socstat/api/.env`. Укажите номер кошелька
+получателя в `YOOMONEY_RECEIVER`. После деплоя проверьте создание тестового платежа:
+после возврата пользователь попадёт на адрес из `YOOMONEY_SUCCESS_URL`,
+а подтверждённое уведомление продлит подписку автоматически.
 
 ## GitHub
 
@@ -50,5 +64,5 @@ VK-приложения.
 После push в `master` Actions пересобирает контейнеры. Проверка успешного деплоя:
 
 ```bash
-curl https://socstat.example.com/api/health
+curl https://socstat-lab.ru/api/health
 ```

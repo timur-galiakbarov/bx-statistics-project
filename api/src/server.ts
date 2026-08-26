@@ -5,7 +5,10 @@ import { seedDevelopmentData } from './db/seed.js';
 
 async function bootstrap() {
   await connectDatabase();
-  await seedDevelopmentData();
+
+  if (env.nodeEnv !== 'production') {
+    await seedDevelopmentData();
+  }
 
   createApp().listen(env.port, () => {
     console.log(`Socstat API listening on http://localhost:${env.port}`);

@@ -6,7 +6,9 @@ const userSchema = new Schema(
     // разрешает хранить таких пользователей, сохраняя уникальность VK ID.
     vkId: { type: String, unique: true, sparse: true, index: true },
     legacy: {
-      bitrixId: { type: Number, required: true }
+      // Есть только у перенесённых из Bitrix пользователей. Новые пользователи
+      // создаются через VK OAuth и не имеют legacy ID.
+      bitrixId: { type: Number }
     },
     email: { type: String },
     firstName: { type: String, default: '' },

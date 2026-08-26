@@ -12,7 +12,8 @@ analyticsRouter.get('/community/:groupId', requireUser, requireActiveAccess, asy
       req.params.groupId,
       req.query.period,
       req.query.dateFrom,
-      req.query.dateTo
+      req.query.dateTo,
+      req.query.refresh === '1'
     );
     res.json({ success: true, data });
   } catch (error) {

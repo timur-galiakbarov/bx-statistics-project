@@ -1,6 +1,7 @@
 const VK_API_BASE_URL = 'https://api.vk.com/method';
 const VK_API_VERSION = '5.131';
 const VK_TOO_MANY_REQUESTS_CODE = 6;
+const VK_PERMISSION_DENIED_CODES = new Set([7, 15]);
 const VK_RETRY_DELAYS_MS = [450, 900, 1500];
 
 type VkApiPayload<T> = {
@@ -24,6 +25,11 @@ export class VkApiError extends Error {
     this.code = options.code ?? 'VK_API_ERROR';
     this.vkCode = options.vkCode;
   }
+}
+
+/** VK uses both 7 (permission denied) and 15 (access denied) for restricted data. */
+export function isVkPermissionDeniedError(error: unknown): error is VkApiError {
+  return error instanceof VkApiError && VK_PERMISSION_DENIED_CODES.has(error.vkCode ?? -1);
 }
 
 function delay(ms: number) {

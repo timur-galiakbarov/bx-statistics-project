@@ -1,5 +1,6 @@
 import { getVkAccessToken } from '../repositories/accountRepository.js';
-import { VkApiError, vkApiRequest } from './vkClient.js';
+import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.js';
+import { TtlCache } from './ttlCache.js';
 import {
   buildDailySeries,
   getAnalyticsPeriod,
@@ -385,7 +386,7 @@ async function getStatsForPeriod(
     timestamp_to: period.unixTo,
     stats_groups: 'visitors,reach,activity'
   }).catch((error) => {
-    if (error instanceof VkApiError && error.vkCode === 7) {
+    if (isVkPermissionDeniedError(error)) {
       onUnavailable();
       return [] as VkStatsDay[];
     }
@@ -396,7 +397,7 @@ async function getStatsForPeriod(
   return sumStats(stats);
 }
 
-export async function getCommunityAnalytics(
+async function loadCommunityAnalytics(
   userId: string,
   groupId: string,
   periodValue: unknown,
@@ -446,7 +447,9 @@ export async function getCommunityAnalytics(
   }
 
   const WALL_PAGE_SIZE = 100;
-  const WALL_MAX_POSTS = 1_000;
+  // A busy community can publish more than 1,000 posts within the compared periods.
+  // Keep a finite cap to avoid unbounded VK API calls for unusually active walls.
+  const WALL_MAX_POSTS = 2_500;
   let wallCount = 0;
   const wallPosts: VkWallPost[] = [];
   let offset = 0;
@@ -556,4 +559,42 @@ export async function getCommunityAnalytics(
     videos: summarizeVideos(videos, period.unixFrom, period.unixTo),
     warnings
   };
+}
+
+type CommunityAnalyticsResult = Awaited<ReturnType<typeof loadCommunityAnalytics>>;
+
+const COMMUNITY_ANALYTICS_CACHE_TTL_MS = 15 * 60 * 1_000;
+const communityAnalyticsCache = new TtlCache<CommunityAnalyticsResult>(COMMUNITY_ANALYTICS_CACHE_TTL_MS);
+
+function getCommunityAnalyticsCacheKey(
+  userId: string,
+  groupId: string,
+  periodValue: unknown,
+  dateFromValue: unknown,
+  dateToValue: unknown
+) {
+  return [userId, groupId, String(periodValue ?? ''), String(dateFromValue ?? ''), String(dateToValue ?? '')].join(':');
+}
+
+export async function getCommunityAnalytics(
+  userId: string,
+  groupId: string,
+  periodValue: unknown,
+  dateFromValue?: unknown,
+  dateToValue?: unknown,
+  forceRefresh = false
+) {
+  const cacheKey = getCommunityAnalyticsCacheKey(userId, groupId, periodValue, dateFromValue, dateToValue);
+
+  if (!forceRefresh) {
+    const cached = communityAnalyticsCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  const analytics = await loadCommunityAnalytics(userId, groupId, periodValue, dateFromValue, dateToValue);
+  communityAnalyticsCache.set(cacheKey, analytics);
+
+  return analytics;
 }

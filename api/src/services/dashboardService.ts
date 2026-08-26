@@ -1,5 +1,5 @@
 import { getVkAccessToken } from '../repositories/accountRepository.js';
-import { VkApiError, vkApiRequest } from './vkClient.js';
+import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.js';
 
 type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'currentMonth';
 
@@ -250,7 +250,7 @@ export async function getDashboardSummary(userId: string, periodValue: unknown) 
             timestamp_to: period.unixTo,
             stats_groups: 'visitors,reach,activity'
           }).catch((error) => {
-            if (error instanceof VkApiError && error.vkCode === 7) {
+            if (isVkPermissionDeniedError(error)) {
               statsUnavailable = true;
               return [] as VkStatsDay[];
             }

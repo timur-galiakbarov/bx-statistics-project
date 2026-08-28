@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { Types } from 'mongoose';
 import { env } from '../config/env.js';
 import { requireUser } from '../middleware/auth.js';
@@ -16,6 +16,7 @@ const plans = [
 ];
 
 type YooMoneyCallback = {
+  [key: string]: unknown;
   notification_type?: string;
   operation_id?: string;
   amount?: string;
@@ -25,7 +26,7 @@ type YooMoneyCallback = {
   sender?: string;
   codepro?: string;
   label?: string;
-  sha1_hash?: string;
+  sign?: string;
 };
 
 type PaymentActionResult = {
@@ -58,18 +59,16 @@ function getPaymentIdFromLabel(label?: string) {
   return label.slice(prefix.length);
 }
 
-function buildYooMoneyHashPayload(payload: YooMoneyCallback) {
-  return [
-    payload.notification_type ?? '',
-    payload.operation_id ?? '',
-    payload.amount ?? '',
-    payload.currency ?? '',
-    payload.datetime ?? '',
-    payload.sender ?? '',
-    payload.codepro ?? '',
-    env.yoomoneyNotificationSecret,
-    payload.label ?? ''
-  ].join('&');
+function encodeRfc3986(value: string) {
+  return encodeURIComponent(value).replace(/[!'()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
+}
+
+function buildYooMoneySignaturePayload(payload: YooMoneyCallback) {
+  return Object.entries(payload)
+    .filter(([key, value]) => key !== 'sign' && typeof value === 'string')
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([key, value]) => `${key}=${encodeRfc3986(value as string)}`)
+    .join('&');
 }
 
 function safeEqual(left: string, right: string) {
@@ -88,12 +87,14 @@ function verifyYooMoneyCallback(payload: YooMoneyCallback) {
     return false;
   }
 
-  if (!payload.sha1_hash || !payload.label) {
+  if (typeof payload.sign !== 'string' || !payload.label) {
     return false;
   }
 
-  const hash = createHash('sha1').update(buildYooMoneyHashPayload(payload)).digest('hex');
-  return safeEqual(hash, payload.sha1_hash);
+  const signature = createHmac('sha256', env.yoomoneyNotificationSecret)
+    .update(buildYooMoneySignaturePayload(payload))
+    .digest('hex');
+  return safeEqual(signature, payload.sign);
 }
 
 function extendActiveTo(currentActiveTo: Date, months: number) {
@@ -595,21 +596,14 @@ paymentsRouter.post('/create', requireUser, async (req, res, next) => {
       data: {
         paymentId: payment.id,
         provider: 'yoomoney',
-        action: 'https://yoomoney.ru/quickpay/confirm.xml',
+        action: 'https://yoomoney.ru/quickpay/confirm',
         method: 'POST',
         fields: {
           receiver: env.yoomoneyReceiver,
-          formcomment: env.yoomoneyFormComment,
-          'short-dest': `оплата периода ${plan.title}`,
           label: `socstat-payment:${payment.id}`,
-          'quickpay-form': 'shop',
-          targets: `Для пользователя ${req.user!.firstName} ${req.user!.lastName}`,
+          'quickpay-form': 'button',
           successURL: env.yoomoneySuccessUrl,
           sum: String(plan.priceRub),
-          'need-fio': 'false',
-          'need-email': 'false',
-          'need-phone': 'false',
-          'need-address': 'false',
           paymentType
         }
       }

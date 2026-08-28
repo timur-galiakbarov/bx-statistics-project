@@ -11,7 +11,7 @@ export function hasActiveAccess(user: Express.Request['user']) {
     return false;
   }
 
-  if (user.isAdmin) {
+  if (user.isAdmin && !user.enforceAccessRestrictions) {
     return true;
   }
 

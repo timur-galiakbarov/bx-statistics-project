@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiGet, apiPost } from '../api/client';
 import type { PaymentHistoryItem, PaymentIntent, PaymentPlan, SavedGroup, User } from '../api/types';
+import { formatDate } from '../utils/date';
 
 type Props = {
   user: User | null;
@@ -67,18 +68,6 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
         planId: selectedPlan.id,
         paymentType
       });
-      setPayments((items) => [
-        {
-          id: intent.paymentId,
-          provider: intent.provider,
-          amount: selectedPlan.priceRub,
-          period: selectedPlan.title,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        ...items
-      ]);
       submitPaymentForm(intent);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось перейти к оплате.');
@@ -146,7 +135,7 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
 
         <div className="billing-current">
           <span>Текущий доступ</span>
-          <strong>до {user?.activeTo ?? '-'}</strong>
+          <strong>до {formatDate(user?.activeTo)}</strong>
         </div>
 
         <div className="plan-grid">
@@ -206,7 +195,7 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
             <strong>{user?.userFullName ?? 'Гость'}</strong>
             <span>id: {user?.id ?? '-'}</span>
             <span>vk id: {user?.vkId ?? '-'}</span>
-            <span>Безлимитная аналитика до {user?.activeTo ?? '-'}</span>
+            <span>Безлимитная аналитика до {formatDate(user?.activeTo)}</span>
             <span>{groups.length} сохраненных групп</span>
           </div>
         </div>
@@ -220,14 +209,14 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
         <div className="panel-header compact">
           <div>
             <h2>История оплат</h2>
-            <p>Последние платежи и их текущие статусы.</p>
+            <p>Подтверждённые платежи за подписку.</p>
           </div>
           <button className="icon-button" type="button" aria-label="Обновить историю оплат" onClick={refreshPaymentStatus} disabled={isRefreshingPayment}>
             <RefreshCw size={17} className={isRefreshingPayment ? 'spin' : undefined} />
           </button>
         </div>
 
-        {payments.length === 0 && <div className="empty-state">Платежей пока нет.</div>}
+        {payments.length === 0 && <div className="empty-state">Подтверждённых платежей пока нет.</div>}
 
         {payments.length > 0 && (
           <div className="table analytics-posts">

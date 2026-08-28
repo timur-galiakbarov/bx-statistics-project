@@ -664,6 +664,51 @@ a {
   margin: 0;
 }
 
+.access-expired-modal-backdrop {
+  align-items: center;
+  background: rgba(20, 31, 43, 0.52);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 1000;
+}
+
+.access-expired-modal {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 18px 56px rgba(0, 0, 0, 0.28);
+  max-width: 480px;
+  padding: 28px;
+  position: relative;
+  width: 100%;
+}
+
+.access-expired-modal > .icon-button {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+}
+
+.access-expired-modal h2 {
+  font-size: 22px;
+  margin: 0 40px 10px 0;
+}
+
+.access-expired-modal p {
+  color: #687684;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.access-expired-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
 .group-line span,
 .account-card span {
   color: #777;
@@ -1969,7 +2014,7 @@ a {
 }
 
 .admin-recent-users-row {
-  grid-template-columns: minmax(160px, 1fr) minmax(230px, 1.5fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(110px, 0.8fr);
+  grid-template-columns: minmax(160px, 1fr) minmax(230px, 1.5fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(110px, 0.8fr) minmax(130px, 0.9fr);
 }
 
 .recent-users-table {
@@ -2035,6 +2080,25 @@ a {
   margin-top: 8px;
 }
 
+.admin-access-restrictions-switch {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  gap: 8px;
+}
+
+.admin-access-restrictions-switch input {
+  accent-color: #2e7d32;
+  height: 18px;
+  width: 18px;
+}
+
+.admin-access-restrictions-switch:has(input:disabled) {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .admin-access-actions input {
   border: 0;
   border-bottom: 1px solid #d2d2d2;
@@ -2045,6 +2109,48 @@ a {
   min-height: 30px;
   padding: 4px 6px;
   width: 126px;
+}
+
+.admin-access-modal-backdrop {
+  align-items: center;
+  background: rgba(20, 31, 43, 0.52);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 1000;
+}
+
+.admin-access-modal {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 18px 56px rgba(0, 0, 0, 0.28);
+  max-width: 480px;
+  padding: 28px;
+  position: relative;
+  width: 100%;
+}
+
+.admin-access-modal > .icon-button {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+}
+
+.admin-access-modal h2 {
+  font-size: 22px;
+  margin: 0 40px 10px 0;
+}
+
+.admin-access-modal p {
+  color: #687684;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.admin-access-modal .admin-access-actions {
+  margin-top: 22px;
 }
 
 .mini-button {

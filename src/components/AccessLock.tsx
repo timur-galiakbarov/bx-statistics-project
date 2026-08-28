@@ -1,6 +1,8 @@
 import { CreditCard, LockKeyhole } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { formatDate } from '../utils/date';
+
 type Props = {
   activeTo?: string;
 };
@@ -26,7 +28,7 @@ export function AccessLock({ activeTo }: Props) {
           <h2>Доступ к аналитике истёк</h2>
           <p>
             Анализ сообществ, сравнение, публикации, каналы и сводная статистика доступны после продления.
-            Текущий доступ до {activeTo ?? 'не указан'}.
+            Текущий доступ до {formatDate(activeTo, 'не указан')}.
           </p>
         </div>
         <Link className="primary-button" to="/account">

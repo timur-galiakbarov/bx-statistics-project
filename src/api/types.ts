@@ -7,6 +7,7 @@ export type User = {
   photo_200?: string;
   activeTo: string;
   isAdmin: boolean;
+  enforceAccessRestrictions: boolean;
 };
 
 export type SavedGroup = {

@@ -16,6 +16,7 @@ const userSchema = new Schema(
     photo: { type: String },
     activeTo: { type: Date, required: true },
     isAdmin: { type: Boolean, default: false },
+    enforceAccessRestrictions: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date, index: true },
     lastActivityAt: { type: Date }

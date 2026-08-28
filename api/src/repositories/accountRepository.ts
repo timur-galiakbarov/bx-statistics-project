@@ -19,6 +19,7 @@ type UserDocument = {
   photo?: string;
   activeTo: Date;
   isAdmin: boolean;
+  enforceAccessRestrictions?: boolean;
 };
 
 type GroupDocument = {
@@ -38,6 +39,7 @@ export type AccountUser = {
   photo?: string;
   activeTo: string;
   isAdmin: boolean;
+  enforceAccessRestrictions: boolean;
 };
 
 export type RecentAdminUser = {
@@ -58,7 +60,8 @@ export function mapUser(user: UserDocument): AccountUser {
     lastName: user.lastName,
     photo: user.photo,
     activeTo: user.activeTo.toISOString().slice(0, 10),
-    isAdmin: user.isAdmin
+    isAdmin: user.isAdmin,
+    enforceAccessRestrictions: Boolean(user.enforceAccessRestrictions)
   };
 }
 

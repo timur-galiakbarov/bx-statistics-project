@@ -22,6 +22,7 @@ import { lazy, FormEvent, Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiGet } from '../api/client';
 import type { AnalyticsPeriod, CommunityAnalytics, SavedGroup, VkGroup, VkListResponse } from '../api/types';
+import { AccessExpiredModal } from '../components/AccessExpiredModal';
 import { PostCard } from '../components/PostCard';
 
 type ChartMetric = 'views' | 'activity' | 'engagement';
@@ -158,7 +159,15 @@ function KpiCard({
   );
 }
 
-export function AnalyticsPage({ groups }: { groups: SavedGroup[] }) {
+export function AnalyticsPage({
+  groups,
+  hasPaidAccess,
+  activeTo
+}: {
+  groups: SavedGroup[];
+  hasPaidAccess: boolean;
+  activeTo?: string;
+}) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const groupIdParam = searchParams.get('groupId');
@@ -181,6 +190,7 @@ export function AnalyticsPage({ groups }: { groups: SavedGroup[] }) {
   const [message, setMessage] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+  const [isAccessExpiredModalOpen, setIsAccessExpiredModalOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -215,6 +225,11 @@ export function AnalyticsPage({ groups }: { groups: SavedGroup[] }) {
 
   const loadAnalytics = async (group: VkGroup = selectedGroup!, nextPeriod: AnalyticsPeriod = period, forceRefresh = false) => {
     if (!group) return setMessage('Выберите сообщество для анализа.');
+    if (!hasPaidAccess) {
+      setIsAccessExpiredModalOpen(true);
+      return;
+    }
+
     if (nextPeriod === 'custom') {
       const today = new Date().toISOString().slice(0, 10);
       const duration = customDateFrom && customDateTo ? Math.floor((new Date(`${customDateTo}T00:00:00`).getTime() - new Date(`${customDateFrom}T00:00:00`).getTime()) / 86_400_000) + 1 : 0;
@@ -366,7 +381,8 @@ export function AnalyticsPage({ groups }: { groups: SavedGroup[] }) {
     ? `${previousPeriodLabel}${analytics.previous.wall.available ? '' : ' · неполные данные'}`
     : undefined;
 
-  return <section className="page-grid analytics-page">
+  return <>
+    <section className="page-grid analytics-page">
     <div className="panel span-2 analytics-workbench">
       <div className="panel-header analytics-controls-header"><div><h2>Анализ сообществ</h2><p>Оцените динамику, контент и следующие действия за один рабочий проход.</p></div><div className="period-tabs">{periods.filter((item) => quickPeriodKeys.includes(item.key)).map((item) => <button className={period === item.key ? 'active' : undefined} key={item.key} type="button" onClick={() => changePeriod(item.key)} disabled={isLoadingAnalytics}>{item.label}</button>)}<select aria-label="Другой период" value={quickPeriodKeys.includes(period) ? '' : period} onChange={(event) => changePeriod(event.target.value as AnalyticsPeriod)} disabled={isLoadingAnalytics}><option value="" disabled>Другой период</option>{periods.filter((item) => !quickPeriodKeys.includes(item.key)).map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}</select></div></div>
       {period === 'custom' && <div className="custom-period-form"><label>С <input type="date" value={customDateFrom} onChange={(event) => setCustomDateFrom(event.target.value)} /></label><label>По <input type="date" value={customDateTo} onChange={(event) => setCustomDateTo(event.target.value)} /></label><button type="button" onClick={() => selectedGroup && loadAnalytics(selectedGroup, 'custom')} disabled={!selectedGroup || isLoadingAnalytics}>Применить период</button></div>}
@@ -386,5 +402,7 @@ export function AnalyticsPage({ groups }: { groups: SavedGroup[] }) {
         {detailPosts.length ? <div className="table analytics-posts"><div className="table-row table-head analytics-post-row"><span>Публикация</span><span>Тип</span><span>Лайки</span><span>Репосты</span><span>Комментарии</span><span>Просмотры</span><span>ER</span><span></span></div>{detailPosts.map((post) => <div className="table-row analytics-post-row" key={post.id}><span data-label="Публикация"><strong>{post.text || 'Без текста'}</strong><small>{new Date(post.date).toLocaleString('ru-RU')}</small></span><span data-label="Тип">{post.contentType}{post.isAd ? ' · реклама' : ''}</span><span data-label="Лайки">{formatNumber(post.likes)}</span><span data-label="Репосты">{formatNumber(post.reposts)}</span><span data-label="Комментарии">{formatNumber(post.comments)}</span><span data-label="Просмотры">{formatNumber(post.views)}</span><span data-label="ER">{formatPercent(post.er)}</span><a className="icon-button" href={post.url} rel="noreferrer" target="_blank" aria-label="Открыть пост VK"><ExternalLink size={17} /></a></div>)}</div> : <div className="empty-state">По активным фильтрам публикаций не найдено. Сбросьте фильтры или измените запрос.</div>}
       </div>
     </>}
-  </section>;
+    </section>
+    <AccessExpiredModal activeTo={activeTo} isOpen={isAccessExpiredModalOpen} onClose={() => setIsAccessExpiredModalOpen(false)} />
+  </>;
 }

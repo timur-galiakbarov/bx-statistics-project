@@ -10,6 +10,9 @@ import {
 } from '../repositories/accountRepository.js';
 import { requireUser } from '../middleware/auth.js';
 import { env } from '../config/env.js';
+import { subscribeToAccountEvents } from '../services/accountEvents.js';
+import { publishAccountUpdated } from '../services/accountEvents.js';
+import { UserModel } from '../models/User.js';
 
 export const accountRouter = Router();
 
@@ -30,10 +33,45 @@ accountRouter.get('/me', requireUser, (req, res) => {
         userFullName: `${user.firstName} ${user.lastName}`,
         photo_200: user.photo,
         activeTo: user.activeTo,
-        isAdmin: user.isAdmin
+        isAdmin: user.isAdmin,
+        enforceAccessRestrictions: user.enforceAccessRestrictions
       }
     }
   });
+});
+
+accountRouter.get('/events', requireUser, (req, res) => {
+  subscribeToAccountEvents(req.user!.id, res);
+});
+
+accountRouter.post('/admin/access-restrictions', requireUser, async (req, res, next) => {
+  if (!req.user!.isAdmin) {
+    res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    return;
+  }
+
+  if (typeof req.body?.enabled !== 'boolean') {
+    res.status(400).json({ success: false, error: 'INVALID_ACCESS_RESTRICTIONS_VALUE' });
+    return;
+  }
+
+  try {
+    const user = await UserModel.findByIdAndUpdate(
+      req.user!.id,
+      { enforceAccessRestrictions: req.body.enabled },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(404).json({ success: false, error: 'USER_NOT_FOUND' });
+      return;
+    }
+
+    publishAccountUpdated(user.id);
+    res.json({ success: true, data: { enforceAccessRestrictions: user.enforceAccessRestrictions } });
+  } catch (error) {
+    next(error);
+  }
 });
 
 accountRouter.post('/logout', async (req, res, next) => {

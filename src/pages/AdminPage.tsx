@@ -7,6 +7,7 @@ import type {
   AdminPaymentsMonthlySummary,
   AdminUserAccessResult,
   RecentAdminUser,
+  User,
   VkAppInfo,
   VkManualStatsResult,
   VkOAuthDebug,
@@ -14,10 +15,15 @@ import type {
   VkTokenStatus
 } from '../api/types';
 
+type Props = {
+  user: User;
+  onAccountChanged: () => Promise<void>;
+};
+
 const paymentStatusOptions = [
   { key: 'all', label: 'Все' },
+  { key: 'paid', label: 'Только успешные' },
   { key: 'pending', label: 'Ожидает' },
-  { key: 'paid', label: 'Оплачены' },
   { key: 'failed', label: 'Ошибки' }
 ] as const;
 
@@ -47,14 +53,14 @@ function formatAdminDateTime(value: string) {
   return dateTimeFormatter.format(new Date(value));
 }
 
-export function AdminPage() {
+export function AdminPage({ user, onAccountChanged }: Props) {
   const [permissions, setPermissions] = useState<VkPermissions | null>(null);
   const [tokenStatus, setTokenStatus] = useState<VkTokenStatus | null>(null);
   const [appInfo, setAppInfo] = useState<VkAppInfo | null>(null);
   const [oauthDebug, setOauthDebug] = useState<VkOAuthDebug | null>(null);
   const [manualToken, setManualToken] = useState('');
   const [manualGroupId, setManualGroupId] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatusFilter>('all');
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatusFilter>('paid');
   const [paymentQuery, setPaymentQuery] = useState('');
   const [payments, setPayments] = useState<AdminPaymentHistoryItem[]>([]);
   const [paymentsMonthlySummary, setPaymentsMonthlySummary] = useState<AdminPaymentsMonthlySummary | null>(null);
@@ -72,6 +78,7 @@ export function AdminPage() {
   const [paymentActionId, setPaymentActionId] = useState<string | null>(null);
   const [accessActionUserId, setAccessActionUserId] = useState<string | null>(null);
   const [accessDates, setAccessDates] = useState<Record<string, string>>({});
+  const [accessModalUser, setAccessModalUser] = useState<RecentAdminUser | null>(null);
   const [isPermissionsLoading, setIsPermissionsLoading] = useState(false);
   const [isTokenStatusLoading, setIsTokenStatusLoading] = useState(false);
   const [isAppInfoLoading, setIsAppInfoLoading] = useState(false);
@@ -81,6 +88,8 @@ export function AdminPage() {
   const [isRecentUsersLoading, setIsRecentUsersLoading] = useState(false);
   const [isManualPermissionsLoading, setIsManualPermissionsLoading] = useState(false);
   const [isManualStatsLoading, setIsManualStatsLoading] = useState(false);
+  const [isAccessRestrictionsUpdating, setIsAccessRestrictionsUpdating] = useState(false);
+  const [accessRestrictionsError, setAccessRestrictionsError] = useState<string | null>(null);
 
   const app = appInfo?.items?.[0];
   const displayedPaymentsAmount = payments.reduce((total, payment) => total + payment.amount, 0);
@@ -125,6 +134,10 @@ export function AdminPage() {
       )
     );
     setAccessDates((items) => ({ ...items, [user.id]: user.activeTo }));
+    setRecentUsers((items) =>
+      items.map((item) => (item.id === user.id ? { ...item, activeTo: user.activeTo } : item))
+    );
+    setAccessModalUser((item) => (item?.id === user.id ? { ...item, activeTo: user.activeTo } : item));
   };
 
   const loadPermissions = async () => {
@@ -318,10 +331,30 @@ export function AdminPage() {
     try {
       const data = await apiPost<AdminUserAccessResult>(`/api/payments/admin/users/${userId}/access`, payload);
       updateUserRows(data.user);
+      await loadRecentUsers();
     } catch (nextError) {
       setPaymentsError(nextError instanceof Error ? nextError.message : 'Не удалось изменить дату доступа');
     } finally {
       setAccessActionUserId(null);
+    }
+  };
+
+  const openAccessModal = (user: RecentAdminUser) => {
+    setAccessDates((items) => ({ ...items, [user.id]: items[user.id] ?? user.activeTo }));
+    setAccessModalUser(user);
+  };
+
+  const updateOwnAccessRestrictions = async (enabled: boolean) => {
+    setIsAccessRestrictionsUpdating(true);
+    setAccessRestrictionsError(null);
+
+    try {
+      await apiPost<{ enforceAccessRestrictions: boolean }>('/api/account/admin/access-restrictions', { enabled });
+      await onAccountChanged();
+    } catch (error) {
+      setAccessRestrictionsError(error instanceof Error ? error.message : 'Не удалось изменить режим ограничений');
+    } finally {
+      setIsAccessRestrictionsUpdating(false);
     }
   };
 
@@ -333,6 +366,25 @@ export function AdminPage() {
 
   return (
     <section className="page-grid">
+      <div className="panel span-2">
+        <div className="panel-header compact">
+          <div>
+            <h2>Тестирование ограничений тарифа</h2>
+            <p>Применить срок доступа к вашей админской учётной записи.</p>
+          </div>
+          <label className="admin-access-restrictions-switch">
+            <input
+              type="checkbox"
+              checked={user.enforceAccessRestrictions}
+              onChange={(event) => updateOwnAccessRestrictions(event.target.checked)}
+              disabled={isAccessRestrictionsUpdating}
+            />
+            <span>Ограничения включены</span>
+          </label>
+        </div>
+        {accessRestrictionsError && <div className="debug-error">{accessRestrictionsError}</div>}
+      </div>
+
       <div className="panel span-2">
         <div className="panel-header compact">
           <div>
@@ -391,6 +443,7 @@ export function AdminPage() {
               <span>Bitrix ID</span>
               <span>Доступ</span>
               <span>Доступ до</span>
+              <span>Действия</span>
             </div>
             {recentUsers.map((user) => (
               <div className="table-row admin-recent-users-row" key={user.id}>
@@ -404,6 +457,11 @@ export function AdminPage() {
                   {user.hasActiveAccess ? 'Активен' : 'Не активен'}
                 </span>
                 <span data-label="Доступ до">{formatAdminDate(user.activeTo)}</span>
+                <span data-label="Действия">
+                  <button className="mini-button" type="button" onClick={() => openAccessModal(user)}>
+                    Изменить доступ
+                  </button>
+                </span>
               </div>
             ))}
           </div>
@@ -479,45 +537,6 @@ export function AdminPage() {
                     <>
                       <small>id: {payment.user.id}</small>
                       <small>vk id: {payment.user.vkId} / до {formatAdminDate(payment.user.activeTo)}</small>
-                      <span className="admin-access-actions">
-                        <button
-                          className="mini-button"
-                          type="button"
-                          disabled={accessActionUserId === payment.user.id}
-                          onClick={() => updateUserAccess(payment.user!.id, { action: 'add_days', value: 7 })}
-                        >
-                          +7 дней
-                        </button>
-                        <button
-                          className="mini-button"
-                          type="button"
-                          disabled={accessActionUserId === payment.user.id}
-                          onClick={() => updateUserAccess(payment.user!.id, { action: 'add_months', value: 1 })}
-                        >
-                          +1 месяц
-                        </button>
-                        <input
-                          type="date"
-                          value={accessDates[payment.user.id] ?? payment.user.activeTo}
-                          disabled={accessActionUserId === payment.user.id}
-                          onChange={(event) =>
-                            setAccessDates((items) => ({ ...items, [payment.user!.id]: event.target.value }))
-                          }
-                        />
-                        <button
-                          className="mini-button"
-                          type="button"
-                          disabled={accessActionUserId === payment.user.id}
-                          onClick={() =>
-                            updateUserAccess(payment.user!.id, {
-                              action: 'set',
-                              value: accessDates[payment.user!.id] ?? payment.user!.activeTo
-                            })
-                          }
-                        >
-                          Задать
-                        </button>
-                      </span>
                     </>
                   ) : (
                     <small>{payment.id}</small>
@@ -558,6 +577,66 @@ export function AdminPage() {
           </div>
         )}
       </div>
+
+      {accessModalUser && (
+        <div className="admin-access-modal-backdrop" role="presentation" onMouseDown={() => setAccessModalUser(null)}>
+          <section
+            aria-labelledby="admin-access-modal-title"
+            aria-modal="true"
+            className="admin-access-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+            role="dialog"
+          >
+            <button aria-label="Закрыть" className="icon-button" type="button" onClick={() => setAccessModalUser(null)}>
+              <XCircle size={18} />
+            </button>
+            <h2 id="admin-access-modal-title">Изменить доступ</h2>
+            <p>
+              <strong>{accessModalUser.name}</strong>
+              {accessModalUser.vkId ? ` · VK ID ${accessModalUser.vkId}` : ''}
+              <br />
+              Текущая дата: {formatAdminDate(accessModalUser.activeTo)}
+            </p>
+            <div className="admin-access-actions">
+              <button
+                className="mini-button"
+                type="button"
+                disabled={accessActionUserId === accessModalUser.id}
+                onClick={() => updateUserAccess(accessModalUser.id, { action: 'add_days', value: 7 })}
+              >
+                +7 дней
+              </button>
+              <button
+                className="mini-button"
+                type="button"
+                disabled={accessActionUserId === accessModalUser.id}
+                onClick={() => updateUserAccess(accessModalUser.id, { action: 'add_months', value: 1 })}
+              >
+                +1 месяц
+              </button>
+              <input
+                type="date"
+                value={accessDates[accessModalUser.id] ?? accessModalUser.activeTo}
+                disabled={accessActionUserId === accessModalUser.id}
+                onChange={(event) => setAccessDates((items) => ({ ...items, [accessModalUser.id]: event.target.value }))}
+              />
+              <button
+                className="mini-button"
+                type="button"
+                disabled={accessActionUserId === accessModalUser.id}
+                onClick={() =>
+                  updateUserAccess(accessModalUser.id, {
+                    action: 'set',
+                    value: accessDates[accessModalUser.id] ?? accessModalUser.activeTo
+                  })
+                }
+              >
+                Задать дату
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <div className="panel span-2">
         <div className="panel-header compact">

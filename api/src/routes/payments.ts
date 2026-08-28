@@ -5,6 +5,7 @@ import { env } from '../config/env.js';
 import { requireUser } from '../middleware/auth.js';
 import { PaymentModel } from '../models/Payment.js';
 import { UserModel } from '../models/User.js';
+import { publishAccountUpdated } from '../services/accountEvents.js';
 
 export const paymentsRouter = Router();
 
@@ -275,6 +276,8 @@ async function updateUserAccess(
 
   await user.save();
 
+  publishAccountUpdated(user.id);
+
   return {
     user: mapAdminUser({
       _id: user._id,
@@ -325,6 +328,8 @@ async function confirmPayment(paymentId: string, options: { operationId?: string
 
   await Promise.all([user.save(), payment.save()]);
 
+  publishAccountUpdated(user.id);
+
   return {
     status: 'paid',
     activeTo: user.activeTo.toISOString().slice(0, 10)
@@ -366,7 +371,7 @@ paymentsRouter.get('/plans', (_req, res) => {
 
 paymentsRouter.get('/history', requireUser, async (req, res, next) => {
   try {
-    const payments = await PaymentModel.find({ userId: req.user!.id }).sort({ createdAt: -1 }).limit(20).lean();
+    const payments = await PaymentModel.find({ userId: req.user!.id, status: 'paid' }).sort({ createdAt: -1 }).limit(20).lean();
 
     res.json({
       success: true,

@@ -66,6 +66,12 @@ export function App() {
   }, [loadAccount]);
 
   useEffect(() => {
+    if (import.meta.env.PROD) {
+      window.ym?.(38791285, 'hit', `${location.pathname}${location.search}`);
+    }
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
     if (!user) {
       return;
     }

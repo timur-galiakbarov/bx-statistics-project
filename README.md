@@ -134,7 +134,7 @@ cp api/.env.example api/.env
 ```env
 VK_REDIRECT_URL=http://localhost:5173/api/auth/vk/callback
 VK_PUBLIC_REDIRECT_URL=http://localhost:5173/api/auth/vk/callback
-VK_IMPLICIT_REDIRECT_URL=http://localhost:5173/auth/vk/implicit-callback
+VK_IMPLICIT_REDIRECT_URL=http://localhost:5173/app/auth/vk/implicit-callback
 ```
 
 Так OAuth state cookie ставится и читается на одном origin.

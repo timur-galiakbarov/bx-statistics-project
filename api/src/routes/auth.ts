@@ -69,7 +69,9 @@ const sessionCookieOptions = {
 export const authRouter = Router();
 
 function redirectToLoginWithError(res: Parameters<Parameters<typeof authRouter.get>[1]>[1], error: string, details?: string) {
-  const redirectUrl = new URL('/login', env.authSuccessRedirectUrl);
+  const redirectUrl = new URL(env.authSuccessRedirectUrl);
+  redirectUrl.pathname = '/app/login';
+  redirectUrl.search = '';
   redirectUrl.searchParams.set('authError', error);
 
   if (details) {

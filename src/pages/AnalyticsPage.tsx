@@ -1,5 +1,6 @@
 import {
   Activity,
+  ArrowDownUp,
   BarChart3,
   CalendarDays,
   ChevronRight,
@@ -13,23 +14,26 @@ import {
   RefreshCw,
   Repeat2,
   Search,
-  Star,
   TrendingDown,
   TrendingUp,
   Users
 } from 'lucide-react';
+import { Button } from '@alfalab/core-components-button';
+import { CalendarInput } from '@alfalab/core-components-calendar-input';
+import { Select } from '@alfalab/core-components-select';
+import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
 import { lazy, FormEvent, Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiGet } from '../api/client';
 import type { AnalyticsPeriod, CommunityAnalytics, SavedGroup, VkGroup, VkListResponse } from '../api/types';
 import { AccessExpiredModal } from '../components/AccessExpiredModal';
 import { PostCard } from '../components/PostCard';
+import { formatDate } from '../utils/date';
 
-type ChartMetric = 'views' | 'activity' | 'engagement';
-type PostSegment = 'top' | 'weak' | 'aboveAverage' | 'belowAverage';
-type ContentCriterion = 'er' | 'actions' | 'views' | 'reposts' | 'comments';
-type PostFilter = 'all' | 'organic' | 'ad';
-type DetailSort = 'date' | 'er' | 'views' | 'actions' | 'reposts' | 'comments';
+type ChartMetric = 'views' | 'activity' | 'comments' | 'engagement';
+type AnalyticsSection = 'summary' | 'audience' | 'posts';
+type AnalyticsPostSort = 'likes' | 'reposts' | 'comments' | 'actions' | 'views' | 'er' | 'date';
+type AnalyticsPostListFilter = 'all' | 'media' | 'photo' | 'video' | 'gif' | 'text';
 type AnalyticsPost = CommunityAnalytics['wall']['topPosts'][number];
 
 const AnalyticsChart = lazy(() => import('../components/AnalyticsChart'));
@@ -45,26 +49,40 @@ const periods: Array<{ key: AnalyticsPeriod; label: string }> = [
   { key: 'custom', label: 'Произвольный период' }
 ];
 const quickPeriodKeys: AnalyticsPeriod[] = ['week', 'month', 'currentMonth'];
+const otherPeriodOptions = periods
+  .filter((item) => !quickPeriodKeys.includes(item.key))
+  .map((item) => ({ key: item.key, content: item.label }));
 
 const chartMetrics: Array<{ key: ChartMetric; label: string }> = [
   { key: 'views', label: 'Просмотры поста' },
   { key: 'activity', label: 'Реакции' },
+  { key: 'comments', label: 'Комментарии на пост' },
   { key: 'engagement', label: 'ER' }
 ];
 
-const postSegments: Array<{ key: PostSegment; label: string }> = [
-  { key: 'top', label: 'Топ' },
-  { key: 'weak', label: 'Слабые' },
-  { key: 'aboveAverage', label: 'Выше среднего' },
-  { key: 'belowAverage', label: 'Ниже среднего' }
-];
-
-const contentCriteria: Array<{ key: ContentCriterion; label: string }> = [
-  { key: 'er', label: 'ER' },
-  { key: 'actions', label: 'Реакции' },
-  { key: 'views', label: 'Просмотры' },
+const analyticsPostSortOptions: Array<{ key: AnalyticsPostSort; label: string }> = [
+  { key: 'likes', label: 'Лайки' },
   { key: 'reposts', label: 'Репосты' },
-  { key: 'comments', label: 'Комментарии' }
+  { key: 'comments', label: 'Комментарии' },
+  { key: 'actions', label: 'Все реакции' },
+  { key: 'views', label: 'Просмотры' },
+  { key: 'er', label: 'ER' },
+  { key: 'date', label: 'Дата' }
+];
+const analyticsPostFilterOptions: Array<{ key: AnalyticsPostListFilter; label: string }> = [
+  { key: 'all', label: 'Все' },
+  { key: 'media', label: 'С вложениями' },
+  { key: 'photo', label: 'Фото' },
+  { key: 'video', label: 'Видео' },
+  { key: 'gif', label: 'GIF' },
+  { key: 'text', label: 'Без вложений' }
+];
+const ANALYTICS_POSTS_PAGE_SIZE = 18;
+const analyticsLoadingSteps = [
+  { label: 'Получаем данные сообщества' },
+  { label: 'Загружаем статистику VK' },
+  { label: 'Анализируем публикации' },
+  { label: 'Собираем отчёт' }
 ];
 
 function formatNumber(value: number, maximumFractionDigits = 0) {
@@ -75,6 +93,19 @@ function formatPercent(value: number) {
   return `${formatNumber(value, 1)}%`;
 }
 
+function formatDatePickerValue(value: string) {
+  if (!value) return '';
+  const [year, month, day] = value.split('-');
+  return year && month && day ? `${day}.${month}.${year}` : '';
+}
+
+function formatIsoDate(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function normalizeQuery(value: string) {
   return value.trim().replace(/^https?:\/\/vk\.com\//, '').replace(/^vk\.com\//, '');
 }
@@ -83,16 +114,17 @@ function getPostActions(post: AnalyticsPost) {
   return post.likes + post.reposts + post.comments;
 }
 
-function getCriterionValue(post: AnalyticsPost, criterion: ContentCriterion) {
-  if (criterion === 'er') return post.er;
-  if (criterion === 'views') return post.views;
-  if (criterion === 'reposts') return post.reposts;
-  if (criterion === 'comments') return post.comments;
-  return getPostActions(post);
+function getAnalyticsPostSortValue(post: AnalyticsPost, sort: AnalyticsPostSort) {
+  if (sort === 'date') return new Date(post.date).getTime();
+  if (sort === 'actions') return getPostActions(post);
+  return post[sort];
 }
 
-function getCriterionLabel(criterion: ContentCriterion) {
-  return contentCriteria.find((item) => item.key === criterion)?.label.toLowerCase() ?? 'показателю';
+function matchesAnalyticsPostFilter(post: AnalyticsPost, filter: AnalyticsPostListFilter) {
+  if (filter === 'all') return true;
+  if (filter === 'media') return post.media.length > 0;
+  if (filter === 'text') return post.media.length === 0;
+  return post.media.some((item) => item.type === filter);
 }
 
 function getChange(current: number, previous: number | null) {
@@ -116,7 +148,7 @@ function parseDayLabel(value: string) {
 }
 
 function periodLabel(dateFrom: string, dateTo: string) {
-  return `${new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(new Date(`${dateFrom}T00:00:00`))} — ${new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(new Date(`${dateTo}T00:00:00`))}`;
+  return `${formatDate(dateFrom)} — ${formatDate(dateTo)}`;
 }
 
 function KpiCard({
@@ -180,16 +212,14 @@ export function AnalyticsPage({
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
   const [analytics, setAnalytics] = useState<CommunityAnalytics | null>(null);
-  const [chartMetric, setChartMetric] = useState<ChartMetric>('views');
-  const [postSegment, setPostSegment] = useState<PostSegment>('top');
-  const [contentCriterion, setContentCriterion] = useState<ContentCriterion>('er');
-  const [postFilter, setPostFilter] = useState<PostFilter>('all');
-  const [detailPostFilter, setDetailPostFilter] = useState<PostFilter>('all');
-  const [detailSort, setDetailSort] = useState<DetailSort>('date');
-  const [detailQuery, setDetailQuery] = useState('');
+  const [analyticsSection, setAnalyticsSection] = useState<AnalyticsSection>('summary');
+  const [analyticsPostSort, setAnalyticsPostSort] = useState<AnalyticsPostSort>('likes');
+  const [analyticsPostListFilter, setAnalyticsPostListFilter] = useState<AnalyticsPostListFilter>('all');
+  const [visibleAnalyticsPostsCount, setVisibleAnalyticsPostsCount] = useState(ANALYTICS_POSTS_PAGE_SIZE);
   const [message, setMessage] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+  const [analyticsLoadingStep, setAnalyticsLoadingStep] = useState(0);
   const [isAccessExpiredModalOpen, setIsAccessExpiredModalOpen] = useState(false);
 
   useEffect(() => {
@@ -208,15 +238,6 @@ export function AnalyticsPage({
     }).filter((group): group is VkGroup => group !== null),
     [groups]
   );
-  const favoriteGroups = useMemo(() => {
-    const ids = new Set(groups.filter((group) => group.source === 'favorite').map((group) => Number(group.vkGroupId)));
-    return savedGroups.filter((group) => ids.has(group.id));
-  }, [groups, savedGroups]);
-  const otherSavedGroups = useMemo(() => {
-    const shown = new Set([...recentGroups, ...favoriteGroups].map((group) => group.id));
-    return savedGroups.filter((group) => !shown.has(group.id));
-  }, [favoriteGroups, recentGroups, savedGroups]);
-
   const rememberGroup = (group: VkGroup) => setRecentGroups((current) => {
     const next = [group, ...current.filter((item) => item.id !== group.id)].slice(0, MAX_RECENT_GROUPS);
     window.localStorage.setItem(RECENT_GROUPS_STORAGE_KEY, JSON.stringify(next));
@@ -243,6 +264,10 @@ export function AnalyticsPage({
       navigate(`/analytics?groupId=${group.id}`);
     }
     setIsLoadingAnalytics(true);
+    setAnalyticsLoadingStep(0);
+    const loadingStepTimer = window.setInterval(() => {
+      setAnalyticsLoadingStep((current) => Math.min(current + 1, analyticsLoadingSteps.length - 1));
+    }, 900);
     setMessage(null);
     const customQuery = nextPeriod === 'custom' ? `&dateFrom=${customDateFrom}&dateTo=${customDateTo}` : '';
     const refreshQuery = forceRefresh ? '&refresh=1' : '';
@@ -256,6 +281,7 @@ export function AnalyticsPage({
       setAnalytics(null);
       setMessage(error instanceof Error ? error.message : 'Не удалось получить анализ сообщества.');
     } finally {
+      window.clearInterval(loadingStepTimer);
       setIsLoadingAnalytics(false);
     }
   };
@@ -286,56 +312,29 @@ export function AnalyticsPage({
     if (nextPeriod !== 'custom' && selectedGroup) loadAnalytics(selectedGroup, nextPeriod);
   };
 
-  const filteredPosts = useMemo(() => (analytics?.wall.topPosts ?? []).filter((post) => postFilter === 'all' || (postFilter === 'ad' ? post.isAd : !post.isAd)), [analytics, postFilter]);
-  const criterionAverage = useMemo(() => filteredPosts.length ? filteredPosts.reduce((sum, post) => sum + getCriterionValue(post, contentCriterion), 0) / filteredPosts.length : 0, [contentCriterion, filteredPosts]);
-  const contentPosts = useMemo(() => {
-    if (criterionAverage <= 0) return [];
-    const sorted = [...filteredPosts].sort((left, right) => getCriterionValue(right, contentCriterion) - getCriterionValue(left, contentCriterion));
-    if (postSegment === 'weak') return sorted.reverse().slice(0, 6);
-    if (postSegment === 'aboveAverage') return sorted.filter((post) => getCriterionValue(post, contentCriterion) >= criterionAverage).slice(0, 6);
-    if (postSegment === 'belowAverage') return sorted.filter((post) => getCriterionValue(post, contentCriterion) < criterionAverage).slice(0, 6);
-    return sorted.slice(0, 6);
-  }, [contentCriterion, criterionAverage, filteredPosts, postSegment]);
+  const analyticsPosts = useMemo(() => [...(analytics?.wall.topPosts ?? [])]
+    .filter((post) => matchesAnalyticsPostFilter(post, analyticsPostListFilter))
+    .sort((left, right) => getAnalyticsPostSortValue(right, analyticsPostSort) - getAnalyticsPostSortValue(left, analyticsPostSort)), [analytics, analyticsPostListFilter, analyticsPostSort]);
+  const visibleAnalyticsPosts = analyticsPosts.slice(0, visibleAnalyticsPostsCount);
+  const hiddenAnalyticsPostsCount = Math.max(analyticsPosts.length - visibleAnalyticsPosts.length, 0);
 
-  const detailPosts = useMemo(() => {
-    const normalizedQuery = detailQuery.trim().toLocaleLowerCase('ru-RU');
-    const posts = (analytics?.wall.topPosts ?? []).filter((post) => {
-      const filterMatches = detailPostFilter === 'all' || (detailPostFilter === 'ad' ? post.isAd : !post.isAd);
-      return filterMatches && (!normalizedQuery || post.text.toLocaleLowerCase('ru-RU').includes(normalizedQuery));
-    });
-    return [...posts].sort((left, right) => {
-      if (detailSort === 'date') return new Date(right.date).getTime() - new Date(left.date).getTime();
-      if (detailSort === 'er') return right.er - left.er;
-      if (detailSort === 'views') return right.views - left.views;
-      if (detailSort === 'reposts') return right.reposts - left.reposts;
-      if (detailSort === 'comments') return right.comments - left.comments;
-      return getPostActions(right) - getPostActions(left);
-    });
-  }, [analytics, detailPostFilter, detailQuery, detailSort]);
-
-  const postExplanation = (post: AnalyticsPost) => {
-    const value = getCriterionValue(post, contentCriterion);
-    if (criterionAverage <= 0) return { badge: 'Недостаточно данных для сравнения', reason: 'Среднее значение выбранного критерия равно нулю.' };
-    const ratio = criterionAverage > 0 ? value / criterionAverage : 0;
-    const label = getCriterionLabel(contentCriterion);
-    if (postSegment === 'top' && post === contentPosts[0]) return { badge: `Лучший по ${label}`, reason: `Максимальный результат по критерию «${label}» среди выбранных публикаций.` };
-    if (ratio >= 1) return { badge: `${label[0].toUpperCase()}${label.slice(1)} в ${formatNumber(ratio, 1)} раза выше среднего`, reason: `Показатель ${formatNumber(value, contentCriterion === 'er' ? 3 : 0)} выше среднего по выборке.` };
-    return { badge: `${label[0].toUpperCase()}${label.slice(1)} на ${formatPercent((1 - ratio) * 100)} ниже среднего`, reason: `Показатель ${formatNumber(value, contentCriterion === 'er' ? 3 : 0)} ниже среднего по выборке.` };
-  };
+  useEffect(() => {
+    setVisibleAnalyticsPostsCount(ANALYTICS_POSTS_PAGE_SIZE);
+  }, [analytics, analyticsPostListFilter, analyticsPostSort]);
 
   const chartData = useMemo(() => {
     if (!analytics) return [];
     const previousByDayIndex = new Map(
       analytics.previous.wall.dayGroups.map((day) => [day.dayIndex, day])
     );
-    return analytics.wall.dayGroups.map((day, index) => ({
+    return analytics.wall.dayGroups.map((day) => ({
       date: day.date,
-      current: chartMetric === 'views' ? day.averageViews : chartMetric === 'activity' ? day.actions : day.er,
-      previous: previousByDayIndex.has(day.dayIndex)
-        ? (chartMetric === 'views' ? previousByDayIndex.get(day.dayIndex)?.averageViews : chartMetric === 'activity' ? previousByDayIndex.get(day.dayIndex)?.actions : previousByDayIndex.get(day.dayIndex)?.er)
-        : undefined
+      views: { current: day.averageViews, previous: previousByDayIndex.get(day.dayIndex)?.averageViews },
+      activity: { current: day.actions, previous: previousByDayIndex.get(day.dayIndex)?.actions },
+      comments: { current: day.posts ? day.comments / day.posts : null, previous: previousByDayIndex.get(day.dayIndex)?.posts ? previousByDayIndex.get(day.dayIndex)!.comments / previousByDayIndex.get(day.dayIndex)!.posts : null },
+      engagement: { current: day.er, previous: previousByDayIndex.get(day.dayIndex)?.er }
     }));
-  }, [analytics, chartMetric]);
+  }, [analytics]);
 
   const insights = useMemo(() => {
     if (!analytics) return [];
@@ -361,13 +360,13 @@ export function AnalyticsPage({
     const ads = analytics.wall.topPosts.filter((post) => post.isAd);
     if (ads.length) result.push({ tone: 'neutral', title: `Рекламных публикаций: ${formatNumber(ads.length)}`, text: `Факт: реклама составляет ${formatPercent((ads.length / Math.max(analytics.wall.periodPosts, 1)) * 100)} публикаций периода. Интерпретация: её метрики могут заметно отличаться от органического контента. Действие: используйте фильтр «Органические», чтобы оценить редакционный контент отдельно.` });
     const denseDay = [...analytics.wall.dayGroups].sort((left, right) => right.posts - left.posts)[0];
-    if (denseDay?.posts > 1 && denseDay.averageActionsPerPost !== null) result.push({ tone: 'neutral', title: `Самый плотный день — ${denseDay.date}`, text: `Факт: опубликовано ${formatNumber(denseDay.posts)} поста, ${formatNumber(denseDay.averageActionsPerPost)} реакций на пост. Интерпретация: несколько публикаций в один день могли конкурировать за внимание аудитории. Действие: сопоставьте этот день с обычной частотой и протестируйте разнесение публикаций.` });
+    if (denseDay?.posts > 1 && denseDay.averageActionsPerPost !== null) result.push({ tone: 'neutral', title: `Самый плотный день — ${formatDate(denseDay.date)}`, text: `Факт: опубликовано ${formatNumber(denseDay.posts)} поста, ${formatNumber(denseDay.averageActionsPerPost)} реакций на пост. Интерпретация: несколько публикаций в один день могли конкурировать за внимание аудитории. Действие: сопоставьте этот день с обычной частотой и протестируйте разнесение публикаций.` });
     return result.slice(0, 5);
   }, [analytics]);
 
   const copySummary = async () => {
     if (!analytics) return;
-    const summary = `${analytics.group.name}\nПериод: ${analytics.period.dateFrom} — ${analytics.period.dateTo}\nПубликаций: ${analytics.wall.periodPosts}; средний ER: ${formatPercent(analytics.wall.erAverage)}; средние просмотры поста: ${formatNumber(analytics.wall.averageViewsPerPost)}.\n${insights.map((item) => `${item.title}. ${item.text}`).join('\n')}`;
+    const summary = `${analytics.group.name}\nПериод: ${formatDate(analytics.period.dateFrom)} — ${formatDate(analytics.period.dateTo)}\nПубликаций: ${analytics.wall.periodPosts}; средний ER: ${formatPercent(analytics.wall.erAverage)}; средние просмотры поста: ${formatNumber(analytics.wall.averageViewsPerPost)}.\n${insights.map((item) => `${item.title}. ${item.text}`).join('\n')}`;
     try { await navigator.clipboard.writeText(summary); setMessage('Вывод скопирован: его можно вставить в отчёт или сообщение клиенту.'); } catch { setMessage('Не удалось скопировать вывод. Проверьте разрешение браузера на буфер обмена.'); }
   };
 
@@ -380,27 +379,38 @@ export function AnalyticsPage({
   const previousChartLabel = analytics && hasPreviousChartData
     ? `${previousPeriodLabel}${analytics.previous.wall.available ? '' : ' · неполные данные'}`
     : undefined;
+  const averageLikesPerPost = analytics && analytics.wall.periodPosts > 0
+    ? analytics.wall.likes / analytics.wall.periodPosts
+    : 0;
+  const previousAverageLikesPerPost = analytics?.previous.wall.available && analytics.previous.wall.periodPosts > 0
+    ? analytics.previous.wall.likes / analytics.previous.wall.periodPosts
+    : null;
 
   return <>
     <section className="page-grid analytics-page">
     <div className="panel span-2 analytics-workbench">
-      <div className="panel-header analytics-controls-header"><div><h2>Анализ сообществ</h2><p>Оцените динамику, контент и следующие действия за один рабочий проход.</p></div><div className="period-tabs">{periods.filter((item) => quickPeriodKeys.includes(item.key)).map((item) => <button className={period === item.key ? 'active' : undefined} key={item.key} type="button" onClick={() => changePeriod(item.key)} disabled={isLoadingAnalytics}>{item.label}</button>)}<select aria-label="Другой период" value={quickPeriodKeys.includes(period) ? '' : period} onChange={(event) => changePeriod(event.target.value as AnalyticsPeriod)} disabled={isLoadingAnalytics}><option value="" disabled>Другой период</option>{periods.filter((item) => !quickPeriodKeys.includes(item.key)).map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}</select></div></div>
-      {period === 'custom' && <div className="custom-period-form"><label>С <input type="date" value={customDateFrom} onChange={(event) => setCustomDateFrom(event.target.value)} /></label><label>По <input type="date" value={customDateTo} onChange={(event) => setCustomDateTo(event.target.value)} /></label><button type="button" onClick={() => selectedGroup && loadAnalytics(selectedGroup, 'custom')} disabled={!selectedGroup || isLoadingAnalytics}>Применить период</button></div>}
-      {selectedGroup && <div className="selected-community-control">{selectedGroup.photo_100 ?? selectedGroup.photo_50 ? <img src={selectedGroup.photo_100 ?? selectedGroup.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><small>Анализируем сообщество</small><strong>{selectedGroup.name}</strong></span><div className="analytics-actions"><button type="button" className="secondary-button" onClick={() => setIsCommunityPickerOpen((value) => !value)}>Сменить</button><button type="button" className="secondary-button" onClick={() => loadAnalytics(selectedGroup, period, true)} disabled={isLoadingAnalytics}><RefreshCw size={16} />Обновить данные</button><a className="secondary-button" href={`https://vk.com/${analytics?.group.screenName ?? selectedGroup.screen_name ?? `club${selectedGroup.id}`}`} target="_blank" rel="noreferrer"><ExternalLink size={16} />Открыть VK</a><button type="button" className="secondary-button" onClick={copySummary} disabled={!analytics}><Copy size={16} />Скопировать вывод</button></div></div>}
-      {isCommunityPickerOpen && <div className="community-picker">{!selectedGroup && <div className="community-picker-intro"><h3>Выберите сообщество</h3><p>Продолжите анализ знакомой группы или найдите новую.</p></div>}{recentGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Clock3 size={17} /><strong>Недавно анализировали</strong></div><div className="community-options">{recentGroups.map((group) => renderCommunityOption(group, 'недавний анализ'))}</div></div>}{favoriteGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Star size={17} /><strong>Избранные сообщества</strong></div><div className="community-options">{favoriteGroups.map((group) => renderCommunityOption(group, 'избранное'))}</div></div>}{otherSavedGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Сохранённые сообщества</strong></div><div className="community-options">{otherSavedGroups.map((group) => renderCommunityOption(group))}</div></div>}<form className="search-form" onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти другое сообщество: название, screen name или ссылка" /><button type="submit" disabled={isSearching}><Search size={18} />{isSearching ? 'Ищем' : 'Найти'}</button></form>{searchResults.length > 0 && <div className="search-results">{searchResults.map((group) => <button className="analytics-result" key={group.id} type="button" onClick={() => loadAnalytics(group)}><img src={group.photo_100 ?? group.photo_50} alt="" /><span><strong>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}{group.members_count ? ` · ${formatNumber(group.members_count)} участников` : ''}</small></span></button>)}</div>}</div>}
+      <div className="panel-header analytics-controls-header"><div className="analytics-heading"><h2>Аналитика</h2><p>Оцените динамику, контент и следующие действия за один рабочий проход.</p><div className="period-tabs">{periods.filter((item) => quickPeriodKeys.includes(item.key)).map((item) => <Button className={`period-tab-button ${period === item.key ? 'period-tab-button-active' : ''}`} client="desktop" disabled={isLoadingAnalytics} key={item.key} size={40} type="button" view="secondary" onClick={() => changePeriod(item.key)}>{item.label}</Button>)}<Select className="analytics-period-select" client="desktop" disabled={isLoadingAnalytics} options={otherPeriodOptions} optionsListWidth="content" placeholder="Другой период" selected={quickPeriodKeys.includes(period) ? null : period} size={40} onChange={({ selected }) => selected && changePeriod(selected.key as AnalyticsPeriod)} /></div></div></div>
+      {period === 'custom' && <div className="custom-period-form"><CalendarInput className="custom-period-picker" client="desktop" label="С" maxDate={Date.now()} size={40} value={formatDatePickerValue(customDateFrom)} onChange={(_, { date }) => !Number.isNaN(date.getTime()) && setCustomDateFrom(formatIsoDate(date))} /><CalendarInput className="custom-period-picker" client="desktop" label="По" maxDate={Date.now()} size={40} value={formatDatePickerValue(customDateTo)} onChange={(_, { date }) => !Number.isNaN(date.getTime()) && setCustomDateTo(formatIsoDate(date))} /><button type="button" onClick={() => selectedGroup && loadAnalytics(selectedGroup, 'custom')} disabled={!selectedGroup || isLoadingAnalytics}>Применить период</button></div>}
+      {selectedGroup && <div className="selected-community-control">{selectedGroup.photo_100 ?? selectedGroup.photo_50 ? <img src={selectedGroup.photo_100 ?? selectedGroup.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><small>Анализируем сообщество</small><strong>{selectedGroup.name}</strong></span><div className="analytics-actions"><Button className="analytics-action-button" client="desktop" size={40} type="button" view="secondary" onClick={() => setIsCommunityPickerOpen((value) => !value)}>Сменить</Button><Button className="analytics-action-button" client="desktop" disabled={isLoadingAnalytics} leftAddons={<RefreshCw size={16} />} size={40} type="button" view="secondary" onClick={() => loadAnalytics(selectedGroup, period, true)}>Обновить данные</Button><Button className="analytics-action-button" client="desktop" href={`https://vk.com/${analytics?.group.screenName ?? selectedGroup.screen_name ?? `club${selectedGroup.id}`}`} leftAddons={<ExternalLink size={16} />} rel="noreferrer" size={40} target="_blank" view="secondary">Открыть VK</Button><Button className="analytics-action-button" client="desktop" disabled={!analytics} leftAddons={<Copy size={16} />} size={40} type="button" view="secondary" onClick={copySummary}>Скопировать вывод</Button></div></div>}
+      {isCommunityPickerOpen && <div className="community-picker">{!selectedGroup && <div className="community-picker-intro"><h3>Выберите сообщество</h3><p>Продолжите анализ отслеживаемой группы или найдите новую.</p></div>}{recentGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Clock3 size={17} /><strong>Недавно анализировали</strong></div><div className="community-options">{recentGroups.map((group) => renderCommunityOption(group, 'недавний анализ'))}</div></div>}{savedGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Отслеживаемые сообщества</strong></div><div className="community-options">{savedGroups.map((group) => renderCommunityOption(group))}</div></div>}<form className="search-form" onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти другое сообщество: название, screen name или ссылка" /><button type="submit" disabled={isSearching}><Search size={18} />{isSearching ? 'Ищем' : 'Найти'}</button></form>{searchResults.length > 0 && <div className="search-results">{searchResults.map((group) => <button className="analytics-result" key={group.id} type="button" onClick={() => loadAnalytics(group)}><img src={group.photo_100 ?? group.photo_50} alt="" /><span><strong>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}{group.members_count ? ` · ${formatNumber(group.members_count)} участников` : ''}</small></span></button>)}</div>}</div>}
       {message && <div className="form-message">{message}</div>}
     </div>
-    {isLoadingAnalytics && <div className="panel span-2 analytics-skeleton" aria-label="Загружаем анализ"><span /><span /><span /><span /><span /><span /><span /></div>}
+    {isLoadingAnalytics && <div className="panel span-2 analytics-loading" aria-live="polite" role="status"><div><strong>Готовим аналитику</strong><span>{analyticsLoadingSteps[analyticsLoadingStep].label}</span></div><div aria-label={analyticsLoadingSteps[analyticsLoadingStep].label} className="analytics-loading-progress" role="progressbar"><span /></div></div>}
     {analytics && !isLoadingAnalytics && <>
-      <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Сводка за период</h2><p>{currentPeriodLabel}. Изменения сравниваются с предыдущим аналогичным периодом: {previousPeriodLabel}.</p></div></div>{analytics.warnings.map((warning) => <div className="debug-error" key={warning}>{warning}</div>)}<div className="analytics-kpi-grid"><KpiCard icon={Users} label="Подписчики" value={formatNumber(analytics.group.membersCount)} change={getChange(analytics.group.membersCount, isStatsUnavailable ? null : analytics.group.membersCount - analytics.stats.growth)} tooltip="Текущее число участников. Изменение — чистый прирост или отток относительно начала выбранного периода; VK не отдаёт исторический срез числа подписчиков." comparisonUnavailable={isStatsUnavailable} /><KpiCard icon={TrendingUp} label="Прирост" value={isStatsUnavailable ? 'Недоступно' : formatNumber(analytics.stats.growth)} change={getChange(analytics.stats.growth, analytics.previous.stats?.growth ?? null)} tooltip="Подписавшиеся минус отписавшиеся за период по данным VK; сравнивается с чистым приростом предыдущего аналогичного периода." unavailable={isStatsUnavailable} /><KpiCard icon={Eye} label="Охват сообщества" value={isStatsUnavailable ? 'Недоступно' : formatNumber(analytics.stats.reach)} change={getChange(analytics.stats.reach, analytics.previous.stats?.reach ?? null)} tooltip="Охват сообщества из stats.get VK. Это не равно просмотрам публикаций." unavailable={isStatsUnavailable} /><KpiCard icon={CalendarDays} label="Посещения" value={isStatsUnavailable ? 'Недоступно' : formatNumber(analytics.stats.visitors)} change={getChange(analytics.stats.visitors, analytics.previous.stats?.visitors ?? null)} tooltip="Количество посетителей сообщества за период по данным VK." unavailable={isStatsUnavailable} /><KpiCard icon={Activity} label="Реакции" value={formatNumber(analytics.wall.actions)} change={getChange(analytics.wall.actions, analytics.previous.wall.available ? analytics.previous.wall.actions : null)} tooltip="Сумма лайков, комментариев и репостов публикаций за период." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard icon={BarChart3} label="ER" value={formatPercent(analytics.wall.erAverage)} change={getChange(analytics.wall.erAverage, analytics.previous.wall.available ? analytics.previous.wall.erAverage : null)} tooltip="Средний ER поста: (лайки + комментарии + репосты) / число подписчиков × 100%." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard icon={Eye} label="Средние просмотры поста" value={formatNumber(analytics.wall.averageViewsPerPost)} change={getChange(analytics.wall.averageViewsPerPost, analytics.previous.wall.available ? analytics.previous.wall.averageViewsPerPost : null)} tooltip="Суммарные просмотры публикаций, делённые на число публикаций. Это не охват сообщества." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard icon={MessageCircle} label="Публикации" value={formatNumber(analytics.wall.periodPosts)} change={getChange(analytics.wall.periodPosts, analytics.previous.wall.available ? analytics.previous.wall.periodPosts : null)} tooltip="Количество публикаций, попавших в выбранный период." comparisonUnavailable={!analytics.previous.wall.available} /></div></div>
-      <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Что важно</h2><p>Факт, интерпретация и следующее действие — без общих формулировок.</p></div></div>{insights.length ? <div className="insight-grid">{insights.map((insight) => <div className={`insight-card ${insight.tone}`} key={insight.title}>{insight.tone === 'warn' ? <TrendingDown size={18} /> : insight.tone === 'good' ? <TrendingUp size={18} /> : <BarChart3 size={18} />}<div><strong>{insight.title}</strong><span>{insight.text}</span></div></div>)}</div> : <div className="empty-state">Недостаточно публикаций для выводов. Выберите более длинный период или обновите данные.</div>}</div>
-      <div className="panel span-2 analytics-section"><div className="section-title analytics-chart-title"><div><h2>Динамика</h2><p>Сопоставление с предыдущим аналогичным периодом. Охват сообщества не подменяется просмотрами постов.</p></div><div className="analytics-tabs compact-tabs">{chartMetrics.map((metric) => <button className={chartMetric === metric.key ? 'active' : undefined} key={metric.key} type="button" onClick={() => setChartMetric(metric.key)}>{metric.label}</button>)}</div></div>{hasPreviousChartData && !analytics.previous.wall.available && <div className="debug-error">Линия предыдущего периода построена по неполной истории стены VK.</div>}{chartData.length ? <Suspense fallback={<div className="empty-state">Загружаем график...</div>}><AnalyticsChart kind={chartMetric} title={chartMetric === 'views' ? 'Средние просмотры публикаций по дням' : chartMetric === 'activity' ? 'Реакции публикаций по дням' : 'ER публикаций по дням'} data={chartData} currentPeriodLabel={currentPeriodLabel} previousPeriodLabel={previousChartLabel} /></Suspense> : <div className="empty-state">Нет постов для графика. Выберите более длинный период или проверьте доступ к стене VK.</div>}</div>
-      <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Контентная эффективность</h2><p>Сравнение отдельных публикаций относительно среднего по выбранной выборке.</p></div><div className="content-controls"><label>Критерий<select value={contentCriterion} onChange={(event) => setContentCriterion(event.target.value as ContentCriterion)}>{contentCriteria.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}</select></label><label>Публикации<select value={postFilter} onChange={(event) => setPostFilter(event.target.value as PostFilter)}><option value="all">Все</option><option value="organic">Органические</option><option value="ad">Рекламные</option></select></label></div></div><div className="analytics-tabs compact-tabs content-segments">{postSegments.map((segment) => <button className={postSegment === segment.key ? 'active' : undefined} key={segment.key} type="button" onClick={() => setPostSegment(segment.key)}>{segment.label}</button>)}</div>{contentPosts.length ? <div className="posts-list">{contentPosts.map((post) => { const explanation = postExplanation(post); return <PostCard key={post.id} post={{ ...post, group: analytics.group, resultBadge: explanation.badge, resultReason: explanation.reason }} />; })}</div> : <div className="empty-state">{criterionAverage <= 0 ? 'Недостаточно данных для сравнения: среднее значение выбранного критерия равно нулю.' : 'В этой выборке нет публикаций. Смените фильтр или период.'}</div>}</div>
-      <div className="panel span-2 analytics-section">
-        <div className="section-title"><div><h2>Все публикации</h2><p>Найдено: {detailPosts.length} из {analytics.wall.topPosts.length}.</p></div><button className="secondary-button" type="button" onClick={() => { setDetailPostFilter('all'); setDetailSort('date'); setDetailQuery(''); }}>Сбросить фильтры</button></div>
-        <div className="detail-post-controls"><input value={detailQuery} onChange={(event) => setDetailQuery(event.target.value)} placeholder="Поиск по тексту публикации" /><label>Тип<select value={detailPostFilter} onChange={(event) => setDetailPostFilter(event.target.value as PostFilter)}><option value="all">Все</option><option value="organic">Органические</option><option value="ad">Рекламные</option></select></label><label>Сортировка<select value={detailSort} onChange={(event) => setDetailSort(event.target.value as DetailSort)}><option value="date">По дате</option><option value="er">По ER</option><option value="views">По просмотрам</option><option value="actions">По реакциям</option><option value="reposts">По репостам</option><option value="comments">По комментариям</option></select></label></div>
-        {detailPosts.length ? <div className="table analytics-posts"><div className="table-row table-head analytics-post-row"><span>Публикация</span><span>Тип</span><span>Лайки</span><span>Репосты</span><span>Комментарии</span><span>Просмотры</span><span>ER</span><span></span></div>{detailPosts.map((post) => <div className="table-row analytics-post-row" key={post.id}><span data-label="Публикация"><strong>{post.text || 'Без текста'}</strong><small>{new Date(post.date).toLocaleString('ru-RU')}</small></span><span data-label="Тип">{post.contentType}{post.isAd ? ' · реклама' : ''}</span><span data-label="Лайки">{formatNumber(post.likes)}</span><span data-label="Репосты">{formatNumber(post.reposts)}</span><span data-label="Комментарии">{formatNumber(post.comments)}</span><span data-label="Просмотры">{formatNumber(post.views)}</span><span data-label="ER">{formatPercent(post.er)}</span><a className="icon-button" href={post.url} rel="noreferrer" target="_blank" aria-label="Открыть пост VK"><ExternalLink size={17} /></a></div>)}</div> : <div className="empty-state">По активным фильтрам публикаций не найдено. Сбросьте фильтры или измените запрос.</div>}
+      <div className="span-2 analytics-section-switcher">
+        <SegmentedControl selectedId={analyticsSection} size={40} onChange={(id) => setAnalyticsSection(id as AnalyticsSection)}>
+          <Segment id="summary" title="Сводная" />
+          <Segment id="audience" title="Активность аудитории" />
+          <Segment id="posts" title="Посты" />
+        </SegmentedControl>
       </div>
+      {analyticsSection === 'summary' && <>
+      <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Сводка за период</h2><p>{currentPeriodLabel}. Изменения сравниваются с предыдущим аналогичным периодом: {previousPeriodLabel}.</p></div></div>{analytics.warnings.map((warning) => <div className="debug-error" key={warning}>{warning}</div>)}<div className="analytics-kpi-grid"><KpiCard icon={Users} label="Подписчики" value={formatNumber(analytics.group.membersCount)} change={getChange(analytics.group.membersCount, isStatsUnavailable ? null : analytics.group.membersCount - analytics.stats.growth)} tooltip="Текущее число участников. Изменение — чистый прирост или отток относительно начала выбранного периода; VK не отдаёт исторический срез числа подписчиков." comparisonUnavailable={isStatsUnavailable} /><KpiCard icon={TrendingUp} label="Прирост" value={isStatsUnavailable ? 'Недоступно' : formatNumber(analytics.stats.growth)} change={getChange(analytics.stats.growth, analytics.previous.stats?.growth ?? null)} tooltip="Подписавшиеся минус отписавшиеся за период по данным VK; сравнивается с чистым приростом предыдущего аналогичного периода." unavailable={isStatsUnavailable} /><KpiCard icon={Eye} label="Охват сообщества" value={isStatsUnavailable ? 'Недоступно' : formatNumber(analytics.stats.reach)} change={getChange(analytics.stats.reach, analytics.previous.stats?.reach ?? null)} tooltip="Охват сообщества из stats.get VK. Это не равно просмотрам публикаций." unavailable={isStatsUnavailable} /><KpiCard icon={CalendarDays} label="Посещения" value={isStatsUnavailable ? 'Недоступно' : formatNumber(analytics.stats.visitors)} change={getChange(analytics.stats.visitors, analytics.previous.stats?.visitors ?? null)} tooltip="Количество посетителей сообщества за период по данным VK." unavailable={isStatsUnavailable} /><KpiCard icon={Activity} label="Реакции" value={formatNumber(analytics.wall.actions)} change={getChange(analytics.wall.actions, analytics.previous.wall.available ? analytics.previous.wall.actions : null)} tooltip="Сумма лайков, комментариев и репостов публикаций за период." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard icon={BarChart3} label="ER" value={formatPercent(analytics.wall.erAverage)} change={getChange(analytics.wall.erAverage, analytics.previous.wall.available ? analytics.previous.wall.erAverage : null)} tooltip="Средний ER поста: (лайки + комментарии + репосты) / число подписчиков × 100%." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard icon={Eye} label="Средние просмотры поста" value={formatNumber(analytics.wall.averageViewsPerPost)} change={getChange(analytics.wall.averageViewsPerPost, analytics.previous.wall.available ? analytics.previous.wall.averageViewsPerPost : null)} tooltip="Суммарные просмотры публикаций, делённые на число публикаций. Это не охват сообщества." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard icon={MessageCircle} label="Публикации" value={formatNumber(analytics.wall.periodPosts)} change={getChange(analytics.wall.periodPosts, analytics.previous.wall.available ? analytics.previous.wall.periodPosts : null)} tooltip="Количество публикаций, попавших в выбранный период." comparisonUnavailable={!analytics.previous.wall.available} /></div></div>
+      <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Инсайты</h2></div></div>{insights.length ? <div className={`insight-grid insight-grid-count-${insights.length}`}>{insights.map((insight) => <div className={`insight-card ${insight.tone}`} key={insight.title}>{insight.tone === 'warn' ? <TrendingDown size={18} /> : insight.tone === 'good' ? <TrendingUp size={18} /> : <BarChart3 size={18} />}<div><strong>{insight.title}</strong><span>{insight.text}</span></div></div>)}</div> : <div className="empty-state">Недостаточно публикаций для выводов. Выберите более длинный период или обновите данные.</div>}</div>
+      <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Публикации</h2><p>Самые активные публикации за выбранный период.</p></div></div>{analytics.wall.topPosts.length ? <div className="posts-list posts-carousel">{analytics.wall.topPosts.slice(0, 6).map((post) => <PostCard key={post.id} post={{ ...post, group: analytics.group }} />)}</div> : <div className="empty-state">За выбранный период публикаций не найдено.</div>}</div>
+      </>}
+      {analyticsSection === 'audience' && <><div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Вовлечённость аудитории</h2><p>Показатели ER за выбранный период и их сравнение с предыдущим периодом.</p></div></div><div className="analytics-kpi-grid audience-er-kpi-grid"><KpiCard icon={BarChart3} label="Средняя вовлечённость на пост (ER)" value={formatPercent(analytics.wall.erAverage)} change={getChange(analytics.wall.erAverage, analytics.previous.wall.available ? analytics.previous.wall.erAverage : null)} tooltip="Средний ER поста: (лайки + комментарии + репосты) / число подписчиков × 100%." comparisonUnavailable={!analytics.previous.wall.available} isEr /><KpiCard icon={TrendingUp} label="Максимальная вовлечённость поста (ER)" value={formatPercent(analytics.wall.erMax)} change={getChange(analytics.wall.erMax, analytics.previous.wall.available ? analytics.previous.wall.erMax : null)} tooltip="Максимальный ER среди публикаций выбранного периода." comparisonUnavailable={!analytics.previous.wall.available} isEr /></div>{chartData.length ? <Suspense fallback={<div className="empty-state">Загружаем график...</div>}><AnalyticsChart kind="engagement" title="ER публикаций по дням" data={chartData.map((day) => ({ date: day.date, ...day.engagement }))} currentPeriodLabel={currentPeriodLabel} previousPeriodLabel={previousChartLabel} /></Suspense> : <div className="empty-state">Нет постов для графика. Выберите более длинный период или проверьте доступ к стене VK.</div>}</div><div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Динамика</h2><p>Сопоставление с предыдущим аналогичным периодом. Охват сообщества не подменяется просмотрами постов.</p></div></div>{hasPreviousChartData && !analytics.previous.wall.available && <div className="debug-error">Линия предыдущего периода построена по неполной истории стены VK.</div>}<div className="analytics-kpi-grid audience-kpi-grid"><KpiCard icon={Heart} label="Средние лайки на пост" value={formatNumber(averageLikesPerPost, 1)} change={getChange(averageLikesPerPost, previousAverageLikesPerPost)} tooltip="Среднее число лайков: общее количество лайков, делённое на число публикаций за период." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard icon={MessageCircle} label="Комментарии" value={formatNumber(analytics.wall.comments)} change={getChange(analytics.wall.comments, analytics.previous.wall.available ? analytics.previous.wall.comments : null)} tooltip="Общее количество комментариев к публикациям за выбранный период." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard icon={Repeat2} label="Репосты" value={formatNumber(analytics.wall.reposts)} change={getChange(analytics.wall.reposts, analytics.previous.wall.available ? analytics.previous.wall.reposts : null)} tooltip="Общее количество репостов публикаций за выбранный период." comparisonUnavailable={!analytics.previous.wall.available} /></div>{chartData.length ? <Suspense fallback={<div className="empty-state">Загружаем графики...</div>}><div className="analytics-charts-grid">{chartMetrics.filter((metric) => metric.key !== 'engagement').map((metric) => <AnalyticsChart key={metric.key} kind={metric.key} title={metric.key === 'views' ? 'Средние просмотры публикаций по дням' : metric.key === 'activity' ? 'Реакции публикаций по дням' : 'Комментарии на пост по дням'} data={chartData.map((day) => ({ date: day.date, ...day[metric.key] }))} currentPeriodLabel={currentPeriodLabel} previousPeriodLabel={previousChartLabel} />)}</div></Suspense> : <div className="empty-state">Нет постов для графика. Выберите более длинный период или проверьте доступ к стене VK.</div>}</div></>}
+      {analyticsSection === 'posts' && <><div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Показатели публикаций</h2><p>Данные за выбранный период и сравнение с предыдущим периодом.</p></div></div><div className="analytics-kpi-grid posts-kpi-grid"><KpiCard icon={MessageCircle} label="Публикации" value={formatNumber(analytics.wall.periodPosts)} change={getChange(analytics.wall.periodPosts, analytics.previous.wall.available ? analytics.previous.wall.periodPosts : null)} tooltip="Количество публикаций, попавших в выбранный период." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard icon={Eye} label="Охват постов" value={formatNumber(analytics.wall.views)} change={getChange(analytics.wall.views, analytics.previous.wall.available ? analytics.previous.wall.views : null)} tooltip="Суммарное количество просмотров публикаций за выбранный период." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard icon={Eye} label="Средний охват постов" value={formatNumber(analytics.wall.averageViewsPerPost, 1)} change={getChange(analytics.wall.averageViewsPerPost, analytics.previous.wall.available ? analytics.previous.wall.averageViewsPerPost : null)} tooltip="Среднее количество просмотров одной публикации за выбранный период." comparisonUnavailable={!analytics.previous.wall.available} /></div></div><div className="panel span-2 posts-section"><div className="section-title"><div><h2>Все публикации</h2><p>Показано {formatNumber(visibleAnalyticsPosts.length)} из {formatNumber(analyticsPosts.length)}.</p></div></div><div className="posts-toolbar"><label><ArrowDownUp size={16} /><span>Сортировка</span><select value={analyticsPostSort} onChange={(event) => setAnalyticsPostSort(event.target.value as AnalyticsPostSort)}>{analyticsPostSortOptions.map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}</select></label></div><div className="post-filter-tabs">{analyticsPostFilterOptions.map((option) => <button className={analyticsPostListFilter === option.key ? 'active' : undefined} key={option.key} type="button" onClick={() => setAnalyticsPostListFilter(option.key)}>{option.label}</button>)}</div>{analyticsPosts.length ? <><div className="posts-list">{visibleAnalyticsPosts.map((post) => <PostCard key={post.id} post={{ ...post, group: analytics.group }} />)}</div>{hiddenAnalyticsPostsCount > 0 && <button className="secondary-button load-more-button" type="button" onClick={() => setVisibleAnalyticsPostsCount((count) => count + ANALYTICS_POSTS_PAGE_SIZE)}>Показать ещё {formatNumber(Math.min(hiddenAnalyticsPostsCount, ANALYTICS_POSTS_PAGE_SIZE))}</button>}</> : <div className="empty-state">За выбранный период публикаций не найдено.</div>}</div></>}
     </>}
     </section>
     <AccessExpiredModal activeTo={activeTo} isOpen={isAccessExpiredModalOpen} onClose={() => setIsAccessExpiredModalOpen(false)} />

@@ -35,7 +35,7 @@ test('валидирует произвольный период, будущие
 
 test('временной ряд включает дни без публикаций без синтетических ER и просмотров', () => {
   const period = getAnalyticsPeriod('custom', '2026-08-01', '2026-08-03', localDate(2026, 8, 10));
-  const series = buildDailySeries(period, [{ date: at('2026-08-02') }], () => ({ actions: 5, views: 100, er: 1.2 }));
+  const series = buildDailySeries(period, [{ date: at('2026-08-02') }], () => ({ actions: 5, likes: 3, reposts: 1, comments: 1, views: 100, er: 1.2 }));
   assert.deepEqual(series.map((item) => [item.dayIndex, item.posts, item.actions, item.averageViews, item.er]), [[1, 0, 0, null, null], [2, 1, 5, 100, 1.2], [3, 0, 0, null, null]]);
 });
 

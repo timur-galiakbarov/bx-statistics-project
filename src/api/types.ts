@@ -27,6 +27,9 @@ export type VkGroup = {
   photo_100?: string;
   photo_200?: string;
   members_count?: number;
+  is_admin?: number | boolean;
+  is_member?: number | boolean;
+  is_subscribed?: number | boolean;
 };
 
 export type VkListResponse<T> = {
@@ -34,7 +37,7 @@ export type VkListResponse<T> = {
   items: T[];
 };
 
-export type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'currentMonth';
+export type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'last90days' | 'currentMonth';
 
 export type DashboardSummaryItem = {
   savedGroupId: string;
@@ -46,6 +49,8 @@ export type DashboardSummaryItem = {
     photo?: string;
   };
   membersCount: number;
+  isManagedByUser: boolean;
+  statsAvailable: boolean | null;
   growth: {
     total: number;
     subscribed: number;

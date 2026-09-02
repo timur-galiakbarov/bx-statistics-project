@@ -86,7 +86,7 @@ export function getWallCompleteness(totalCount: number, loadedPosts: Array<{ dat
 export function buildDailySeries<T extends { date: number }>(
   period: AnalyticsPeriodRange,
   posts: T[],
-  getValues: (post: T) => { actions: number; views: number; er: number }
+  getValues: (post: T) => { actions: number; likes: number; reposts: number; comments: number; views: number; er: number }
 ) {
   const byDate = new Map<string, T[]>();
   posts.forEach((post) => {
@@ -96,15 +96,18 @@ export function buildDailySeries<T extends { date: number }>(
     byDate.set(key, [...(byDate.get(key) ?? []), post]);
   });
 
-  const result: Array<{ date: string; dayIndex: number; posts: number; actions: number; views: number; er: number | null; averageViews: number | null; averageActionsPerPost: number | null }> = [];
+  const result: Array<{ date: string; dayIndex: number; posts: number; likes: number; reposts: number; comments: number; actions: number; views: number; er: number | null; averageViews: number | null; averageActionsPerPost: number | null }> = [];
   for (let index = 0, timestamp = period.dateFrom.getTime(); timestamp <= period.dateTo.getTime(); index += 1, timestamp += 86_400_000) {
     const date = new Date(timestamp);
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const dayPosts = byDate.get(key) ?? [];
     const values = dayPosts.map(getValues);
+    const likes = values.reduce((sum, value) => sum + value.likes, 0);
+    const reposts = values.reduce((sum, value) => sum + value.reposts, 0);
+    const comments = values.reduce((sum, value) => sum + value.comments, 0);
     const actions = values.reduce((sum, value) => sum + value.actions, 0);
     const views = values.reduce((sum, value) => sum + value.views, 0);
-    result.push({ date: key, dayIndex: index + 1, posts: dayPosts.length, actions, views, er: values.length ? Number((values.reduce((sum, value) => sum + value.er, 0) / values.length).toFixed(3)) : null, averageViews: values.length ? Number((views / values.length).toFixed(1)) : null, averageActionsPerPost: values.length ? Number((actions / values.length).toFixed(1)) : null });
+    result.push({ date: key, dayIndex: index + 1, posts: dayPosts.length, likes, reposts, comments, actions, views, er: values.length ? Number((values.reduce((sum, value) => sum + value.er, 0) / values.length).toFixed(3)) : null, averageViews: values.length ? Number((views / values.length).toFixed(1)) : null, averageActionsPerPost: values.length ? Number((actions / values.length).toFixed(1)) : null });
   }
   return result;
 }

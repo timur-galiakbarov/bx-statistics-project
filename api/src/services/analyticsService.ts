@@ -247,6 +247,9 @@ function summarizeWall(
   };
   const dayGroups = buildDailySeries(period, posts, (post) => ({
     actions: getPostActions(post),
+    likes: post.likes?.count ?? 0,
+    reposts: post.reposts?.count ?? 0,
+    comments: post.comments?.count ?? 0,
     views: post.views?.count ?? 0,
     er: getPostEr(post, membersCount)
   }));
@@ -563,7 +566,7 @@ async function loadCommunityAnalytics(
 
 type CommunityAnalyticsResult = Awaited<ReturnType<typeof loadCommunityAnalytics>>;
 
-const COMMUNITY_ANALYTICS_CACHE_TTL_MS = 15 * 60 * 1_000;
+const COMMUNITY_ANALYTICS_CACHE_TTL_MS = 60 * 60 * 1_000;
 const communityAnalyticsCache = new TtlCache<CommunityAnalyticsResult>(COMMUNITY_ANALYTICS_CACHE_TTL_MS);
 
 function getCommunityAnalyticsCacheKey(

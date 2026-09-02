@@ -297,18 +297,26 @@ vkRouter.get('/groups/search', requireUser, async (req, res, next) => {
   }
 });
 
-vkRouter.get('/groups/subscriptions', requireUser, requireActiveAccess, async (req, res, next) => {
+vkRouter.get('/groups/subscriptions', requireUser, async (req, res, next) => {
   try {
     const accessToken = await getRequiredVkToken(req.user!.id);
     const count = 1000;
+    const groupFields = 'members_count,counters,description,is_admin,is_member,is_subscribed,photo_50,photo_100,photo_200,screen_name';
+    const managedGroups = await vkApiRequest<{ items: Array<Record<string, unknown> & { id: number }> }>('groups.get', accessToken, {
+      extended: 1,
+      filter: 'moder',
+      fields: groupFields,
+      count
+    });
+    const managedGroupIds = new Set(managedGroups.items.map((group) => String(group.id)));
     let offset = 0;
     let total = 0;
-    const items: unknown[] = [];
+    const items: Array<Record<string, unknown>> = [];
 
     do {
-      const data = await vkApiRequest<{ count: number; items: unknown[] }>('groups.get', accessToken, {
+      const data = await vkApiRequest<{ count: number; items: Array<Record<string, unknown>> }>('groups.get', accessToken, {
         extended: 1,
-        fields: 'members_count,counters,description,photo_50,photo_100,photo_200,screen_name',
+        fields: groupFields,
         count,
         offset
       });
@@ -318,9 +326,21 @@ vkRouter.get('/groups/subscriptions', requireUser, requireActiveAccess, async (r
         break;
       }
 
-      items.push(...data.items);
+      items.push(
+        ...data.items.map((group) => ({
+          ...group,
+          is_admin: managedGroupIds.has(String(group.id)) || Boolean(group.is_admin)
+        }))
+      );
       offset += count;
     } while (items.length < total);
+
+    const listedGroupIds = new Set(items.map((group) => String(group.id)));
+    for (const group of managedGroups.items) {
+      if (!listedGroupIds.has(String(group.id))) {
+        items.push({ ...group, is_admin: true });
+      }
+    }
 
     res.json({
       success: true,

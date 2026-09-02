@@ -9,6 +9,7 @@ import {
   removeSession
 } from '../repositories/accountRepository.js';
 import { requireUser } from '../middleware/auth.js';
+import { hasActiveAccess } from '../middleware/access.js';
 import { env } from '../config/env.js';
 import { subscribeToAccountEvents } from '../services/accountEvents.js';
 import { publishAccountUpdated } from '../services/accountEvents.js';
@@ -110,11 +111,38 @@ accountRouter.get('/groups/free', requireUser, async (req, res, next) => {
 
 accountRouter.post('/groups/free', requireUser, async (req, res, next) => {
   try {
+    const group = await addGroup(
+      req.user!.id,
+      {
+        source: 'free',
+        vkGroupId: req.body.group?.id ?? req.body.group?.screen_name ?? req.body.group,
+        name: req.body.group?.name ?? req.body.group?.screen_name ?? String(req.body.group ?? 'Новая группа'),
+        photo: req.body.group?.photo,
+        membersCount: req.body.group?.members_count
+      },
+      { bypassFreeLimit: hasActiveAccess(req.user) }
+    );
+
+    res.status(201).json({ success: true, data: group, id: group.id });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.post('/groups', requireUser, async (req, res, next) => {
+  try {
+    const source = req.body?.source;
+
+    if (source !== 'managed' && source !== 'bookmark') {
+      res.status(400).json({ success: false, error: 'INVALID_GROUP_SOURCE' });
+      return;
+    }
+
     const group = await addGroup(req.user!.id, {
-      source: 'free',
-      vkGroupId: req.body.group?.id ?? req.body.group?.screen_name ?? req.body.group,
-      name: req.body.group?.name ?? req.body.group?.screen_name ?? String(req.body.group ?? 'Новая группа'),
-      photo: req.body.group?.photo,
+      source,
+      vkGroupId: req.body.group?.id ?? req.body.group?.screen_name,
+      name: req.body.group?.name ?? req.body.group?.screen_name ?? 'Новое сообщество',
+      photo: req.body.group?.photo_100 ?? req.body.group?.photo_50,
       membersCount: req.body.group?.members_count
     });
 

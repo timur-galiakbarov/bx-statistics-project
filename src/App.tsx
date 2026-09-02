@@ -8,6 +8,7 @@ import {
   Shield,
   Users
 } from 'lucide-react';
+import { IconButton } from '@alfalab/core-components-icon-button';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiGet, apiPost } from './api/client';
@@ -25,7 +26,7 @@ import { formatDate } from './utils/date';
 
 const navItems = [
   { to: '/dashboard', label: 'Главная', icon: Home },
-  { to: '/analytics', label: 'Анализ сообществ', icon: BarChart3 },
+  { to: '/analytics', label: 'Аналитика', icon: BarChart3 },
   { to: '/compare', label: 'Сравнение', icon: GitCompare },
   { to: '/posts', label: 'Публикации', icon: Newspaper },
   { to: '/account', label: 'Профиль и оплата', icon: CreditCard }
@@ -132,9 +133,13 @@ export function App() {
                 <span>{user.userFullName}</span>
                 <small className={hasPaidAccess ? undefined : 'expired'}>до {formatDate(user.activeTo)}</small>
               </div>
-              <button className="icon-button" type="button" aria-label="Выйти" onClick={logout}>
-                <LogOut size={17} />
-              </button>
+              <IconButton
+                aria-label="Выйти"
+                icon={LogOut}
+                onClick={logout}
+                size={40}
+                view="transparent"
+              />
             </div>
           )}
         </header>

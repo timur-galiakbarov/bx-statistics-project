@@ -217,11 +217,15 @@ export async function getGroups(userId: string, source?: SavedGroup['source']) {
   return groups.map(mapGroup);
 }
 
-export async function addGroup(userId: string, group: Partial<SavedGroup>) {
+export async function addGroup(
+  userId: string,
+  group: Partial<SavedGroup>,
+  options: { bypassFreeLimit?: boolean } = {}
+) {
   const source = group.source ?? 'free';
   const vkGroupId = group.vkGroupId ?? String(group.name ?? 'unknown');
 
-  if (source === 'free') {
+  if (source === 'free' && !options.bypassFreeLimit) {
     const [existingGroup, freeGroupsCount] = await Promise.all([
       SavedGroupModel.exists({ userId, source, vkGroupId }),
       SavedGroupModel.countDocuments({ userId, source })

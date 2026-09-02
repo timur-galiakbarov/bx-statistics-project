@@ -1,7 +1,8 @@
-import { getVkAccessToken } from '../repositories/accountRepository.js';
+import { getGroups, getVkAccessToken } from '../repositories/accountRepository.js';
 import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.js';
+import { TtlCache } from './ttlCache.js';
 
-type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'currentMonth';
+type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'last90days' | 'currentMonth';
 
 type VkGroupInfo = {
   id: number;
@@ -14,7 +15,7 @@ type VkGroupInfo = {
 
 type VkGroupsGetResponse = {
   count: number;
-  items: VkGroupInfo[];
+  items: Array<number | VkGroupInfo>;
 };
 
 type VkStatsDay = {
@@ -52,6 +53,8 @@ export type DashboardSummaryItem = {
     photo?: string;
   };
   membersCount: number;
+  isManagedByUser: boolean;
+  statsAvailable: boolean | null;
   growth: {
     total: number;
     subscribed: number;
@@ -78,10 +81,22 @@ export type DashboardSummaryItem = {
   };
 };
 
+type DashboardSummaryResult = {
+  period: {
+    key: DashboardPeriod;
+    dateFrom: string;
+    dateTo: string;
+  };
+  groups: DashboardSummaryItem[];
+};
+
+const DASHBOARD_SUMMARY_CACHE_TTL_MS = 60 * 60 * 1_000;
+const dashboardSummaryCache = new TtlCache<DashboardSummaryResult>(DASHBOARD_SUMMARY_CACHE_TTL_MS);
+
 function getPeriod(period: unknown) {
   const now = new Date();
   const value = typeof period === 'string' ? period : 'last7days';
-  const normalized: DashboardPeriod = ['today', 'yesterday', 'last7days', 'currentMonth'].includes(value)
+  const normalized: DashboardPeriod = ['today', 'yesterday', 'last7days', 'last30days', 'last90days', 'currentMonth'].includes(value)
     ? (value as DashboardPeriod)
     : 'last7days';
 
@@ -102,6 +117,12 @@ function getPeriod(period: unknown) {
 
   if (normalized === 'last7days') {
     start.setDate(start.getDate() - 6);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+  }
+
+  if (normalized === 'last30days' || normalized === 'last90days') {
+    start.setDate(start.getDate() - (normalized === 'last30days' ? 29 : 89));
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   }
@@ -169,7 +190,7 @@ function delay(ms: number) {
   });
 }
 
-function emptySummaryItem(savedGroupId: string, source: string, groupId: string, name: string): DashboardSummaryItem {
+function emptySummaryItem(savedGroupId: string, source: string, groupId: string, name: string, isManagedByUser: boolean): DashboardSummaryItem {
   return {
     savedGroupId,
     source,
@@ -178,6 +199,8 @@ function emptySummaryItem(savedGroupId: string, source: string, groupId: string,
       name
     },
     membersCount: 0,
+    isManagedByUser,
+    statsAvailable: null,
     growth: {
       total: 0,
       subscribed: 0,
@@ -201,7 +224,16 @@ function emptySummaryItem(savedGroupId: string, source: string, groupId: string,
   };
 }
 
-export async function getDashboardSummary(userId: string, periodValue: unknown) {
+export async function getDashboardSummary(userId: string, periodValue: unknown, forceRefresh = false): Promise<DashboardSummaryResult> {
+  const period = getPeriod(periodValue);
+  const groups = await getGroups(userId);
+  const cacheKey = [userId, period.key, groups.map((group) => `${group.id}:${group.vkGroupId}:${group.source}`).join(',')].join(':');
+
+  if (!forceRefresh) {
+    const cached = dashboardSummaryCache.get(cacheKey);
+    if (cached) return cached;
+  }
+
   const accessToken = await getVkAccessToken(userId);
 
   if (!accessToken) {
@@ -211,19 +243,20 @@ export async function getDashboardSummary(userId: string, periodValue: unknown) 
     });
   }
 
-  const period = getPeriod(periodValue);
-  const adminGroupsResponse = await vkApiRequest<VkGroupsGetResponse>('groups.get', accessToken, {
-    extended: 1,
+  const managedGroupsResponse = await vkApiRequest<VkGroupsGetResponse>('groups.get', accessToken, {
+    extended: 0,
     filter: 'moder',
-    fields: 'members_count,counters,description,photo_100,photo_200,screen_name',
-    count: 100
-  });
-  const groups = adminGroupsResponse.items;
+    count: 1000
+  }).catch(() => null);
+  const managedGroupIds = new Set(
+    (managedGroupsResponse?.items ?? []).map((group) => typeof group === 'number' ? group : group.id)
+  );
   const summaryGroups: DashboardSummaryItem[] = [];
 
-  for (const adminGroup of groups) {
-      const groupId = String(adminGroup.id);
-      const fallback = emptySummaryItem(groupId, 'managed', groupId, adminGroup.name);
+  for (const savedGroup of groups) {
+      const groupId = String(savedGroup.vkGroupId);
+      const isManagedByUser = managedGroupIds.has(Number(groupId)) || savedGroup.source === 'managed';
+      const fallback = emptySummaryItem(savedGroup.id, savedGroup.source, groupId, savedGroup.name, isManagedByUser);
 
       try {
         const groupInfoList = await vkApiRequest<VkGroupInfo[]>('groups.getById', accessToken, {
@@ -270,15 +303,17 @@ export async function getDashboardSummary(userId: string, periodValue: unknown) 
         const activity = sumWallActivity(wall, period.unixFrom, period.unixTo);
 
         summaryGroups.push({
-          savedGroupId: groupId,
-          source: 'managed',
+          savedGroupId: savedGroup.id,
+          source: savedGroup.source,
           group: {
             id: groupInfo.id,
             name: groupInfo.name,
             screenName: groupInfo.screen_name,
             photo: groupInfo.photo_100 ?? groupInfo.photo_200
           },
-          membersCount: groupInfo.members_count ?? adminGroup.members_count ?? 0,
+          membersCount: groupInfo.members_count ?? savedGroup.membersCount ?? 0,
+          isManagedByUser,
+          statsAvailable: !statsUnavailable,
           growth: {
             total: stat.subscribed - stat.unsubscribed,
             subscribed: stat.subscribed,
@@ -321,7 +356,7 @@ export async function getDashboardSummary(userId: string, periodValue: unknown) 
       await delay(350);
   }
 
-  return {
+  const summary = {
     period: {
       key: period.key,
       dateFrom: formatDate(period.dateFrom),
@@ -329,4 +364,7 @@ export async function getDashboardSummary(userId: string, periodValue: unknown) 
     },
     groups: summaryGroups
   };
+  dashboardSummaryCache.set(cacheKey, summary);
+
+  return summary;
 }

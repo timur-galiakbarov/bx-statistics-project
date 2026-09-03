@@ -41,7 +41,6 @@ jobs:
             --exclude '.git/' \
             --exclude '.github/' \
             --exclude '.idea/' \
-            --exclude 'legacy/' \
             --exclude 'node_modules/' \
             --exclude 'dist/' \
             --exclude 'api/dist/' \

@@ -1,7 +1,6 @@
 .git
 .github
 .idea
-legacy
 node_modules
 api/node_modules
 dist
@@ -10,4 +9,3 @@ api/.env
 .env
 .env.*
 npm-debug.log
-

@@ -1,4 +1,6 @@
 :root {
+
+  
   color: #3c4858;
   background: #eeeeee;
   font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -1403,10 +1405,14 @@ a {
   font-size: 12px;
 }
 
+.analytics-community-heading {
+  margin: 24px 0 20px;
+}
+
 .analytics-community-heading h2 {
   color: #3c4858;
-  font-size: clamp(24px, 3vw, 30px);
-  font-weight: 400;
+  font-size: clamp(20px, 2vw, 24px);
+  font-weight: 300;
   letter-spacing: -0.02em;
   line-height: 1.2;
   margin: 0;
@@ -1414,8 +1420,8 @@ a {
 
 .analytics-community-heading p {
   color: #687684;
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 15px;
+  font-weight: 300;
   margin: 6px 0 0;
 }
 

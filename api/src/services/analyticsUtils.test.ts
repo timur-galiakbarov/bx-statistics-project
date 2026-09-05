@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildDailySeries, getAnalyticsPeriod, getPreviousAnalyticsPeriod, getWallCompleteness } from './analyticsUtils.js';
+import { buildReachSeries, buildDailySeries, getAnalyticsPeriod, getPreviousAnalyticsPeriod, getWallCompleteness } from './analyticsUtils.js';
 
 const at = (value: string) => Math.floor(new Date(`${value}T12:00:00`).getTime() / 1000);
 const localDate = (year: number, month: number, day: number) => new Date(year, month - 1, day, 12);
@@ -44,4 +44,21 @@ test('полнота стены учитывает границу периода
   assert.equal(getWallCompleteness(250, [{ date: at('2026-08-08') }], period), false);
   assert.equal(getWallCompleteness(250, [{ date: at('2026-07-31') }], period), true);
   assert.equal(getWallCompleteness(1, [{ date: at('2026-08-08') }], period), true);
+});
+
+test('дневной охват сопоставляет даты, сохраняет нули и не заменяет пропуски нулями', () => {
+  const period = getAnalyticsPeriod('custom', '2026-08-01', '2026-08-04', localDate(2026, 8, 25));
+  const series = buildReachSeries(period, [
+    { period_from: at('2026-08-04'), reach: {} },
+    { period_from: at('2026-08-02'), reach: { reach: 0 } },
+    { period_from: at('2026-08-01'), reach: { reach: 120 } },
+    { period_from: at('2026-07-31'), reach: { reach: 900 } },
+    { reach: { reach: 500 } }
+  ]);
+  assert.deepEqual(series, [
+    { date: '2026-08-01', dayIndex: 1, reach: 120 },
+    { date: '2026-08-02', dayIndex: 2, reach: 0 },
+    { date: '2026-08-03', dayIndex: 3, reach: null },
+    { date: '2026-08-04', dayIndex: 4, reach: null }
+  ]);
 });

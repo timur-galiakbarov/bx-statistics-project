@@ -1,10 +1,17 @@
-import { KeyRound } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { apiPost } from '../api/client';
 
 type Props = {
   onDevLogin: () => Promise<void>;
 };
+
+function VkIcon() {
+  return (
+    <span aria-hidden="true" className="vk-icon">
+      <img alt="" src="/vk-logo.png" />
+    </span>
+  );
+}
 
 export function LoginPage({ onDevLogin }: Props) {
   const [searchParams] = useSearchParams();
@@ -18,9 +25,13 @@ export function LoginPage({ onDevLogin }: Props) {
   return (
     <main className="login-page">
       <section className="login-panel">
-        <div className="brand login-brand">
-          <strong>socstat.ru</strong>
-          <span>Аналитика групп ВКонтакте</span>
+        <div className="login-logo" aria-hidden="true">
+          <VkIcon />
+        </div>
+        <div className="login-brand">
+          <span className="login-product-name">socstat.ru</span>
+          <h1>Вход в систему</h1>
+          <p>Отслеживайте статистику, публикации и динамику аудитории сообществ.</p>
         </div>
         {authErrorMessage && (
           <div className="login-error">
@@ -29,23 +40,29 @@ export function LoginPage({ onDevLogin }: Props) {
           </div>
         )}
         <div className="login-actions">
-          <a className="primary-button" href="/api/auth/vk/start">
-            <KeyRound size={18} />
+          <a className="vk-login-button" href="/api/auth/vk/start">
+            <VkIcon />
             Войти через VK
           </a>
-          <a className="secondary-button" href="/api/auth/vk/implicit-start">
-            <KeyRound size={18} />
-            VK legacy token
-          </a>
-          <button
-            className="secondary-button"
-            onClick={() => {
-              apiPost('/api/auth/dev').then(onDevLogin);
-            }}
-          >
-            Dev-вход
-          </button>
         </div>
+        {import.meta.env.DEV && (
+          <div className="login-dev-tools">
+            <div className="login-dev-actions">
+              <a className="secondary-button" href="/api/auth/vk/implicit-start">
+                VK legacy token
+              </a>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => {
+                  apiPost('/api/auth/dev').then(onDevLogin);
+                }}
+              >
+                Dev-вход
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </main>
   );

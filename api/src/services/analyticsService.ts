@@ -3,6 +3,7 @@ import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.
 import { TtlCache } from './ttlCache.js';
 import {
   buildDailySeries,
+  buildReachSeries,
   getAnalyticsPeriod,
   getPreviousAnalyticsPeriod,
   getWallCompleteness
@@ -10,6 +11,7 @@ import {
 
 type VkGroupInfo = {
   id: number;
+  is_admin?: number | boolean;
   name: string;
   screen_name?: string;
   description?: string;
@@ -19,6 +21,7 @@ type VkGroupInfo = {
 };
 
 type VkStatsDay = {
+  period_from?: number;
   visitors?: {
     views?: number;
     visitors?: number;
@@ -162,7 +165,7 @@ function getPostEr(post: VkWallPost, membersCount: number) {
     return 0;
   }
 
-  return round((getPostActions(post) / membersCount) * 100, 3);
+  return (getPostActions(post) / membersCount) * 100;
 }
 
 function formatDayLabel(timestamp: number) {
@@ -276,7 +279,7 @@ function summarizeWall(
       return min === null ? views : Math.min(min, views);
     }, null) ?? 0,
     adsPosts: posts.filter((post) => Boolean(post.marked_as_ads)).length,
-    erAverage: posts.length ? round(postErs.reduce((sum, er) => sum + er, 0) / posts.length, 3) : 0,
+    erAverage: posts.length ? round(postErs.reduce((sum, er) => sum + er, 0) / posts.length, 5) : 0,
     erMax: postErs.length ? Math.max(...postErs) : 0,
     dayGroups,
     topPosts: [...posts]
@@ -387,6 +390,7 @@ async function getStatsForPeriod(
     group_id: groupId,
     timestamp_from: period.unixFrom,
     timestamp_to: period.unixTo,
+    interval: 'day',
     stats_groups: 'visitors,reach,activity'
   }).catch((error) => {
     if (isVkPermissionDeniedError(error)) {
@@ -397,7 +401,7 @@ async function getStatsForPeriod(
     throw error;
   });
 
-  return sumStats(stats);
+  return { ...sumStats(stats), dayGroups: buildReachSeries(period, stats) };
 }
 
 async function loadCommunityAnalytics(
@@ -427,7 +431,7 @@ async function loadCommunityAnalytics(
   const warnings: string[] = [];
   const groupInfoList = await vkApiRequest<VkGroupInfo[]>('groups.getById', accessToken, {
     group_id: groupId,
-    fields: 'members_count,counters,description,photo_100,photo_200,screen_name'
+    fields: 'members_count,counters,description,photo_100,photo_200,screen_name,is_admin'
   });
   const groupInfo = groupInfoList[0];
 
@@ -442,8 +446,9 @@ async function loadCommunityAnalytics(
   const stats = await getStatsForPeriod(accessToken, groupInfo.id, period, () => {
     statsUnavailable = true;
   });
+  let previousStatsUnavailable = false;
   const previousStats = await getStatsForPeriod(accessToken, groupInfo.id, previousPeriod, () => {
-    statsUnavailable = true;
+    previousStatsUnavailable = true;
   });
   if (statsUnavailable) {
     warnings.push('VK не выдал право stats, прирост, посещения и охват сообщества недоступны.');
@@ -524,7 +529,8 @@ async function loadCommunityAnalytics(
       screenName: groupInfo.screen_name,
       description: groupInfo.description,
       photo: groupInfo.photo_200 ?? groupInfo.photo_100,
-      membersCount: groupInfo.members_count ?? 0
+      membersCount: groupInfo.members_count ?? 0,
+      isManagedByCurrentUser: groupInfo.is_admin === 1 || groupInfo.is_admin === true
     },
     stats: {
       unavailable: statsUnavailable,
@@ -534,7 +540,8 @@ async function loadCommunityAnalytics(
       visitors: stats.visitors,
       views: stats.views,
       reach: stats.reach,
-      reachSubscribers: stats.reachSubscribers
+      reachSubscribers: stats.reachSubscribers,
+      dayGroups: stats.dayGroups
     },
     wall: {
       ...summarizeWall(wall, period.unixFrom, period.unixTo, groupInfo.members_count ?? 0, groupInfo.id),
@@ -545,12 +552,13 @@ async function loadCommunityAnalytics(
         dateFrom: formatDate(previousPeriod.dateFrom),
         dateTo: formatDate(previousPeriod.dateTo)
       },
-      stats: statsUnavailable
+      stats: previousStatsUnavailable
         ? null
         : {
             growth: previousStats.subscribed - previousStats.unsubscribed,
             visitors: previousStats.visitors,
-            reach: previousStats.reach
+            reach: previousStats.reach,
+            dayGroups: previousStats.dayGroups
           },
       wall: {
         ...summarizeWall(wall, previousPeriod.unixFrom, previousPeriod.unixTo, groupInfo.members_count ?? 0, groupInfo.id),

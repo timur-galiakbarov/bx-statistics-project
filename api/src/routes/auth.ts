@@ -184,6 +184,11 @@ authRouter.get('/vk/start', (_req, res) => {
 });
 
 authRouter.get('/vk/implicit-start', (_req, res) => {
+  if (env.nodeEnv === 'production') {
+    res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    return;
+  }
+
   const state = randomBytes(24).toString('hex');
 
   res.cookie(env.oauthStateCookie, state, {

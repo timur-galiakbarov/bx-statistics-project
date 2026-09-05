@@ -165,6 +165,7 @@ export type CommunityAnalytics = {
     description?: string;
     photo?: string;
     membersCount: number;
+    isManagedByCurrentUser?: boolean;
   };
   stats: {
     unavailable: boolean;
@@ -175,6 +176,7 @@ export type CommunityAnalytics = {
     views: number;
     reach: number;
     reachSubscribers: number;
+    dayGroups?: Array<{ date: string; dayIndex: number; reach: number | null }>;
   };
   wall: {
     totalPosts: number;
@@ -235,6 +237,7 @@ export type CommunityAnalytics = {
       growth: number;
       visitors: number;
       reach: number;
+      dayGroups?: Array<{ date: string; dayIndex: number; reach: number | null }>;
     };
     wall: CommunityAnalytics['wall'] & { available: boolean };
   };

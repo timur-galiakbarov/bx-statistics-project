@@ -107,9 +107,30 @@ export function buildDailySeries<T extends { date: number }>(
     const comments = values.reduce((sum, value) => sum + value.comments, 0);
     const actions = values.reduce((sum, value) => sum + value.actions, 0);
     const views = values.reduce((sum, value) => sum + value.views, 0);
-    result.push({ date: key, dayIndex: index + 1, posts: dayPosts.length, likes, reposts, comments, actions, views, er: values.length ? Number((values.reduce((sum, value) => sum + value.er, 0) / values.length).toFixed(3)) : null, averageViews: values.length ? Number((views / values.length).toFixed(1)) : null, averageActionsPerPost: values.length ? Number((actions / values.length).toFixed(1)) : null });
+    result.push({ date: key, dayIndex: index + 1, posts: dayPosts.length, likes, reposts, comments, actions, views, er: values.length ? Number((values.reduce((sum, value) => sum + value.er, 0) / values.length).toFixed(5)) : null, averageViews: values.length ? Number((views / values.length).toFixed(1)) : null, averageActionsPerPost: values.length ? Number((actions / values.length).toFixed(1)) : null });
   }
   return result;
 }
 
 export { MAX_CUSTOM_PERIOD_DAYS };
+
+export function buildReachSeries(
+  period: AnalyticsPeriodRange,
+  stats: Array<{ period_from?: number; reach?: { reach?: number } }>
+) {
+  const byDate = new Map<string, number | null>();
+  for (const day of stats) {
+    if (day.period_from === undefined || !Number.isFinite(day.period_from)) continue;
+    const date = new Date(day.period_from * 1000);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    byDate.set(key, day.reach?.reach ?? null);
+  }
+  const result: Array<{ date: string; dayIndex: number; reach: number | null }> = [];
+  const date = new Date(period.dateFrom);
+  while (date <= period.dateTo) {
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    result.push({ date: key, dayIndex: result.length + 1, reach: byDate.get(key) ?? null });
+    date.setDate(date.getDate() + 1);
+  }
+  return result;
+}

@@ -26,39 +26,142 @@ a {
 
 .login-page {
   align-items: center;
-  background:
-    linear-gradient(rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.68)),
-    url("/sidebar-1.jpg") center / cover;
+  background: #fff;
   display: flex;
   min-height: 100vh;
   justify-content: center;
-  padding: 24px;
+  padding: 32px 20px 96px;
+  position: relative;
 }
 
 .login-panel {
-  background: #fff;
-  border-radius: 3px;
-  box-shadow:
-    0 16px 38px -12px rgba(0, 0, 0, 0.56),
-    0 4px 25px 0 rgba(0, 0, 0, 0.12),
-    0 8px 10px -5px rgba(0, 0, 0, 0.2);
-  max-width: 420px;
-  padding: 28px;
+  max-width: 440px;
+  text-align: center;
   width: 100%;
 }
 
 .login-brand {
-  color: #3c4858;
-  margin-bottom: 26px;
+  color: #19191a;
+  margin-bottom: 32px;
 }
 
-.login-brand span {
-  color: #777;
+.login-logo {
+  align-items: center;
+  background: #07f;
+  border-radius: 20px;
+  color: #fff;
+  display: flex;
+  height: 72px;
+  justify-content: center;
+  margin: 0 auto 24px;
+  width: 72px;
+}
+
+.vk-icon {
+  align-items: center;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.vk-icon img {
+  display: block;
+  height: 110%;
+  max-width: none;
+  object-fit: contain;
+  width: 110%;
+}
+
+.login-logo .vk-icon {
+  height: 48px;
+  margin: auto;
+  width: 48px;
+}
+
+.login-product-name {
+  color: #818c99;
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.login-brand h1 {
+  font-size: clamp(24px, 5vw, 30px);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.login-brand p {
+  color: #626d7a;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 16px auto 0;
+  max-width: 390px;
 }
 
 .login-actions {
   display: grid;
-  gap: 12px;
+  gap: 16px;
+}
+
+.vk-login-button {
+  align-items: center;
+  background: #07f;
+  border-radius: 12px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 16px;
+  font-weight: 600;
+  gap: 10px;
+  justify-content: center;
+  min-height: 52px;
+  padding: 12px 20px;
+  text-decoration: none;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.vk-login-button:hover {
+  background: #0067d6;
+}
+
+.vk-login-button:active {
+  transform: translateY(1px);
+}
+
+.vk-login-button:focus-visible {
+  outline: 3px solid rgba(0, 119, 255, 0.25);
+  outline-offset: 3px;
+}
+
+.vk-login-button .vk-icon {
+  height: 26px;
+  width: 26px;
+}
+
+.login-dev-tools {
+  bottom: 18px;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  width: min(440px, calc(100% - 40px));
+}
+
+.login-dev-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.login-dev-actions .secondary-button {
+  justify-content: center;
+  margin-top: 0;
 }
 
 .login-error {
@@ -74,6 +177,17 @@ a {
 
 .login-error span {
   font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  .login-page {
+    align-items: flex-start;
+    padding-top: max(48px, 10vh);
+  }
+
+  .login-dev-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .app-shell {
@@ -1289,6 +1403,22 @@ a {
   font-size: 12px;
 }
 
+.analytics-community-heading h2 {
+  color: #3c4858;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.analytics-community-heading p {
+  color: #687684;
+  font-size: 16px;
+  font-weight: 400;
+  margin: 6px 0 0;
+}
+
 .community-picker {
   display: grid;
   gap: 16px;
@@ -1667,6 +1797,12 @@ a {
   gap: 14px;
 }
 
+.analytics-chart-kpis {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 .engagement-widget {
   border-top: 3px solid #4caf50;
 }
@@ -1697,7 +1833,6 @@ a {
   margin-top: 0;
 }
 
-.custom-period-form,
 .content-controls {
   align-items: end;
   display: flex;
@@ -1705,11 +1840,30 @@ a {
   gap: 10px;
 }
 
-.custom-period-picker {
-  min-width: 150px;
+.custom-period-form {
+  align-items: flex-start;
+  background: #f7f8fa;
+  border: 1px solid #e1e5ea;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px;
 }
 
-.custom-period-form label,
+.custom-period-fields {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(180px, 220px)) auto;
+}
+
+.custom-period-picker {
+  min-width: 0;
+  width: 100%;
+}
+
 .content-controls label {
   color: #555;
   display: grid;
@@ -1718,7 +1872,6 @@ a {
   gap: 4px;
 }
 
-.custom-period-form input,
 .content-controls select {
   background: #fff;
   border: 0;
@@ -1730,14 +1883,22 @@ a {
   padding: 0 4px;
 }
 
-.custom-period-form button {
-  background: #4caf50;
-  border: 0;
-  border-radius: 3px;
-  color: #fff;
-  cursor: pointer;
-  min-height: 36px;
-  padding: 0 12px;
+.custom-period-hint {
+  color: #697586;
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+  .custom-period-fields {
+    flex-basis: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .custom-period-fields .custom-period-submit {
+    width: 100%;
+  }
 }
 
 .content-segments {
@@ -1885,7 +2046,11 @@ a {
 
 .posts-toolbar {
   align-items: center;
+  color: #555;
   display: flex;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 8px;
   justify-content: flex-start;
 }
 
@@ -1906,6 +2071,10 @@ a {
   color: #3c4858;
   min-height: 38px;
   padding: 0 10px;
+}
+
+.analytics-post-sort-select {
+  min-width: 180px;
 }
 
 .compare-toolbar {
@@ -2021,7 +2190,7 @@ a {
   gap: 8px;
 }
 
-.post-filter-tabs button {
+.post-filter-tabs .post-filter-button {
   background: #f2f2f2;
   border: 0;
   border-radius: 3px;
@@ -2032,8 +2201,8 @@ a {
   padding: 7px 10px;
 }
 
-.post-filter-tabs button.active,
-.post-filter-tabs button:hover {
+.post-filter-tabs .post-filter-button.active,
+.post-filter-tabs .post-filter-button:hover {
   background: #4caf50;
   box-shadow: 0 2px 5px rgba(76, 175, 80, 0.35);
   color: #fff;
@@ -2745,4 +2914,11 @@ a {
   .compare-row.content {
     grid-template-columns: 1fr;
   }
+}
+
+.visibility-chart-note {
+  margin: 14px 0 0;
+  color: #687684;
+  font-size: 13px;
+  line-height: 1.5;
 }

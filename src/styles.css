@@ -2648,6 +2648,12 @@ a {
   gap: 6px;
 }
 
+.admin-recent-users-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .admin-access-actions {
   align-items: center;
   display: flex;
@@ -2727,6 +2733,29 @@ a {
 
 .admin-access-modal .admin-access-actions {
   margin-top: 22px;
+}
+
+.admin-create-user-form {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 20px;
+}
+
+.admin-create-user-form label {
+  color: #657269;
+  display: grid;
+  font-size: 13px;
+  gap: 5px;
+}
+
+.admin-create-user-form input {
+  border: 1px solid #dbe3dd;
+  border-radius: 4px;
+  color: #3c4858;
+  font: inherit;
+  min-height: 38px;
+  padding: 7px 9px;
 }
 
 .mini-button {

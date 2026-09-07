@@ -1,4 +1,4 @@
-import { Bug, CheckCircle2, CreditCard, Info, Link, RefreshCw, Search, Trash2, Users, XCircle } from 'lucide-react';
+import { Bug, CheckCircle2, CreditCard, Info, Link, RefreshCw, Search, Trash2, UserPlus, Users, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../api/client';
 import type {
@@ -80,6 +80,15 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [groupsResetUserId, setGroupsResetUserId] = useState<string | null>(null);
   const [accessDates, setAccessDates] = useState<Record<string, string>>({});
   const [accessModalUser, setAccessModalUser] = useState<RecentAdminUser | null>(null);
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [createUserError, setCreateUserError] = useState<string | null>(null);
+  const [newUser, setNewUser] = useState(() => ({
+    vkId: '',
+    firstName: '',
+    lastName: '',
+    activeTo: new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10)
+  }));
   const [isPermissionsLoading, setIsPermissionsLoading] = useState(false);
   const [isTokenStatusLoading, setIsTokenStatusLoading] = useState(false);
   const [isAppInfoLoading, setIsAppInfoLoading] = useState(false);
@@ -345,6 +354,26 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     setAccessModalUser(user);
   };
 
+  const openCreateUserModal = () => {
+    setCreateUserError(null);
+    setNewUser({ vkId: '', firstName: '', lastName: '', activeTo: new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10) });
+    setIsCreateUserModalOpen(true);
+  };
+
+  const createUser = async () => {
+    setIsCreatingUser(true);
+    setCreateUserError(null);
+    try {
+      await apiPost<{ user: RecentAdminUser }>('/api/account/admin/users', newUser);
+      setIsCreateUserModalOpen(false);
+      await loadRecentUsers();
+    } catch (error) {
+      setCreateUserError(error instanceof Error ? error.message : 'Не удалось добавить пользователя.');
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
+
   const resetUserGroups = async (targetUser: RecentAdminUser) => {
     if (!window.confirm(`Сбросить бесплатные сообщества пользователя «${targetUser.name}»? Отслеживаемые сообщества останутся без изменений.`)) {
       return;
@@ -442,10 +471,16 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             <h2>Последние активные пользователи</h2>
             <p>До 300 пользователей, отсортированных по времени последнего входа.</p>
           </div>
-          <button className="secondary-button inline" type="button" onClick={loadRecentUsers} disabled={isRecentUsersLoading}>
-            {isRecentUsersLoading ? <RefreshCw className="spin" size={18} /> : <Users size={18} />}
-            {isRecentUsersLoading ? 'Загружаем' : 'Обновить'}
-          </button>
+          <div className="admin-recent-users-actions">
+            <button className="secondary-button inline" type="button" onClick={loadRecentUsers} disabled={isRecentUsersLoading}>
+              {isRecentUsersLoading ? <RefreshCw className="spin" size={18} /> : <Users size={18} />}
+              {isRecentUsersLoading ? 'Загружаем' : 'Обновить'}
+            </button>
+            <button className="primary-button" type="button" onClick={openCreateUserModal}>
+              <UserPlus size={18} />
+              Добавить пользователя
+            </button>
+          </div>
         </div>
 
         {recentUsersError && <div className="debug-error">{recentUsersError}</div>}
@@ -663,6 +698,26 @@ export function AdminPage({ user, onAccountChanged }: Props) {
                 Задать дату
               </button>
             </div>
+          </section>
+        </div>
+      )}
+
+      {isCreateUserModalOpen && (
+        <div className="admin-access-modal-backdrop" role="presentation" onMouseDown={() => !isCreatingUser && setIsCreateUserModalOpen(false)}>
+          <section aria-labelledby="admin-create-user-modal-title" aria-modal="true" className="admin-access-modal" onMouseDown={(event) => event.stopPropagation()} role="dialog">
+            <button aria-label="Закрыть" className="icon-button" disabled={isCreatingUser} type="button" onClick={() => setIsCreateUserModalOpen(false)}>
+              <XCircle size={18} />
+            </button>
+            <h2 id="admin-create-user-modal-title">Добавить пользователя</h2>
+            <p>Пользователь сможет войти через VK с указанным ID. Доступ и пробный период будут активны до выбранной даты.</p>
+            <div className="admin-create-user-form">
+              <label>VK ID<input autoFocus disabled={isCreatingUser} inputMode="numeric" value={newUser.vkId} onChange={(event) => setNewUser((current) => ({ ...current, vkId: event.target.value }))} /></label>
+              <label>Имя<input disabled={isCreatingUser} value={newUser.firstName} onChange={(event) => setNewUser((current) => ({ ...current, firstName: event.target.value }))} /></label>
+              <label>Фамилия<input disabled={isCreatingUser} value={newUser.lastName} onChange={(event) => setNewUser((current) => ({ ...current, lastName: event.target.value }))} /></label>
+              <label>Доступ до<input disabled={isCreatingUser} type="date" value={newUser.activeTo} onChange={(event) => setNewUser((current) => ({ ...current, activeTo: event.target.value }))} /></label>
+            </div>
+            {createUserError && <div className="debug-error">{createUserError}</div>}
+            <div className="admin-access-actions"><button className="primary-button" disabled={isCreatingUser} type="button" onClick={() => void createUser()}>{isCreatingUser ? <RefreshCw className="spin" size={17} /> : <UserPlus size={17} />}{isCreatingUser ? 'Добавляем' : 'Добавить'}</button><button className="secondary-button" disabled={isCreatingUser} type="button" onClick={() => setIsCreateUserModalOpen(false)}>Отмена</button></div>
           </section>
         </div>
       )}

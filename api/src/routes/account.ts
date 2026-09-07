@@ -100,6 +100,58 @@ accountRouter.post('/admin/users/:userId/groups/reset', requireUser, async (req,
   }
 });
 
+accountRouter.post('/admin/users', requireUser, async (req, res, next) => {
+  if (!req.user!.isAdmin) {
+    res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    return;
+  }
+
+  const vkId = typeof req.body?.vkId === 'string' ? req.body.vkId.trim() : '';
+  const firstName = typeof req.body?.firstName === 'string' ? req.body.firstName.trim() : '';
+  const lastName = typeof req.body?.lastName === 'string' ? req.body.lastName.trim() : '';
+  const activeTo = typeof req.body?.activeTo === 'string' ? new Date(`${req.body.activeTo}T00:00:00.000Z`) : null;
+
+  if (!/^\d+$/.test(vkId) || !firstName || !lastName || !activeTo || Number.isNaN(activeTo.getTime())) {
+    res.status(400).json({ success: false, error: 'INVALID_USER_DATA' });
+    return;
+  }
+
+  try {
+    const exists = await UserModel.exists({ vkId });
+    if (exists) {
+      res.status(409).json({ success: false, error: 'VK_USER_ALREADY_EXISTS' });
+      return;
+    }
+
+    const createdAt = new Date();
+    const user = await UserModel.create({
+      vkId,
+      firstName,
+      lastName,
+      activeTo,
+      trialEndsAt: activeTo,
+      isAdmin: false,
+      lastLoginAt: createdAt
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          vkId: user.vkId,
+          name: `${user.firstName} ${user.lastName}`,
+          hasActiveAccess: activeTo.getTime() >= Date.now(),
+          lastLoginAt: createdAt.toISOString(),
+          activeTo: activeTo.toISOString().slice(0, 10)
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 accountRouter.post('/logout', async (req, res, next) => {
   try {
     await removeSession(req.cookies?.[env.sessionCookie]);

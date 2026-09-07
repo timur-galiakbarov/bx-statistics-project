@@ -10,9 +10,9 @@ import { publishAccountUpdated } from '../services/accountEvents.js';
 export const paymentsRouter = Router();
 
 const plans = [
-  { id: 'month', title: '1 месяц', months: 1, priceRub: 299, monthlyPriceRub: 299 },
-  { id: 'quarter', title: '3 месяца', months: 3, priceRub: 499, monthlyPriceRub: 166 },
-  { id: 'year', title: '1 год', months: 12, priceRub: 1399, monthlyPriceRub: 116 }
+  { id: 'month', title: '1 месяц', months: 1, priceRub: 499, monthlyPriceRub: 499 },
+  { id: 'quarter', title: '3 месяца', months: 3, priceRub: 899, monthlyPriceRub: 300 },
+  { id: 'year', title: '1 год', months: 12, priceRub: 1999, monthlyPriceRub: 167 }
 ];
 
 type YooMoneyCallback = {

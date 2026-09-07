@@ -10,7 +10,7 @@ export type User = {
 
 export type SavedGroup = {
   id: string;
-  source: 'free' | 'bookmark' | 'favorite' | 'managed';
+  source: 'free' | 'bonus' | 'bookmark' | 'favorite' | 'managed';
   vkGroupId: string;
   name: string;
   photo?: string;

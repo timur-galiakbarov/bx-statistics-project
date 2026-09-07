@@ -28,25 +28,12 @@ export async function seedDevelopmentData() {
     { upsert: true }
   );
 
-  const groupsCount = await SavedGroupModel.countDocuments({ userId: user._id });
-  if (groupsCount === 0) {
-    await SavedGroupModel.insertMany([
-      {
-        userId: user._id,
-        source: 'managed',
-        vkGroupId: 'socstat_ru',
-        name: 'socstat.ru',
-        membersCount: 12840
-      },
-      {
-        userId: user._id,
-        source: 'free',
-        vkGroupId: 'free-demo',
-        name: 'Бесплатная группа',
-        membersCount: 5420
-      }
-    ]);
-  }
+  // Earlier development builds inserted these two communities automatically.
+  // Remove only those known seed records so a local restart also clears them.
+  await SavedGroupModel.deleteMany({
+    userId: user._id,
+    vkGroupId: { $in: ['socstat_ru', 'free-demo'] }
+  });
 
   const newsCount = await NewsModel.countDocuments();
   if (newsCount === 0) {

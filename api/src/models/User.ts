@@ -15,6 +15,7 @@ const userSchema = new Schema(
     lastName: { type: String, default: '' },
     photo: { type: String },
     activeTo: { type: Date, required: true },
+    trialEndsAt: { type: Date },
     isAdmin: { type: Boolean, default: false },
     enforceAccessRestrictions: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

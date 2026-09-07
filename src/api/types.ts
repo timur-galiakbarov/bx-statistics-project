@@ -6,13 +6,14 @@ export type User = {
   userFullName: string;
   photo_200?: string;
   activeTo: string;
+  trialEndsAt?: string;
   isAdmin: boolean;
   enforceAccessRestrictions: boolean;
 };
 
 export type SavedGroup = {
   id: string;
-  source: 'free' | 'bookmark' | 'favorite' | 'managed';
+  source: 'free' | 'bonus' | 'bookmark' | 'favorite' | 'managed';
   vkGroupId: string;
   name: string;
   photo?: string;

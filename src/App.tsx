@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  ChevronRight,
   CreditCard,
   GitCompare,
   Home,
@@ -98,6 +99,7 @@ export function App() {
   }, [location.pathname]);
   const visibleNavItems = user?.isAdmin ? [...navItems, adminNavItem] : navItems;
   const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions) || isAccessActive(user?.activeTo);
+  const isTrialActive = Boolean(user?.trialEndsAt && new Date(user.trialEndsAt).getTime() >= Date.now());
   const paidRoute = (element: JSX.Element) => (hasPaidAccess ? element : <AccessLock activeTo={user?.activeTo} />);
 
   if (location.pathname === '/auth/vk/implicit-callback') {
@@ -134,11 +136,14 @@ export function App() {
           <h1>{title}</h1>
           {user && (
             <div className="topbar-actions">
-              <div className="profile-pill">
+              <NavLink className="profile-pill" to="/account">
                 <Users size={17} />
                 <span>{user.userFullName}</span>
-                <small className={hasPaidAccess ? undefined : 'expired'}>до {formatDate(user.activeTo)}</small>
-              </div>
+                <small className={`profile-access-status ${hasPaidAccess ? 'active' : 'inactive'}`}>
+                  {hasPaidAccess ? `Активен до ${formatDate(user.activeTo)}` : 'Не активен'}
+                </small>
+                <ChevronRight size={16} />
+              </NavLink>
               <IconButton
                 aria-label="Выйти"
                 icon={LogOut}
@@ -158,6 +163,7 @@ export function App() {
               <DashboardPage
                 groups={groups}
                 hasPaidAccess={Boolean(hasPaidAccess)}
+                isTrialActive={isTrialActive}
                 onGroupsChanged={loadAccount}
               />
             }

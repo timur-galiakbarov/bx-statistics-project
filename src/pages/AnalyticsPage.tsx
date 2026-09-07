@@ -240,13 +240,12 @@ export function AnalyticsPage({
     }
   }, []);
 
-  const savedGroups = useMemo(
-    () => groups.map<VkGroup | null>((group) => {
+  const mapSavedGroups = (sourceGroups: SavedGroup[]) => sourceGroups.map<VkGroup | null>((group) => {
       const id = Number(group.vkGroupId);
       return Number.isFinite(id) && id > 0 ? { id, name: group.name, photo_100: group.photo, members_count: group.membersCount } : null;
-    }).filter((group): group is VkGroup => group !== null),
-    [groups]
-  );
+    }).filter((group): group is VkGroup => group !== null);
+  const bonusGroups = useMemo(() => mapSavedGroups(groups.filter((group) => group.source === 'free' || group.source === 'bonus')), [groups]);
+  const trackedGroups = useMemo(() => mapSavedGroups(groups.filter((group) => group.source !== 'free' && group.source !== 'bonus')), [groups]);
   const rememberGroup = (group: VkGroup) => setRecentGroups((current) => {
     const next = [group, ...current.filter((item) => item.id !== group.id)].slice(0, MAX_RECENT_GROUPS);
     window.localStorage.setItem(RECENT_GROUPS_STORAGE_KEY, JSON.stringify(next));
@@ -255,7 +254,10 @@ export function AnalyticsPage({
 
   const loadAnalytics = async (group: VkGroup = selectedGroup!, nextPeriod: AnalyticsPeriod = period, forceRefresh = false) => {
     if (!group) return setMessage('Выберите сообщество для анализа.');
-    if (!hasPaidAccess) {
+    const hasBonusAccess = groups.some((savedGroup) =>
+      (savedGroup.source === 'free' || savedGroup.source === 'bonus') && String(savedGroup.vkGroupId) === String(group.id)
+    );
+    if (!hasPaidAccess && !hasBonusAccess) {
       setIsAccessExpiredModalOpen(true);
       return;
     }
@@ -288,7 +290,11 @@ export function AnalyticsPage({
       rememberGroup(analyzedGroup);
     } catch (error) {
       setAnalytics(null);
-      setMessage(error instanceof Error ? error.message : 'Не удалось получить анализ сообщества.');
+      if (error instanceof Error && error.message === 'ACCESS_EXPIRED') {
+        setIsAccessExpiredModalOpen(true);
+      } else {
+        setMessage(error instanceof Error ? error.message : 'Не удалось получить анализ сообщества.');
+      }
     } finally {
       window.clearInterval(loadingStepTimer);
       setIsLoadingAnalytics(false);
@@ -439,7 +445,7 @@ export function AnalyticsPage({
       <div className="panel-header analytics-controls-header"><div className="analytics-heading"><h2>Аналитика</h2><p>Оцените динамику, контент и следующие действия за один рабочий проход.</p><div className="period-tabs">{periods.filter((item) => quickPeriodKeys.includes(item.key)).map((item) => <Button className={`period-tab-button ${period === item.key ? 'period-tab-button-active' : ''}`} client="desktop" disabled={isLoadingAnalytics} key={item.key} size={40} type="button" view="secondary" onClick={() => changePeriod(item.key)}>{item.label}</Button>)}<Select className="analytics-period-select" client="desktop" disabled={isLoadingAnalytics} options={otherPeriodOptions} optionsListWidth="content" placeholder="Другой период" selected={quickPeriodKeys.includes(period) ? null : period} size={40} onChange={({ selected }) => selected && changePeriod(selected.key as AnalyticsPeriod)} /></div></div></div>
       {period === 'custom' && <div className="custom-period-form"><div className="custom-period-fields"><CalendarInput className="custom-period-picker" client="desktop" label="Дата начала" maxDate={customDateToTimestamp ?? Date.now()} size={40} value={formatDatePickerValue(customDateFrom)} onChange={(_, { date }) => !Number.isNaN(date.getTime()) && setCustomDateFrom(formatIsoDate(date))} /><CalendarInput className="custom-period-picker" client="desktop" label="Дата окончания" maxDate={customPeriodEndMaxDate} minDate={customDateFromTimestamp} size={40} value={formatDatePickerValue(customDateTo)} onChange={(_, { date }) => !Number.isNaN(date.getTime()) && setCustomDateTo(formatIsoDate(date))} /><Button className="custom-period-submit" client="desktop" disabled={!selectedGroup || !customDateFrom || !customDateTo || isLoadingAnalytics} size={40} type="button" view="primary" onClick={() => selectedGroup && loadAnalytics(selectedGroup, 'custom')}>Применить период</Button></div><span className="custom-period-hint">Можно выбрать период до 93 дней включительно.</span></div>}
       {selectedGroup && <div className="selected-community-control">{selectedGroup.photo_100 ?? selectedGroup.photo_50 ? <img src={selectedGroup.photo_100 ?? selectedGroup.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><small>Анализируем сообщество</small><strong>{selectedGroup.name}</strong></span><div className="analytics-actions"><Button className="analytics-action-button" client="desktop" leftAddons={<ArrowLeftRight size={16} />} size={40} type="button" view="secondary" onClick={() => setIsCommunityPickerOpen((value) => !value)}>Сменить</Button><Button className="analytics-action-button" client="desktop" disabled={isLoadingAnalytics} leftAddons={<RefreshCw size={16} />} size={40} type="button" view="secondary" onClick={() => loadAnalytics(selectedGroup, period, true)}>Обновить данные</Button><Button className="analytics-action-button" client="desktop" href={`https://vk.com/${analytics?.group.screenName ?? selectedGroup.screen_name ?? `club${selectedGroup.id}`}`} leftAddons={<ExternalLink size={16} />} rel="noreferrer" size={40} target="_blank" view="secondary">Открыть VK</Button></div></div>}
-      {isCommunityPickerOpen && <div className="community-picker">{!selectedGroup && <div className="community-picker-intro"><h3>Выберите сообщество</h3><p>Продолжите анализ отслеживаемой группы или найдите новую.</p></div>}{recentGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Clock3 size={17} /><strong>Недавно анализировали</strong></div><div className="community-options">{recentGroups.map((group) => renderCommunityOption(group, 'недавний анализ'))}</div></div>}{savedGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Отслеживаемые сообщества</strong></div><div className="community-options">{savedGroups.map((group) => renderCommunityOption(group))}</div></div>}<form className="search-form" onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти другое сообщество: название, screen name или ссылка" /><button type="submit" disabled={isSearching}><Search size={18} />{isSearching ? 'Ищем' : 'Найти'}</button></form>{searchResults.length > 0 && <div className="search-results">{searchResults.map((group) => <button className="analytics-result" key={group.id} type="button" onClick={() => loadAnalytics(group)}><img src={group.photo_100 ?? group.photo_50} alt="" /><span><strong>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}{group.members_count ? ` · ${formatNumber(group.members_count)} участников` : ''}</small></span></button>)}</div>}</div>}
+      {isCommunityPickerOpen && <div className="community-picker">{!selectedGroup && <div className="community-picker-intro"><h3>Выберите сообщество</h3><p>Выберите бонусное сообщество или найдите другое для анализа.</p></div>}{recentGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Clock3 size={17} /><strong>Недавно анализировали</strong></div><div className="community-options">{recentGroups.map((group) => renderCommunityOption(group, 'недавний анализ'))}</div></div>}{bonusGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Бонусные сообщества</strong></div><div className="community-options">{bonusGroups.map((group) => renderCommunityOption(group, 'доступно без тарифа'))}</div></div>}{trackedGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Отслеживаемые сообщества</strong></div><div className="community-options">{trackedGroups.map((group) => renderCommunityOption(group))}</div></div>}<form className="search-form" onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Найти другое сообщество: название, screen name или ссылка" /><button type="submit" disabled={isSearching}><Search size={18} />{isSearching ? 'Ищем' : 'Найти'}</button></form>{searchResults.length > 0 && <div className="search-results">{searchResults.map((group) => <button className="analytics-result" key={group.id} type="button" onClick={() => loadAnalytics(group)}><img src={group.photo_100 ?? group.photo_50} alt="" /><span><strong>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}{group.members_count ? ` · ${formatNumber(group.members_count)} участников` : ''}</small></span></button>)}</div>}</div>}
       {message && <div className="form-message">{message}</div>}
     </div>
     {analytics && <div className="span-2 analytics-community-heading"><h2>{analyticsCommunityTitle}</h2><p>{analyticsCommunityPeriodLabel}</p></div>}

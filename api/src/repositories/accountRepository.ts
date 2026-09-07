@@ -9,7 +9,7 @@ import type { SavedGroup } from '../store/types.js';
 import { DomainError } from '../errors/domainError.js';
 import { env } from '../config/env.js';
 
-const FREE_GROUP_LIMIT = 3;
+export const FREE_GROUP_LIMIT = 1;
 
 type UserDocument = {
   _id: Types.ObjectId;
@@ -18,6 +18,7 @@ type UserDocument = {
   lastName: string;
   photo?: string;
   activeTo: Date;
+  trialEndsAt?: Date;
   isAdmin: boolean;
   enforceAccessRestrictions?: boolean;
 };
@@ -38,6 +39,7 @@ export type AccountUser = {
   lastName: string;
   photo?: string;
   activeTo: string;
+  trialEndsAt?: string;
   isAdmin: boolean;
   enforceAccessRestrictions: boolean;
 };
@@ -60,6 +62,7 @@ export function mapUser(user: UserDocument): AccountUser {
     lastName: user.lastName,
     photo: user.photo,
     activeTo: user.activeTo.toISOString().slice(0, 10),
+    trialEndsAt: user.trialEndsAt?.toISOString() ?? undefined,
     isAdmin: user.isAdmin,
     enforceAccessRestrictions: Boolean(user.enforceAccessRestrictions)
   };
@@ -124,7 +127,8 @@ export async function upsertVkUser(profile: {
   photo?: string;
 }) {
   const fallbackActiveTo = new Date();
-  fallbackActiveTo.setDate(fallbackActiveTo.getDate() + 14);
+  fallbackActiveTo.setDate(fallbackActiveTo.getDate() + 3);
+  const trialEndsAt = new Date(fallbackActiveTo);
   const isAdmin = env.adminVkIds.includes(profile.vkId);
 
   const user = await UserModel.findOneAndUpdate(
@@ -139,6 +143,7 @@ export async function upsertVkUser(profile: {
       },
       $setOnInsert: {
         activeTo: fallbackActiveTo,
+        trialEndsAt,
         ...(isAdmin ? {} : { isAdmin: false })
       }
     },
@@ -146,6 +151,10 @@ export async function upsertVkUser(profile: {
   ).lean<UserDocument>();
 
   return mapUser(user);
+}
+
+export function hasTrialAccess(user: AccountUser | undefined) {
+  return Boolean(user?.trialEndsAt && new Date(user.trialEndsAt).getTime() >= Date.now());
 }
 
 export async function saveVkToken(options: {
@@ -220,21 +229,35 @@ export async function getGroups(userId: string, source?: SavedGroup['source']) {
 export async function addGroup(
   userId: string,
   group: Partial<SavedGroup>,
-  options: { bypassFreeLimit?: boolean } = {}
+  options: { allowBonusGroup?: boolean } = {}
 ) {
   const source = group.source ?? 'free';
   const vkGroupId = group.vkGroupId ?? String(group.name ?? 'unknown');
 
-  if (source === 'free' && !options.bypassFreeLimit) {
-    const [existingGroup, freeGroupsCount] = await Promise.all([
-      SavedGroupModel.exists({ userId, source, vkGroupId }),
-      SavedGroupModel.countDocuments({ userId, source })
-    ]);
+  const existingGroup = await SavedGroupModel.exists({ userId, source, vkGroupId });
 
-    if (!existingGroup && freeGroupsCount >= FREE_GROUP_LIMIT) {
-      throw new DomainError('Можно добавить не больше 3 бесплатных групп.', {
+  if (!existingGroup && source === 'free') {
+    const groupsCount = await SavedGroupModel.countDocuments({ userId, source: 'free' });
+    if (groupsCount >= FREE_GROUP_LIMIT) {
+      throw new DomainError('Можно добавить только одно бесплатное сообщество.', {
         status: 409,
         code: 'FREE_GROUP_LIMIT_REACHED'
+      });
+    }
+  }
+
+  if (!existingGroup && source === 'bonus') {
+    const groupsCount = await SavedGroupModel.countDocuments({ userId, source: 'bonus' });
+    if (groupsCount >= FREE_GROUP_LIMIT) {
+      throw new DomainError('Бонусное сообщество уже добавлено.', {
+        status: 409,
+        code: 'BONUS_GROUP_LIMIT_REACHED'
+      });
+    }
+    if (!options.allowBonusGroup) {
+      throw new DomainError('Второе сообщество доступно после подписки на сообщество Socstat во ВКонтакте.', {
+        status: 403,
+        code: 'BONUS_GROUP_SUBSCRIPTION_REQUIRED'
       });
     }
   }
@@ -261,6 +284,11 @@ export async function addGroup(
 
 export async function removeGroup(userId: string, groupId: string) {
   await SavedGroupModel.deleteOne({ _id: groupId, userId });
+}
+
+export async function removeFreeGroups(userId: string) {
+  const result = await SavedGroupModel.deleteMany({ userId, source: { $in: ['free', 'bonus'] } });
+  return result.deletedCount;
 }
 
 export async function getNews() {

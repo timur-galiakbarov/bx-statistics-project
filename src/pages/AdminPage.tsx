@@ -1,4 +1,4 @@
-import { Bug, CheckCircle2, CreditCard, Info, Link, RefreshCw, Search, Users, XCircle } from 'lucide-react';
+import { Bug, CheckCircle2, CreditCard, Info, Link, RefreshCw, Search, Trash2, Users, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../api/client';
 import type {
@@ -77,6 +77,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [manualError, setManualError] = useState<string | null>(null);
   const [paymentActionId, setPaymentActionId] = useState<string | null>(null);
   const [accessActionUserId, setAccessActionUserId] = useState<string | null>(null);
+  const [groupsResetUserId, setGroupsResetUserId] = useState<string | null>(null);
   const [accessDates, setAccessDates] = useState<Record<string, string>>({});
   const [accessModalUser, setAccessModalUser] = useState<RecentAdminUser | null>(null);
   const [isPermissionsLoading, setIsPermissionsLoading] = useState(false);
@@ -344,6 +345,23 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     setAccessModalUser(user);
   };
 
+  const resetUserGroups = async (targetUser: RecentAdminUser) => {
+    if (!window.confirm(`Сбросить бесплатные сообщества пользователя «${targetUser.name}»? Отслеживаемые сообщества останутся без изменений.`)) {
+      return;
+    }
+
+    setGroupsResetUserId(targetUser.id);
+    setRecentUsersError(null);
+    try {
+      await apiPost<{ deletedCount: number }>(`/api/account/admin/users/${targetUser.id}/groups/reset`);
+      await loadRecentUsers();
+    } catch (error) {
+      setRecentUsersError(error instanceof Error ? error.message : 'Не удалось сбросить бесплатные сообщества пользователя.');
+    } finally {
+      setGroupsResetUserId(null);
+    }
+  };
+
   const updateOwnAccessRestrictions = async (enabled: boolean) => {
     setIsAccessRestrictionsUpdating(true);
     setAccessRestrictionsError(null);
@@ -458,9 +476,20 @@ export function AdminPage({ user, onAccountChanged }: Props) {
                 </span>
                 <span data-label="Доступ до">{formatAdminDate(user.activeTo)}</span>
                 <span data-label="Действия">
-                  <button className="mini-button" type="button" onClick={() => openAccessModal(user)}>
-                    Изменить доступ
-                  </button>
+                  <span className="admin-user-actions">
+                    <button className="mini-button" type="button" onClick={() => openAccessModal(user)}>
+                      Изменить доступ
+                    </button>
+                    <button
+                      className="mini-button danger-button"
+                      type="button"
+                      disabled={groupsResetUserId === user.id}
+                      onClick={() => void resetUserGroups(user)}
+                    >
+                      {groupsResetUserId === user.id ? <RefreshCw className="spin" size={14} /> : <Trash2 size={14} />}
+                      Сбросить бесплатные
+                    </button>
+                  </span>
                 </span>
               </div>
             ))}

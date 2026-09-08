@@ -6,6 +6,13 @@
     <meta name="yandex-verification" content="7b8f5f86e582c7ce" />
     <meta name="description" content="Socstat — аналитика и статистика групп ВКонтакте." />
     <title>Socstat — аналитика групп ВКонтакте</title>
+    <script>
+      fetch('/api/account/me', { credentials: 'include' })
+        .then(function (response) {
+          if (response.ok) window.location.replace('/app/dashboard');
+        })
+        .catch(function () {});
+    </script>
     <!-- Yandex.Metrika counter -->
     <script>
       (function (m, e, t, r, i, k, a) {

@@ -148,7 +148,7 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
             >
               <span>{plan.title}</span>
               <strong>{plan.priceRub} ₽</strong>
-              <small>{plan.monthlyPriceRub} ₽ / месяц</small>
+              <small>{plan.durationLabel ?? `${plan.monthlyPriceRub} ₽ / месяц`}</small>
             </button>
           ))}
         </div>

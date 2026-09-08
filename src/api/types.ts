@@ -336,11 +336,13 @@ export type NewsItem = {
 };
 
 export type PaymentPlan = {
-  id: 'month' | 'quarter' | 'year';
+  id: 'month' | 'quarter' | 'year' | 'admin-test';
   title: string;
-  months: number;
+  months?: number;
+  days?: number;
   priceRub: number;
   monthlyPriceRub: number;
+  durationLabel?: string;
 };
 
 export type PaymentIntent = {

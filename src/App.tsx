@@ -110,8 +110,12 @@ export function App() {
     return <div className="boot">Загрузка socstat...</div>;
   }
 
-  if (isUnauthorized || location.pathname === '/login') {
+  if (isUnauthorized) {
     return <LoginPage onDevLogin={loadAccount} />;
+  }
+
+  if (location.pathname === '/login') {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (

@@ -9,11 +9,37 @@ import { publishAccountUpdated } from '../services/accountEvents.js';
 
 export const paymentsRouter = Router();
 
-const plans = [
+type PaymentPlan = {
+  id: 'month' | 'quarter' | 'year' | 'admin-test';
+  title: string;
+  months?: number;
+  days?: number;
+  priceRub: number;
+  monthlyPriceRub: number;
+  durationLabel?: string;
+};
+
+const plans: PaymentPlan[] = [
   { id: 'month', title: '1 месяц', months: 1, priceRub: 499, monthlyPriceRub: 499 },
   { id: 'quarter', title: '3 месяца', months: 3, priceRub: 899, monthlyPriceRub: 300 },
   { id: 'year', title: '1 год', months: 12, priceRub: 1999, monthlyPriceRub: 167 }
 ];
+const adminTestPlan: PaymentPlan = {
+  id: 'admin-test',
+  title: 'Тестовый режим',
+  days: 15,
+  priceRub: 29,
+  monthlyPriceRub: 0,
+  durationLabel: '15 дней'
+};
+
+function plansForUser(user: Express.Request['user']) {
+  return user?.isAdmin && user.enforceAccessRestrictions ? [...plans, adminTestPlan] : plans;
+}
+
+function allPlans() {
+  return [...plans, adminTestPlan];
+}
 
 type YooMoneyCallback = {
   [key: string]: unknown;
@@ -42,11 +68,11 @@ type AdminPaymentsMonthlySummary = {
 };
 
 function findPlanByAmount(amount: number) {
-  return plans.find((plan) => plan.priceRub === amount);
+  return allPlans().find((plan) => plan.priceRub === amount);
 }
 
 function findPlanByPeriod(period: string) {
-  return plans.find((plan) => plan.title === period);
+  return allPlans().find((plan) => plan.title === period);
 }
 
 function getPaymentIdFromLabel(label?: string) {
@@ -319,7 +345,9 @@ async function confirmPayment(paymentId: string, options: { operationId?: string
     return { status: 'user_not_found' };
   }
 
-  user.activeTo = extendActiveTo(user.activeTo, plan.months);
+  user.activeTo = plan.days
+    ? extendActiveToByDays(user.activeTo, plan.days)
+    : extendActiveTo(user.activeTo, plan.months ?? 0);
   payment.status = 'paid';
   payment.providerTransactionId = options.operationId ?? payment.providerTransactionId;
   payment.rawCallbackPayload = options.rawPayload ?? {
@@ -363,10 +391,10 @@ async function cancelPayment(paymentId: string, reason?: string): Promise<Paymen
   return { status: 'failed' };
 }
 
-paymentsRouter.get('/plans', (_req, res) => {
+paymentsRouter.get('/plans', requireUser, (req, res) => {
   res.json({
     success: true,
-    data: plans
+    data: plansForUser(req.user)
   });
 });
 
@@ -571,7 +599,7 @@ paymentsRouter.post('/admin/:paymentId/cancel', requireUser, async (req, res, ne
 
 paymentsRouter.post('/create', requireUser, async (req, res, next) => {
   try {
-    const plan = plans.find((item) => item.id === req.body?.planId);
+    const plan = plansForUser(req.user).find((item) => item.id === req.body?.planId);
     const paymentType = req.body?.paymentType === 'PC' ? 'PC' : 'AC';
 
     if (!plan) {

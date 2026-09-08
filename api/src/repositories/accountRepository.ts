@@ -255,7 +255,7 @@ export async function addGroup(
       });
     }
     if (!options.allowBonusGroup) {
-      throw new DomainError('Второе сообщество доступно после подписки на сообщество Socstat во ВКонтакте.', {
+      throw new DomainError('Второе сообщество доступно после вступления в сообщество Socstat во ВКонтакте.', {
         status: 403,
         code: 'BONUS_GROUP_SUBSCRIPTION_REQUIRED'
       });

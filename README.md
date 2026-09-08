@@ -190,5 +190,5 @@ Callback для уведомлений ЮMoney:
 YOOMONEY_NOTIFICATION_SECRET=...
 ```
 
-Без этого секрета callback не будет продлевать подписку. В настройках кошелька ЮMoney включите HTTP-уведомления,
+Без этого секрета callback не будет продлевать оплаченный период доступа. В настройках кошелька ЮMoney включите HTTP-уведомления,
 укажите `YOOMONEY_NOTIFICATION_URL` и используйте тот же секрет, что в `YOOMONEY_NOTIFICATION_SECRET`.

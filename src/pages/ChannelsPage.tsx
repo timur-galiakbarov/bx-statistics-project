@@ -149,7 +149,7 @@ export function ChannelsPage() {
                 </span>
               </div>
               <div className="debug-summary">
-                <strong>Подписка на посты</strong>
+                <strong>Уведомления о постах</strong>
                 <span>can_subscribe_posts: {formatFlag(group?.can_subscribe_posts)}</span>
               </div>
               <div className="debug-summary">

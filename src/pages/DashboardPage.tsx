@@ -77,10 +77,10 @@ function FreeCommunitiesPanel({ groups, isTrialActive, onAdd }: { groups: SavedG
   const hasBaseGroup = Boolean(baseGroup);
   const hasBonusGroup = Boolean(bonusGroup);
   return <section className="panel free-communities-panel">
-    <div className="free-communities-heading"><div><h2>Бонусные сообщества</h2><p>Добавьте до двух сообществ: первое доступно сразу, второе — после подписки на Socstat во ВКонтакте.</p></div><strong className="free-communities-count">{Math.min(groups.length, 2)} из 2</strong></div>
+    <div className="free-communities-heading"><div><h2>Бонусные сообщества</h2><p>Добавьте до двух сообществ: первое доступно сразу, второе — после вступления в сообщество Socstat во ВКонтакте.</p></div><strong className="free-communities-count">{Math.min(groups.length, 2)} из 2</strong></div>
     <div className="free-communities-slots">
       <FreeCommunitySlot title="Первое сообщество" description="Доступно всем пользователям" isActive={hasBaseGroup} group={baseGroup} />
-      <FreeCommunitySlot title="Бонусное сообщество" description="За подписку на Socstat во ВКонтакте" isActive={hasBonusGroup} group={bonusGroup} />
+      <FreeCommunitySlot title="Бонусное сообщество" description="За вступление в сообщество Socstat во ВКонтакте" isActive={hasBonusGroup} group={bonusGroup} />
     </div>
     {isTrialActive && <div className="trial-access-note"><Check size={17} /><span><strong>Пробный период активен.</strong> В течение трёх дней доступна аналитика без ограничений.</span></div>}
     {!hasBonusGroup && <div className="free-communities-action"><div>{hasBaseGroup && <><LockKeyhole size={17} /><span>Подпишитесь на <a href="https://vk.com/socstat" target="_blank" rel="noreferrer">сообщество Socstat</a> и добавьте ещё одно.</span></>}</div><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={() => onAdd(hasBaseGroup ? 'bonus' : 'free')}>{hasBaseGroup ? 'Добавить бонусное сообщество' : 'Добавить сообщество'}</Button></div>}

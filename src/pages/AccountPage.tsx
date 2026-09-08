@@ -112,7 +112,7 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
         <div className="panel-header">
           <div>
             <h2>Оплата</h2>
-            <p>Подписка открывает аналитику любых групп без ограничений.</p>
+            <p>Оплата периода открывает аналитику любых групп без ограничений.</p>
           </div>
           <WalletCards size={24} />
         </div>
@@ -182,7 +182,7 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
         </button>
 
         <div className="billing-note">
-          После оплаты период подписки суммируется с текущим остатком. Если дата доступа не обновилась сразу, нажмите
+          После оплаты период доступа суммируется с текущим остатком. Если дата доступа не обновилась сразу, нажмите
           кнопку обновления после возврата с оплаты.
         </div>
       </section>
@@ -209,7 +209,7 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
         <div className="panel-header compact">
           <div>
             <h2>История оплат</h2>
-            <p>Подтверждённые платежи за подписку.</p>
+            <p>Подтверждённые платежи за доступ к сервису.</p>
           </div>
           <button className="icon-button" type="button" aria-label="Обновить историю оплат" onClick={refreshPaymentStatus} disabled={isRefreshingPayment}>
             <RefreshCw size={17} className={isRefreshingPayment ? 'spin' : undefined} />

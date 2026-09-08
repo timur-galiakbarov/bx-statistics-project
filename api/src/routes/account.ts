@@ -210,7 +210,7 @@ accountRouter.post('/groups/bonus', requireUser, async (req, res, next) => {
   try {
     const accessToken = await getVkAccessToken(req.user!.id);
     if (!accessToken) {
-      throw new VkApiError('Для проверки подписки подключите аккаунт ВКонтакте.', {
+      throw new VkApiError('Для проверки участия в сообществе подключите аккаунт ВКонтакте.', {
         status: 409,
         code: 'VK_TOKEN_REQUIRED'
       });

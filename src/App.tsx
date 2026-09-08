@@ -21,6 +21,7 @@ import { AdminPage } from './pages/AdminPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { ComparePage } from './pages/ComparePage';
 import { LoginPage } from './pages/LoginPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 import { PostsPage } from './pages/PostsPage';
 import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
 import { formatDate } from './utils/date';
@@ -185,6 +186,7 @@ export function App() {
               user?.isAdmin ? <AdminPage user={user} onAccountChanged={loadAccount} /> : <Navigate to="/dashboard" replace />
             }
           />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <footer className="app-footer">
           Нашли ошибку?{' '}

@@ -1,4 +1,4 @@
-import { Check, ExternalLink, LockKeyhole, Plus, RefreshCw, Trash2, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ExternalLink, Eye, Heart, LockKeyhole, MessageCircle, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
 import { IconButton } from '@alfalab/core-components-icon-button';
 import { Input } from '@alfalab/core-components-input';
 import { Modal } from '@alfalab/core-components-modal';
@@ -8,7 +8,7 @@ import { Skeleton } from '@alfalab/core-components-skeleton';
 import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiDelete, apiGet, apiPost } from '../api/client';
-import type { DashboardSummary, SavedGroup, VkGroup, VkListResponse } from '../api/types';
+import type { DashboardPeriod, DashboardSummary, DashboardSummaryItem, SavedGroup, VkGroup, VkListResponse } from '../api/types';
 import { number } from './dashboardSelectors';
 
 type Props = { groups: SavedGroup[]; hasPaidAccess: boolean; isTrialActive: boolean; onGroupsChanged: () => Promise<void> };
@@ -16,6 +16,7 @@ type AddMode = 'tracked' | 'free' | 'bonus';
 export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsChanged }: Props) {
   const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [period, setPeriod] = useState<DashboardPeriod>('last7days');
   const [message, setMessage] = useState('');
   const [query, setQuery] = useState('');
   const [searchError, setSearchError] = useState('');
@@ -30,11 +31,11 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
   const loadSummary = async (forceRefresh = false) => {
     if (!hasPaidAccess) { setSummary(null); setMessage('Детальная статистика недоступна: срок доступа истёк.'); return; }
     setMessage(''); setIsSummaryLoading(true);
-    try { setSummary(await apiGet<DashboardSummary>(`/api/dashboard/summary?period=last30days${forceRefresh ? '&refresh=1' : ''}`)); }
+    try { setSummary(await apiGet<DashboardSummary>(`/api/dashboard/summary?period=${period}${forceRefresh ? '&refresh=1' : ''}`)); }
     catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось загрузить дашборд.'); }
     finally { setIsSummaryLoading(false); }
   };
-  useEffect(() => { if (groups.length) void loadSummary(); else setSummary(null); }, [groups.length, hasPaidAccess]);
+  useEffect(() => { if (groups.length) void loadSummary(); else setSummary(null); }, [groups.length, hasPaidAccess, period]);
   const search = async (event: FormEvent) => { event.preventDefault(); if (!query.trim()) { setSearchError('Введите название или ссылку на сообщество.'); return; } setSearchError(''); setIsSearching(true); try { setResults((await apiGet<VkListResponse<VkGroup>>(`/api/vk/groups/search?q=${encodeURIComponent(query.trim())}`)).items); } catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось найти сообщество.'); } finally { setIsSearching(false); } };
   const updateQuery = (value: string) => { setQuery(value); if (searchError) setSearchError(''); };
   const add = async (group: VkGroup) => { try { const photo = group.photo_100 ?? group.photo_50; const payload = { group: { id: group.id, name: group.name, screen_name: group.screen_name, photo, photo_50: photo, members_count: group.members_count } }; const path = addMode === 'free' ? '/api/account/groups/free' : addMode === 'bonus' ? '/api/account/groups/bonus' : '/api/account/groups'; await apiPost(path, addMode === 'tracked' ? { ...payload, source: 'bookmark' } : payload); await onGroupsChanged(); setResults([]); setIsAddModalOpen(false); setMessage(`«${group.name}» ${addMode === 'tracked' ? 'добавлено в отслеживание' : 'добавлено для бесплатного анализа'}.`); } catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось добавить сообщество.'); } };
@@ -47,7 +48,7 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
   const trackedGroups = groups.filter((group) => group.source !== 'free' && group.source !== 'bonus');
   const managementProps = { query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds: groups.map((group) => group.vkGroupId) };
   return <div className="page-grid dashboard-page">
-    <CommunitiesTable groups={trackedGroups} summary={summary} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onRemove={remove} onSelect={(group) => navigate(`/analytics?groupId=${group.vkGroupId}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
+    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onRemove={remove} onSelect={(group) => navigate(`/analytics?groupId=${group.vkGroupId}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
     <FreeCommunitiesPanel groups={freeGroups} isTrialActive={isTrialActive} onAdd={openAddModal} />
     {message && <div className="form-message span-2">{message}</div>}
     <AddCommunityModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} managementProps={managementProps} />
@@ -92,7 +93,14 @@ function FreeCommunitySlot({ title, description, isActive, group }: { title: str
   return <div className={`free-community-slot ${isActive ? 'active' : ''}`}><span className="free-community-slot-icon">{isActive ? <Check size={16} /> : <Users size={16} />}</span><div><strong>{group?.name ?? title}</strong><small>{isActive ? 'Добавлено для анализа' : description}</small></div>{group && <a aria-label={`Открыть ${group.name} во ВКонтакте`} href={`https://vk.com/${group.vkGroupId}`} target="_blank" rel="noreferrer"><ExternalLink size={15} /></a>}</div>;
 }
 
-function CommunitiesTable({ groups, summary, onAdd, onRefresh, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; onAdd: () => void; onRefresh: () => void; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
+const dashboardPeriods: Array<{ id: DashboardPeriod; title: string }> = [
+  { id: 'last7days', title: 'Последние 7 дней' },
+  { id: 'today', title: 'Сегодня' },
+  { id: 'yesterday', title: 'Вчера' },
+  { id: 'currentMonth', title: 'Этот месяц' }
+];
+
+function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRefresh, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; period: DashboardPeriod; onPeriodChange: (period: DashboardPeriod) => void; onAdd: () => void; onRefresh: () => void; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
   const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'mine' | 'other'>('all');
   const rows = groups.map((group) => {
     const summaryItem = summary?.groups.find((item) => item.savedGroupId === group.id);
@@ -107,24 +115,63 @@ function CommunitiesTable({ groups, summary, onAdd, onRefresh, onRemove, onSelec
 
   return <section className="panel span-2 communities-panel">
     <div className="section-title"><div><h2>Отслеживаемые сообщества</h2><strong>{groups.length}</strong></div><Button disabled={isRefreshing} leftAddons={<RefreshCw size={16} />} loading={isRefreshing} size={40} type="button" view="secondary" onClick={onRefresh}>Обновить данные</Button></div>
-    <div className="communities-filter" aria-label="Фильтр сообществ">
-      <SegmentedControl className="communities-filter-control" onChange={(id) => setOwnershipFilter(id as 'all' | 'mine' | 'other')} selectedId={ownershipFilter} size={40}>
+    <div className="communities-controls">
+      <div className="communities-filter" aria-label="Фильтр сообществ">
+        <SegmentedControl className="communities-filter-control" onChange={(id) => setOwnershipFilter(id as 'all' | 'mine' | 'other')} selectedId={ownershipFilter} size={40}>
         <Segment className="communities-filter-segment" id="all" title={`Все (${groups.length})`} />
         <Segment className="communities-filter-segment" id="mine" title={`Мои (${managedCount})`} />
         <Segment className="communities-filter-segment" id="other" title={`Чужие (${groups.length - managedCount})`} />
-      </SegmentedControl>
+        </SegmentedControl>
+      </div>
+      <div className="communities-period" aria-label="Период статистики">
+        <SegmentedControl className="communities-period-control" onChange={(id) => onPeriodChange(id as DashboardPeriod)} selectedId={period} size={40}>
+          {dashboardPeriods.map((item) => <Segment className="communities-period-segment" id={item.id} key={item.id} title={item.title} />)}
+        </SegmentedControl>
+      </div>
     </div>
     <div className="communities-table">
-      <div className="communities-table-head"><span>Сообщество</span><span>Статус</span><span>Статистика</span><span>Подписчики</span><span aria-label="Действия" /></div>
+      <div className="communities-table-head"><span>Сообщество</span><span>Участники</span><span>Прирост</span><span>Посещения<br />Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span>Лайки<br />Репосты<br />Комментарии</span><span aria-label="Действия" /></div>
       {visibleRows.length ? visibleRows.map(({ group, summaryItem, isManaged }) => {
         const membersCount = summaryItem?.membersCount ?? group.membersCount;
         const selectGroup = () => onSelect(group);
-        const statsStatus = !summaryItem ? { label: 'Загружаем данные', className: 'loading' } : summaryItem.error || summaryItem.statsAvailable === null ? { label: 'Не удалось проверить', className: 'unknown' } : summaryItem.statsAvailable ? { label: 'открыта', className: 'available' } : { label: 'закрытая', className: 'unavailable' };
-        return <div className="communities-table-row communities-table-row-action" key={group.id} onClick={selectGroup} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectGroup(); } }} role="link" tabIndex={0}><span className="communities-table-name">{group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<strong>{group.name}</strong></span><span className={`communities-table-status ${isManaged ? 'managed' : 'tracked'}`}>{isManaged ? 'мое сообщество' : 'чужое сообщество'}</span><span className={`communities-table-stats ${statsStatus.className}`}>{statsStatus.label}</span><span className={`communities-table-members ${typeof membersCount === 'number' ? '' : 'loading'}`}>{typeof membersCount === 'number' ? number(membersCount) : 'Загружаем данные'}</span><IconButton className="community-delete-button" aria-label={`Удалить ${group.name}`} icon={Trash2} loading={deletingGroupId === group.id} onClick={(event) => { event.stopPropagation(); void onRemove(group); }} size={24} view="transparent" /></div>;
+        return <div className="communities-table-row communities-table-row-action" key={group.id} onClick={selectGroup} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectGroup(); } }} role="link" tabIndex={0}>
+          <span className="communities-table-name">{group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<span><strong>{group.name}</strong><small className={`communities-table-owner ${isManaged ? 'managed' : ''}`}>{isManaged ? 'Моё сообщество' : 'Чужое сообщество'}</small></span></span>
+          <MetricValue value={membersCount} loading={!summaryItem} />
+          <GrowthValue item={summaryItem} />
+          <PairValue first={summaryItem?.traffic.visitors} second={summaryItem?.traffic.views} firstIcon={Users} secondIcon={Eye} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />
+          <PairValue first={summaryItem?.reach.subscribers} second={summaryItem?.reach.total} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />
+          <TripleValue item={summaryItem} loading={!summaryItem} />
+          <IconButton className="community-delete-button" aria-label={`Удалить ${group.name}`} icon={Trash2} loading={deletingGroupId === group.id} onClick={(event) => { event.stopPropagation(); void onRemove(group); }} size={24} view="transparent" />
+        </div>;
       }) : <div className="communities-table-empty">В этой категории пока нет сообществ.</div>}
     </div>
     <div className="communities-add"><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={onAdd}>Добавить сообщество</Button></div>
   </section>;
+}
+
+function isStatsUnavailable(item?: DashboardSummaryItem) {
+  return Boolean(item && (item.statsAvailable === false || item.statsAvailable === null || item.error));
+}
+
+function MetricValue({ value, loading = false }: { value?: number; loading?: boolean }) {
+  return <span className={`communities-table-metric ${loading ? 'loading' : ''}`}>{loading ? 'Загружаем данные' : typeof value === 'number' ? number(value) : '—'}</span>;
+}
+
+function GrowthValue({ item }: { item?: DashboardSummaryItem }) {
+  if (!item) return <MetricValue loading />;
+  if (isStatsUnavailable(item)) return <MetricValue />;
+  return <span className="communities-table-pair"><strong>{item.growth.total > 0 ? '+' : ''}{number(item.growth.total)}</strong><small><ArrowUp size={12} />{number(item.growth.subscribed)} <ArrowDown size={12} />{number(item.growth.unsubscribed)}</small></span>;
+}
+
+function PairValue({ first, second, firstIcon: FirstIcon, secondIcon: SecondIcon, unavailable, loading }: { first?: number; second?: number; firstIcon?: typeof Users; secondIcon?: typeof Users; unavailable: boolean; loading: boolean }) {
+  if (loading || unavailable) return <MetricValue loading={loading} />;
+  return <span className="communities-table-pair"><strong>{FirstIcon && <FirstIcon size={13} />}{number(first ?? 0)}</strong><small>{SecondIcon && <SecondIcon size={13} />}{number(second ?? 0)}</small></span>;
+}
+
+function TripleValue({ item, loading }: { item?: DashboardSummaryItem; loading: boolean }) {
+  if (loading) return <MetricValue loading />;
+  if (item?.error) return <MetricValue />;
+  return <span className="communities-table-triple"><small><Heart size={13} />{number(item?.activity.likes ?? 0)}</small><small><Share2 size={13} />{number(item?.activity.reposts ?? 0)}</small><small><MessageCircle size={13} />{number(item?.activity.comments ?? 0)}</small></span>;
 }
 
 function Management({ query, setQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds }: ManagementProps) {

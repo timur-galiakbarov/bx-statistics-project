@@ -6,6 +6,7 @@ import {
   Home,
   LogOut,
   Newspaper,
+  Send,
   Shield,
   Users
 } from 'lucide-react';
@@ -23,6 +24,7 @@ import { ComparePage } from './pages/ComparePage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PostsPage } from './pages/PostsPage';
+import { TelegramPage } from './pages/TelegramPage';
 import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
 import { formatDate } from './utils/date';
 
@@ -35,6 +37,7 @@ const navItems = [
 ];
 
 const adminNavItem = { to: '/admin', label: 'Админка', icon: Shield };
+const telegramNavItem = { to: '/telegram', label: 'Telegram', icon: Send };
 
 export function App() {
   const location = useLocation();
@@ -96,9 +99,9 @@ export function App() {
   };
 
   const title = useMemo(() => {
-    return [...navItems, adminNavItem].find((item) => location.pathname.startsWith(item.to))?.label ?? 'Socstat';
+    return [...navItems, telegramNavItem, adminNavItem].find((item) => location.pathname.startsWith(item.to))?.label ?? 'Socstat';
   }, [location.pathname]);
-  const visibleNavItems = user?.isAdmin ? [...navItems, adminNavItem] : navItems;
+  const visibleNavItems = user?.isAdmin ? [...navItems, telegramNavItem, adminNavItem] : navItems;
   const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions) || isAccessActive(user?.activeTo);
   const isTrialActive = Boolean(user?.trialEndsAt && new Date(user.trialEndsAt).getTime() >= Date.now());
   const paidRoute = (element: JSX.Element) => (hasPaidAccess ? element : <AccessLock activeTo={user?.activeTo} />);
@@ -180,6 +183,7 @@ export function App() {
           />
           <Route path="/compare" element={paidRoute(<ComparePage />)} />
           <Route path="/posts" element={paidRoute(<PostsPage />)} />
+          <Route path="/telegram" element={user?.isAdmin ? <TelegramPage /> : <Navigate to="/dashboard" replace />} />
           <Route
             path="/admin"
             element={

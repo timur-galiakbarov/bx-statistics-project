@@ -1,7 +1,7 @@
 import { ArrowDownUp, BarChart3, Search, Trash2, X } from 'lucide-react';
 import { FormEvent, Suspense, lazy, useMemo, useState } from 'react';
 import { apiGet } from '../api/client';
-import type { AnalyticsPeriod, CommunityAnalytics, CompareItem, CompareResult, VkGroup, VkListResponse } from '../api/types';
+import type { AnalyticsPeriod, CommunityAnalytics, CompareItem, CompareResult, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
 
 const CompareChart = lazy(() => import('../components/CompareChart'));
 
@@ -21,6 +21,7 @@ const sortOptions = [
 
 type CompareSort = (typeof sortOptions)[number]['key'];
 type ComparedItem = CompareItem & { analytics: CommunityAnalytics };
+type CompareChannel = { id: string | number; name: string; platform: 'vk' | 'youtube'; screen_name?: string; photo_50?: string; photo_100?: string; members_count?: number | null };
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value);
@@ -35,10 +36,11 @@ function normalizeQuery(value: string) {
 
 export function ComparePage() {
   const [query, setQuery] = useState('');
+  const [platform, setPlatform] = useState<'vk' | 'youtube'>('vk');
   const [period, setPeriod] = useState<AnalyticsPeriod>('month');
   const [sortBy, setSortBy] = useState<CompareSort>('actions');
-  const [searchResults, setSearchResults] = useState<VkGroup[]>([]);
-  const [selectedGroups, setSelectedGroups] = useState<VkGroup[]>([]);
+  const [searchResults, setSearchResults] = useState<CompareChannel[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<CompareChannel[]>([]);
   const [compare, setCompare] = useState<CompareResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -47,7 +49,7 @@ export function ComparePage() {
   const comparedItems = useMemo<ComparedItem[]>(() => {
     const items = (compare?.items.filter((item): item is ComparedItem => Boolean(item.analytics)) ?? []).slice();
 
-    return items.sort((left, right) => getSortValue(right.analytics, sortBy) - getSortValue(left.analytics, sortBy));
+    return items.sort((left, right) => getSortValue(right.analytics!, sortBy) - getSortValue(left.analytics!, sortBy));
   }, [compare, sortBy]);
   const failedItems = compare?.items.filter((item) => item.error) ?? [];
   const compareChartData = comparedItems.map((item) => ({
@@ -72,11 +74,14 @@ export function ComparePage() {
     setSearchResults([]);
 
     try {
-      const data = await apiGet<VkListResponse<VkGroup>>(
-        `/api/vk/groups/search?q=${encodeURIComponent(normalized)}&count=10`
-      );
-      setSearchResults(data.items);
-      setMessage(data.items.length ? null : 'Сообщества не найдены.');
+      if (platform === 'youtube') {
+        const data = await apiGet<VkListResponse<YoutubeChannel>>(`/api/youtube/channels/search?q=${encodeURIComponent(query.trim())}`);
+        setSearchResults(data.items.map((item) => ({ id: item.id, name: item.name, platform: 'youtube', screen_name: item.handle, photo_100: item.photo, members_count: item.followersCount })));
+      } else {
+        const data = await apiGet<VkListResponse<VkGroup>>(`/api/vk/groups/search?q=${encodeURIComponent(normalized)}&count=10`);
+        setSearchResults(data.items.map((item) => ({ ...item, platform: 'vk' })));
+      }
+      setMessage(null);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось найти сообщества.');
     } finally {
@@ -84,10 +89,10 @@ export function ComparePage() {
     }
   };
 
-  const addGroup = (group: VkGroup) => {
+  const addGroup = (group: CompareChannel) => {
     setMessage(null);
 
-    if (selectedGroups.some((item) => item.id === group.id)) {
+    if (selectedGroups.some((item) => item.platform === group.platform && item.id === group.id)) {
       setMessage('Сообщество уже добавлено в сравнение.');
       return;
     }
@@ -96,7 +101,7 @@ export function ComparePage() {
     setCompare(null);
   };
 
-  const removeGroup = (groupId: number) => {
+  const removeGroup = (groupId: string | number) => {
     setSelectedGroups((groups) => groups.filter((group) => group.id !== groupId));
     setCompare(null);
   };
@@ -119,7 +124,7 @@ export function ComparePage() {
     try {
       const groupIds = selectedGroups.map((group) => group.id).join(',');
       const data = await apiGet<CompareResult>(
-        `/api/compare?groupIds=${encodeURIComponent(groupIds)}&period=${encodeURIComponent(period)}`
+        `/api/compare?groupIds=${encodeURIComponent(groupIds)}&platform=${platform}&period=${encodeURIComponent(period)}`
       );
       setCompare(data);
     } catch (error) {
@@ -135,7 +140,7 @@ export function ComparePage() {
       {item.group.photo && <img src={item.group.photo} alt="" />}
       <span>
         <strong>{item.group.name}</strong>
-        <small>{formatNumber(item.group.membersCount)} участников</small>
+        <small>{item.group.membersCount === null ? 'Подписчики: Недоступно' : `${formatNumber(item.group.membersCount)} ${item.platform === 'youtube' ? 'подписчиков' : 'участников'}`}</small>
       </span>
     </span>
   );
@@ -151,10 +156,11 @@ export function ComparePage() {
         </div>
 
         <form className="search-form" onSubmit={search}>
+          <select aria-label="Платформа" value={platform} onChange={(event) => { setPlatform(event.target.value as 'vk' | 'youtube'); setSelectedGroups([]); setSearchResults([]); setCompare(null); }}><option value="vk">ВКонтакте</option><option value="youtube">YouTube</option></select>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Название, screen name или ссылка vk.com/..."
+            placeholder={platform === 'youtube' ? 'URL, @handle, channel ID или название' : 'Название, screen name или ссылка vk.com/...'}
           />
           <button type="submit" disabled={isSearching}>
             <Search size={18} />
@@ -235,7 +241,7 @@ export function ComparePage() {
           <div className="panel-header compact">
             <div>
               <h2>Результаты сравнения</h2>
-              <p>Сравнение построено по доступным VK-данным за выбранный период.</p>
+            <p>{platform === 'youtube' ? 'YouTube сравнивается по текущим накопительным метрикам видео, опубликованных в периоде; репосты и приватная аналитика недоступны.' : 'Сравнение построено по доступным VK-данным за выбранный период.'}</p>
             </div>
           </div>
 
@@ -284,7 +290,7 @@ export function ComparePage() {
                     <span>{item.analytics.wall.averageActionsPerPost}</span>
                     <span>{item.analytics.wall.averageActionsPerDay}</span>
                     <span>{formatNumber(item.analytics.wall.likes)}</span>
-                    <span>{formatNumber(item.analytics.wall.reposts)}</span>
+                    <span>{item.analytics.platform === 'youtube' ? 'Недоступно' : formatNumber(item.analytics.wall.reposts)}</span>
                     <span>{formatNumber(item.analytics.wall.comments)}</span>
                   </div>
                 ))}
@@ -305,7 +311,7 @@ export function ComparePage() {
                     <span>{formatNumber(item.analytics.wall.averageViewsPerPost)}</span>
                     <span>{formatNumber(item.analytics.wall.maxViews)}</span>
                     <span>{formatNumber(item.analytics.wall.minViews)}</span>
-                    <span>{formatNumber(item.analytics.wall.adsPosts)}</span>
+                    <span>{item.analytics.platform === 'youtube' ? 'Недоступно' : formatNumber(item.analytics.wall.adsPosts)}</span>
                     <span>{formatNumber(item.analytics.wall.periodPosts)}</span>
                   </div>
                 ))}
@@ -323,8 +329,8 @@ export function ComparePage() {
                 {comparedItems.map((item) => (
                   <div className="table-row compare-row content" key={item.groupId}>
                     {renderGroupCell(item.analytics)}
-                    <span>{item.analytics.wall.erAverage}%</span>
-                    <span>{item.analytics.wall.erMax}%</span>
+                    <span>{item.analytics.wall.availability?.er === false ? 'Недоступно' : `${item.analytics.wall.erAverage}%`}</span>
+                    <span>{item.analytics.wall.availability?.er === false ? 'Недоступно' : `${item.analytics.wall.erMax}%`}</span>
                     <span>{formatNumber(item.analytics.photos.period)}</span>
                     <span>{formatNumber(item.analytics.videos.period)}</span>
                     <span>{item.analytics.warnings.length ? item.analytics.warnings.length : 'нет'}</span>
@@ -341,7 +347,7 @@ export function ComparePage() {
 
 function getSortValue(analytics: CommunityAnalytics, sortBy: CompareSort) {
   if (sortBy === 'membersCount') {
-    return analytics.group.membersCount;
+    return analytics.group.membersCount ?? -1;
   }
 
   return analytics.wall[sortBy];

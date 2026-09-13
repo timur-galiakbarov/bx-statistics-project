@@ -30,7 +30,11 @@ type GroupDocument = {
   source: SavedGroup['source'];
   isTracked?: boolean;
   vkGroupId: string;
+  platform?: SavedGroup['platform'];
+  externalId?: string | null;
   name: string;
+  handle?: string | null;
+  url?: string | null;
   photo?: string | null;
   membersCount?: number | null;
 };
@@ -74,12 +78,18 @@ export function mapUser(user: UserDocument): AccountUser {
 }
 
 function mapGroup(group: GroupDocument): SavedGroup {
+  const platform = group.platform ?? 'vk';
+  const externalId = group.externalId ?? group.vkGroupId;
   return {
     id: group._id.toString(),
     source: group.source,
     isTracked: group.isTracked !== false,
     vkGroupId: group.vkGroupId,
+    platform,
+    externalId,
     name: group.name,
+    handle: group.handle ?? undefined,
+    url: group.url ?? (platform === 'youtube' ? `https://www.youtube.com/channel/${externalId}` : `https://vk.com/${externalId}`),
     photo: group.photo ?? undefined,
     membersCount: group.membersCount ?? undefined
   };
@@ -258,11 +268,20 @@ export async function addGroup(
   options: { allowBonusGroup?: boolean } = {}
 ) {
   const source = group.source ?? 'free';
-  const vkGroupId = group.vkGroupId ?? String(group.name ?? 'unknown');
+  const platform = group.platform ?? 'vk';
+  const externalId = group.externalId ?? group.vkGroupId ?? String(group.name ?? 'unknown');
+  // Populate the legacy field for old indexes and old deployments reading the collection.
+  const vkGroupId = group.vkGroupId ?? externalId;
+  const identityQuery: Record<string, unknown> = platform === 'vk'
+    ? { userId, source, $or: [{ platform: 'vk', externalId }, { platform: 'vk', vkGroupId }, { platform: { $exists: false }, vkGroupId }] }
+    : { userId, source, platform, externalId };
 
-  const existingGroup = await SavedGroupModel.exists({ userId, source, vkGroupId });
+  const existingGroup = await SavedGroupModel.exists(identityQuery as any);
+  const trackedIdentityQuery: Record<string, unknown> = platform === 'vk'
+    ? { userId, $or: [{ platform: 'vk', externalId }, { platform: 'vk', vkGroupId }, { platform: { $exists: false }, vkGroupId }] }
+    : { userId, platform, externalId };
   const isAlreadyTracked = source === 'free' || source === 'bonus'
-    ? await SavedGroupModel.exists({ userId, vkGroupId, isTracked: { $ne: false } })
+    ? await SavedGroupModel.exists({ ...trackedIdentityQuery, isTracked: { $ne: false } } as any)
     : false;
 
   if (!existingGroup && source === 'free') {
@@ -292,17 +311,21 @@ export async function addGroup(
   }
 
   const createdGroup = await SavedGroupModel.findOneAndUpdate(
-    { userId, source, vkGroupId },
+    identityQuery as any,
     {
       $set: {
-        name: group.name ?? group.vkGroupId ?? 'Новая группа',
+        name: group.name ?? externalId ?? 'Новый источник',
+        platform,
+        externalId,
+        vkGroupId,
+        handle: group.handle,
+        url: group.url,
         photo: group.photo,
         membersCount: group.membersCount
       },
       $setOnInsert: {
         userId,
         source,
-        vkGroupId,
         isTracked: !isAlreadyTracked
       }
     },

@@ -25,6 +25,7 @@
     "@alfalab/core-components-select": "^19.2.5",
     "@alfalab/core-components-skeleton": "^7.0.4",
     "@alfalab/core-components-stack-context": "^1.0.1",
+    "@alfalab/core-components-tooltip": "^9.0.19",
     "@vitejs/plugin-react": "^4.3.1",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",

@@ -1,7 +1,7 @@
 import { ArrowDownUp, FileText, Search, Trash2, X } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { apiGet } from '../api/client';
-import type { AnalyticsPeriod, PostsAnalysisPost, PostsAnalysisResult, VkGroup, VkListResponse } from '../api/types';
+import type { AnalyticsPeriod, PostsAnalysisPost, PostsAnalysisResult, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
 import { PostCard } from '../components/PostCard';
 
 const periods: Array<{ key: AnalyticsPeriod; label: string }> = [
@@ -34,6 +34,7 @@ const POSTS_PAGE_SIZE = 18;
 
 type PostSort = (typeof sortOptions)[number]['key'];
 type PostFilter = (typeof filterOptions)[number]['key'];
+type PostsChannel = { id: string | number; name: string; platform: 'vk' | 'youtube'; screen_name?: string; photo_50?: string; photo_100?: string; members_count?: number | null };
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value);
@@ -76,12 +77,13 @@ function postMatchesFilter(post: PostsAnalysisPost, filter: PostFilter) {
 
 export function PostsPage() {
   const [query, setQuery] = useState('');
+  const [platform, setPlatform] = useState<'vk' | 'youtube'>('vk');
   const [period, setPeriod] = useState<AnalyticsPeriod>('month');
   const [sortBy, setSortBy] = useState<PostSort>('likes');
   const [filterBy, setFilterBy] = useState<PostFilter>('all');
   const [visibleCount, setVisibleCount] = useState(POSTS_PAGE_SIZE);
-  const [searchResults, setSearchResults] = useState<VkGroup[]>([]);
-  const [selectedGroups, setSelectedGroups] = useState<VkGroup[]>([]);
+  const [searchResults, setSearchResults] = useState<PostsChannel[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<PostsChannel[]>([]);
   const [analysis, setAnalysis] = useState<PostsAnalysisResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -115,11 +117,15 @@ export function PostsPage() {
     setSearchResults([]);
 
     try {
-      const data = await apiGet<VkListResponse<VkGroup>>(
-        `/api/vk/groups/search?q=${encodeURIComponent(normalized)}&count=10`
-      );
-      setSearchResults(data.items);
-      setMessage(data.items.length ? null : 'Сообщества не найдены.');
+      if (platform === 'youtube') {
+        const data = await apiGet<VkListResponse<YoutubeChannel>>(`/api/youtube/channels/search?q=${encodeURIComponent(query.trim())}`);
+        setSearchResults(data.items.map((item) => ({ id: item.id, name: item.name, platform: 'youtube', screen_name: item.handle, photo_100: item.photo, members_count: item.followersCount })));
+        setMessage(data.items.length ? null : 'YouTube-каналы не найдены.');
+      } else {
+        const data = await apiGet<VkListResponse<VkGroup>>(`/api/vk/groups/search?q=${encodeURIComponent(normalized)}&count=10`);
+        setSearchResults(data.items.map((item) => ({ ...item, platform: 'vk' })));
+        setMessage(data.items.length ? null : 'Сообщества не найдены.');
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось найти сообщества.');
     } finally {
@@ -127,10 +133,10 @@ export function PostsPage() {
     }
   };
 
-  const addGroup = (group: VkGroup) => {
+  const addGroup = (group: PostsChannel) => {
     setMessage(null);
 
-    if (selectedGroups.some((item) => item.id === group.id)) {
+    if (selectedGroups.some((item) => item.platform === group.platform && item.id === group.id)) {
       setMessage('Сообщество уже добавлено в анализ публикаций.');
       return;
     }
@@ -139,7 +145,7 @@ export function PostsPage() {
     setAnalysis(null);
   };
 
-  const removeGroup = (groupId: number) => {
+  const removeGroup = (groupId: string | number) => {
     setSelectedGroups((groups) => groups.filter((group) => group.id !== groupId));
     setAnalysis(null);
   };
@@ -162,7 +168,7 @@ export function PostsPage() {
     try {
       const groupIds = selectedGroups.map((group) => group.id).join(',');
       const data = await apiGet<PostsAnalysisResult>(
-        `/api/posts/analyze?groupIds=${encodeURIComponent(groupIds)}&period=${encodeURIComponent(period)}`
+        `/api/posts/analyze?groupIds=${encodeURIComponent(groupIds)}&platform=${platform}&period=${encodeURIComponent(period)}`
       );
       setAnalysis(data);
       setFilterBy('all');
@@ -185,10 +191,11 @@ export function PostsPage() {
         </div>
 
         <form className="search-form" onSubmit={search}>
+          <select aria-label="Платформа" value={platform} onChange={(event) => { setPlatform(event.target.value as 'vk' | 'youtube'); setSelectedGroups([]); setSearchResults([]); setAnalysis(null); }}><option value="vk">ВКонтакте</option><option value="youtube">YouTube</option></select>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Название, screen name или ссылка vk.com/..."
+            placeholder={platform === 'youtube' ? 'URL, @handle, channel ID или название' : 'Название, screen name или ссылка vk.com/...'}
           />
           <button type="submit" disabled={isSearching}>
             <Search size={18} />
@@ -276,6 +283,8 @@ export function PostsPage() {
             </div>
           </div>
 
+          {platform === 'youtube' && <div className="form-message">Просмотры, лайки и комментарии — текущие накопительные значения видео, опубликованных в выбранном периоде. Репосты недоступны.</div>}
+
           {analysis.groups.some((item) => item.error) &&
             analysis.groups
               .filter((item) => item.error)
@@ -303,7 +312,7 @@ export function PostsPage() {
                       {item.group?.photo && <img src={item.group.photo} alt="" />}
                       <span>
                         <strong>{item.group?.name}</strong>
-                        <small>{formatNumber(item.group?.membersCount ?? 0)} участников</small>
+                        <small>{item.group?.membersCount === null ? 'Подписчики: Недоступно' : `${formatNumber(item.group?.membersCount ?? 0)} ${platform === 'youtube' ? 'подписчиков' : 'участников'}`}</small>
                       </span>
                     </span>
                     <span>{formatNumber(item.summary?.periodPosts ?? 0)}</span>

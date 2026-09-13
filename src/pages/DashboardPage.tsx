@@ -4,15 +4,20 @@ import { Input } from '@alfalab/core-components-input';
 import { Modal } from '@alfalab/core-components-modal';
 import { Button } from '@alfalab/core-components-button';
 import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
-import { Skeleton } from '@alfalab/core-components-skeleton';
 import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiDelete, apiGet, apiPost } from '../api/client';
-import type { DashboardPeriod, DashboardSummary, DashboardSummaryItem, SavedGroup, VkGroup, VkListResponse } from '../api/types';
+import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
+import type { DashboardPeriod, DashboardSummary, DashboardSummaryItem, SavedGroup, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
 import { number } from './dashboardSelectors';
 
 type Props = { groups: SavedGroup[]; hasPaidAccess: boolean; isTrialActive: boolean; onGroupsChanged: () => Promise<void> };
 type AddMode = 'tracked' | 'free' | 'bonus';
+type Platform = 'vk' | 'youtube';
+type SearchResult = VkGroup | YoutubeChannel;
+function isYoutubeChannel(group: SearchResult): group is YoutubeChannel {
+  return 'platform' in group && group.platform === 'youtube';
+}
 export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsChanged }: Props) {
   const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -21,7 +26,8 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
   const [query, setQuery] = useState('');
   const [searchError, setSearchError] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<VkGroup[]>([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [platform, setPlatform] = useState<Platform>('vk');
   const [vkGroups, setVkGroups] = useState<VkGroup[]>([]);
   const [isVkGroupsLoading, setIsVkGroupsLoading] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -36,9 +42,9 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
     finally { setIsSummaryLoading(false); }
   };
   useEffect(() => { if (groups.length) void loadSummary(); else setSummary(null); }, [groups.length, hasPaidAccess, period]);
-  const search = async (event: FormEvent) => { event.preventDefault(); if (!query.trim()) { setSearchError('Введите название или ссылку на сообщество.'); return; } setSearchError(''); setIsSearching(true); try { setResults((await apiGet<VkListResponse<VkGroup>>(`/api/vk/groups/search?q=${encodeURIComponent(query.trim())}`)).items); } catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось найти сообщество.'); } finally { setIsSearching(false); } };
+  const search = async (event: FormEvent) => { event.preventDefault(); if (!query.trim()) { setSearchError(`Введите название, ID или ссылку на ${platform === 'youtube' ? 'канал' : 'сообщество'}.`); return; } setSearchError(''); setResults([]); setIsSearching(true); try { const path = platform === 'youtube' ? '/api/youtube/channels/search' : '/api/vk/groups/search'; const items = (await apiGet<VkListResponse<SearchResult>>(`${path}?q=${encodeURIComponent(query.trim())}`)).items; setResults(items); if (!items.length) setSearchError(platform === 'youtube' ? 'YouTube-каналы не найдены.' : 'Сообщества не найдены.'); } catch (error) { setSearchError(error instanceof Error ? error.message : 'Не удалось найти источник.'); } finally { setIsSearching(false); } };
   const updateQuery = (value: string) => { setQuery(value); if (searchError) setSearchError(''); };
-  const add = async (group: VkGroup) => { try { const photo = group.photo_100 ?? group.photo_50; const payload = { group: { id: group.id, name: group.name, screen_name: group.screen_name, photo, photo_50: photo, members_count: group.members_count } }; const path = addMode === 'free' ? '/api/account/groups/free' : addMode === 'bonus' ? '/api/account/groups/bonus' : '/api/account/groups'; await apiPost(path, addMode === 'tracked' ? { ...payload, source: 'bookmark' } : payload); await onGroupsChanged(); setResults([]); setIsAddModalOpen(false); setMessage(`«${group.name}» ${addMode === 'tracked' ? 'добавлено в отслеживание' : 'добавлено для бесплатного анализа'}.`); } catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось добавить сообщество.'); } };
+  const add = async (group: SearchResult) => { try { setSearchError(''); const payload = isYoutubeChannel(group) ? { platform: 'youtube', group } : { platform: 'vk', group: { id: group.id, name: group.name, screen_name: group.screen_name, photo: group.photo_100 ?? group.photo_50, members_count: group.members_count } }; const path = addMode === 'free' ? '/api/account/groups/free' : addMode === 'bonus' ? '/api/account/groups/bonus' : '/api/account/groups'; await apiPost(path, addMode === 'tracked' ? { ...payload, source: 'bookmark' } : payload); await onGroupsChanged(); setResults([]); setIsAddModalOpen(false); setMessage(`«${group.name}» добавлено.`); } catch (error) { setSearchError(error instanceof Error ? error.message : 'Не удалось добавить источник.'); } };
   const remove = async (group: SavedGroup) => { if (!window.confirm(`Удалить «${group.name}» из списка сообществ?`)) return; setDeletingGroupId(group.id); try { await apiDelete(`/api/account/groups/${group.id}`); await onGroupsChanged(); setMessage(`«${group.name}» удалено из списка.`); } catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось удалить сообщество.'); } finally { setDeletingGroupId(null); } };
   const loadVkGroups = async () => { if (vkGroups.length || isVkGroupsLoading) return; setIsVkGroupsLoading(true); try { setVkGroups((await apiGet<VkListResponse<VkGroup>>('/api/vk/groups/subscriptions')).items); } catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось загрузить список сообществ VK.'); } finally { setIsVkGroupsLoading(false); } };
   const openAddModal = (mode: AddMode) => { setAddMode(mode); setIsAddModalOpen(true); setResults([]); setSearchError(''); void loadVkGroups(); };
@@ -53,23 +59,25 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
       }
       return group.isTracked;
     })
-    .map((group) => group.vkGroupId);
-  const managementProps = { query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds };
+    .map((group) => `${group.platform}:${group.externalId}`);
+  const managementProps = { platform, setPlatform: (next: Platform) => { setPlatform(next); setResults([]); setSearchError(''); }, query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds };
   return <div className="page-grid dashboard-page">
-    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onRemove={remove} onSelect={(group) => navigate(`/analytics?groupId=${group.vkGroupId}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
+    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onRemove={remove} onSelect={(group) => navigate(`/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
     <FreeCommunitiesPanel groups={freeGroups} isTrialActive={isTrialActive} onAdd={openAddModal} />
     {message && <div className="form-message span-2">{message}</div>}
     <AddCommunityModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} managementProps={managementProps} />
   </div>;
 }
 type ManagementProps = {
+  platform: Platform;
+  setPlatform: (platform: Platform) => void;
   query: string;
   setQuery: (value: string) => void;
   searchError: string;
   isSearching: boolean;
-  results: VkGroup[];
+  results: SearchResult[];
   search: (event: FormEvent) => Promise<void>;
-  add: (group: VkGroup, source?: 'free' | 'managed' | 'bookmark') => Promise<void>;
+  add: (group: SearchResult, source?: 'free' | 'managed' | 'bookmark') => Promise<void>;
   isVkGroupsLoading: boolean;
   managedVkGroups: VkGroup[];
   subscribedVkGroups: VkGroup[];
@@ -77,7 +85,7 @@ type ManagementProps = {
 };
 
 function AddCommunityModal({ open, onClose, managementProps }: { open: boolean; onClose: () => void; managementProps: ManagementProps }) {
-  return <Modal open={open} onClose={onClose} hasCloser scrollLock size={600}><Modal.Header title="Добавить сообщество" /><Modal.Content><p className="add-community-modal-description">Найдите сообщество через поиск или выберите из списка сообществ VK.</p><Management {...managementProps} /></Modal.Content></Modal>;
+  return <Modal open={open} onClose={onClose} hasCloser scrollLock size={600}><Modal.Header title="Добавить источник" /><Modal.Content><p className="add-community-modal-description">Добавьте сообщество VK или произвольный публичный YouTube-канал.</p><Management {...managementProps} /></Modal.Content></Modal>;
 }
 
 function FreeCommunitiesPanel({ groups, isTrialActive, onAdd }: { groups: SavedGroup[]; isTrialActive: boolean; onAdd: (mode: AddMode) => void }) {
@@ -98,7 +106,7 @@ function FreeCommunitiesPanel({ groups, isTrialActive, onAdd }: { groups: SavedG
 }
 
 function FreeCommunitySlot({ title, description, isActive, group }: { title: string; description: string; isActive: boolean; group?: SavedGroup }) {
-  return <div className={`free-community-slot ${isActive ? 'active' : ''}`}><span className="free-community-slot-icon">{isActive ? <Check size={16} /> : <Users size={16} />}</span><div><strong>{group?.name ?? title}</strong><small>{isActive ? 'Добавлено для анализа' : description}</small></div>{group && <a aria-label={`Открыть ${group.name} во ВКонтакте`} href={`https://vk.com/${group.vkGroupId}`} target="_blank" rel="noreferrer"><ExternalLink size={15} /></a>}</div>;
+  return <div className={`free-community-slot ${isActive ? 'active' : ''}`}><span className="free-community-slot-icon">{isActive ? <Check size={16} /> : <Users size={16} />}</span><div><strong>{group?.name ?? title}</strong><small>{isActive ? `Добавлено · ${group?.platform === 'youtube' ? 'YouTube' : 'VK'}` : description}</small></div>{group && <a aria-label={`Открыть ${group.name}`} href={group.url} target="_blank" rel="noreferrer"><ExternalLink size={15} /></a>}</div>;
 }
 
 const dashboardPeriods: Array<{ id: DashboardPeriod; title: string }> = [
@@ -138,17 +146,18 @@ function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRe
       </div>
     </div>
     <div className="communities-table">
-      <div className="communities-table-head"><span>Сообщество</span><span>Участники</span><span>Прирост</span><span>Посещения<br />Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span>Лайки<br />Репосты<br />Комментарии</span><span aria-label="Действия" /></div>
+      <div className="communities-table-head"><span>Сеть</span><span>Сообщество</span><span>Участники</span><span>Прирост</span><span>Посещения<br />Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span>Лайки<br />Репосты<br />Комментарии</span><span aria-label="Действия" /></div>
       {visibleRows.length ? visibleRows.map(({ group, summaryItem, isManaged }) => {
         const membersCount = summaryItem?.membersCount ?? group.membersCount;
         const selectGroup = () => onSelect(group);
         return <div className="communities-table-row communities-table-row-action" key={group.id} onClick={selectGroup} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectGroup(); } }} role="link" tabIndex={0}>
-          <span className="communities-table-name">{group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<span><strong>{group.name}</strong><small className={`communities-table-owner ${isManaged ? 'managed' : ''}`}>{isManaged ? 'Моё сообщество' : 'Чужое сообщество'}</small></span></span>
+          <span className="communities-table-network"><img src={group.platform === 'youtube' ? '/youtube-logo.png' : '/vk-network-logo.png'} alt={group.platform === 'youtube' ? 'YouTube' : 'ВКонтакте'} title={group.platform === 'youtube' ? 'YouTube' : 'ВКонтакте'} /></span>
+          <span className="communities-table-name">{group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<span><strong>{group.name}</strong><small className={`communities-table-owner ${isManaged ? 'managed' : ''}`}>{group.platform === 'youtube' ? 'YouTube-канал' : isManaged ? 'Моё сообщество' : 'Чужое сообщество'}</small></span></span>
           <MetricValue value={membersCount} loading={!summaryItem} />
-          <GrowthValue item={summaryItem} />
-          <PairValue first={summaryItem?.traffic.visitors} second={summaryItem?.traffic.views} firstIcon={Users} secondIcon={Eye} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />
-          <PairValue first={summaryItem?.reach.subscribers} second={summaryItem?.reach.total} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />
-          <TripleValue item={summaryItem} loading={!summaryItem} />
+          {group.platform === 'youtube' ? <MetricValue /> : <GrowthValue item={summaryItem} />}
+          {group.platform === 'youtube' ? <MetricValue value={summaryItem?.traffic.views} loading={!summaryItem} /> : <PairValue first={summaryItem?.traffic.visitors} second={summaryItem?.traffic.views} firstIcon={Users} secondIcon={Eye} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
+          {group.platform === 'youtube' ? <MetricValue /> : <PairValue first={summaryItem?.reach.subscribers} second={summaryItem?.reach.total} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
+          <TripleValue item={summaryItem} loading={!summaryItem} platform={group.platform} />
           <IconButton className="community-delete-button" aria-label={`Удалить ${group.name}`} icon={Trash2} loading={deletingGroupId === group.id} onClick={(event) => { event.stopPropagation(); void onRemove(group); }} size={24} view="transparent" />
         </div>;
       }) : <div className="communities-table-empty">В этой категории пока нет сообществ.</div>}
@@ -161,7 +170,7 @@ function isStatsUnavailable(item?: DashboardSummaryItem) {
   return Boolean(item && (item.statsAvailable === false || item.statsAvailable === null || item.error));
 }
 
-function MetricValue({ value, loading = false }: { value?: number; loading?: boolean }) {
+function MetricValue({ value, loading = false }: { value?: number | null; loading?: boolean }) {
   return <span className={`communities-table-metric ${loading ? 'loading' : ''}`}>{loading ? 'Загружаем данные' : typeof value === 'number' ? number(value) : '—'}</span>;
 }
 
@@ -176,24 +185,24 @@ function PairValue({ first, second, firstIcon: FirstIcon, secondIcon: SecondIcon
   return <span className="communities-table-pair"><strong>{FirstIcon && <FirstIcon size={13} />}{number(first ?? 0)}</strong><small>{SecondIcon && <SecondIcon size={13} />}{number(second ?? 0)}</small></span>;
 }
 
-function TripleValue({ item, loading }: { item?: DashboardSummaryItem; loading: boolean }) {
+function TripleValue({ item, loading, platform = 'vk' }: { item?: DashboardSummaryItem; loading: boolean; platform?: Platform }) {
   if (loading) return <MetricValue loading />;
   if (item?.error) return <MetricValue />;
-  return <span className="communities-table-triple"><small><Heart size={13} />{number(item?.activity.likes ?? 0)}</small><small><Share2 size={13} />{number(item?.activity.reposts ?? 0)}</small><small><MessageCircle size={13} />{number(item?.activity.comments ?? 0)}</small></span>;
+  return <span className="communities-table-triple"><small><Heart size={13} />{number(item?.activity.likes ?? 0)}</small><small><Share2 size={13} />{platform === 'youtube' ? 'Недоступно' : number(item?.activity.reposts ?? 0)}</small><small><MessageCircle size={13} />{number(item?.activity.comments ?? 0)}</small></span>;
 }
 
-function Management({ query, setQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds }: ManagementProps) {
+function Management({ platform, setPlatform, query, setQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds }: ManagementProps) {
   const visiblePickerGroups = [...managedVkGroups, ...subscribedVkGroups.filter((group) => !managedVkGroups.some((managed) => managed.id === group.id))];
-  return <div className="dashboard-management"><form className="search-form" onSubmit={search}><Input block className="dashboard-search-input" error={searchError || undefined} value={query} onChange={(_, payload) => setQuery(payload.value)} placeholder="Название или screen name сообщества" /><Button className="dashboard-action-button" type="submit" view="primary" size={48} leftAddons={<Plus size={17} />} loading={isSearching}>Найти</Button></form><div className="search-results">{isSearching ? <SearchResultsSkeleton /> : results.map((group) => <GroupOption group={group} key={group.id} isAdded={savedGroupIds.includes(String(group.id))} onAdd={() => void add(group)} />)}</div><div className="vk-picker"><div className="vk-picker-heading"><strong>Или выберите из VK</strong></div>{isVkGroupsLoading ? <div className="empty-state">Загружаем сообщества VK...</div> : <div className="search-results vk-picker-results">{visiblePickerGroups.length ? visiblePickerGroups.map((group) => <GroupOption group={group} key={group.id} isAdded={savedGroupIds.includes(String(group.id))} onAdd={() => void add(group)} />) : <div className="empty-state">В этом списке нет сообществ.</div>}</div>}</div></div>;
+  return <div className="dashboard-management"><SegmentedControl onChange={(id) => setPlatform(id as Platform)} selectedId={platform} size={40}><Segment id="vk" title={<PlatformSegmentTitle platform="vk" />} /><Segment id="youtube" title={<PlatformSegmentTitle platform="youtube" />} /></SegmentedControl><form className="search-form" onSubmit={search}><Input block className="dashboard-search-input" value={query} onChange={(_, payload) => setQuery(payload.value)} placeholder={platform === 'youtube' ? 'URL, @handle, channel ID или название' : 'Название или screen name сообщества'} /><Button className="dashboard-action-button" type="submit" view="primary" size={48} leftAddons={<Plus size={17} />} loading={isSearching}>Найти</Button></form><div className={`source-search-feedback ${searchError ? 'has-error' : ''}`} aria-live="polite">{isSearching ? `Ищем ${platform === 'youtube' ? 'YouTube-канал' : 'сообщество'}…` : searchError}</div><div className="search-results source-search-results">{results.map((group) => <GroupOption group={group} key={group.id} isAdded={savedGroupIds.includes(`${platform}:${group.id}`)} onAdd={() => void add(group)} />)}</div>{platform === 'vk' && <div className="vk-picker"><div className="vk-picker-heading"><strong>Или выберите из VK</strong></div>{isVkGroupsLoading ? <div className="empty-state">Загружаем сообщества VK...</div> : <div className="search-results vk-picker-results">{visiblePickerGroups.length ? visiblePickerGroups.map((group) => <GroupOption group={group} key={group.id} isAdded={savedGroupIds.includes(`vk:${group.id}`)} onAdd={() => void add(group)} />) : <div className="empty-state">В этом списке нет сообществ.</div>}</div>}</div>}</div>;
 }
 
-function SearchResultsSkeleton() {
-  return <>{Array.from({ length: 3 }, (_, index) => <div className="group-option-skeleton" key={index}><Skeleton borderRadius={10} style={{ height: 40, width: 40 }} /><div><Skeleton borderRadius={6} style={{ height: 16, width: '68%' }} /><Skeleton borderRadius={6} style={{ height: 13, marginTop: 7, width: '42%' }} /></div><Skeleton borderRadius={10} style={{ height: 32, width: 82 }} /></div>)}</>;
-}
-
-function GroupOption({ group, isAdded, onAdd }: { group: VkGroup; isAdded: boolean; onAdd: () => void }) {
-  const groupPath = group.screen_name ?? `club${group.id}`;
-  return <div className="search-result"><img src={group.photo_100 ?? group.photo_50} alt="" /><span><OverflowingCommunityName name={group.name} /><a href={`https://vk.com/${groupPath}`} target="_blank" rel="noreferrer">vk.com/{groupPath}</a></span><Button className="dashboard-action-button group-add-button" aria-label={isAdded ? `${group.name} уже добавлено` : `Добавить ${group.name}`} disabled={isAdded} onClick={onAdd} size={32} view="primary">{isAdded ? 'Добавлено' : 'Добавить'}</Button></div>;
+function GroupOption({ group, isAdded, onAdd }: { group: SearchResult; isAdded: boolean; onAdd: () => void }) {
+  const youtube = isYoutubeChannel(group);
+  const groupPath = youtube ? group.handle ?? group.id : group.screen_name ?? `club${group.id}`;
+  const photo = youtube ? group.photo : group.photo_100 ?? group.photo_50;
+  const href = youtube ? group.url : `https://vk.com/${groupPath}`;
+  const details = youtube ? `${group.followersCount === null ? 'Подписчики: Недоступно' : `${number(group.followersCount)} подписчиков`} · ${number(group.videoCount)} видео · ${number(group.viewCount)} просмотров` : `vk.com/${groupPath}`;
+  return <div className="search-result">{photo ? <img src={photo} alt="" /> : <Users size={32} />}<span><OverflowingCommunityName name={group.name} /><a href={href} target="_blank" rel="noreferrer">{groupPath}</a><small>{details}</small></span><Button className="dashboard-action-button group-add-button" aria-label={isAdded ? `${group.name} уже добавлено` : `Добавить ${group.name}`} disabled={isAdded} onClick={onAdd} size={32} view="primary">{isAdded ? 'Добавлено' : 'Добавить'}</Button></div>;
 }
 
 function OverflowingCommunityName({ name }: { name: string }) {

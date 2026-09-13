@@ -20,6 +20,26 @@ import { DomainError } from '../errors/domainError.js';
 
 export const accountRouter = Router();
 
+function savedSourceFromBody(body: any, source: 'free' | 'bonus' | 'bookmark' | 'managed') {
+  const platform = body?.platform === 'youtube' || body?.group?.platform === 'youtube' ? 'youtube' as const : 'vk' as const;
+  const group = body?.group ?? body;
+  const externalId = String(typeof group === 'string' || typeof group === 'number' ? group : group?.externalId ?? group?.id ?? group?.screen_name ?? '').trim();
+  if (!externalId) {
+    throw new DomainError('Не передан идентификатор источника.', { status: 400, code: 'SOCIAL_SOURCE_ID_REQUIRED' });
+  }
+  return {
+    source,
+    platform,
+    externalId,
+    vkGroupId: externalId,
+    name: (typeof group === 'object' ? group?.name ?? group?.title ?? group?.screen_name : undefined) ?? externalId,
+    handle: group?.handle ?? group?.screenName ?? group?.screen_name,
+    url: group?.url ?? (platform === 'youtube' ? `https://www.youtube.com/channel/${externalId}` : `https://vk.com/${group?.screen_name ?? externalId}`),
+    photo: group?.photo ?? group?.photo_100 ?? group?.photo_50,
+    membersCount: group?.followersCount ?? group?.membersCount ?? group?.members_count ?? null
+  };
+}
+
 accountRouter.get('/auth/status', (req, res) => {
   res.json({ success: Boolean(req.user), data: { isAuth: Boolean(req.user) } });
 });
@@ -190,13 +210,7 @@ accountRouter.post('/groups/free', requireUser, async (req, res, next) => {
   try {
     const group = await addGroup(
       req.user!.id,
-      {
-        source: 'free',
-        vkGroupId: req.body.group?.id ?? req.body.group?.screen_name ?? req.body.group,
-        name: req.body.group?.name ?? req.body.group?.screen_name ?? String(req.body.group ?? 'Новая группа'),
-        photo: req.body.group?.photo,
-        membersCount: req.body.group?.members_count
-      },
+      savedSourceFromBody(req.body, 'free'),
       {}
     );
 
@@ -229,13 +243,7 @@ accountRouter.post('/groups/bonus', requireUser, async (req, res, next) => {
 
     const group = await addGroup(
       req.user!.id,
-      {
-        source: 'bonus',
-        vkGroupId: req.body.group?.id ?? req.body.group?.screen_name ?? req.body.group,
-        name: req.body.group?.name ?? req.body.group?.screen_name ?? String(req.body.group ?? 'Новое сообщество'),
-        photo: req.body.group?.photo,
-        membersCount: req.body.group?.members_count
-      },
+      savedSourceFromBody(req.body, 'bonus'),
       { allowBonusGroup: true }
     );
 
@@ -254,13 +262,7 @@ accountRouter.post('/groups', requireUser, async (req, res, next) => {
       return;
     }
 
-    const group = await addGroup(req.user!.id, {
-      source,
-      vkGroupId: req.body.group?.id ?? req.body.group?.screen_name,
-      name: req.body.group?.name ?? req.body.group?.screen_name ?? 'Новое сообщество',
-      photo: req.body.group?.photo_100 ?? req.body.group?.photo_50,
-      membersCount: req.body.group?.members_count
-    });
+    const group = await addGroup(req.user!.id, savedSourceFromBody(req.body, source));
 
     res.status(201).json({ success: true, data: group, id: group.id });
   } catch (error) {

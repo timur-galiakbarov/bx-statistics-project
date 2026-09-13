@@ -1,6 +1,7 @@
 import { getGroups, getVkAccessToken } from '../repositories/accountRepository.js';
 import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.js';
 import { TtlCache } from './ttlCache.js';
+import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
 
 type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'last90days' | 'currentMonth';
 
@@ -46,13 +47,14 @@ type VkWallResponse = {
 export type DashboardSummaryItem = {
   savedGroupId: string;
   source: string;
+  platform: 'vk' | 'youtube';
   group: {
     id: number | string;
     name: string;
     screenName?: string;
     photo?: string;
   };
-  membersCount: number;
+  membersCount: number | null;
   isManagedByUser: boolean;
   statsAvailable: boolean | null;
   growth: {
@@ -190,15 +192,16 @@ function delay(ms: number) {
   });
 }
 
-function emptySummaryItem(savedGroupId: string, source: string, groupId: string, name: string, isManagedByUser: boolean): DashboardSummaryItem {
+function emptySummaryItem(savedGroupId: string, source: string, platform: 'vk' | 'youtube', groupId: string, name: string, isManagedByUser: boolean): DashboardSummaryItem {
   return {
     savedGroupId,
     source,
+    platform,
     group: {
       id: groupId,
       name
     },
-    membersCount: 0,
+    membersCount: platform === 'youtube' ? null : 0,
     isManagedByUser,
     statsAvailable: null,
     growth: {
@@ -227,39 +230,61 @@ function emptySummaryItem(savedGroupId: string, source: string, groupId: string,
 export async function getDashboardSummary(userId: string, periodValue: unknown, forceRefresh = false): Promise<DashboardSummaryResult> {
   const period = getPeriod(periodValue);
   const groups = (await getGroups(userId)).filter((group) => group.isTracked);
-  const cacheKey = [userId, period.key, groups.map((group) => `${group.id}:${group.vkGroupId}:${group.source}`).join(',')].join(':');
+  const cacheKey = [userId, period.key, groups.map((group) => `${group.id}:${group.platform}:${group.externalId}:${group.source}`).join(',')].join(':');
 
   if (!forceRefresh) {
     const cached = dashboardSummaryCache.get(cacheKey);
     if (cached) return cached;
   }
 
-  const accessToken = await getVkAccessToken(userId);
+  const hasVkGroups = groups.some((group) => group.platform === 'vk');
+  const accessToken = hasVkGroups ? await getVkAccessToken(userId) : undefined;
 
-  if (!accessToken) {
+  if (hasVkGroups && !accessToken) {
     throw new VkApiError('VK token is required', {
       status: 409,
       code: 'VK_TOKEN_REQUIRED'
     });
   }
 
-  const managedGroupsResponse = await vkApiRequest<VkGroupsGetResponse>('groups.get', accessToken, {
+  const managedGroupsResponse = accessToken ? await vkApiRequest<VkGroupsGetResponse>('groups.get', accessToken, {
     extended: 0,
     filter: 'moder',
     count: 1000
-  }).catch(() => null);
+  }).catch(() => null) : null;
   const managedGroupIds = new Set(
     (managedGroupsResponse?.items ?? []).map((group) => typeof group === 'number' ? group : group.id)
   );
   const summaryGroups: DashboardSummaryItem[] = [];
 
   for (const savedGroup of groups) {
-      const groupId = String(savedGroup.vkGroupId);
+      const groupId = String(savedGroup.externalId);
+      if (savedGroup.platform === 'youtube') {
+        const fallback = emptySummaryItem(savedGroup.id, savedGroup.source, 'youtube', groupId, savedGroup.name, false);
+        try {
+          const channel = await resolveYoutubeChannel(groupId, forceRefresh);
+          const videos = await getYoutubeVideos(channel, period.dateFrom, period.dateTo, forceRefresh);
+          const likes = videos.reduce((sum, video) => sum + (video.likes ?? 0), 0);
+          const comments = videos.reduce((sum, video) => sum + (video.comments ?? 0), 0);
+          summaryGroups.push({
+            ...fallback,
+            group: { id: channel.id, name: channel.name, screenName: channel.handle, photo: channel.photo },
+            membersCount: channel.followersCount,
+            statsAvailable: true,
+            traffic: { visitors: 0, views: videos.reduce((sum, video) => sum + (video.views ?? 0), 0) },
+            activity: { likes, reposts: 0, comments },
+            warnings: ['Просмотры и реакции YouTube — текущие накопительные показатели видео, опубликованных в выбранном периоде. Репосты и динамика аудитории недоступны.']
+          });
+        } catch (error) {
+          summaryGroups.push({ ...fallback, error: { code: error instanceof Error ? error.name : 'YOUTUBE_DASHBOARD_FAILED', message: error instanceof Error ? error.message : 'Не удалось получить данные YouTube-канала.' } });
+        }
+        continue;
+      }
       const isManagedByUser = managedGroupIds.has(Number(groupId)) || savedGroup.source === 'managed';
-      const fallback = emptySummaryItem(savedGroup.id, savedGroup.source, groupId, savedGroup.name, isManagedByUser);
+      const fallback = emptySummaryItem(savedGroup.id, savedGroup.source, 'vk', groupId, savedGroup.name, isManagedByUser);
 
       try {
-        const groupInfoList = await vkApiRequest<VkGroupInfo[]>('groups.getById', accessToken, {
+        const groupInfoList = await vkApiRequest<VkGroupInfo[]>('groups.getById', accessToken!, {
           group_id: groupId,
           fields: 'members_count,counters,description,photo_100,photo_200,screen_name'
         });
@@ -277,7 +302,7 @@ export async function getDashboardSummary(userId: string, periodValue: unknown, 
         }
 
         let statsUnavailable = false;
-        const stats = await vkApiRequest<VkStatsDay[]>('stats.get', accessToken, {
+        const stats = await vkApiRequest<VkStatsDay[]>('stats.get', accessToken!, {
             group_id: groupInfo.id,
             timestamp_from: period.unixFrom,
             timestamp_to: period.unixTo,
@@ -293,7 +318,7 @@ export async function getDashboardSummary(userId: string, periodValue: unknown, 
 
         await delay(350);
 
-        const wall = await vkApiRequest<VkWallResponse>('wall.get', accessToken, {
+        const wall = await vkApiRequest<VkWallResponse>('wall.get', accessToken!, {
             owner_id: -groupInfo.id,
             count: 100,
             offset: 0
@@ -305,6 +330,7 @@ export async function getDashboardSummary(userId: string, periodValue: unknown, 
         summaryGroups.push({
           savedGroupId: savedGroup.id,
           source: savedGroup.source,
+          platform: 'vk',
           group: {
             id: groupInfo.id,
             name: groupInfo.name,

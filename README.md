@@ -109,6 +109,9 @@ cp api/.env.example api/.env
 - `VK_REDIRECT_URL` - callback URL для VK OAuth
 - `VK_PUBLIC_REDIRECT_URL` - публичный callback URL, который отправляется в VK authorize
 - `VK_IMPLICIT_REDIRECT_URL` - frontend callback для legacy VK implicit flow
+- `YOUTUBE_API_KEY` - серверный ключ YouTube Data API v3 (не должен попадать во frontend)
+- `YOUTUBE_API_TIMEOUT_MS` - таймаут запросов к YouTube API, по умолчанию `10000`
+- `YOUTUBE_CACHE_TTL_MS` - TTL кэша ответов YouTube API, по умолчанию `300000`
 - `AUTH_SUCCESS_REDIRECT_URL` - куда вернуть пользователя после успешного входа
 - `YOOMONEY_RECEIVER` - номер кошелька ЮMoney, который принимает платежи
 - `YOOMONEY_NOTIFICATION_URL` - URL HTTP-уведомлений, который нужно указать в кабинете ЮMoney
@@ -153,6 +156,28 @@ VK_IMPLICIT_REDIRECT_URL=http://localhost:5173/app/auth/vk/implicit-callback
 - `GET /api/vk/groups/:groupId/videos` - видео
 
 Если пользователь вошёл через dev-вход и у него нет VK token, API вернёт `VK_TOKEN_REQUIRED`.
+
+## YouTube Data API
+
+Публичная аналитика YouTube работает по серверному API key, без Google OAuth. В Google Cloud включите **YouTube Data API v3**, создайте API key, ограничьте его этим API и задайте:
+
+```env
+YOUTUBE_API_KEY=your-server-api-key
+```
+
+Ключ читается только API-приложением и не включается в Vite-конфигурацию или ответы frontend. Без ключа YouTube-маршруты возвращают `YOUTUBE_API_KEY_REQUIRED` (HTTP 503).
+
+Маршруты:
+
+- `GET /api/youtube/channels/search?q=...` — поиск по URL, `@handle`, channel ID или тексту;
+- `GET /api/youtube/channels/resolve?q=...` — получить один канал;
+- `GET /api/analytics/community/:channelId?platform=youtube&period=month` — аналитика канала;
+- `GET /api/posts/analyze?platform=youtube&groupIds=UC...&period=month` — публикации;
+- `GET /api/compare?platform=youtube&groupIds=UC...,UC...&period=month` — сравнение каналов.
+
+История публикаций загружается через uploads playlist (`channels.list` → `playlistItems.list` → пакетные `videos.list`, до 50 ID в запросе). HTML-скрейпинг и `search.list` для истории не используются. `search.list` применяется только как fallback при текстовом поиске канала.
+
+Ограничения публичного MVP: просмотры, лайки и комментарии видео — текущие накопительные значения, а период выбирает видео по `publishedAt`. Публичный API не даёт репосты, исторический прирост/отток подписчиков, охват, уникальных зрителей, удержание и источники трафика. Скрытые счётчики отображаются как «Недоступно»; Shorts учитываются как обычные видео.
 
 ## Legacy VK implicit flow
 

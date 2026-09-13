@@ -1,5 +1,7 @@
 import { VkApiError } from './vkClient.js';
 import { getCommunityAnalytics } from './analyticsService.js';
+import { getYoutubeChannelAnalytics } from './youtubeAnalyticsService.js';
+import { DomainError } from '../errors/domainError.js';
 
 function parseGroupIds(value: unknown) {
   if (typeof value !== 'string') {
@@ -13,7 +15,7 @@ function parseGroupIds(value: unknown) {
     .slice(0, 10);
 }
 
-export async function getCommunitiesCompare(userId: string, groupIdsValue: unknown, period: unknown) {
+export async function getCommunitiesCompare(userId: string, groupIdsValue: unknown, period: unknown, platformValue: unknown = 'vk') {
   const groupIds = parseGroupIds(groupIdsValue);
 
   if (groupIds.length === 0) {
@@ -26,29 +28,38 @@ export async function getCommunitiesCompare(userId: string, groupIdsValue: unkno
   const items = [];
 
   for (const groupId of groupIds) {
+    const separator = groupId.indexOf(':');
+    const explicitPlatform = separator > 0 ? groupId.slice(0, separator) : String(platformValue);
+    const externalId = separator > 0 ? groupId.slice(separator + 1) : groupId;
+    const platform = explicitPlatform === 'youtube' ? 'youtube' : 'vk';
     try {
-      const analytics = await getCommunityAnalytics(userId, groupId, period);
+      const analytics = platform === 'youtube'
+        ? await getYoutubeChannelAnalytics(externalId, period)
+        : await getCommunityAnalytics(userId, externalId, period);
       items.push({
-        groupId,
+        groupId: externalId,
+        platform,
         analytics,
         error: null
       });
     } catch (error) {
-      if (error instanceof VkApiError) {
+      if (error instanceof VkApiError || error instanceof DomainError) {
         items.push({
-          groupId,
+          groupId: externalId,
+          platform,
           analytics: null,
           error: {
             code: error.code,
             message: error.message,
-            vkCode: error.vkCode
+            ...(error instanceof VkApiError ? { vkCode: error.vkCode } : {})
           }
         });
         continue;
       }
 
       items.push({
-        groupId,
+        groupId: externalId,
+        platform,
         analytics: null,
         error: {
           code: 'COMPARE_GROUP_FAILED',

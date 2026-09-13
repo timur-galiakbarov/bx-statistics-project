@@ -45,8 +45,16 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
   const managedVkGroups = vkGroups.filter((group) => Boolean(group.is_admin));
   const subscribedVkGroups = vkGroups.filter((group) => !group.is_admin);
   const freeGroups = groups.filter((group) => group.source === 'free' || group.source === 'bonus');
-  const trackedGroups = groups.filter((group) => group.source !== 'free' && group.source !== 'bonus');
-  const managementProps = { query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds: groups.map((group) => group.vkGroupId) };
+  const trackedGroups = groups.filter((group) => group.isTracked);
+  const savedGroupIds = groups
+    .filter((group) => {
+      if (addMode === 'free' || addMode === 'bonus') {
+        return group.source === 'free' || group.source === 'bonus';
+      }
+      return group.isTracked;
+    })
+    .map((group) => group.vkGroupId);
+  const managementProps = { query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds };
   return <div className="page-grid dashboard-page">
     <CommunitiesTable groups={trackedGroups} summary={summary} period={period} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onRemove={remove} onSelect={(group) => navigate(`/analytics?groupId=${group.vkGroupId}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
     <FreeCommunitiesPanel groups={freeGroups} isTrialActive={isTrialActive} onAdd={openAddModal} />

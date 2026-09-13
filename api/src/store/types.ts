@@ -11,6 +11,7 @@ export type User = {
 export type SavedGroup = {
   id: string;
   source: 'free' | 'bonus' | 'bookmark' | 'favorite' | 'managed';
+  isTracked: boolean;
   vkGroupId: string;
   name: string;
   photo?: string;

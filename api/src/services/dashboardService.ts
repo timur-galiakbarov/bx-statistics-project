@@ -226,7 +226,7 @@ function emptySummaryItem(savedGroupId: string, source: string, groupId: string,
 
 export async function getDashboardSummary(userId: string, periodValue: unknown, forceRefresh = false): Promise<DashboardSummaryResult> {
   const period = getPeriod(periodValue);
-  const groups = await getGroups(userId);
+  const groups = (await getGroups(userId)).filter((group) => group.isTracked);
   const cacheKey = [userId, period.key, groups.map((group) => `${group.id}:${group.vkGroupId}:${group.source}`).join(',')].join(':');
 
   if (!forceRefresh) {

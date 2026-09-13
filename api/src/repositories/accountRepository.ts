@@ -28,6 +28,7 @@ type UserDocument = {
 type GroupDocument = {
   _id: Types.ObjectId;
   source: SavedGroup['source'];
+  isTracked?: boolean;
   vkGroupId: string;
   name: string;
   photo?: string | null;
@@ -76,6 +77,7 @@ function mapGroup(group: GroupDocument): SavedGroup {
   return {
     id: group._id.toString(),
     source: group.source,
+    isTracked: group.isTracked !== false,
     vkGroupId: group.vkGroupId,
     name: group.name,
     photo: group.photo ?? undefined,
@@ -259,6 +261,9 @@ export async function addGroup(
   const vkGroupId = group.vkGroupId ?? String(group.name ?? 'unknown');
 
   const existingGroup = await SavedGroupModel.exists({ userId, source, vkGroupId });
+  const isAlreadyTracked = source === 'free' || source === 'bonus'
+    ? await SavedGroupModel.exists({ userId, vkGroupId, isTracked: { $ne: false } })
+    : false;
 
   if (!existingGroup && source === 'free') {
     const groupsCount = await SavedGroupModel.countDocuments({ userId, source: 'free' });
@@ -297,7 +302,8 @@ export async function addGroup(
       $setOnInsert: {
         userId,
         source,
-        vkGroupId
+        vkGroupId,
+        isTracked: !isAlreadyTracked
       }
     },
     { new: true, upsert: true }
@@ -307,6 +313,15 @@ export async function addGroup(
 }
 
 export async function removeGroup(userId: string, groupId: string) {
+  const group = await SavedGroupModel.findOne({ _id: groupId, userId }).select('source');
+
+  if (!group) return;
+
+  if (group.source === 'free' || group.source === 'bonus') {
+    await SavedGroupModel.updateOne({ _id: groupId, userId }, { $set: { isTracked: false } });
+    return;
+  }
+
   await SavedGroupModel.deleteOne({ _id: groupId, userId });
 }
 

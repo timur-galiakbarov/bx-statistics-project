@@ -9,6 +9,7 @@ const savedGroupSchema = new Schema(
       required: true,
       index: true
     },
+    isTracked: { type: Boolean, default: true },
     vkGroupId: { type: String, required: true },
     name: { type: String, required: true },
     photo: { type: String },

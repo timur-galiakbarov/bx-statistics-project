@@ -2646,7 +2646,7 @@ a {
 }
 
 .admin-recent-users-row {
-  grid-template-columns: minmax(160px, 1fr) minmax(230px, 1.5fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(110px, 0.8fr) minmax(130px, 0.9fr);
+  grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) minmax(160px, 1fr) minmax(230px, 1.5fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(110px, 0.8fr) minmax(130px, 0.9fr);
 }
 
 .recent-users-table {

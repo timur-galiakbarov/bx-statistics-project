@@ -399,6 +399,8 @@ export type RecentAdminUser = {
   vkId?: string;
   name: string;
   hasActiveAccess: boolean;
+  registeredAt: string;
   lastLoginAt: string;
+  lastActivityAt: string;
   activeTo: string;
 };

@@ -10,6 +10,8 @@ import { DomainError } from '../errors/domainError.js';
 import { env } from '../config/env.js';
 
 export const FREE_GROUP_LIMIT = 1;
+const LAST_ACTIVITY_WRITE_INTERVAL_MS = 5 * 60 * 1_000;
+const lastActivityWriteAt = new Map<string, number>();
 
 type UserDocument = {
   _id: Types.ObjectId;
@@ -50,7 +52,9 @@ export type RecentAdminUser = {
   vkId?: string;
   name: string;
   hasActiveAccess: boolean;
+  registeredAt: string;
   lastLoginAt: string;
+  lastActivityAt: string;
   activeTo: string;
 };
 
@@ -96,6 +100,26 @@ export async function getUserBySession(sessionId?: string) {
   }
 
   return mapUser(session.userId);
+}
+
+/** Records authenticated activity at most once per five minutes per process and user. */
+export async function touchUserActivity(userId: string) {
+  const now = Date.now();
+  const lastWrite = lastActivityWriteAt.get(userId);
+
+  if (lastWrite !== undefined && now - lastWrite < LAST_ACTIVITY_WRITE_INTERVAL_MS) {
+    return;
+  }
+
+  // Set before the write so parallel browser requests do not generate duplicate updates.
+  lastActivityWriteAt.set(userId, now);
+
+  try {
+    await UserModel.updateOne({ _id: userId }, { $set: { lastActivityAt: new Date(now) } });
+  } catch (error) {
+    lastActivityWriteAt.delete(userId);
+    throw error;
+  }
 }
 
 export async function getDemoUser() {
@@ -313,10 +337,15 @@ export async function getAdminStat(userId: string) {
 }
 
 export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[]> {
-  const users = await UserModel.find({ lastLoginAt: { $exists: true, $ne: null } })
-    .sort({ lastLoginAt: -1 })
+  const users = await UserModel.find({
+    $or: [
+      { lastActivityAt: { $exists: true, $ne: null } },
+      { lastLoginAt: { $exists: true, $ne: null } }
+    ]
+  })
+    .sort({ lastActivityAt: -1, lastLoginAt: -1 })
     .limit(Math.min(limit, 300))
-    .select({ legacy: 1, vkId: 1, firstName: 1, lastName: 1, lastLoginAt: 1, activeTo: 1 })
+    .select({ legacy: 1, vkId: 1, firstName: 1, lastName: 1, createdAt: 1, lastLoginAt: 1, lastActivityAt: 1, activeTo: 1 })
     .lean<
       Array<{
         _id: Types.ObjectId;
@@ -324,7 +353,9 @@ export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[
         vkId?: string;
         firstName?: string;
         lastName?: string;
+        createdAt: Date;
         lastLoginAt: Date;
+        lastActivityAt?: Date;
         activeTo: Date;
       }>
     >();
@@ -337,7 +368,9 @@ export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[
     vkId: user.vkId,
     name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени',
     hasActiveAccess: user.activeTo > now,
+    registeredAt: user.createdAt.toISOString(),
     lastLoginAt: user.lastLoginAt.toISOString(),
+    lastActivityAt: (user.lastActivityAt ?? user.lastLoginAt).toISOString(),
     activeTo: user.activeTo.toISOString().slice(0, 10)
   }));
 }

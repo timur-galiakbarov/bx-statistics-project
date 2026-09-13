@@ -469,7 +469,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
         <div className="panel-header compact">
           <div>
             <h2>Последние активные пользователи</h2>
-            <p>До 300 пользователей, отсортированных по времени последнего входа.</p>
+            <p>До 300 пользователей, отсортированных по последней активности. Обновляется не чаще раза в 5 минут на пользователя.</p>
           </div>
           <div className="admin-recent-users-actions">
             <button className="secondary-button inline" type="button" onClick={loadRecentUsers} disabled={isRecentUsersLoading}>
@@ -485,11 +485,13 @@ export function AdminPage({ user, onAccountChanged }: Props) {
 
         {recentUsersError && <div className="debug-error">{recentUsersError}</div>}
         {recentUsers.length === 0 && !recentUsersError && !isRecentUsersLoading && (
-          <div className="empty-state">Пользователей со входами пока нет.</div>
+          <div className="empty-state">Активных пользователей пока нет.</div>
         )}
         {recentUsers.length > 0 && (
-          <div className="table analytics-posts recent-users-table">
+            <div className="table analytics-posts recent-users-table">
             <div className="table-row table-head admin-recent-users-row">
+              <span>Регистрация</span>
+              <span>Последняя активность</span>
               <span>Последний вход</span>
               <span>Пользователь</span>
               <span>VK ID</span>
@@ -500,6 +502,8 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             </div>
             {recentUsers.map((user) => (
               <div className="table-row admin-recent-users-row" key={user.id}>
+                <span data-label="Регистрация">{formatAdminDateTime(user.registeredAt)}</span>
+                <span data-label="Последняя активность">{formatAdminDateTime(user.lastActivityAt)}</span>
                 <span data-label="Последний вход">{formatAdminDateTime(user.lastLoginAt)}</span>
                 <span data-label="Пользователь">
                   <strong>{user.name}</strong>

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { env } from '../config/env.js';
-import { getUserBySession, type AccountUser } from '../repositories/accountRepository.js';
+import { getUserBySession, touchUserActivity, type AccountUser } from '../repositories/accountRepository.js';
 
 declare global {
   namespace Express {
@@ -20,11 +20,16 @@ export async function attachUser(req: Request, res: Response, next: NextFunction
   }
 }
 
-export function requireUser(req: Request, res: Response, next: NextFunction) {
+export async function requireUser(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
     res.status(401).json({ success: false, error: 'UNAUTHORIZED' });
     return;
   }
 
-  next();
+  try {
+    await touchUserActivity(req.user.id);
+    next();
+  } catch (error) {
+    next(error);
+  }
 }

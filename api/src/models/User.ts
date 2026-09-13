@@ -20,7 +20,7 @@ const userSchema = new Schema(
     enforceAccessRestrictions: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date, index: true },
-    lastActivityAt: { type: Date }
+    lastActivityAt: { type: Date, index: true }
   },
   { timestamps: true }
 );

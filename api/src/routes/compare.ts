@@ -7,7 +7,7 @@ export const compareRouter = Router();
 
 compareRouter.get('/', requireUser, requireActiveAccess, async (req, res, next) => {
   try {
-    const data = await getCommunitiesCompare(req.user!.id, req.query.groupIds, req.query.period);
+    const data = await getCommunitiesCompare(req.user!.id, req.query.sources ?? req.query.groupIds, req.query.period, req.query.platform);
     res.json({ success: true, data });
   } catch (error) {
     next(error);

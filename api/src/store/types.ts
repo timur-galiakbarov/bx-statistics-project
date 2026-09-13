@@ -8,14 +8,24 @@ export type User = {
   isAdmin: boolean;
 };
 
-export type SavedGroup = {
+export type SocialPlatform = 'vk' | 'youtube';
+
+export type SocialChannel = {
+  platform: SocialPlatform;
+  externalId: string;
+  name: string;
+  handle?: string;
+  url: string;
+  photo?: string;
+  followersCount?: number | null;
+};
+
+export type SavedGroup = SocialChannel & {
   id: string;
   source: 'free' | 'bonus' | 'bookmark' | 'favorite' | 'managed';
   isTracked: boolean;
   vkGroupId: string;
-  name: string;
-  photo?: string;
-  membersCount?: number;
+  membersCount?: number | null;
 };
 
 export type NewsItem = {

@@ -1,6 +1,7 @@
 import { DomainError } from '../errors/domainError.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { vkApiRequest, VkApiError } from './vkClient.js';
+import { getYoutubeChannelAnalytics } from './youtubeAnalyticsService.js';
 
 type PostsPeriod = 'week' | 'twoWeek' | 'month';
 
@@ -215,7 +216,29 @@ function summarizeGroup(wall: VkWallResponse, posts: VkWallPost[], membersCount:
   };
 }
 
-export async function getPostsAnalysis(userId: string, groupIdsValue: unknown, periodValue: unknown) {
+export async function getPostsAnalysis(userId: string, groupIdsValue: unknown, periodValue: unknown, platformValue: unknown = 'vk') {
+  if (platformValue === 'youtube') {
+    const period = getPeriod(periodValue);
+    const groupIds = parseGroupIds(groupIdsValue);
+    const groups: any[] = [];
+    const posts: any[] = [];
+    for (const groupId of groupIds) {
+      try {
+        const analytics = await getYoutubeChannelAnalytics(groupId, periodValue);
+        groups.push({ groupId, platform: 'youtube', group: analytics.group, summary: analytics.wall, error: null });
+        posts.push(...analytics.wall.topPosts.map((post) => ({
+          ...post,
+          id: `youtube_${post.id}`,
+          youtubeId: post.id,
+          group: analytics.group,
+          actions: (post.likes ?? 0) + (post.comments ?? 0)
+        })));
+      } catch (error) {
+        groups.push({ groupId, platform: 'youtube', group: null, summary: null, error: { code: 'YOUTUBE_POSTS_FAILED', message: error instanceof Error ? error.message : 'Не удалось получить публикации YouTube.' } });
+      }
+    }
+    return { period: { key: period.key, dateFrom: formatDate(period.dateFrom), dateTo: formatDate(period.dateTo) }, groups, posts };
+  }
   const accessToken = await getVkAccessToken(userId);
 
   if (!accessToken) {

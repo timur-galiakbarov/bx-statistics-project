@@ -11,14 +11,39 @@ export type User = {
   enforceAccessRestrictions: boolean;
 };
 
-export type SavedGroup = {
+export type SocialPlatform = 'vk' | 'youtube';
+
+export type SocialChannel = {
+  platform: SocialPlatform;
+  externalId: string;
+  name: string;
+  handle?: string;
+  url: string;
+  photo?: string;
+  followersCount?: number | null;
+};
+
+export type SavedGroup = SocialChannel & {
   id: string;
   source: 'free' | 'bonus' | 'bookmark' | 'favorite' | 'managed';
   isTracked: boolean;
   vkGroupId: string;
+  membersCount?: number | null;
+};
+
+export type YoutubeChannel = {
+  platform: 'youtube';
+  id: string;
+  externalId: string;
   name: string;
+  description: string;
+  handle?: string;
+  url: string;
   photo?: string;
-  membersCount?: number;
+  followersCount: number | null;
+  subscribersHidden: boolean;
+  videoCount: number;
+  viewCount: number;
 };
 
 export type VkGroup = {
@@ -44,13 +69,14 @@ export type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days'
 export type DashboardSummaryItem = {
   savedGroupId: string;
   source: string;
+  platform: 'vk' | 'youtube';
   group: {
     id: number | string;
     name: string;
     screenName?: string;
     photo?: string;
   };
-  membersCount: number;
+  membersCount: number | null;
   isManagedByUser: boolean;
   statsAvailable: boolean | null;
   growth: {
@@ -155,18 +181,25 @@ export type VkChannelDebug = {
 export type AnalyticsPeriod = 'week' | 'twoWeek' | 'month' | 'currentMonth' | 'previousMonth' | 'custom';
 
 export type CommunityAnalytics = {
+  platform?: 'vk' | 'youtube';
   period: {
     key: AnalyticsPeriod;
     dateFrom: string;
     dateTo: string;
   };
   group: {
-    id: number;
+    id: number | string;
+    platform?: 'vk' | 'youtube';
+    externalId?: string;
     name: string;
     screenName?: string;
     description?: string;
     photo?: string;
-    membersCount: number;
+    membersCount: number | null;
+    url?: string;
+    subscribersHidden?: boolean;
+    channelViewCount?: number;
+    publicVideoCount?: number;
     isManagedByCurrentUser?: boolean;
   };
   stats: {
@@ -197,6 +230,15 @@ export type CommunityAnalytics = {
     adsPosts: number;
     erAverage: number;
     erMax: number;
+    medianViewsPerPost?: number;
+    availability?: {
+      subscribers: boolean;
+      views: boolean;
+      likes: boolean;
+      comments: boolean;
+      reposts: boolean;
+      er: boolean;
+    };
     isComplete: boolean;
     dayGroups: Array<{
       date: string;
@@ -260,6 +302,7 @@ export type CommunityAnalytics = {
     views: number;
   };
   warnings: string[];
+  unavailableMetrics?: Record<string, boolean>;
 };
 
 export type CompareItem = {

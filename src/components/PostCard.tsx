@@ -24,11 +24,11 @@ export type PostCardData = {
   text: string;
   url: string;
   media: PostMedia[];
-  likes: number;
-  reposts: number;
-  comments: number;
-  views: number;
-  er: number;
+  likes: number | null;
+  reposts: number | null;
+  comments: number | null;
+  views: number | null;
+  er: number | null;
   isAd: boolean;
   contentType?: string;
   resultBadge?: string;
@@ -39,8 +39,8 @@ type Props = {
   post: PostCardData;
 };
 
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('ru-RU').format(value);
+function formatNumber(value: number | null) {
+  return value === null ? 'Недоступно' : new Intl.NumberFormat('ru-RU').format(value);
 }
 
 function getPostPreview(post: PostCardData) {
@@ -80,14 +80,14 @@ export function PostCard({ post }: Props) {
               <small>{new Date(post.date).toLocaleString('ru-RU')}</small>
             </span>
           </span>
-          <a className="icon-button" href={post.url} rel="noreferrer" target="_blank" aria-label="Открыть пост VK">
+          <a className="icon-button" href={post.url} rel="noreferrer" target="_blank" aria-label="Открыть публикацию">
             <ExternalLink size={17} />
           </a>
         </div>
 
         <div className="post-card-tags">
           <span>{post.contentType ?? (preview ? preview.title : 'Текст')}</span>
-          <span className={post.isAd ? 'post-ad-badge' : 'post-organic-badge'}>{post.isAd ? 'Реклама' : 'Органический'}</span>
+          {post.group.platform !== 'youtube' && <span className={post.isAd ? 'post-ad-badge' : 'post-organic-badge'}>{post.isAd ? 'Реклама' : 'Органический'}</span>}
           {post.resultBadge && <strong className="post-result-badge">{post.resultBadge}</strong>}
         </div>
 
@@ -100,10 +100,10 @@ export function PostCard({ post }: Props) {
             <Heart size={15} />
             {formatNumber(post.likes)}
           </span>
-          <span title="Репосты" aria-label={`Репосты: ${formatNumber(post.reposts)}`}>
+          {post.group.platform !== 'youtube' && <span title="Репосты" aria-label={`Репосты: ${formatNumber(post.reposts)}`}>
             <Repeat2 size={15} />
             {formatNumber(post.reposts)}
-          </span>
+          </span>}
           <span title="Комментарии" aria-label={`Комментарии: ${formatNumber(post.comments)}`}>
             <MessageCircle size={15} />
             {formatNumber(post.comments)}
@@ -112,9 +112,9 @@ export function PostCard({ post }: Props) {
             <Eye size={15} />
             {formatNumber(post.views)}
           </span>
-          <span title="ER" aria-label={`ER: ${post.er}%`}>
+          <span title={post.group.platform === 'youtube' ? 'Вовлечённость по просмотрам' : 'ER'} aria-label={`Вовлечённость: ${post.er}%`}>
             <Activity size={15} />
-            {post.er}%
+            {post.er === null ? 'Недоступно' : `${post.er}%`}
           </span>
         </div>
       </div>

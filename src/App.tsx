@@ -127,7 +127,7 @@ export function App() {
       <aside className="sidebar">
         <div className="brand">
           <strong>socstat.ru</strong>
-          <span>Аналитика групп ВКонтакте</span>
+          <span>Аналитика VK и YouTube</span>
         </div>
         <nav className="nav">
           {visibleNavItems.map((item) => (

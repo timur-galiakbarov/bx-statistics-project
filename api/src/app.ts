@@ -14,6 +14,7 @@ import { legacyRouter } from './routes/legacy.js';
 import { paymentsRouter } from './routes/payments.js';
 import { postsRouter } from './routes/posts.js';
 import { vkRouter } from './routes/vk.js';
+import { youtubeRouter } from './routes/youtube.js';
 import { VkApiError } from './services/vkClient.js';
 import { DomainError } from './errors/domainError.js';
 
@@ -40,6 +41,7 @@ export function createApp() {
   app.use('/api/payments', paymentsRouter);
   app.use('/api/posts', postsRouter);
   app.use('/api/vk', vkRouter);
+  app.use('/api/youtube', youtubeRouter);
   app.use('/controllers', legacyRouter);
 
   app.use((error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

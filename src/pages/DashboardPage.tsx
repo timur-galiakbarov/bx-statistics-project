@@ -15,13 +15,25 @@ type Props = { groups: SavedGroup[]; hasPaidAccess: boolean; isTrialActive: bool
 type AddMode = 'tracked' | 'free' | 'bonus';
 type Platform = 'vk' | 'youtube';
 type SearchResult = VkGroup | YoutubeChannel;
+const DASHBOARD_PERIOD_STORAGE_KEY = 'socstat.dashboard.period';
+const dashboardPeriodValues: DashboardPeriod[] = ['last7days', 'today', 'yesterday', 'currentMonth'];
+
+function getSavedDashboardPeriod(): DashboardPeriod {
+  try {
+    const savedPeriod = window.localStorage.getItem(DASHBOARD_PERIOD_STORAGE_KEY) as DashboardPeriod | null;
+    return savedPeriod && dashboardPeriodValues.includes(savedPeriod) ? savedPeriod : 'last7days';
+  } catch {
+    return 'last7days';
+  }
+}
+
 function isYoutubeChannel(group: SearchResult): group is YoutubeChannel {
   return 'platform' in group && group.platform === 'youtube';
 }
 export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsChanged }: Props) {
   const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [period, setPeriod] = useState<DashboardPeriod>('last7days');
+  const [period, setPeriod] = useState<DashboardPeriod>(getSavedDashboardPeriod);
   const [message, setMessage] = useState('');
   const [query, setQuery] = useState('');
   const [searchError, setSearchError] = useState('');
@@ -41,6 +53,13 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
     catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось загрузить дашборд.'); }
     finally { setIsSummaryLoading(false); }
   };
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(DASHBOARD_PERIOD_STORAGE_KEY, period);
+    } catch {
+      // The dashboard still works when browser storage is unavailable.
+    }
+  }, [period]);
   useEffect(() => { if (groups.length) void loadSummary(); else setSummary(null); }, [groups.length, hasPaidAccess, period]);
   const search = async (event: FormEvent) => { event.preventDefault(); if (!query.trim()) { setSearchError(`Введите название, ID или ссылку на ${platform === 'youtube' ? 'канал' : 'сообщество'}.`); return; } setSearchError(''); setResults([]); setIsSearching(true); try { const path = platform === 'youtube' ? '/api/youtube/channels/search' : '/api/vk/groups/search'; const items = (await apiGet<VkListResponse<SearchResult>>(`${path}?q=${encodeURIComponent(query.trim())}`)).items; setResults(items); if (!items.length) setSearchError(platform === 'youtube' ? 'YouTube-каналы не найдены.' : 'Сообщества не найдены.'); } catch (error) { setSearchError(error instanceof Error ? error.message : 'Не удалось найти источник.'); } finally { setIsSearching(false); } };
   const updateQuery = (value: string) => { setQuery(value); if (searchError) setSearchError(''); };

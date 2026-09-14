@@ -5,6 +5,7 @@ import {
   GitCompare,
   Home,
   LogOut,
+  Menu,
   Newspaper,
   Send,
   Shield,
@@ -12,7 +13,7 @@ import {
 } from 'lucide-react';
 import { IconButton } from '@alfalab/core-components-icon-button';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiGet, apiPost } from './api/client';
 import type { SavedGroup, User } from './api/types';
 import { AccessLock, isAccessActive } from './components/AccessLock';
@@ -45,6 +46,9 @@ export function App() {
   const [groups, setGroups] = useState<SavedGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const loadAccount = useCallback(
     () =>
@@ -91,12 +95,56 @@ export function App() {
     };
   }, [loadAccount, user?.id]);
 
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+        return;
+      }
+
+      if (event.key !== 'Tab' || !menuRef.current) return;
+      const focusable = Array.from(menuRef.current.querySelectorAll<HTMLElement>(focusableSelector));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', onKeyDown);
+    window.setTimeout(() => menuRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus(), 0);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+      menuButtonRef.current?.focus();
+    };
+  }, [isMobileMenuOpen]);
+
   const logout = async () => {
     await apiPost('/api/auth/logout');
     setUser(null);
     setGroups([]);
     setIsUnauthorized(true);
   };
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const title = useMemo(() => {
     return [...navItems, telegramNavItem, adminNavItem].find((item) => location.pathname.startsWith(item.to))?.label ?? 'Socstat';
@@ -124,24 +172,50 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      {isMobileMenuOpen && <button aria-label="Закрыть меню" className="mobile-menu-backdrop" type="button" onClick={closeMobileMenu} />}
+      <aside aria-label="Основная навигация" className={`sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`} id="main-navigation" ref={menuRef}>
         <div className="brand">
           <strong>socstat.ru</strong>
           <span>Аналитика VK и YouTube</span>
         </div>
         <nav className="nav">
           {visibleNavItems.map((item) => (
-            <NavLink key={item.to} to={item.to}>
+            <NavLink key={item.to} to={item.to} onClick={closeMobileMenu}>
               <item.icon size={18} />
               <span>{item.label}</span>
             </NavLink>
           ))}
         </nav>
+        {user && <div className="mobile-menu-account">
+          <NavLink className="profile-pill" to="/account" onClick={closeMobileMenu}>
+            <Users size={18} />
+            <span>{user.userFullName}</span>
+            <small className={`profile-access-status ${hasPaidAccess ? 'active' : 'inactive'}`}>
+              {hasPaidAccess ? `Активен до ${formatDate(user.activeTo)}` : 'Доступ не активен'}
+            </small>
+          </NavLink>
+          <button className="mobile-menu-logout" type="button" onClick={() => { closeMobileMenu(); void logout(); }}>
+            <LogOut size={18} /> Выйти
+          </button>
+        </div>}
       </aside>
 
       <main className="main">
         <header className="topbar">
-          <h1>{title}</h1>
+          <div className="topbar-title">
+            <button
+              aria-controls="main-navigation"
+              aria-expanded={isMobileMenuOpen}
+              aria-label={isMobileMenuOpen ? 'Закрыть меню' : 'Открыть меню'}
+              className="mobile-menu-button"
+              ref={menuButtonRef}
+              type="button"
+              onClick={() => setIsMobileMenuOpen((open) => !open)}
+            >
+              <Menu size={24} />
+            </button>
+            <h1>{title}</h1>
+          </div>
           {user && (
             <div className="topbar-actions">
               <NavLink className="profile-pill" to="/account">

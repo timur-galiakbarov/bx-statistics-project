@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Check, ExternalLink, Eye, Heart, LockKeyhole, MessageCircle, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ExternalLink, Eye, Heart, LockKeyhole, MessageCircle, MoreHorizontal, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
 import { IconButton } from '@alfalab/core-components-icon-button';
 import { Input } from '@alfalab/core-components-input';
 import { Modal } from '@alfalab/core-components-modal';
@@ -151,6 +151,14 @@ function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRe
   return <section className="panel span-2 communities-panel">
     <div className="section-title"><div><h2>Отслеживаемые сообщества</h2><strong>{groups.length}</strong></div><Button disabled={isRefreshing} leftAddons={<RefreshCw size={16} />} loading={isRefreshing} size={40} type="button" view="secondary" onClick={onRefresh}>Обновить данные</Button></div>
     <div className="communities-controls">
+      <label className="communities-mobile-select">
+        <span>Показывать</span>
+        <select aria-label="Фильтр сообществ" value={ownershipFilter} onChange={(event) => setOwnershipFilter(event.target.value as 'all' | 'mine' | 'other')}>
+          <option value="all">Все сообщества ({groups.length})</option>
+          <option value="mine">Мои ({managedCount})</option>
+          <option value="other">Чужие ({groups.length - managedCount})</option>
+        </select>
+      </label>
       <div className="communities-filter" aria-label="Фильтр сообществ">
         <SegmentedControl className="communities-filter-control" onChange={(id) => setOwnershipFilter(id as 'all' | 'mine' | 'other')} selectedId={ownershipFilter} size={40}>
         <Segment className="communities-filter-segment" id="all" title={`Все (${groups.length})`} />
@@ -158,6 +166,12 @@ function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRe
         <Segment className="communities-filter-segment" id="other" title={`Чужие (${groups.length - managedCount})`} />
         </SegmentedControl>
       </div>
+      <label className="communities-mobile-select">
+        <span>Период</span>
+        <select aria-label="Период статистики" value={period} onChange={(event) => onPeriodChange(event.target.value as DashboardPeriod)}>
+          {dashboardPeriods.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+        </select>
+      </label>
       <div className="communities-period" aria-label="Период статистики">
         <SegmentedControl className="communities-period-control" onChange={(id) => onPeriodChange(id as DashboardPeriod)} selectedId={period} size={40}>
           {dashboardPeriods.map((item) => <Segment className="communities-period-segment" id={item.id} key={item.id} title={item.title} />)}
@@ -171,16 +185,20 @@ function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRe
         const selectGroup = () => onSelect(group);
         return <div className="communities-table-row communities-table-row-action" key={group.id} onClick={selectGroup} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectGroup(); } }} role="link" tabIndex={0}>
           <span className="communities-table-network"><img src={group.platform === 'youtube' ? '/youtube-logo.png' : '/vk-network-logo.png'} alt={group.platform === 'youtube' ? 'YouTube' : 'ВКонтакте'} title={group.platform === 'youtube' ? 'YouTube' : 'ВКонтакте'} /></span>
-          <span className="communities-table-name">{group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<span><strong>{group.name}</strong><small className={`communities-table-owner ${isManaged ? 'managed' : ''}`}>{group.platform === 'youtube' ? 'YouTube-канал' : isManaged ? 'Моё сообщество' : 'Чужое сообщество'}</small></span></span>
+          <span className="communities-table-name">{group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<span><strong>{group.name}</strong><small className={`communities-table-owner ${isManaged ? 'managed' : ''}`}><img className="community-platform-mobile" src={group.platform === 'youtube' ? '/youtube-logo.png' : '/vk-network-logo.png'} alt="" />{group.platform === 'youtube' ? 'YouTube-канал' : isManaged ? 'Моё сообщество' : 'Чужое сообщество'}</small></span></span>
           <MetricValue value={membersCount} loading={!summaryItem} />
           {group.platform === 'youtube' ? <MetricValue /> : <GrowthValue item={summaryItem} />}
           {group.platform === 'youtube' ? <MetricValue value={summaryItem?.traffic.views} loading={!summaryItem} /> : <PairValue first={summaryItem?.traffic.visitors} second={summaryItem?.traffic.views} firstIcon={Users} secondIcon={Eye} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
           {group.platform === 'youtube' ? <MetricValue /> : <PairValue first={summaryItem?.reach.subscribers} second={summaryItem?.reach.total} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
           <TripleValue item={summaryItem} loading={!summaryItem} platform={group.platform} />
-          <IconButton className="community-delete-button" aria-label={`Удалить ${group.name}`} icon={Trash2} loading={deletingGroupId === group.id} onClick={(event) => { event.stopPropagation(); void onRemove(group); }} size={24} view="transparent" />
+          <details className="community-actions" onClick={(event) => event.stopPropagation()}>
+            <summary aria-label={`Действия для ${group.name}`}><MoreHorizontal size={20} /></summary>
+            <IconButton className="community-delete-button" aria-label={`Удалить ${group.name}`} icon={Trash2} loading={deletingGroupId === group.id} onClick={() => void onRemove(group)} size={32} view="transparent" />
+          </details>
         </div>;
       }) : <div className="communities-table-empty">В этой категории пока нет сообществ.</div>}
     </div>
+    <p className="communities-table-scroll-hint" aria-hidden="true">Прокрутите таблицу в сторону, чтобы увидеть все показатели →</p>
     <div className="communities-add"><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={onAdd}>Добавить сообщество</Button></div>
   </section>;
 }
@@ -207,7 +225,7 @@ function PairValue({ first, second, firstIcon: FirstIcon, secondIcon: SecondIcon
 function TripleValue({ item, loading, platform = 'vk' }: { item?: DashboardSummaryItem; loading: boolean; platform?: Platform }) {
   if (loading) return <MetricValue loading />;
   if (item?.error) return <MetricValue />;
-  return <span className="communities-table-triple"><small><Heart size={13} />{number(item?.activity.likes ?? 0)}</small><small><Share2 size={13} />{platform === 'youtube' ? 'Недоступно' : number(item?.activity.reposts ?? 0)}</small><small><MessageCircle size={13} />{number(item?.activity.comments ?? 0)}</small></span>;
+  return <span className="communities-table-triple"><span className="communities-reaction-values"><small><Heart size={13} />{number(item?.activity.likes ?? 0)}</small><small><Share2 size={13} />{platform === 'youtube' ? 'Недоступно' : number(item?.activity.reposts ?? 0)}</small><small><MessageCircle size={13} />{number(item?.activity.comments ?? 0)}</small></span></span>;
 }
 
 function Management({ platform, setPlatform, query, setQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds }: ManagementProps) {

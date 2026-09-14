@@ -1,10 +1,11 @@
-import { Bug, CheckCircle2, CreditCard, Info, Link, RefreshCw, Search, Trash2, UserPlus, Users, XCircle } from 'lucide-react';
+import { Bug, CheckCircle2, CreditCard, Info, Link, MoreHorizontal, RefreshCw, Search, Trash2, UserPlus, Users, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../api/client';
 import type {
   AdminPaymentActionResult,
   AdminPaymentHistoryItem,
   AdminPaymentsMonthlySummary,
+  AdminTodayActivitySummary,
   AdminUserAccessResult,
   RecentAdminUser,
   User,
@@ -19,6 +20,8 @@ type Props = {
   user: User;
   onAccountChanged: () => Promise<void>;
 };
+
+type AdminSection = 'statistics' | 'payments' | 'settings';
 
 const paymentStatusOptions = [
   { key: 'all', label: 'Все' },
@@ -54,6 +57,7 @@ function formatAdminDateTime(value: string) {
 }
 
 export function AdminPage({ user, onAccountChanged }: Props) {
+  const [adminSection, setAdminSection] = useState<AdminSection>('statistics');
   const [permissions, setPermissions] = useState<VkPermissions | null>(null);
   const [tokenStatus, setTokenStatus] = useState<VkTokenStatus | null>(null);
   const [appInfo, setAppInfo] = useState<VkAppInfo | null>(null);
@@ -64,6 +68,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [paymentQuery, setPaymentQuery] = useState('');
   const [payments, setPayments] = useState<AdminPaymentHistoryItem[]>([]);
   const [paymentsMonthlySummary, setPaymentsMonthlySummary] = useState<AdminPaymentsMonthlySummary | null>(null);
+  const [todayActivity, setTodayActivity] = useState<AdminTodayActivitySummary | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentAdminUser[]>([]);
   const [manualPermissions, setManualPermissions] = useState<VkPermissions | null>(null);
   const [manualStats, setManualStats] = useState<VkManualStatsResult | null>(null);
@@ -73,6 +78,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [oauthDebugError, setOauthDebugError] = useState<string | null>(null);
   const [paymentsError, setPaymentsError] = useState<string | null>(null);
   const [paymentsMonthlySummaryError, setPaymentsMonthlySummaryError] = useState<string | null>(null);
+  const [todayActivityError, setTodayActivityError] = useState<string | null>(null);
   const [recentUsersError, setRecentUsersError] = useState<string | null>(null);
   const [manualError, setManualError] = useState<string | null>(null);
   const [paymentActionId, setPaymentActionId] = useState<string | null>(null);
@@ -80,6 +86,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [groupsResetUserId, setGroupsResetUserId] = useState<string | null>(null);
   const [accessDates, setAccessDates] = useState<Record<string, string>>({});
   const [accessModalUser, setAccessModalUser] = useState<RecentAdminUser | null>(null);
+  const [openActionMenuUserId, setOpenActionMenuUserId] = useState<string | null>(null);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [createUserError, setCreateUserError] = useState<string | null>(null);
@@ -95,6 +102,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [isOauthDebugLoading, setIsOauthDebugLoading] = useState(false);
   const [isPaymentsLoading, setIsPaymentsLoading] = useState(false);
   const [isPaymentsMonthlySummaryLoading, setIsPaymentsMonthlySummaryLoading] = useState(false);
+  const [isTodayActivityLoading, setIsTodayActivityLoading] = useState(false);
   const [isRecentUsersLoading, setIsRecentUsersLoading] = useState(false);
   const [isManualPermissionsLoading, setIsManualPermissionsLoading] = useState(false);
   const [isManualStatsLoading, setIsManualStatsLoading] = useState(false);
@@ -137,9 +145,9 @@ export function AdminPage({ user, onAccountChanged }: Props) {
       items.map((item) =>
         item.user?.id === user.id
           ? {
-              ...item,
-              user
-            }
+            ...item,
+            user
+          }
           : item
       )
     );
@@ -282,6 +290,21 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     }
   };
 
+  const loadTodayActivity = async () => {
+    setIsTodayActivityLoading(true);
+    setTodayActivityError(null);
+
+    try {
+      const data = await apiGet<AdminTodayActivitySummary>('/api/account/admin/activity/today');
+      setTodayActivity(data);
+    } catch (nextError) {
+      setTodayActivity(null);
+      setTodayActivityError(nextError instanceof Error ? nextError.message : 'Не удалось загрузить активность за сегодня');
+    } finally {
+      setIsTodayActivityLoading(false);
+    }
+  };
+
   const loadRecentUsers = async () => {
     setIsRecentUsersLoading(true);
     setRecentUsersError(null);
@@ -408,11 +431,19 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   useEffect(() => {
     loadPayments();
     loadPaymentsMonthlySummary();
+    loadTodayActivity();
     loadRecentUsers();
   }, []);
 
   return (
     <section className="page-grid">
+      <div className="admin-tabs span-2" role="tablist" aria-label="Разделы админки">
+        <button aria-selected={adminSection === 'statistics'} className={adminSection === 'statistics' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('statistics')}>Пользователи</button>
+        <button aria-selected={adminSection === 'payments'} className={adminSection === 'payments' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('payments')}>Платежи</button>
+        <button aria-selected={adminSection === 'settings'} className={adminSection === 'settings' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('settings')}>Настройки</button>
+      </div>
+
+      {adminSection === 'settings' && (
       <div className="panel span-2">
         <div className="panel-header compact">
           <div>
@@ -431,8 +462,126 @@ export function AdminPage({ user, onAccountChanged }: Props) {
         </div>
         {accessRestrictionsError && <div className="debug-error">{accessRestrictionsError}</div>}
       </div>
+      )}
+
+      {adminSection === 'statistics' && <>
+      <div className="panel admin-summary-panel">
+        <div className="panel-header compact">
+          <div>
+            <h2>Посетители сегодня</h2>
+            <p>По полю «Последняя активность»</p>
+          </div>
+          <button className="secondary-button inline" type="button" onClick={loadTodayActivity} disabled={isTodayActivityLoading}>
+            {isTodayActivityLoading ? <RefreshCw className="spin" size={18} /> : <RefreshCw size={18} />}
+            Обновить
+          </button>
+        </div>
+        {todayActivityError && <div className="debug-error">{todayActivityError}</div>}
+        {todayActivity && (
+          <div className="admin-today-activity">
+            <div><span>Всего</span><strong>{todayActivity.total.toLocaleString('ru-RU')}</strong></div>
+            <div><span>Новые</span><strong>{todayActivity.new.toLocaleString('ru-RU')}</strong></div>
+            <div><span>Вернувшиеся</span><strong>{todayActivity.returning.toLocaleString('ru-RU')}</strong></div>
+          </div>
+        )}
+      </div>
 
       <div className="panel span-2">
+        <div className="panel-header compact">
+          <div>
+            <h2>Последние активные пользователи</h2>
+          </div>
+          <div className="admin-recent-users-actions">
+            <button className="secondary-button inline" type="button" onClick={loadRecentUsers} disabled={isRecentUsersLoading}>
+              {isRecentUsersLoading ? <RefreshCw className="spin" size={18} /> : <Users size={18} />}
+              {isRecentUsersLoading ? 'Загружаем' : 'Обновить'}
+            </button>
+            <button
+              aria-label="Добавить пользователя"
+              className="primary-button admin-add-user-button"
+              title="Добавить пользователя"
+              type="button"
+              onClick={openCreateUserModal}
+            >
+              <UserPlus size={18} />
+            </button>
+          </div>
+        </div>
+
+        {recentUsersError && <div className="debug-error">{recentUsersError}</div>}
+        {recentUsers.length === 0 && !recentUsersError && !isRecentUsersLoading && (
+          <div className="empty-state">Активных пользователей пока нет.</div>
+        )}
+        {recentUsers.length > 0 && (
+          <div className="table analytics-posts recent-users-table">
+            <div className="table-row table-head admin-recent-users-row">
+              <span>Пользователь</span>
+              <span>Последняя активность</span>
+              <span>Регистрация / вход</span>
+              <span>Системная информация</span>
+              <span>Доступ</span>
+              <span>Действия</span>
+            </div>
+            {recentUsers.map((user) => (
+              <div className="table-row admin-recent-users-row" key={user.id}>
+                <span data-label="Пользователь">
+                  <strong>{user.name}</strong>
+                </span>
+                <span data-label="Последняя активность">{formatAdminDateTime(user.lastActivityAt)}</span>
+                <span className="admin-user-dates" data-label="Регистрация / вход">
+                  <small>Рег.: {formatAdminDateTime(user.registeredAt)}</small>
+                  <small>Вход: {formatAdminDateTime(user.lastLoginAt)}</small>
+                </span>
+                <span className="admin-user-dates" data-label="Системная информация">
+                  <small>VK ID: {user.vkId ?? '—'}</small>
+                  <small>Bitrix ID: {user.bitrixId ?? '—'}</small>
+                </span>
+                <span className="admin-user-access" data-label="Доступ">
+                  <span className={`user-active-status ${user.hasActiveAccess ? 'active' : 'inactive'}`}>
+                    {user.hasActiveAccess ? 'Активен' : 'Не активен'}
+                  </span>
+                  <small>До {formatAdminDate(user.activeTo)}</small>
+                </span>
+                <span data-label="Действия">
+                  <span className="admin-user-actions">
+                    <button
+                      aria-expanded={openActionMenuUserId === user.id}
+                      aria-haspopup="menu"
+                      aria-label={`Действия пользователя ${user.name}`}
+                      className="admin-user-actions-trigger"
+                      type="button"
+                      onClick={() => setOpenActionMenuUserId((current) => current === user.id ? null : user.id)}
+                    >
+                      <MoreHorizontal size={18} />
+                    </button>
+                    {openActionMenuUserId === user.id && (
+                      <span className="admin-user-actions-menu" role="menu">
+                        <button type="button" role="menuitem" onClick={() => { setOpenActionMenuUserId(null); openAccessModal(user); }}>
+                          Изменить доступ
+                        </button>
+                        <button
+                          className="danger"
+                          type="button"
+                          role="menuitem"
+                          disabled={groupsResetUserId === user.id}
+                          onClick={() => { setOpenActionMenuUserId(null); void resetUserGroups(user); }}
+                        >
+                          {groupsResetUserId === user.id ? <RefreshCw className="spin" size={14} /> : <Trash2 size={14} />}
+                          Сбросить бесплатные
+                        </button>
+                      </span>
+                    )}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      </>}
+
+      {adminSection === 'payments' && <>
+      <div className="panel admin-summary-panel">
         <div className="panel-header compact">
           <div>
             <h2>Платежи по месяцам</h2>
@@ -461,77 +610,6 @@ export function AdminPage({ user, onAccountChanged }: Props) {
               <strong>{paymentsMonthlySummary.previous.amount.toLocaleString('ru-RU')} ₽</strong>
               <small>{paymentsMonthlySummary.previous.count} оплат</small>
             </div>
-          </div>
-        )}
-      </div>
-
-      <div className="panel span-2">
-        <div className="panel-header compact">
-          <div>
-            <h2>Последние активные пользователи</h2>
-            <p>До 300 пользователей, отсортированных по последней активности. Обновляется не чаще раза в 5 минут на пользователя.</p>
-          </div>
-          <div className="admin-recent-users-actions">
-            <button className="secondary-button inline" type="button" onClick={loadRecentUsers} disabled={isRecentUsersLoading}>
-              {isRecentUsersLoading ? <RefreshCw className="spin" size={18} /> : <Users size={18} />}
-              {isRecentUsersLoading ? 'Загружаем' : 'Обновить'}
-            </button>
-            <button className="primary-button" type="button" onClick={openCreateUserModal}>
-              <UserPlus size={18} />
-              Добавить пользователя
-            </button>
-          </div>
-        </div>
-
-        {recentUsersError && <div className="debug-error">{recentUsersError}</div>}
-        {recentUsers.length === 0 && !recentUsersError && !isRecentUsersLoading && (
-          <div className="empty-state">Активных пользователей пока нет.</div>
-        )}
-        {recentUsers.length > 0 && (
-            <div className="table analytics-posts recent-users-table">
-            <div className="table-row table-head admin-recent-users-row">
-              <span>Регистрация</span>
-              <span>Последняя активность</span>
-              <span>Последний вход</span>
-              <span>Пользователь</span>
-              <span>VK ID</span>
-              <span>Bitrix ID</span>
-              <span>Доступ</span>
-              <span>Доступ до</span>
-              <span>Действия</span>
-            </div>
-            {recentUsers.map((user) => (
-              <div className="table-row admin-recent-users-row" key={user.id}>
-                <span data-label="Регистрация">{formatAdminDateTime(user.registeredAt)}</span>
-                <span data-label="Последняя активность">{formatAdminDateTime(user.lastActivityAt)}</span>
-                <span data-label="Последний вход">{formatAdminDateTime(user.lastLoginAt)}</span>
-                <span data-label="Пользователь">
-                  <strong>{user.name}</strong>
-                </span>
-                <span data-label="VK ID">{user.vkId ?? '—'}</span>
-                <span data-label="Bitrix ID">{user.bitrixId ?? '—'}</span>
-                <span data-label="Доступ" className={`user-active-status ${user.hasActiveAccess ? 'active' : 'inactive'}`}>
-                  {user.hasActiveAccess ? 'Активен' : 'Не активен'}
-                </span>
-                <span data-label="Доступ до">{formatAdminDate(user.activeTo)}</span>
-                <span data-label="Действия">
-                  <span className="admin-user-actions">
-                    <button className="mini-button" type="button" onClick={() => openAccessModal(user)}>
-                      Изменить доступ
-                    </button>
-                    <button
-                      className="mini-button danger-button"
-                      type="button"
-                      disabled={groupsResetUserId === user.id}
-                      onClick={() => void resetUserGroups(user)}
-                    >
-                      {groupsResetUserId === user.id ? <RefreshCw className="spin" size={14} /> : <Trash2 size={14} />}
-                      Сбросить бесплатные
-                    </button>
-                  </span>
-                </span>
-              </div>
-            ))}
           </div>
         )}
       </div>
@@ -645,6 +723,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
           </div>
         )}
       </div>
+      </>}
 
       {accessModalUser && (
         <div className="admin-access-modal-backdrop" role="presentation" onMouseDown={() => setAccessModalUser(null)}>
@@ -726,6 +805,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
         </div>
       )}
 
+      {adminSection === 'settings' && <>
       <div className="panel span-2">
         <div className="panel-header compact">
           <div>
@@ -907,6 +987,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
           </div>
         )}
       </div>
+      </>}
     </section>
   );
 }

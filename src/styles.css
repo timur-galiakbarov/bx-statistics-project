@@ -409,6 +409,32 @@ a {
   grid-column: span 2;
 }
 
+.admin-tabs {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+}
+
+.admin-tabs button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: #777;
+  cursor: pointer;
+  font: inherit;
+  padding: 9px 12px;
+}
+
+.admin-tabs button:hover {
+  color: #3c4858;
+}
+
+.admin-tabs button.active {
+  border-bottom-color: #4caf50;
+  color: #287d30;
+  font-weight: 700;
+}
+
 .panel {
   background: #fff;
   border: 1px solid #e5e9e6;
@@ -1296,6 +1322,33 @@ a {
   font-size: 24px;
   font-weight: 400;
   margin: 7px 0;
+}
+
+.admin-today-activity {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-today-activity > div {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 10px;
+}
+
+.admin-today-activity span {
+  color: #777;
+  display: block;
+  font-size: 13px;
+}
+
+.admin-today-activity strong {
+  color: #3c4858;
+  display: block;
+  font-size: 22px;
+  font-weight: 400;
+  margin-top: 7px;
 }
 
 .secondary-button.inline {
@@ -2741,11 +2794,12 @@ a {
 }
 
 .admin-recent-users-row {
-  grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) minmax(160px, 1fr) minmax(230px, 1.5fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr) minmax(110px, 0.8fr) minmax(130px, 0.9fr);
+  grid-template-columns: minmax(230px, 1.5fr) minmax(160px, 1fr) minmax(160px, 1fr) minmax(140px, 0.9fr) minmax(120px, 0.8fr) minmax(130px, 0.9fr);
 }
 
 .recent-users-table {
   max-height: 620px;
+  min-height: 400px;
   overflow: auto;
 }
 
@@ -2776,12 +2830,32 @@ a {
   overflow-wrap: anywhere;
 }
 
+.admin-user-dates {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-user-dates small {
+  font-size: 11px;
+}
+
+.admin-user-access {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+
+.admin-user-access small {
+  color: #777;
+  font-size: 11px;
+}
+
 .user-active-status {
   border-radius: 3px;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   justify-self: start;
-  padding: 5px 9px;
+  padding: 3px 7px;
 }
 
 .user-active-status.active {
@@ -2803,12 +2877,80 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  position: relative;
+}
+
+.admin-user-actions-trigger {
+  align-items: center;
+  background: #f2f2f2;
+  border: 0;
+  border-radius: 4px;
+  color: #3c4858;
+  cursor: pointer;
+  display: inline-flex;
+  height: 30px;
+  justify-content: center;
+  padding: 0;
+  width: 34px;
+}
+
+.admin-user-actions-trigger:hover,
+.admin-user-actions-trigger[aria-expanded='true'] {
+  background: #e5ebe6;
+}
+
+.admin-user-actions-menu {
+  background: #fff;
+  border: 1px solid #dbe3dd;
+  border-radius: 5px;
+  box-shadow: 0 6px 18px rgba(60, 72, 88, 0.16);
+  display: grid;
+  min-width: 190px;
+  padding: 4px;
+  position: absolute;
+  right: calc(100% + 5px);
+  top: 0;
+  z-index: 3;
+}
+
+.admin-user-actions-menu button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  color: #3c4858;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 12px;
+  gap: 6px;
+  padding: 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.admin-user-actions-menu button:hover {
+  background: #f2f5f3;
+}
+
+.admin-user-actions-menu button.danger {
+  color: #b42318;
+}
+
+.admin-user-actions-menu button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .admin-recent-users-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
+}
+
+.admin-add-user-button {
+  justify-content: center;
+  padding: 10px;
 }
 
 .admin-access-actions {
@@ -3145,6 +3287,10 @@ a {
   }
 
   .admin-monthly-payments {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-today-activity {
     grid-template-columns: 1fr;
   }
 

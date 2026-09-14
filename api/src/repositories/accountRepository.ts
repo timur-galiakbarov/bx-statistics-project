@@ -374,6 +374,39 @@ export async function getAdminStat(userId: string) {
   return { users, paidUsers, savedGroups };
 }
 
+export type AdminTodayActivitySummary = {
+  total: number;
+  new: number;
+  returning: number;
+};
+
+/**
+ * Counts users with recorded activity during the current UTC calendar day.
+ * A new visitor is one whose account was created on that same day; everyone
+ * else in the activity cohort is returning.
+ */
+export async function getAdminTodayActivitySummary(now = new Date()): Promise<AdminTodayActivitySummary> {
+  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const nextDayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  const activeToday = {
+    lastActivityAt: { $gte: dayStart, $lt: nextDayStart }
+  };
+
+  const [total, newVisitors] = await Promise.all([
+    UserModel.countDocuments(activeToday),
+    UserModel.countDocuments({
+      ...activeToday,
+      createdAt: { $gte: dayStart, $lt: nextDayStart }
+    })
+  ]);
+
+  return {
+    total,
+    new: newVisitors,
+    returning: total - newVisitors
+  };
+}
+
 export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[]> {
   const users = await UserModel.find({
     $or: [

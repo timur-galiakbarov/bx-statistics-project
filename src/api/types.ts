@@ -428,6 +428,12 @@ export type AdminPaymentsMonthlySummary = {
   previous: { count: number; amount: number };
 };
 
+export type AdminTodayActivitySummary = {
+  total: number;
+  new: number;
+  returning: number;
+};
+
 export type AdminUserAccessResult = {
   user: {
     id: string;

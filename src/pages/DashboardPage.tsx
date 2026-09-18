@@ -4,7 +4,7 @@ import { Input } from '@alfalab/core-components-input';
 import { Modal } from '@alfalab/core-components-modal';
 import { Button } from '@alfalab/core-components-button';
 import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiDelete, apiGet, apiPost } from '../api/client';
 import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
@@ -30,6 +30,28 @@ function getSavedDashboardPeriod(): DashboardPeriod {
 function isYoutubeChannel(group: SearchResult): group is YoutubeChannel {
   return 'platform' in group && group.platform === 'youtube';
 }
+
+function failedDashboardItem(group: SavedGroup, error: unknown): DashboardSummaryItem {
+  return {
+    savedGroupId: group.id,
+    source: group.source,
+    platform: group.platform,
+    group: { id: group.externalId, name: group.name, screenName: group.handle, photo: group.photo },
+    membersCount: group.membersCount ?? null,
+    isManagedByUser: group.source === 'managed',
+    statsAvailable: null,
+    growth: { total: 0, subscribed: 0, unsubscribed: 0 },
+    traffic: { visitors: 0, views: 0 },
+    reach: { subscribers: 0, total: 0 },
+    activity: { likes: 0, reposts: 0, comments: 0 },
+    warnings: [],
+    error: {
+      code: 'DASHBOARD_GROUP_REQUEST_FAILED',
+      message: error instanceof Error ? error.message : 'Не удалось загрузить данные сообщества.'
+    }
+  };
+}
+
 export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsChanged }: Props) {
   const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -46,12 +68,47 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
   const [addMode, setAddMode] = useState<AddMode>('tracked');
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const summaryRequestId = useRef(0);
   const loadSummary = async (forceRefresh = false) => {
-    if (!hasPaidAccess) { setSummary(null); setMessage('Детальная статистика недоступна: срок доступа истёк.'); return; }
+    const requestId = ++summaryRequestId.current;
+    if (!hasPaidAccess) { setSummary(null); setIsSummaryLoading(false); setMessage('Детальная статистика недоступна: срок доступа истёк.'); return; }
+    const pendingGroups = groups.filter((group) => group.isTracked);
     setMessage(''); setIsSummaryLoading(true);
-    try { setSummary(await apiGet<DashboardSummary>(`/api/dashboard/summary?period=${period}${forceRefresh ? '&refresh=1' : ''}`)); }
-    catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось загрузить дашборд.'); }
-    finally { setIsSummaryLoading(false); }
+    setSummary(null);
+    let nextGroupIndex = 0;
+    let failedGroups = 0;
+
+    const updateItem = (item: DashboardSummaryItem, response?: DashboardSummary) => {
+      if (summaryRequestId.current !== requestId) return;
+      setSummary((current) => ({
+        period: response?.period ?? current?.period ?? { key: period, dateFrom: '', dateTo: '' },
+        groups: [...(current?.groups ?? []).filter((currentItem) => currentItem.savedGroupId !== item.savedGroupId), item]
+      }));
+    };
+
+    const worker = async () => {
+      while (summaryRequestId.current === requestId) {
+        const group = pendingGroups[nextGroupIndex++];
+        if (!group) return;
+        try {
+          const response = await apiGet<DashboardSummary>(`/api/dashboard/summary/groups/${encodeURIComponent(group.id)}?period=${period}${forceRefresh ? '&refresh=1' : ''}`);
+          const item = response.groups[0];
+          if (item) updateItem(item, response);
+        } catch (error) {
+          failedGroups += 1;
+          updateItem(failedDashboardItem(group, error));
+        }
+      }
+    };
+
+    try {
+      await Promise.all(Array.from({ length: Math.min(2, pendingGroups.length) }, () => worker()));
+      if (summaryRequestId.current === requestId && failedGroups) {
+        setMessage(`Не удалось загрузить данные для ${failedGroups} ${failedGroups === 1 ? 'сообщества' : 'сообществ'}.`);
+      }
+    } finally {
+      if (summaryRequestId.current === requestId) setIsSummaryLoading(false);
+    }
   };
   useEffect(() => {
     try {
@@ -60,7 +117,12 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
       // The dashboard still works when browser storage is unavailable.
     }
   }, [period]);
-  useEffect(() => { if (groups.length) void loadSummary(); else setSummary(null); }, [groups.length, hasPaidAccess, period]);
+  const trackedGroupsKey = groups.filter((group) => group.isTracked).map((group) => `${group.id}:${group.externalId}:${group.platform}:${group.source}`).join(',');
+  useEffect(() => {
+    if (trackedGroupsKey) void loadSummary();
+    else { summaryRequestId.current += 1; setSummary(null); setIsSummaryLoading(false); }
+    return () => { summaryRequestId.current += 1; };
+  }, [trackedGroupsKey, hasPaidAccess, period]);
   const search = async (event: FormEvent) => { event.preventDefault(); if (!query.trim()) { setSearchError(`Введите название, ID или ссылку на ${platform === 'youtube' ? 'канал' : 'сообщество'}.`); return; } setSearchError(''); setResults([]); setIsSearching(true); try { const path = platform === 'youtube' ? '/api/youtube/channels/search' : '/api/vk/groups/search'; const items = (await apiGet<VkListResponse<SearchResult>>(`${path}?q=${encodeURIComponent(query.trim())}`)).items; setResults(items); if (!items.length) setSearchError(platform === 'youtube' ? 'YouTube-каналы не найдены.' : 'Сообщества не найдены.'); } catch (error) { setSearchError(error instanceof Error ? error.message : 'Не удалось найти источник.'); } finally { setIsSearching(false); } };
   const updateQuery = (value: string) => { setQuery(value); if (searchError) setSearchError(''); };
   const add = async (group: SearchResult) => { try { setSearchError(''); const payload = isYoutubeChannel(group) ? { platform: 'youtube', group } : { platform: 'vk', group: { id: group.id, name: group.name, screen_name: group.screen_name, photo: group.photo_100 ?? group.photo_50, members_count: group.members_count } }; const path = addMode === 'free' ? '/api/account/groups/free' : addMode === 'bonus' ? '/api/account/groups/bonus' : '/api/account/groups'; await apiPost(path, addMode === 'tracked' ? { ...payload, source: 'bookmark' } : payload); await onGroupsChanged(); setResults([]); setIsAddModalOpen(false); setMessage(`«${group.name}» добавлено.`); } catch (error) { setSearchError(error instanceof Error ? error.message : 'Не удалось добавить источник.'); } };

@@ -241,8 +241,8 @@ function formatPeriod(period: ReturnType<typeof getPeriod>) {
   };
 }
 
-function getSummaryItemCacheKey(userId: string, savedGroup: SavedGroup, period: ReturnType<typeof getPeriod>) {
-  return [userId, period.key, savedGroup.id, savedGroup.platform, savedGroup.externalId, savedGroup.source].join(':');
+function getSummaryItemCacheKey(userId: string, savedGroup: SavedGroup, period: ReturnType<typeof getPeriod>, includePremiumMetrics: boolean) {
+  return [userId, period.key, savedGroup.id, savedGroup.platform, savedGroup.externalId, savedGroup.source, includePremiumMetrics ? 'full' : 'basic'].join(':');
 }
 
 async function getManagedGroupIds(userId: string, accessToken: string, forceRefresh: boolean) {
@@ -276,7 +276,8 @@ async function buildDashboardSummaryItem(
   period: ReturnType<typeof getPeriod>,
   accessToken: string | undefined,
   managedGroupIds: Set<number>,
-  forceRefresh: boolean
+  forceRefresh: boolean,
+  includePremiumMetrics: boolean
 ): Promise<DashboardSummaryItem> {
   const groupId = String(savedGroup.externalId);
 
@@ -293,7 +294,7 @@ async function buildDashboardSummaryItem(
         membersCount: channel.followersCount,
         statsAvailable: true,
         traffic: { visitors: 0, views: videos.reduce((sum, video) => sum + (video.views ?? 0), 0) },
-        activity: { likes, reposts: 0, comments },
+        activity: includePremiumMetrics ? { likes, reposts: 0, comments } : fallback.activity,
         warnings: ['Просмотры и реакции YouTube — текущие накопительные показатели видео, опубликованных в выбранном периоде. Репосты и динамика аудитории недоступны.']
       };
     } catch (error) {
@@ -320,7 +321,7 @@ async function buildDashboardSummaryItem(
       group_id: groupInfo.id,
       timestamp_from: period.unixFrom,
       timestamp_to: period.unixTo,
-      stats_groups: 'visitors,reach,activity'
+      stats_groups: includePremiumMetrics ? 'visitors,reach,activity' : 'visitors,activity'
     }).catch((error) => {
       if (isVkPermissionDeniedError(error)) {
         statsUnavailable = true;
@@ -329,17 +330,19 @@ async function buildDashboardSummaryItem(
       throw error;
     });
 
-    await delay(350);
+    if (includePremiumMetrics) await delay(350);
 
-    const wall = await vkApiRequest<VkWallResponse>('wall.get', accessToken!, {
-      owner_id: -groupInfo.id,
-      count: 100,
-      offset: 0
-    });
+    const wall = includePremiumMetrics
+      ? await vkApiRequest<VkWallResponse>('wall.get', accessToken!, {
+          owner_id: -groupInfo.id,
+          count: 100,
+          offset: 0
+        })
+      : null;
     const stat = sumStats(stats);
-    const activity = sumWallActivity(wall, period.unixFrom, period.unixTo);
+    const activity = wall ? sumWallActivity(wall, period.unixFrom, period.unixTo) : fallback.activity;
 
-    await delay(350);
+    if (includePremiumMetrics) await delay(350);
 
     return {
       savedGroupId: savedGroup.id,
@@ -360,7 +363,7 @@ async function buildDashboardSummaryItem(
         unsubscribed: stat.unsubscribed
       },
       traffic: { visitors: stat.visitors, views: stat.views },
-      reach: { subscribers: stat.reachSubscribers, total: stat.reach },
+      reach: includePremiumMetrics ? { subscribers: stat.reachSubscribers, total: stat.reach } : fallback.reach,
       activity,
       warnings: statsUnavailable ? ['Статистика группы недоступна в VK.'] : [],
       error: null
@@ -379,9 +382,10 @@ async function loadDashboardSummaryItem(
   period: ReturnType<typeof getPeriod>,
   accessToken: string | undefined,
   managedGroupIds: Set<number>,
-  forceRefresh: boolean
+  forceRefresh: boolean,
+  includePremiumMetrics: boolean
 ) {
-  const cacheKey = getSummaryItemCacheKey(userId, savedGroup, period);
+  const cacheKey = getSummaryItemCacheKey(userId, savedGroup, period, includePremiumMetrics);
   if (!forceRefresh) {
     const cached = dashboardSummaryItemCache.get(cacheKey);
     if (cached) return cached;
@@ -391,7 +395,7 @@ async function loadDashboardSummaryItem(
   const pending = pendingSummaryItems.get(pendingKey);
   if (pending) return pending;
 
-  const request = buildDashboardSummaryItem(savedGroup, period, accessToken, managedGroupIds, forceRefresh)
+  const request = buildDashboardSummaryItem(savedGroup, period, accessToken, managedGroupIds, forceRefresh, includePremiumMetrics)
     .then((item) => {
       dashboardSummaryItemCache.set(cacheKey, item);
       return item;
@@ -401,7 +405,7 @@ async function loadDashboardSummaryItem(
   return request;
 }
 
-export async function getDashboardSummaryItem(userId: string, savedGroupId: string, periodValue: unknown, forceRefresh = false): Promise<DashboardSummaryResult> {
+export async function getDashboardSummaryItem(userId: string, savedGroupId: string, periodValue: unknown, forceRefresh = false, includePremiumMetrics = true): Promise<DashboardSummaryResult> {
   const period = getPeriod(periodValue);
   const savedGroup = (await getGroups(userId)).find((group) => group.id === savedGroupId && group.isTracked);
   if (!savedGroup) {
@@ -415,15 +419,15 @@ export async function getDashboardSummaryItem(userId: string, savedGroupId: stri
   // Ownership changes much less frequently than metrics. Reuse it across per-row refreshes
   // so every next worker does not add another groups.get request to VK.
   const managedGroupIds = accessToken ? await getManagedGroupIds(userId, accessToken, false) : new Set<number>();
-  const item = await loadDashboardSummaryItem(userId, savedGroup, period, accessToken, managedGroupIds, forceRefresh);
+  const item = await loadDashboardSummaryItem(userId, savedGroup, period, accessToken, managedGroupIds, forceRefresh, includePremiumMetrics);
 
   return { period: formatPeriod(period), groups: [item] };
 }
 
-export async function getDashboardSummary(userId: string, periodValue: unknown, forceRefresh = false): Promise<DashboardSummaryResult> {
+export async function getDashboardSummary(userId: string, periodValue: unknown, forceRefresh = false, includePremiumMetrics = true): Promise<DashboardSummaryResult> {
   const period = getPeriod(periodValue);
   const groups = (await getGroups(userId)).filter((group) => group.isTracked);
-  const cacheKey = [userId, period.key, groups.map((group) => `${group.id}:${group.platform}:${group.externalId}:${group.source}`).join(',')].join(':');
+  const cacheKey = [userId, period.key, includePremiumMetrics ? 'full' : 'basic', groups.map((group) => `${group.id}:${group.platform}:${group.externalId}:${group.source}`).join(',')].join(':');
 
   if (!forceRefresh) {
     const cached = dashboardSummaryCache.get(cacheKey);
@@ -444,7 +448,7 @@ export async function getDashboardSummary(userId: string, periodValue: unknown, 
   const summaryGroups: DashboardSummaryItem[] = [];
 
   for (const savedGroup of groups) {
-    summaryGroups.push(await loadDashboardSummaryItem(userId, savedGroup, period, accessToken, managedGroupIds, forceRefresh));
+    summaryGroups.push(await loadDashboardSummaryItem(userId, savedGroup, period, accessToken, managedGroupIds, forceRefresh, includePremiumMetrics));
   }
 
   const summary = {

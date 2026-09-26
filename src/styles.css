@@ -906,6 +906,9 @@ a {
 .community-platform-mobile { display: none; }
 .communities-table-metric { color: #3c4858; font-variant-numeric: tabular-nums; }
 .communities-table-metric.loading { color: #7b8780; font-size: 11px; }
+.communities-table-metric.tariff-unavailable { color: #9a6534; font-size: 11px; line-height: 1.2; }
+.tariff-unavailable-label { align-items: center; display: flex; gap: 5px; }
+.tariff-unavailable-label svg { flex: 0 0 auto; }
 .communities-table-pair, .communities-table-triple { display: grid; font-variant-numeric: tabular-nums; gap: 3px; }
 .communities-reaction-values { display: grid; gap: 3px; }
 .communities-table-pair strong, .communities-table-pair small, .communities-table-triple small { align-items: center; display: flex; gap: 4px; line-height: 1.1; }

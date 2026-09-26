@@ -71,7 +71,6 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
   const summaryRequestId = useRef(0);
   const loadSummary = async (forceRefresh = false) => {
     const requestId = ++summaryRequestId.current;
-    if (!hasPaidAccess) { setSummary(null); setIsSummaryLoading(false); setMessage('Детальная статистика недоступна: срок доступа истёк.'); return; }
     const pendingGroups = groups.filter((group) => group.isTracked);
     setMessage(''); setIsSummaryLoading(true);
     setSummary(null);
@@ -143,7 +142,7 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
     .map((group) => `${group.platform}:${group.externalId}`);
   const managementProps = { platform, setPlatform: (next: Platform) => { setPlatform(next); setResults([]); setSearchError(''); }, query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds };
   return <div className="page-grid dashboard-page">
-    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onRemove={remove} onSelect={(group) => navigate(`/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
+    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onRemove={remove} onSelect={(group) => navigate(`/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
     <FreeCommunitiesPanel groups={freeGroups} isTrialActive={isTrialActive} onAdd={openAddModal} />
     {message && <div className="form-message span-2">{message}</div>}
     <AddCommunityModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} managementProps={managementProps} />
@@ -197,7 +196,7 @@ const dashboardPeriods: Array<{ id: DashboardPeriod; title: string }> = [
   { id: 'currentMonth', title: 'Этот месяц' }
 ];
 
-function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRefresh, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; period: DashboardPeriod; onPeriodChange: (period: DashboardPeriod) => void; onAdd: () => void; onRefresh: () => void; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
+function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChange, onAdd, onRefresh, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; period: DashboardPeriod; hasPaidAccess: boolean; onPeriodChange: (period: DashboardPeriod) => void; onAdd: () => void; onRefresh: () => void; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
   const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'mine' | 'other'>('all');
   const rows = groups.map((group) => {
     const summaryItem = summary?.groups.find((item) => item.savedGroupId === group.id);
@@ -251,8 +250,8 @@ function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRe
           <MetricValue value={membersCount} loading={!summaryItem} />
           {group.platform === 'youtube' ? <MetricValue /> : <GrowthValue item={summaryItem} />}
           {group.platform === 'youtube' ? <MetricValue value={summaryItem?.traffic.views} loading={!summaryItem} /> : <PairValue first={summaryItem?.traffic.visitors} second={summaryItem?.traffic.views} firstIcon={Users} secondIcon={Eye} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
-          {group.platform === 'youtube' ? <MetricValue /> : <PairValue first={summaryItem?.reach.subscribers} second={summaryItem?.reach.total} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
-          <TripleValue item={summaryItem} loading={!summaryItem} platform={group.platform} />
+          {!hasPaidAccess ? <TariffUnavailableValue /> : group.platform === 'youtube' ? <MetricValue /> : <PairValue first={summaryItem?.reach.subscribers} second={summaryItem?.reach.total} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
+          {!hasPaidAccess ? <TariffUnavailableValue /> : <TripleValue item={summaryItem} loading={!summaryItem} platform={group.platform} />}
           <details className="community-actions" onClick={(event) => event.stopPropagation()}>
             <summary aria-label={`Действия для ${group.name}`}><MoreHorizontal size={20} /></summary>
             <IconButton className="community-delete-button" aria-label={`Удалить ${group.name}`} icon={Trash2} loading={deletingGroupId === group.id} onClick={() => void onRemove(group)} size={32} view="transparent" />
@@ -271,6 +270,10 @@ function isStatsUnavailable(item?: DashboardSummaryItem) {
 
 function MetricValue({ value, loading = false }: { value?: number | null; loading?: boolean }) {
   return <span className={`communities-table-metric ${loading ? 'loading' : ''}`}>{loading ? 'Загружаем данные' : typeof value === 'number' ? number(value) : '—'}</span>;
+}
+
+function TariffUnavailableValue() {
+  return <span className="communities-table-metric tariff-unavailable" title="Расчёт недоступен: срок действия тарифа истёк"><span className="tariff-unavailable-label"><LockKeyhole size={14} /><span>Тариф истёк</span></span></span>;
 }
 
 function GrowthValue({ item }: { item?: DashboardSummaryItem }) {

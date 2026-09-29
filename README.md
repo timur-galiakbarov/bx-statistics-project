@@ -112,6 +112,11 @@ cp api/.env.example api/.env
 - `YOUTUBE_API_KEY` - серверный ключ YouTube Data API v3 (не должен попадать во frontend)
 - `YOUTUBE_API_TIMEOUT_MS` - таймаут запросов к YouTube API, по умолчанию `10000`
 - `YOUTUBE_CACHE_TTL_MS` - TTL кэша ответов YouTube API, по умолчанию `300000`
+- `TELEGRAM_API_ID` - ID MTProto-приложения из `my.telegram.org`
+- `TELEGRAM_API_HASH` - hash MTProto-приложения (только на сервере)
+- `TELEGRAM_SESSION` - строковая пользовательская сессия Telegram (только на сервере)
+- `TELEGRAM_CACHE_TTL_MS` - TTL кэша Telegram, по умолчанию `300000`
+- `TELEGRAM_MAX_POSTS` - защитный лимит публикаций на один анализ, по умолчанию `2000`
 - `AUTH_SUCCESS_REDIRECT_URL` - куда вернуть пользователя после успешного входа
 - `YOOMONEY_RECEIVER` - номер кошелька ЮMoney, который принимает платежи
 - `YOOMONEY_NOTIFICATION_URL` - URL HTTP-уведомлений, который нужно указать в кабинете ЮMoney
@@ -178,6 +183,28 @@ YOUTUBE_API_KEY=your-server-api-key
 История публикаций загружается через uploads playlist (`channels.list` → `playlistItems.list` → пакетные `videos.list`, до 50 ID в запросе). HTML-скрейпинг и `search.list` для истории не используются. `search.list` применяется только как fallback при текстовом поиске канала.
 
 Ограничения публичного MVP: просмотры, лайки и комментарии видео — текущие накопительные значения, а период выбирает видео по `publishedAt`. Публичный API не даёт репосты, исторический прирост/отток подписчиков, охват, уникальных зрителей, удержание и источники трафика. Скрытые счётчики отображаются как «Недоступно»; Shorts учитываются как обычные видео.
+
+## Telegram MTProto
+
+Аналитика Telegram использует серверную пользовательскую MTProto-сессию. `api_id` и `api_hash` идентифицируют приложение, но сами по себе не авторизуют Telegram-аккаунт.
+
+1. Заполните в `api/.env` значения `TELEGRAM_API_ID` и `TELEGRAM_API_HASH`, полученные на `my.telegram.org`.
+2. Один раз создайте сессию:
+
+```bash
+npm run telegram:login --workspace @socstat/api
+```
+
+3. Введите телефон, код Telegram и пароль 2FA при наличии. Скопируйте полученную строку в `TELEGRAM_SESSION` и перезапустите API.
+
+`TELEGRAM_SESSION` даёт доступ к Telegram-аккаунту: не добавляйте её в Git, клиентский код или логи. При утечке завершите эту сессию в официальном приложении Telegram и создайте новую.
+
+Маршруты:
+
+- `GET /api/telegram/channels/resolve?q=@username` — сведения о публичном канале;
+- `GET /api/telegram/channels/:username/analytics?period=month` — публикации и агрегированная аналитика за период.
+
+Доступны текущие публичные счётчики публикаций: просмотры, реакции, комментарии и пересылки, а также средние показатели, ER по просмотрам, дневная динамика и рейтинг публикаций. Период отбирает публикации по дате; исторические значения счётчиков и прирост подписчиков нельзя восстановить задним числом без регулярного сохранения срезов.
 
 ## Legacy VK implicit flow
 

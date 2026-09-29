@@ -13,6 +13,46 @@ export type User = {
 
 export type SocialPlatform = 'vk' | 'youtube';
 
+export type TelegramAnalytics = {
+  channel: {
+    id: string;
+    username: string;
+    title: string;
+    description: string;
+    subscribers: number | null;
+    url: string;
+    verified: boolean;
+    canViewAdminStats: boolean;
+  };
+  period: { key: AnalyticsPeriod; dateFrom: string; dateTo: string };
+  summary: {
+    posts: number;
+    views: number;
+    reactions: number;
+    comments: number;
+    forwards: number;
+    actions: number;
+    averageViews: number;
+    averageReachRate: number | null;
+    engagementRate: number;
+    postsPerWeek: number;
+  };
+  daily: Array<{ date: string; posts: number; views: number; reactions: number; comments: number; forwards: number }>;
+  posts: Array<{
+    id: number;
+    date: string;
+    timestamp: number;
+    text: string;
+    url: string;
+    views: number;
+    forwards: number;
+    reactions: number;
+    comments: number;
+    engagement: number;
+    mediaType: 'photo' | 'video' | 'document' | 'poll' | 'other' | null;
+  }>;
+};
+
 export type SocialChannel = {
   platform: SocialPlatform;
   externalId: string;

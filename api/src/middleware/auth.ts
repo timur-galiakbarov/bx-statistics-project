@@ -33,3 +33,16 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
     next(error);
   }
 }
+
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.user?.isAdmin) {
+    res.status(403).json({
+      success: false,
+      error: 'ADMIN_REQUIRED',
+      message: 'Раздел доступен только администратору.'
+    });
+    return;
+  }
+
+  next();
+}

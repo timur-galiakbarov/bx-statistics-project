@@ -10,7 +10,9 @@
     "start": "node dist/server.js",
     "test": "tsx --test src/**/*.test.ts && tsc -p tsconfig.json --noEmit",
     "import:legacy-users": "tsx src/scripts/importLegacyBitrixUsers.ts",
-    "import:legacy-payments": "tsx src/scripts/importLegacyBitrixPayments.ts"
+    "import:legacy-payments": "tsx src/scripts/importLegacyBitrixPayments.ts",
+    "telegram:login": "tsx src/scripts/createTelegramSession.ts",
+    "telegram:smoke": "tsx src/scripts/testTelegramConnection.ts"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
@@ -20,7 +22,8 @@
     "helmet": "^7.1.0",
     "mongoose": "^9.9.3",
     "morgan": "^1.10.0",
-    "nanoid": "^5.0.7"
+    "nanoid": "^5.0.7",
+    "telegram": "^2.26.22"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.7",

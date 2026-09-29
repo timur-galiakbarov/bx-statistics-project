@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "dev:api": "npm run dev --workspace @socstat/api",
+    "mongo:start": "docker compose -f docker-compose.dev.yml up -d",
+    "mongo:stop": "docker compose -f docker-compose.dev.yml down",
     "build:frontend": "tsc -b && vite build",
     "build": "npm run build --workspace @socstat/api && tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
@@ -38,5 +40,6 @@
     "@types/react-dom": "^18.3.0",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

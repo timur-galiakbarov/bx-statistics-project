@@ -21,7 +21,13 @@ npm install
 Локально её можно поднять через Docker:
 
 ```bash
-docker run --name socstat-mongo -p 27017:27017 -d mongo:7
+npm run mongo:start
+```
+
+Остановить MongoDB:
+
+```bash
+npm run mongo:stop
 ```
 
 Для API можно скопировать пример env-файла:

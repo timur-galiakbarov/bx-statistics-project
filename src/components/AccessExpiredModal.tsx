@@ -1,5 +1,6 @@
 import { CreditCard, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { formatDate } from '../utils/date';
 
 type Props = {
@@ -9,6 +10,25 @@ type Props = {
 };
 
 export function AccessExpiredModal({ activeTo, isOpen, onClose }: Props) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', onKeyDown);
+    closeButtonRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) {
     return null;
   }
@@ -22,7 +42,7 @@ export function AccessExpiredModal({ activeTo, isOpen, onClose }: Props) {
         onMouseDown={(event) => event.stopPropagation()}
         role="dialog"
       >
-        <button aria-label="Закрыть" className="icon-button" type="button" onClick={onClose}>
+        <button aria-label="Закрыть" className="icon-button" ref={closeButtonRef} type="button" onClick={onClose}>
           <X size={18} />
         </button>
         <h2 id="access-expired-modal-title">Срок доступа к аналитике закончился</h2>

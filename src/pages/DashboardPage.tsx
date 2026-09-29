@@ -1,10 +1,10 @@
-import { ArrowDown, ArrowUp, Check, ExternalLink, Eye, Heart, LockKeyhole, MessageCircle, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ExternalLink, Eye, Heart, LockKeyhole, MessageCircle, MoreHorizontal, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
 import { IconButton } from '@alfalab/core-components-icon-button';
 import { Input } from '@alfalab/core-components-input';
 import { Modal } from '@alfalab/core-components-modal';
 import { Button } from '@alfalab/core-components-button';
 import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiDelete, apiGet, apiPost } from '../api/client';
 import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
@@ -30,6 +30,28 @@ function getSavedDashboardPeriod(): DashboardPeriod {
 function isYoutubeChannel(group: SearchResult): group is YoutubeChannel {
   return 'platform' in group && group.platform === 'youtube';
 }
+
+function failedDashboardItem(group: SavedGroup, error: unknown): DashboardSummaryItem {
+  return {
+    savedGroupId: group.id,
+    source: group.source,
+    platform: group.platform,
+    group: { id: group.externalId, name: group.name, screenName: group.handle, photo: group.photo },
+    membersCount: group.membersCount ?? null,
+    isManagedByUser: group.source === 'managed',
+    statsAvailable: null,
+    growth: { total: 0, subscribed: 0, unsubscribed: 0 },
+    traffic: { visitors: 0, views: 0 },
+    reach: { subscribers: 0, total: 0 },
+    activity: { likes: 0, reposts: 0, comments: 0 },
+    warnings: [],
+    error: {
+      code: 'DASHBOARD_GROUP_REQUEST_FAILED',
+      message: error instanceof Error ? error.message : 'Не удалось загрузить данные сообщества.'
+    }
+  };
+}
+
 export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsChanged }: Props) {
   const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -46,12 +68,46 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
   const [addMode, setAddMode] = useState<AddMode>('tracked');
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const summaryRequestId = useRef(0);
   const loadSummary = async (forceRefresh = false) => {
-    if (!hasPaidAccess) { setSummary(null); setMessage('Детальная статистика недоступна: срок доступа истёк.'); return; }
+    const requestId = ++summaryRequestId.current;
+    const pendingGroups = groups.filter((group) => group.isTracked);
     setMessage(''); setIsSummaryLoading(true);
-    try { setSummary(await apiGet<DashboardSummary>(`/api/dashboard/summary?period=${period}${forceRefresh ? '&refresh=1' : ''}`)); }
-    catch (error) { setMessage(error instanceof Error ? error.message : 'Не удалось загрузить дашборд.'); }
-    finally { setIsSummaryLoading(false); }
+    setSummary(null);
+    let nextGroupIndex = 0;
+    let failedGroups = 0;
+
+    const updateItem = (item: DashboardSummaryItem, response?: DashboardSummary) => {
+      if (summaryRequestId.current !== requestId) return;
+      setSummary((current) => ({
+        period: response?.period ?? current?.period ?? { key: period, dateFrom: '', dateTo: '' },
+        groups: [...(current?.groups ?? []).filter((currentItem) => currentItem.savedGroupId !== item.savedGroupId), item]
+      }));
+    };
+
+    const worker = async () => {
+      while (summaryRequestId.current === requestId) {
+        const group = pendingGroups[nextGroupIndex++];
+        if (!group) return;
+        try {
+          const response = await apiGet<DashboardSummary>(`/api/dashboard/summary/groups/${encodeURIComponent(group.id)}?period=${period}${forceRefresh ? '&refresh=1' : ''}`);
+          const item = response.groups[0];
+          if (item) updateItem(item, response);
+        } catch (error) {
+          failedGroups += 1;
+          updateItem(failedDashboardItem(group, error));
+        }
+      }
+    };
+
+    try {
+      await Promise.all(Array.from({ length: Math.min(2, pendingGroups.length) }, () => worker()));
+      if (summaryRequestId.current === requestId && failedGroups) {
+        setMessage(`Не удалось загрузить данные для ${failedGroups} ${failedGroups === 1 ? 'сообщества' : 'сообществ'}.`);
+      }
+    } finally {
+      if (summaryRequestId.current === requestId) setIsSummaryLoading(false);
+    }
   };
   useEffect(() => {
     try {
@@ -60,7 +116,12 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
       // The dashboard still works when browser storage is unavailable.
     }
   }, [period]);
-  useEffect(() => { if (groups.length) void loadSummary(); else setSummary(null); }, [groups.length, hasPaidAccess, period]);
+  const trackedGroupsKey = groups.filter((group) => group.isTracked).map((group) => `${group.id}:${group.externalId}:${group.platform}:${group.source}`).join(',');
+  useEffect(() => {
+    if (trackedGroupsKey) void loadSummary();
+    else { summaryRequestId.current += 1; setSummary(null); setIsSummaryLoading(false); }
+    return () => { summaryRequestId.current += 1; };
+  }, [trackedGroupsKey, hasPaidAccess, period]);
   const search = async (event: FormEvent) => { event.preventDefault(); if (!query.trim()) { setSearchError(`Введите название, ID или ссылку на ${platform === 'youtube' ? 'канал' : 'сообщество'}.`); return; } setSearchError(''); setResults([]); setIsSearching(true); try { const path = platform === 'youtube' ? '/api/youtube/channels/search' : '/api/vk/groups/search'; const items = (await apiGet<VkListResponse<SearchResult>>(`${path}?q=${encodeURIComponent(query.trim())}`)).items; setResults(items); if (!items.length) setSearchError(platform === 'youtube' ? 'YouTube-каналы не найдены.' : 'Сообщества не найдены.'); } catch (error) { setSearchError(error instanceof Error ? error.message : 'Не удалось найти источник.'); } finally { setIsSearching(false); } };
   const updateQuery = (value: string) => { setQuery(value); if (searchError) setSearchError(''); };
   const add = async (group: SearchResult) => { try { setSearchError(''); const payload = isYoutubeChannel(group) ? { platform: 'youtube', group } : { platform: 'vk', group: { id: group.id, name: group.name, screen_name: group.screen_name, photo: group.photo_100 ?? group.photo_50, members_count: group.members_count } }; const path = addMode === 'free' ? '/api/account/groups/free' : addMode === 'bonus' ? '/api/account/groups/bonus' : '/api/account/groups'; await apiPost(path, addMode === 'tracked' ? { ...payload, source: 'bookmark' } : payload); await onGroupsChanged(); setResults([]); setIsAddModalOpen(false); setMessage(`«${group.name}» добавлено.`); } catch (error) { setSearchError(error instanceof Error ? error.message : 'Не удалось добавить источник.'); } };
@@ -81,7 +142,7 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
     .map((group) => `${group.platform}:${group.externalId}`);
   const managementProps = { platform, setPlatform: (next: Platform) => { setPlatform(next); setResults([]); setSearchError(''); }, query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds };
   return <div className="page-grid dashboard-page">
-    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onRemove={remove} onSelect={(group) => navigate(`/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
+    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onRemove={remove} onSelect={(group) => navigate(`/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
     <FreeCommunitiesPanel groups={freeGroups} isTrialActive={isTrialActive} onAdd={openAddModal} />
     {message && <div className="form-message span-2">{message}</div>}
     <AddCommunityModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} managementProps={managementProps} />
@@ -135,7 +196,7 @@ const dashboardPeriods: Array<{ id: DashboardPeriod; title: string }> = [
   { id: 'currentMonth', title: 'Этот месяц' }
 ];
 
-function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRefresh, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; period: DashboardPeriod; onPeriodChange: (period: DashboardPeriod) => void; onAdd: () => void; onRefresh: () => void; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
+function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChange, onAdd, onRefresh, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; period: DashboardPeriod; hasPaidAccess: boolean; onPeriodChange: (period: DashboardPeriod) => void; onAdd: () => void; onRefresh: () => void; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
   const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'mine' | 'other'>('all');
   const rows = groups.map((group) => {
     const summaryItem = summary?.groups.find((item) => item.savedGroupId === group.id);
@@ -151,6 +212,14 @@ function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRe
   return <section className="panel span-2 communities-panel">
     <div className="section-title"><div><h2>Отслеживаемые сообщества</h2><strong>{groups.length}</strong></div><Button disabled={isRefreshing} leftAddons={<RefreshCw size={16} />} loading={isRefreshing} size={40} type="button" view="secondary" onClick={onRefresh}>Обновить данные</Button></div>
     <div className="communities-controls">
+      <label className="communities-mobile-select">
+        <span>Показывать</span>
+        <select aria-label="Фильтр сообществ" value={ownershipFilter} onChange={(event) => setOwnershipFilter(event.target.value as 'all' | 'mine' | 'other')}>
+          <option value="all">Все сообщества ({groups.length})</option>
+          <option value="mine">Мои ({managedCount})</option>
+          <option value="other">Чужие ({groups.length - managedCount})</option>
+        </select>
+      </label>
       <div className="communities-filter" aria-label="Фильтр сообществ">
         <SegmentedControl className="communities-filter-control" onChange={(id) => setOwnershipFilter(id as 'all' | 'mine' | 'other')} selectedId={ownershipFilter} size={40}>
         <Segment className="communities-filter-segment" id="all" title={`Все (${groups.length})`} />
@@ -158,6 +227,12 @@ function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRe
         <Segment className="communities-filter-segment" id="other" title={`Чужие (${groups.length - managedCount})`} />
         </SegmentedControl>
       </div>
+      <label className="communities-mobile-select">
+        <span>Период</span>
+        <select aria-label="Период статистики" value={period} onChange={(event) => onPeriodChange(event.target.value as DashboardPeriod)}>
+          {dashboardPeriods.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+        </select>
+      </label>
       <div className="communities-period" aria-label="Период статистики">
         <SegmentedControl className="communities-period-control" onChange={(id) => onPeriodChange(id as DashboardPeriod)} selectedId={period} size={40}>
           {dashboardPeriods.map((item) => <Segment className="communities-period-segment" id={item.id} key={item.id} title={item.title} />)}
@@ -171,16 +246,20 @@ function CommunitiesTable({ groups, summary, period, onPeriodChange, onAdd, onRe
         const selectGroup = () => onSelect(group);
         return <div className="communities-table-row communities-table-row-action" key={group.id} onClick={selectGroup} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectGroup(); } }} role="link" tabIndex={0}>
           <span className="communities-table-network"><img src={group.platform === 'youtube' ? '/youtube-logo.png' : '/vk-network-logo.png'} alt={group.platform === 'youtube' ? 'YouTube' : 'ВКонтакте'} title={group.platform === 'youtube' ? 'YouTube' : 'ВКонтакте'} /></span>
-          <span className="communities-table-name">{group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<span><strong>{group.name}</strong><small className={`communities-table-owner ${isManaged ? 'managed' : ''}`}>{group.platform === 'youtube' ? 'YouTube-канал' : isManaged ? 'Моё сообщество' : 'Чужое сообщество'}</small></span></span>
+          <span className="communities-table-name">{group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<span><strong>{group.name}</strong><small className={`communities-table-owner ${isManaged ? 'managed' : ''}`}><img className="community-platform-mobile" src={group.platform === 'youtube' ? '/youtube-logo.png' : '/vk-network-logo.png'} alt="" />{group.platform === 'youtube' ? 'YouTube-канал' : isManaged ? 'Моё сообщество' : 'Чужое сообщество'}</small></span></span>
           <MetricValue value={membersCount} loading={!summaryItem} />
           {group.platform === 'youtube' ? <MetricValue /> : <GrowthValue item={summaryItem} />}
           {group.platform === 'youtube' ? <MetricValue value={summaryItem?.traffic.views} loading={!summaryItem} /> : <PairValue first={summaryItem?.traffic.visitors} second={summaryItem?.traffic.views} firstIcon={Users} secondIcon={Eye} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
-          {group.platform === 'youtube' ? <MetricValue /> : <PairValue first={summaryItem?.reach.subscribers} second={summaryItem?.reach.total} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
-          <TripleValue item={summaryItem} loading={!summaryItem} platform={group.platform} />
-          <IconButton className="community-delete-button" aria-label={`Удалить ${group.name}`} icon={Trash2} loading={deletingGroupId === group.id} onClick={(event) => { event.stopPropagation(); void onRemove(group); }} size={24} view="transparent" />
+          {!hasPaidAccess ? <TariffUnavailableValue /> : group.platform === 'youtube' ? <MetricValue /> : <PairValue first={summaryItem?.reach.subscribers} second={summaryItem?.reach.total} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
+          {!hasPaidAccess ? <TariffUnavailableValue /> : <TripleValue item={summaryItem} loading={!summaryItem} platform={group.platform} />}
+          <details className="community-actions" onClick={(event) => event.stopPropagation()}>
+            <summary aria-label={`Действия для ${group.name}`}><MoreHorizontal size={20} /></summary>
+            <IconButton className="community-delete-button" aria-label={`Удалить ${group.name}`} icon={Trash2} loading={deletingGroupId === group.id} onClick={() => void onRemove(group)} size={32} view="transparent" />
+          </details>
         </div>;
       }) : <div className="communities-table-empty">В этой категории пока нет сообществ.</div>}
     </div>
+    <p className="communities-table-scroll-hint" aria-hidden="true">Прокрутите таблицу в сторону, чтобы увидеть все показатели →</p>
     <div className="communities-add"><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={onAdd}>Добавить сообщество</Button></div>
   </section>;
 }
@@ -191,6 +270,10 @@ function isStatsUnavailable(item?: DashboardSummaryItem) {
 
 function MetricValue({ value, loading = false }: { value?: number | null; loading?: boolean }) {
   return <span className={`communities-table-metric ${loading ? 'loading' : ''}`}>{loading ? 'Загружаем данные' : typeof value === 'number' ? number(value) : '—'}</span>;
+}
+
+function TariffUnavailableValue() {
+  return <span className="communities-table-metric tariff-unavailable" title="Расчёт недоступен: срок действия тарифа истёк"><span className="tariff-unavailable-label"><LockKeyhole size={14} /><span>Тариф истёк</span></span></span>;
 }
 
 function GrowthValue({ item }: { item?: DashboardSummaryItem }) {
@@ -207,7 +290,7 @@ function PairValue({ first, second, firstIcon: FirstIcon, secondIcon: SecondIcon
 function TripleValue({ item, loading, platform = 'vk' }: { item?: DashboardSummaryItem; loading: boolean; platform?: Platform }) {
   if (loading) return <MetricValue loading />;
   if (item?.error) return <MetricValue />;
-  return <span className="communities-table-triple"><small><Heart size={13} />{number(item?.activity.likes ?? 0)}</small><small><Share2 size={13} />{platform === 'youtube' ? 'Недоступно' : number(item?.activity.reposts ?? 0)}</small><small><MessageCircle size={13} />{number(item?.activity.comments ?? 0)}</small></span>;
+  return <span className="communities-table-triple"><span className="communities-reaction-values"><small><Heart size={13} />{number(item?.activity.likes ?? 0)}</small><small><Share2 size={13} />{platform === 'youtube' ? 'Недоступно' : number(item?.activity.reposts ?? 0)}</small><small><MessageCircle size={13} />{number(item?.activity.comments ?? 0)}</small></span></span>;
 }
 
 function Management({ platform, setPlatform, query, setQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds }: ManagementProps) {

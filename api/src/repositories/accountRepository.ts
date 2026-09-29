@@ -89,7 +89,11 @@ function mapGroup(group: GroupDocument): SavedGroup {
     externalId,
     name: group.name,
     handle: group.handle ?? undefined,
-    url: group.url ?? (platform === 'youtube' ? `https://www.youtube.com/channel/${externalId}` : `https://vk.com/${externalId}`),
+    url: group.url ?? (platform === 'youtube'
+      ? `https://www.youtube.com/channel/${externalId}`
+      : platform === 'telegram'
+        ? `https://t.me/${group.handle ?? externalId}`
+        : `https://vk.com/${externalId}`),
     photo: group.photo ?? undefined,
     membersCount: group.membersCount ?? undefined
   };

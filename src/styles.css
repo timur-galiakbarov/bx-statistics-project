@@ -391,6 +391,20 @@ a {
 .telegram-post-row > span svg { color: #258cda; }
 .telegram-post-row > svg { color: #a2aba5; }
 
+.telegram-workbench { display: grid; gap: 16px; }
+.telegram-picker { max-width: 760px; }
+.telegram-selected-avatar,
+.telegram-post-avatar { border-radius: 50%; display: block; flex: 0 0 auto; object-fit: cover; }
+.telegram-selected-avatar { height: 40px; width: 40px; }
+.telegram-post-avatar { height: 34px; width: 34px; }
+.telegram-platform-icon { color: #258cda; }
+.telegram-analytics-kpi .analytics-kpi-heading svg { color: #4caf50; }
+.telegram-post-card-media { background: linear-gradient(145deg, #edf7fe, #d9effc); }
+.telegram-post-card-media .post-card-media-empty { color: #258cda; }
+.telegram-post-card .telegram-public-badge { background: #e9f5fe; color: #287bb6; }
+.telegram-post-card .post-metrics svg { color: #258cda; }
+.telegram-analytics-page .telegram-message-error { margin: 0; }
+
 @keyframes telegram-spin { to { transform: rotate(360deg); } }
 .spin { animation: telegram-spin .85s linear infinite; }
 

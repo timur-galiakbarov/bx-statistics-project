@@ -11,7 +11,7 @@ export type User = {
   enforceAccessRestrictions: boolean;
 };
 
-export type SocialPlatform = 'vk' | 'youtube';
+export type SocialPlatform = 'vk' | 'youtube' | 'telegram';
 
 export type TelegramAnalytics = {
   channel: {
@@ -19,6 +19,7 @@ export type TelegramAnalytics = {
     username: string;
     title: string;
     description: string;
+    photo: string;
     subscribers: number | null;
     url: string;
     verified: boolean;
@@ -38,6 +39,23 @@ export type TelegramAnalytics = {
     postsPerWeek: number;
   };
   daily: Array<{ date: string; posts: number; views: number; reactions: number; comments: number; forwards: number }>;
+  previous: {
+    period: { dateFrom: string; dateTo: string };
+    summary: {
+      posts: number;
+      views: number;
+      reactions: number;
+      comments: number;
+      forwards: number;
+      actions: number;
+      averageViews: number;
+      averageReachRate: number | null;
+      engagementRate: number;
+      postsPerWeek: number;
+    };
+    daily: Array<{ date: string; posts: number; views: number; reactions: number; comments: number; forwards: number }>;
+    posts: TelegramAnalytics['posts'];
+  };
   posts: Array<{
     id: number;
     date: string;
@@ -50,6 +68,7 @@ export type TelegramAnalytics = {
     comments: number;
     engagement: number;
     mediaType: 'photo' | 'video' | 'document' | 'poll' | 'other' | null;
+    mediaUrl?: string;
   }>;
 };
 
@@ -86,6 +105,19 @@ export type YoutubeChannel = {
   viewCount: number;
 };
 
+export type TelegramChannel = {
+  platform: 'telegram';
+  id: string;
+  externalId: string;
+  name: string;
+  description: string;
+  handle: string;
+  url: string;
+  photo?: string;
+  followersCount: number | null;
+  verified: boolean;
+};
+
 export type VkGroup = {
   id: number;
   name: string;
@@ -109,7 +141,7 @@ export type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days'
 export type DashboardSummaryItem = {
   savedGroupId: string;
   source: string;
-  platform: 'vk' | 'youtube';
+  platform: SocialPlatform;
   group: {
     id: number | string;
     name: string;

@@ -10,7 +10,7 @@ const savedGroupSchema = new Schema(
       index: true
     },
     isTracked: { type: Boolean, default: true },
-    platform: { type: String, enum: ['vk', 'youtube'], default: 'vk', required: true, index: true },
+    platform: { type: String, enum: ['vk', 'youtube', 'telegram'], default: 'vk', required: true, index: true },
     externalId: { type: String, index: true },
     // Kept for zero-downtime compatibility with existing documents and legacy clients.
     vkGroupId: { type: String, required: true },

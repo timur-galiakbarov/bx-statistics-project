@@ -22,7 +22,8 @@ import { DomainError } from '../errors/domainError.js';
 export const accountRouter = Router();
 
 function savedSourceFromBody(body: any, source: 'free' | 'bonus' | 'bookmark' | 'managed') {
-  const platform = body?.platform === 'youtube' || body?.group?.platform === 'youtube' ? 'youtube' as const : 'vk' as const;
+  const requestedPlatform = body?.platform ?? body?.group?.platform;
+  const platform = requestedPlatform === 'youtube' || requestedPlatform === 'telegram' ? requestedPlatform : 'vk' as const;
   const group = body?.group ?? body;
   const externalId = String(typeof group === 'string' || typeof group === 'number' ? group : group?.externalId ?? group?.id ?? group?.screen_name ?? '').trim();
   if (!externalId) {
@@ -35,7 +36,11 @@ function savedSourceFromBody(body: any, source: 'free' | 'bonus' | 'bookmark' | 
     vkGroupId: externalId,
     name: (typeof group === 'object' ? group?.name ?? group?.title ?? group?.screen_name : undefined) ?? externalId,
     handle: group?.handle ?? group?.screenName ?? group?.screen_name,
-    url: group?.url ?? (platform === 'youtube' ? `https://www.youtube.com/channel/${externalId}` : `https://vk.com/${group?.screen_name ?? externalId}`),
+    url: group?.url ?? (platform === 'youtube'
+      ? `https://www.youtube.com/channel/${externalId}`
+      : platform === 'telegram'
+        ? `https://t.me/${group?.handle ?? group?.username ?? externalId}`
+        : `https://vk.com/${group?.screen_name ?? externalId}`),
     photo: group?.photo ?? group?.photo_100 ?? group?.photo_50,
     membersCount: group?.followersCount ?? group?.membersCount ?? group?.members_count ?? null
   };

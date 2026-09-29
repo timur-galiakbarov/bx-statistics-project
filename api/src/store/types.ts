@@ -8,7 +8,7 @@ export type User = {
   isAdmin: boolean;
 };
 
-export type SocialPlatform = 'vk' | 'youtube';
+export type SocialPlatform = 'vk' | 'youtube' | 'telegram';
 
 export type SocialChannel = {
   platform: SocialPlatform;

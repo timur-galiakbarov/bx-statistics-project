@@ -1,9 +1,10 @@
 import { getGroups, getVkAccessToken } from '../repositories/accountRepository.js';
 import { DomainError } from '../errors/domainError.js';
-import type { SavedGroup } from '../store/types.js';
+import type { SavedGroup, SocialPlatform } from '../store/types.js';
 import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.js';
 import { TtlCache } from './ttlCache.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
+import { getTelegramChannelAnalytics } from './telegramClient.js';
 
 type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'last90days' | 'currentMonth';
 
@@ -49,7 +50,7 @@ type VkWallResponse = {
 export type DashboardSummaryItem = {
   savedGroupId: string;
   source: string;
-  platform: 'vk' | 'youtube';
+  platform: SocialPlatform;
   group: {
     id: number | string;
     name: string;
@@ -198,7 +199,7 @@ function delay(ms: number) {
   });
 }
 
-function emptySummaryItem(savedGroupId: string, source: string, platform: 'vk' | 'youtube', groupId: string, name: string, isManagedByUser: boolean): DashboardSummaryItem {
+function emptySummaryItem(savedGroupId: string, source: string, platform: SocialPlatform, groupId: string, name: string, isManagedByUser: boolean): DashboardSummaryItem {
   return {
     savedGroupId,
     source,
@@ -207,7 +208,7 @@ function emptySummaryItem(savedGroupId: string, source: string, platform: 'vk' |
       id: groupId,
       name
     },
-    membersCount: platform === 'youtube' ? null : 0,
+    membersCount: platform === 'vk' ? 0 : null,
     isManagedByUser,
     statsAvailable: null,
     growth: {
@@ -299,6 +300,43 @@ async function buildDashboardSummaryItem(
       };
     } catch (error) {
       return { ...fallback, error: { code: error instanceof Error ? error.name : 'YOUTUBE_DASHBOARD_FAILED', message: error instanceof Error ? error.message : 'Не удалось получить данные YouTube-канала.' } };
+    }
+  }
+
+  if (savedGroup.platform === 'telegram') {
+    const fallback = emptySummaryItem(savedGroup.id, savedGroup.source, 'telegram', groupId, savedGroup.name, false);
+    try {
+      const analytics = await getTelegramChannelAnalytics(
+        savedGroup.handle ?? groupId,
+        'custom',
+        formatDate(period.dateFrom),
+        formatDate(period.dateTo),
+        forceRefresh
+      );
+      return {
+        ...fallback,
+        group: {
+          id: analytics.channel.id,
+          name: analytics.channel.title,
+          screenName: analytics.channel.username,
+          photo: analytics.channel.photo
+        },
+        membersCount: analytics.channel.subscribers,
+        statsAvailable: true,
+        traffic: { visitors: 0, views: analytics.summary.views },
+        activity: includePremiumMetrics
+          ? { likes: analytics.summary.reactions, reposts: analytics.summary.forwards, comments: analytics.summary.comments }
+          : fallback.activity,
+        warnings: ['Telegram показывает текущие публичные счётчики публикаций. Динамика аудитории и охват подписчиков недоступны.']
+      };
+    } catch (error) {
+      return {
+        ...fallback,
+        error: {
+          code: error instanceof Error ? error.name : 'TELEGRAM_DASHBOARD_FAILED',
+          message: error instanceof Error ? error.message : 'Не удалось получить данные Telegram-канала.'
+        }
+      };
     }
   }
 

@@ -2,6 +2,7 @@ import { Api, TelegramClient } from 'telegram';
 import { Logger, LogLevel } from 'telegram/extensions/Logger.js';
 import { StringSession } from 'telegram/sessions/StringSession.js';
 import { env } from '../config/env.js';
+import { getTelegramProxy } from '../services/telegramProxy.js';
 
 function fail(message: string): never {
   console.error(`FAIL: ${message}`);
@@ -20,7 +21,7 @@ const client = new TelegramClient(
   new StringSession(env.telegramSession),
   env.telegramApiId,
   env.telegramApiHash,
-  { connectionRetries: 3, requestRetries: 1, baseLogger: new Logger(LogLevel.NONE) }
+  { connectionRetries: 3, requestRetries: 1, baseLogger: new Logger(LogLevel.NONE), proxy: getTelegramProxy() }
 );
 
 try {

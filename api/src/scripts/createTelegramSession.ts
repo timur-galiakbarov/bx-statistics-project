@@ -3,13 +3,14 @@ import { stdin as input, stdout as output } from 'node:process';
 import { TelegramClient } from 'telegram';
 import { StringSession } from 'telegram/sessions/StringSession.js';
 import { env } from '../config/env.js';
+import { getTelegramProxy } from '../services/telegramProxy.js';
 
 if (!env.telegramApiId || !env.telegramApiHash) {
   throw new Error('Сначала заполните TELEGRAM_API_ID и TELEGRAM_API_HASH в api/.env.');
 }
 
 const rl = createInterface({ input, output });
-const client = new TelegramClient(new StringSession(''), env.telegramApiId, env.telegramApiHash, { connectionRetries: 5 });
+const client = new TelegramClient(new StringSession(''), env.telegramApiId, env.telegramApiHash, { connectionRetries: 5, proxy: getTelegramProxy() });
 
 try {
   await client.start({

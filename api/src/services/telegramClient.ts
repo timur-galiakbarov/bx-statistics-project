@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import { DomainError } from '../errors/domainError.js';
 import { getAnalyticsPeriod, getPreviousAnalyticsPeriod, type AnalyticsPeriodRange } from './analyticsUtils.js';
 import { TtlCache } from './ttlCache.js';
+import { getTelegramProxy } from './telegramProxy.js';
 
 export type TelegramChannel = {
   id: string;
@@ -72,7 +73,8 @@ async function getClient() {
       const client = new TelegramClient(new StringSession(env.telegramSession), env.telegramApiId, env.telegramApiHash, {
         connectionRetries: 5,
         requestRetries: 3,
-        autoReconnect: true
+        autoReconnect: true,
+        proxy: getTelegramProxy()
       });
       await client.connect();
       if (!await client.isUserAuthorized()) {

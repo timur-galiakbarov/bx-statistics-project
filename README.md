@@ -121,6 +121,7 @@ cp api/.env.example api/.env
 - `TELEGRAM_API_ID` - ID MTProto-приложения из `my.telegram.org`
 - `TELEGRAM_API_HASH` - hash MTProto-приложения (только на сервере)
 - `TELEGRAM_SESSION` - строковая пользовательская сессия Telegram (только на сервере)
+- `TELEGRAM_PROXY_HOST`, `TELEGRAM_PROXY_PORT`, `TELEGRAM_PROXY_USERNAME`, `TELEGRAM_PROXY_PASSWORD` - необязательный SOCKS-прокси для MTProto; по умолчанию используется SOCKS5, для SOCKS4 задайте `TELEGRAM_PROXY_TYPE=4`
 - `TELEGRAM_CACHE_TTL_MS` - TTL кэша Telegram, по умолчанию `300000`
 - `TELEGRAM_MAX_POSTS` - защитный лимит публикаций на один анализ, по умолчанию `2000`
 - `AUTH_SUCCESS_REDIRECT_URL` - куда вернуть пользователя после успешного входа

@@ -63,7 +63,7 @@ export function App() {
           setUser(profile.user);
           setGroups(nextGroups);
           setIsUnauthorized(false);
-        })//
+        })
         .catch(() => {
           setUser(null);
           setGroups([]);

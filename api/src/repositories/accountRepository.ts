@@ -37,6 +37,7 @@ type GroupDocument = {
   url?: string | null;
   photo?: string | null;
   membersCount?: number | null;
+  sortOrder?: number | null;
 };
 
 export type AccountUser = {
@@ -262,8 +263,22 @@ export async function getGroups(userId: string, source?: SavedGroup['source']) {
     ...(source ? { source } : {})
   };
 
-  const groups = await SavedGroupModel.find(query).sort({ createdAt: 1 }).lean<GroupDocument[]>();
+  const groups = await SavedGroupModel.find(query).sort({ sortOrder: 1, createdAt: 1 }).lean<GroupDocument[]>();
   return groups.map(mapGroup);
+}
+
+export async function reorderGroups(userId: string, groupIds: string[]) {
+  const trackedGroups = await SavedGroupModel.find({ userId, isTracked: { $ne: false } }).select('_id').lean<{ _id: Types.ObjectId }[]>();
+  const trackedGroupIds = trackedGroups.map((group) => group._id.toString());
+  const requestedIds = new Set(groupIds);
+
+  if (requestedIds.size !== groupIds.length || requestedIds.size !== trackedGroupIds.length || trackedGroupIds.some((id) => !requestedIds.has(id))) {
+    throw new DomainError('Передан некорректный порядок источников.', { status: 400, code: 'INVALID_GROUP_ORDER' });
+  }
+
+  await SavedGroupModel.bulkWrite(groupIds.map((id, sortOrder) => ({
+    updateOne: { filter: { _id: id, userId }, update: { $set: { sortOrder } } }
+  })));
 }
 
 export async function addGroup(

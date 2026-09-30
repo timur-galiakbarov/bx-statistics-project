@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Check, ExternalLink, Eye, Heart, LockKeyhole, MessageCircle, MoreHorizontal, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ExternalLink, Eye, GripVertical, Heart, LockKeyhole, MessageCircle, MoreHorizontal, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
 import { IconButton } from '@alfalab/core-components-icon-button';
 import { Input } from '@alfalab/core-components-input';
 import { Modal } from '@alfalab/core-components-modal';
@@ -181,7 +181,7 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
     .map((group) => `${group.platform}:${group.externalId}`);
   const managementProps = { platform, setPlatform: (next: Platform) => { setPlatform(next); setResults([]); setSearchError(''); }, query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds };
   return <div className="page-grid dashboard-page">
-    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onRemove={remove} onSelect={(group) => navigate(group.platform === 'telegram' ? `/analytics?platform=telegram&channel=${encodeURIComponent(group.handle ?? group.externalId)}` : `/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
+    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onReorder={async (groupIds) => { await apiPost('/api/account/groups/order', { groupIds }); await onGroupsChanged(); }} onRemove={remove} onSelect={(group) => navigate(group.platform === 'telegram' ? `/analytics?platform=telegram&channel=${encodeURIComponent(group.handle ?? group.externalId)}` : `/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
     <FreeCommunitiesPanel groups={freeGroups} isTrialActive={isTrialActive} onAdd={openAddModal} />
     {message && <div className="form-message span-2">{message}</div>}
     <AddCommunityModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} managementProps={managementProps} />
@@ -235,8 +235,14 @@ const dashboardPeriods: Array<{ id: DashboardPeriod; title: string }> = [
   { id: 'currentMonth', title: 'Этот месяц' }
 ];
 
-function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChange, onAdd, onRefresh, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; period: DashboardPeriod; hasPaidAccess: boolean; onPeriodChange: (period: DashboardPeriod) => void; onAdd: () => void; onRefresh: () => void; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
+function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChange, onAdd, onRefresh, onReorder, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; period: DashboardPeriod; hasPaidAccess: boolean; onPeriodChange: (period: DashboardPeriod) => void; onAdd: () => void; onRefresh: () => void; onReorder: (groupIds: string[]) => Promise<void>; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
   const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'mine' | 'other'>('all');
+  const [orderedGroupIds, setOrderedGroupIds] = useState(groups.map((group) => group.id));
+  const [draggedGroupId, setDraggedGroupId] = useState<string | null>(null);
+  const [reorderError, setReorderError] = useState('');
+  const groupIdsKey = groups.map((group) => group.id).join(',');
+  useEffect(() => setOrderedGroupIds(groups.map((group) => group.id)), [groupIdsKey]);
+  const groupOrder = new Map(orderedGroupIds.map((id, index) => [id, index]));
   const rows = groups.map((group) => {
     const summaryItem = summary?.groups.find((item) => item.savedGroupId === group.id);
     return {
@@ -245,11 +251,31 @@ function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChan
       isManaged: summaryItem?.isManagedByUser ?? group.source === 'managed'
     };
   });
-  const visibleRows = rows.filter(({ isManaged }) => ownershipFilter === 'all' || (ownershipFilter === 'mine' ? isManaged : !isManaged));
+  const visibleRows = rows
+    .filter(({ isManaged }) => ownershipFilter === 'all' || (ownershipFilter === 'mine' ? isManaged : !isManaged))
+    .sort((left, right) => (groupOrder.get(left.group.id) ?? Number.MAX_SAFE_INTEGER) - (groupOrder.get(right.group.id) ?? Number.MAX_SAFE_INTEGER));
   const managedCount = rows.filter(({ isManaged }) => isManaged).length;
+  const moveGroup = async (targetGroupId: string) => {
+    if (!draggedGroupId || draggedGroupId === targetGroupId) return;
+    const nextOrder = [...orderedGroupIds];
+    const fromIndex = nextOrder.indexOf(draggedGroupId);
+    const toIndex = nextOrder.indexOf(targetGroupId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    nextOrder.splice(fromIndex, 1);
+    nextOrder.splice(toIndex, 0, draggedGroupId);
+    setOrderedGroupIds(nextOrder);
+    setDraggedGroupId(null);
+    setReorderError('');
+    try {
+      await onReorder(nextOrder);
+    } catch (error) {
+      setOrderedGroupIds(groups.map((group) => group.id));
+      setReorderError(error instanceof Error ? error.message : 'Не удалось сохранить порядок источников.');
+    }
+  };
 
   return <section className="panel span-2 communities-panel">
-    <div className="section-title"><div><h2>Отслеживаемые сообщества</h2><strong>{groups.length}</strong></div><Button disabled={isRefreshing} leftAddons={<RefreshCw size={16} />} loading={isRefreshing} size={40} type="button" view="secondary" onClick={onRefresh}>Обновить данные</Button></div>
+    <div className="section-title"><div><h2>Отслеживаемые источники</h2><strong>{groups.length}</strong></div><Button disabled={isRefreshing} leftAddons={<RefreshCw size={16} />} loading={isRefreshing} size={40} type="button" view="secondary" onClick={onRefresh}>Обновить данные</Button></div>
     <div className="communities-controls">
       <label className="communities-mobile-select">
         <span>Показывать</span>
@@ -278,12 +304,15 @@ function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChan
         </SegmentedControl>
       </div>
     </div>
+    <p className="communities-reorder-hint"><GripVertical size={16} />Перетащите источник за значок слева, чтобы изменить порядок.</p>
+    {reorderError && <div className="form-message">{reorderError}</div>}
     <div className="communities-table">
-      <div className="communities-table-head"><span>Сеть</span><span>Сообщество</span><span>Участники</span><span>Прирост</span><span>Посещения<br />Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span>Реакции<br />Репосты / пересылки<br />Комментарии</span><span aria-label="Действия" /></div>
+      <div className="communities-table-head"><span aria-label="Перемещение" /><span>Сеть</span><span>Сообщество</span><span>Участники</span><span>Прирост</span><span>Посещения<br />Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span>Реакции<br />Репосты / пересылки<br />Комментарии</span><span aria-label="Действия" /></div>
       {visibleRows.length ? visibleRows.map(({ group, summaryItem, isManaged }) => {
         const membersCount = summaryItem?.membersCount ?? group.membersCount;
         const selectGroup = () => onSelect(group);
-        return <div className="communities-table-row communities-table-row-action" key={group.id} onClick={selectGroup} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectGroup(); } }} role="link" tabIndex={0}>
+        return <div className={`communities-table-row communities-table-row-action ${draggedGroupId === group.id ? 'is-dragging' : ''}`} key={group.id} onClick={selectGroup} onDragOver={(event) => event.preventDefault()} onDrop={() => void moveGroup(group.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectGroup(); } }} role="link" tabIndex={0}>
+          <span className="communities-table-drag"><button aria-label={`Переместить ${group.name}`} draggable type="button" onClick={(event) => event.stopPropagation()} onDragEnd={() => setDraggedGroupId(null)} onDragStart={(event) => { event.stopPropagation(); event.dataTransfer.effectAllowed = 'move'; const row = event.currentTarget.closest<HTMLElement>('.communities-table-row'); if (row) { const preview = row.cloneNode(true) as HTMLElement; preview.classList.add('communities-table-drag-preview'); preview.style.width = `${row.getBoundingClientRect().width}px`; document.body.append(preview); event.dataTransfer.setDragImage(preview, 28, 28); requestAnimationFrame(() => preview.remove()); } setDraggedGroupId(group.id); }}><GripVertical size={18} /></button></span>
           <span className="communities-table-network"><PlatformIcon platform={group.platform} /></span>
           <span className="communities-table-name">{group.platform === 'telegram' ? <TelegramAvatar src={summaryItem?.group.photo ?? group.photo} size={30} /> : group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<span><strong>{group.name}</strong><small className={`communities-table-owner ${isManaged ? 'managed' : ''}`}><PlatformIcon platform={group.platform} mobile />{group.platform === 'youtube' ? 'YouTube-канал' : group.platform === 'telegram' ? 'Telegram-канал' : isManaged ? 'Моё сообщество' : 'Чужое сообщество'}</small></span></span>
           <MetricValue value={membersCount} loading={!summaryItem} />
@@ -299,7 +328,7 @@ function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChan
       }) : <div className="communities-table-empty">В этой категории пока нет сообществ.</div>}
     </div>
     <p className="communities-table-scroll-hint" aria-hidden="true">Прокрутите таблицу в сторону, чтобы увидеть все показатели →</p>
-    <div className="communities-add"><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={onAdd}>Добавить сообщество</Button></div>
+    <div className="communities-add"><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={onAdd}>Добавить источник</Button></div>
   </section>;
 }
 

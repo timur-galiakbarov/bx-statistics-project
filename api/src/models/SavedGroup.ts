@@ -18,7 +18,8 @@ const savedGroupSchema = new Schema(
     handle: { type: String },
     url: { type: String },
     photo: { type: String },
-    membersCount: { type: Number }
+    membersCount: { type: Number },
+    sortOrder: { type: Number }
   },
   { timestamps: true }
 );

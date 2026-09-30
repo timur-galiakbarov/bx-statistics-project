@@ -6,6 +6,7 @@ import {
   getAdminStat,
   getGroups,
   getNews,
+  reorderGroups,
   removeGroup,
   removeFreeGroups,
   removeSession
@@ -271,6 +272,21 @@ accountRouter.post('/groups', requireUser, async (req, res, next) => {
     const group = await addGroup(req.user!.id, savedSourceFromBody(req.body, source));
 
     res.status(201).json({ success: true, data: group, id: group.id });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.post('/groups/order', requireUser, async (req, res, next) => {
+  if (!Array.isArray(req.body?.groupIds) || !req.body.groupIds.every((id: unknown) => typeof id === 'string')) {
+    res.status(400).json({ success: false, error: 'INVALID_GROUP_ORDER' });
+    return;
+  }
+
+  try {
+    await reorderGroups(req.user!.id, req.body.groupIds);
+    publishAccountUpdated(req.user!.id);
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }

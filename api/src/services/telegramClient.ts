@@ -77,6 +77,7 @@ async function getClient() {
         autoReconnect: true,
         proxy: getTelegramProxy()
       });
+      (client as unknown as { _loopStarted: boolean })._loopStarted = true;
       await client.connect();
       if (!await client.isUserAuthorized()) {
         await client.disconnect();

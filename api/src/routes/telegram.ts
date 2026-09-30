@@ -2,11 +2,11 @@ import { Router } from 'express';
 import { requireUser } from '../middleware/auth.js';
 import { requireActiveAccess } from '../middleware/access.js';
 import { getTelegramChannelAnalytics, getTelegramChannelPhoto, getTelegramPostMedia, resolveTelegramChannel } from '../services/telegramClient.js';
-import { limitTelegramMediaRequests, limitTelegramRefresh, limitTelegramRequests } from '../middleware/telegramProtection.js';
+import { limitTelegramMediaRequests, limitTelegramRefresh, limitTelegramRequests, requireTelegramProtectionStorage } from '../middleware/telegramProtection.js';
 
 export const telegramRouter = Router();
 
-telegramRouter.use(requireUser, limitTelegramRequests);
+telegramRouter.use(requireUser, requireTelegramProtectionStorage, limitTelegramRequests);
 
 telegramRouter.get('/channels/resolve', async (req, res, next) => {
   try {

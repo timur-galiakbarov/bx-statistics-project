@@ -1,6 +1,20 @@
 import type { NextFunction, Request, Response } from 'express';
 import { env } from '../config/env.js';
 import { acquireTelegramRefreshCooldown, consumeTelegramRateLimit } from '../services/telegramProtection.js';
+import { redis } from '../services/redis.js';
+
+export function requireTelegramProtectionStorage(_req: Request, res: Response, next: NextFunction) {
+  if (redis.isReady) {
+    next();
+    return;
+  }
+
+  res.status(503).json({
+    success: false,
+    error: 'TELEGRAM_PROTECTION_UNAVAILABLE',
+    message: 'Сервис аналитики Telegram временно недоступен. Повторите позже.'
+  });
+}
 
 function reject(res: Response, message: string, retryAfterMs: number) {
   res.set('Retry-After', String(Math.max(1, Math.ceil(retryAfterMs / 1000))));

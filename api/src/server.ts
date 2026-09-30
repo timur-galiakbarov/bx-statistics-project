@@ -6,7 +6,12 @@ import { connectRedis } from './services/redis.js';
 
 async function bootstrap() {
   await connectDatabase();
-  await connectRedis();
+  // Redis protects the shared Telegram session, but an outage must not take down
+  // unrelated API routes and turn the whole site into a 502.
+  void connectRedis().then(
+    () => console.log('Redis connected'),
+    (error) => console.error('Redis is unavailable; Telegram analytics is disabled until it reconnects.', error)
+  );
 
   if (env.nodeEnv !== 'production') {
     await seedDevelopmentData();

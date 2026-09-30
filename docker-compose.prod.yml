@@ -7,6 +7,11 @@ services:
       - api
     ports:
       - "127.0.0.1:8080:80"
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
   api:
@@ -26,6 +31,11 @@ services:
         condition: service_healthy
     ports:
       - "127.0.0.1:4000:4000"
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
   mongo:
@@ -37,6 +47,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
   redis:
@@ -49,6 +64,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
 volumes:

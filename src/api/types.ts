@@ -253,7 +253,7 @@ export type VkChannelDebug = {
 export type AnalyticsPeriod = 'week' | 'twoWeek' | 'month' | 'currentMonth' | 'previousMonth' | 'custom';
 
 export type CommunityAnalytics = {
-  platform?: 'vk' | 'youtube';
+  platform?: 'vk' | 'youtube' | 'telegram';
   period: {
     key: AnalyticsPeriod;
     dateFrom: string;
@@ -261,7 +261,7 @@ export type CommunityAnalytics = {
   };
   group: {
     id: number | string;
-    platform?: 'vk' | 'youtube';
+    platform?: 'vk' | 'youtube' | 'telegram';
     externalId?: string;
     name: string;
     screenName?: string;
@@ -379,6 +379,7 @@ export type CommunityAnalytics = {
 
 export type CompareItem = {
   groupId: string;
+  platform?: SocialPlatform;
   analytics: CommunityAnalytics | null;
   error: null | {
     code: string;

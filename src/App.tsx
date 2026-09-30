@@ -258,7 +258,7 @@ export function App() {
             path="/analytics"
             element={<AnalyticsPage groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} activeTo={user?.activeTo} />}
           />
-          <Route path="/compare" element={paidRoute(<ComparePage />)} />
+          <Route path="/compare" element={paidRoute(<ComparePage groups={groups} user={user} />)} />
           <Route path="/posts" element={paidRoute(<PostsPage />)} />
           <Route path="/telegram" element={<TelegramAnalyticsRedirect />} />
           <Route

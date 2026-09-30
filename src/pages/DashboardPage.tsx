@@ -219,7 +219,7 @@ function FreeCommunitiesPanel({ groups, isTrialActive, onAdd }: { groups: SavedG
       <FreeCommunitySlot title="Бонусное сообщество" description="За вступление в сообщество Socstat во ВКонтакте" isActive={hasBonusGroup} group={bonusGroup} />
     </div>
     {isTrialActive && <div className="trial-access-note"><Check size={17} /><span><strong>Пробный период активен.</strong> В течение трёх дней доступна аналитика без ограничений.</span></div>}
-    {!hasBonusGroup && <div className="free-communities-action"><div>{hasBaseGroup && <><LockKeyhole size={17} /><span>Подпишитесь на <a href="https://vk.com/socstat" target="_blank" rel="noreferrer">сообщество Socstat</a> и добавьте ещё одно.</span></>}</div><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={() => onAdd(hasBaseGroup ? 'bonus' : 'free')}>{hasBaseGroup ? 'Добавить бонусное сообщество' : 'Добавить сообщество'}</Button></div>}
+    {!hasBonusGroup && <div className="free-communities-action"><div>{hasBaseGroup && <><LockKeyhole size={17} /><span>Подпишитесь на <a href="https://vk.com/socstat" target="_blank" rel="noreferrer">сообщество Socstat</a> и добавьте ещё одно.</span></>}</div><div className="free-communities-add"><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={() => onAdd(hasBaseGroup ? 'bonus' : 'free')}>{hasBaseGroup ? 'Добавить бонусное сообщество' : 'Добавить сообщество'}</Button><span className="free-communities-platforms" aria-label="Поддерживаются ВКонтакте, YouTube и Telegram"><PlatformIcon platform="vk" /><PlatformIcon platform="youtube" /><PlatformIcon platform="telegram" /></span></div></div>}
     {hasBonusGroup && <div className="free-communities-limit"><Check size={17} />Доступны оба бесплатных сообщества для анализа.</div>}
   </section>;
 }
@@ -328,7 +328,7 @@ function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChan
       }) : <div className="communities-table-empty">В этой категории пока нет сообществ.</div>}
     </div>
     <p className="communities-table-scroll-hint" aria-hidden="true">Прокрутите таблицу в сторону, чтобы увидеть все показатели →</p>
-    <div className="communities-add"><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={onAdd}>Добавить источник</Button></div>
+    <div className="communities-add"><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={onAdd}>Добавить источник</Button><span className="free-communities-platforms" aria-label="Поддерживаются ВКонтакте, YouTube и Telegram"><PlatformIcon platform="vk" /><PlatformIcon platform="youtube" /><PlatformIcon platform="telegram" /></span></div>
   </section>;
 }
 

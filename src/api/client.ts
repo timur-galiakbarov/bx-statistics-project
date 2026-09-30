@@ -45,6 +45,12 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return result.data;
 }
 
+export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`${apiBase}${path}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!response.ok) throw new Error(await getErrorMessage(response, path));
+  return ((await response.json()) as ApiResult<T>).data;
+}
+
 export async function apiDelete<T>(path: string): Promise<T> {
   const response = await fetch(`${apiBase}${path}`, {
     method: 'DELETE',

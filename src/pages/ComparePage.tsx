@@ -1,8 +1,10 @@
-import { ArrowDownUp, BarChart3, Search, X } from 'lucide-react';
+import { ArrowDownUp, BarChart3, BookmarkPlus, FolderOpen, Pencil, Search, Trash2, X } from 'lucide-react';
 import { FormEvent, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { apiGet } from '../api/client';
-import type { AnalyticsPeriod, CommunityAnalytics, CompareItem, CompareResult, SavedGroup, TelegramAnalytics, User, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
+import { apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
+import type { AnalyticsPeriod, CommunityAnalytics, ComparisonCollection, CompareItem, CompareResult, SavedGroup, TelegramAnalytics, User, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
 import { TelegramLogo } from '../components/TelegramLogo';
+import { Button } from '@alfalab/core-components-button';
+import { IconButton } from '@alfalab/core-components-icon-button';
 
 const CompareChart = lazy(() => import('../components/CompareChart'));
 
@@ -92,6 +94,9 @@ export function ComparePage({ groups, user }: Props) {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
+  const [collections, setCollections] = useState<ComparisonCollection[]>([]);
+  const [collectionsError, setCollectionsError] = useState<string | null>(null);
+  const [isCollectionsLoading, setIsCollectionsLoading] = useState(true);
   const searchRequest = useRef(0);
   const compareRequest = useRef(0);
   const requestContext = useRef({ platform, selectedGroups });
@@ -105,6 +110,14 @@ export function ComparePage({ groups, user }: Props) {
     const state: StoredCompareState = { version: 1, platform, period, selectedGroups };
     window.localStorage.setItem(`${COMPARE_STORAGE_PREFIX}${user.id}`, JSON.stringify(state));
   }, [period, platform, selectedGroups, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    apiGet<ComparisonCollection[]>('/api/account/comparison-collections')
+      .then(setCollections)
+      .catch((error) => setCollectionsError(error instanceof Error ? error.message : 'Не удалось загрузить подборки.'))
+      .finally(() => setIsCollectionsLoading(false));
+  }, [user?.id]);
 
   const savedGroups = useMemo(() => Array.from(new Map(groups.map(accountToCompareChannel).filter((group): group is CompareChannel => group !== null && group.platform === platform).map((group) => [`${group.platform}:${group.id}`, group])).values()), [groups, platform]);
 
@@ -196,6 +209,51 @@ export function ComparePage({ groups, user }: Props) {
     compareRequest.current += 1;
   };
 
+  const applyCollection = (collection: ComparisonCollection) => {
+    setSelectedGroups(collection.sources.map((source) => ({ id: source.externalId, name: source.name, platform: source.platform, screen_name: source.handle, photo_100: source.photo, members_count: source.membersCount })).slice(0, 10));
+    setPeriod(collection.period);
+    setPlatform(collection.sources[0]?.platform ?? 'vk');
+    setCompare(null);
+    setCompareError(null);
+    setSelectionError(null);
+    compareRequest.current += 1;
+  };
+
+  const saveCollection = async () => {
+    if (selectedGroups.length < 2) {
+      setSelectionError('Добавьте минимум два аккаунта, чтобы сохранить подборку.');
+      return;
+    }
+    const name = window.prompt('Название подборки');
+    if (!name?.trim()) return;
+    try {
+      const collection = await apiPost<ComparisonCollection>('/api/account/comparison-collections', {
+        name,
+        period,
+        sources: selectedGroups.map((group) => ({ platform: group.platform, externalId: String(group.id), name: group.name, handle: group.screen_name, photo: group.photo_100 ?? group.photo_50, membersCount: group.members_count }))
+      });
+      setCollections((current) => [collection, ...current]);
+      setCollectionsError(null);
+    } catch (error) { setCollectionsError(error instanceof Error ? error.message : 'Не удалось сохранить подборку.'); }
+  };
+
+  const deleteCollection = async (collection: ComparisonCollection) => {
+    if (!window.confirm(`Удалить подборку «${collection.name}»?`)) return;
+    try {
+      await apiDelete(`/api/account/comparison-collections/${collection.id}`);
+      setCollections((current) => current.filter((item) => item.id !== collection.id));
+    } catch (error) { setCollectionsError(error instanceof Error ? error.message : 'Не удалось удалить подборку.'); }
+  };
+
+  const renameCollection = async (collection: ComparisonCollection) => {
+    const name = window.prompt('Новое название подборки', collection.name);
+    if (!name?.trim() || name.trim() === collection.name) return;
+    try {
+      const updated = await apiPatch<ComparisonCollection>(`/api/account/comparison-collections/${collection.id}`, { name });
+      setCollections((current) => current.map((item) => item.id === updated.id ? updated : item));
+    } catch (error) { setCollectionsError(error instanceof Error ? error.message : 'Не удалось переименовать подборку.'); }
+  };
+
   const changePlatform = (nextPlatform: ComparePlatform) => {
     if (nextPlatform === platform) return;
     searchRequest.current += 1;
@@ -252,41 +310,47 @@ export function ComparePage({ groups, user }: Props) {
     <section className="page-grid">
       <div className="panel compare-setup">
         <div className="compare-setup-heading">
-          <div><h2>Сравните бренд с конкурентами</h2><p>Сравните вовлечённость, просмотры и публикации — найдите идеи для своего контента.</p></div>
-          {selectedGroups.length > 0 && <button className="compare-reset" type="button" onClick={clearGroups} disabled={isComparing}>Новое сравнение</button>}
+          <div><h2>Сравните показатели сообществ/каналов</h2><p>Сравните вовлечённость, просмотры и публикации — найдите идеи для своего контента.</p></div>
+          {selectedGroups.length > 0 && <Button className="compare-reset" type="button" view="secondary" size={40} onClick={clearGroups} disabled={isComparing}>Новое сравнение</Button>}
         </div>
 
         <div className="compare-platforms" role="group" aria-label="Платформа">
-          <button className={platform === 'vk' ? 'active' : undefined} type="button" onClick={() => changePlatform('vk')} disabled={isComparing}>ВКонтакте</button>
-          <button className={platform === 'youtube' ? 'active' : undefined} type="button" onClick={() => changePlatform('youtube')} disabled={isComparing}>YouTube</button>
-          <button className={platform === 'telegram' ? 'active' : undefined} type="button" onClick={() => changePlatform('telegram')} disabled={isComparing}>Telegram</button>
+          <Button className={`compare-platform-button ${platform === 'vk' ? 'compare-action-button' : ''}`} view={platform === 'vk' ? 'primary' : 'secondary'} size={40} type="button" onClick={() => changePlatform('vk')} disabled={isComparing}>ВКонтакте</Button>
+          <Button className={`compare-platform-button ${platform === 'youtube' ? 'compare-action-button' : ''}`} view={platform === 'youtube' ? 'primary' : 'secondary'} size={40} type="button" onClick={() => changePlatform('youtube')} disabled={isComparing}>YouTube</Button>
+          <Button className={`compare-platform-button ${platform === 'telegram' ? 'compare-action-button' : ''}`} view={platform === 'telegram' ? 'primary' : 'secondary'} size={40} type="button" onClick={() => changePlatform('telegram')} disabled={isComparing}>Telegram</Button>
         </div>
 
         <form className="compare-search-form" onSubmit={search}>
           <label htmlFor="compare-search">Кого сравниваем?</label>
-          <div><input id="compare-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={platform === 'youtube' ? 'URL, @handle, channel ID или название' : platform === 'telegram' ? '@username или ссылка t.me' : 'Название, screen name или ссылка VK'} /><button type="submit" disabled={isSearching || isComparing}><Search size={18} />{isSearching ? 'Ищем' : 'Найти'}</button></div>
-          {searchError && <div className="form-message" role="alert">{searchError} <button type="button" onClick={() => document.getElementById('compare-search')?.closest('form')?.requestSubmit()}>Повторить</button></div>}
+          <div><input id="compare-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={platform === 'youtube' ? 'URL, @handle, channel ID или название' : platform === 'telegram' ? '@username или ссылка t.me' : 'Название, screen name или ссылка VK'} /><Button className="compare-action-button" type="submit" view="primary" size={48} leftAddons={<Search size={18} />} disabled={isSearching || isComparing}>{isSearching ? 'Ищем' : 'Найти'}</Button></div>
+          {searchError && <div className="form-message" role="alert">{searchError} <Button type="button" view="secondary" size={40} onClick={() => document.getElementById('compare-search')?.closest('form')?.requestSubmit()}>Повторить</Button></div>}
         </form>
 
         {isSearching && <div className="compare-feedback" aria-live="polite">Ищем аккаунты…</div>}
         {!isSearching && !searchError && hasSearched && searchResults.length === 0 && <div className="compare-feedback">Ничего не найдено. Попробуйте другое название или ссылку.</div>}
         {searchResults.length > 0 && <div className="compare-options" aria-label="Результаты поиска">{searchResults.map((group) => {
           const isAdded = selectedGroups.some((item) => item.id === group.id && item.platform === group.platform);
-          return <div className="compare-option" key={`${group.platform}:${group.id}`}>{group.photo_100 ?? group.photo_50 ? <img src={group.photo_100 ?? group.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><strong>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}</small></span><button type="button" onClick={() => addGroup(group)} disabled={isAdded || selectedGroups.length >= 10 || isComparing}>{isAdded ? 'Добавлено' : 'Добавить'}</button></div>;
+          return <div className="compare-option" key={`${group.platform}:${group.id}`}>{group.photo_100 ?? group.photo_50 ? <img src={group.photo_100 ?? group.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><strong>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}</small></span><Button type="button" view="secondary" size={40} onClick={() => addGroup(group)} disabled={isAdded || selectedGroups.length >= 10 || isComparing}>{isAdded ? 'Добавлено' : 'Добавить'}</Button></div>;
         })}</div>}
 
         {savedGroups.length > 0 && <div className="compare-saved"><strong>Сохранённые аккаунты</strong><div className="compare-options">{savedGroups.map((group) => {
           const isAdded = selectedGroups.some((item) => item.id === group.id && item.platform === group.platform);
-          return <div className="compare-option" key={`saved:${group.platform}:${group.id}`}>{group.photo_100 ? <img src={group.photo_100} alt="" /> : <span className="community-avatar-placeholder" />}<span><strong>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}</small></span><button type="button" onClick={() => addGroup(group)} disabled={isAdded || selectedGroups.length >= 10 || isComparing}>{isAdded ? 'Добавлено' : 'Добавить'}</button></div>;
+          return <div className="compare-option" key={`saved:${group.platform}:${group.id}`}>{group.photo_100 ? <img src={group.photo_100} alt="" /> : <span className="community-avatar-placeholder" />}<span><strong>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}</small></span><Button type="button" view="secondary" size={40} onClick={() => addGroup(group)} disabled={isAdded || selectedGroups.length >= 10 || isComparing}>{isAdded ? 'Добавлено' : 'Добавить'}</Button></div>;
         })}</div></div>}
 
         <p className="compare-hint">{selectedGroups.length === 1 ? 'Добавьте ещё один аккаунт для сравнения' : 'Добавьте от 2 до 10 аккаунтов'}</p>
         {selectionError && <div className="form-message" role="alert">{selectionError}</div>}
 
-        {selectedGroups.length > 0 && <div className="compare-selected" aria-label="Выбранные аккаунты">{selectedGroups.map((group) => <div className="compare-selected-card" key={`${group.platform}:${group.id}`}><span className="compare-avatar">{group.photo_100 ?? group.photo_50 ? <img src={group.photo_100 ?? group.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<ComparePlatformIcon platform={group.platform} /></span><span><strong title={group.name}>{group.name}</strong></span><button className="icon-button danger" type="button" aria-label={`Удалить «${group.name}» из сравнения`} onClick={() => removeGroup(group)} disabled={isComparing}><X size={17} /></button></div>)}</div>}
+        {selectedGroups.length > 0 && <div className="compare-selected" aria-label="Выбранные аккаунты">{selectedGroups.map((group) => <div className="compare-selected-card" key={`${group.platform}:${group.id}`}><span className="compare-avatar">{group.photo_100 ?? group.photo_50 ? <img src={group.photo_100 ?? group.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<ComparePlatformIcon platform={group.platform} /></span><span><strong title={group.name}>{group.name}</strong></span><IconButton aria-label={`Удалить «${group.name}» из сравнения`} icon={X} onClick={() => removeGroup(group)} disabled={isComparing} size={32} view="transparent" /></div>)}</div>}
 
-        {selectedGroups.length >= 2 && <div className="compare-run"><div className="period-tabs">{periods.map((item) => <button className={period === item.key ? 'active' : undefined} key={item.key} type="button" onClick={() => changePeriod(item.key)} disabled={isComparing}>{item.label}</button>)}</div><button className="primary-button compare-submit" type="button" onClick={runCompare} disabled={isComparing}><BarChart3 size={18} />{isComparing ? 'Сравниваем выбранные аккаунты…' : `Сравнить ${selectedGroups.length} ${accountWord(selectedGroups.length)}`}</button>{compareError && <div className="form-message" role="alert">{compareError} <button type="button" onClick={() => void runCompare()}>Повторить</button></div>}</div>}
+        {selectedGroups.length >= 2 && <div className="compare-run"><div className="period-tabs">{periods.map((item) => <Button className={`compare-period-button ${period === item.key ? 'compare-action-button' : ''}`} view={period === item.key ? 'primary' : 'secondary'} key={item.key} type="button" size={40} onClick={() => changePeriod(item.key)} disabled={isComparing}>{item.label}</Button>)}</div><Button className="compare-submit compare-action-button" type="button" view="primary" size={48} leftAddons={<BarChart3 size={18} />} onClick={runCompare} disabled={isComparing}>{isComparing ? 'Сравниваем выбранные аккаунты…' : `Сравнить ${selectedGroups.length} ${accountWord(selectedGroups.length)}`}</Button>{compareError && <div className="form-message" role="alert">{compareError} <Button type="button" view="secondary" size={40} onClick={() => void runCompare()}>Повторить</Button></div>}</div>}
       </div>
+
+      <aside className="panel compare-collections-panel">
+        <div className="compare-collections-heading"><span><FolderOpen size={17} />Мои подборки</span><Button type="button" view="secondary" size={40} leftAddons={<BookmarkPlus size={16} />} onClick={() => void saveCollection()} disabled={selectedGroups.length < 2 || isComparing}>Сохранить текущую</Button></div>
+        {isCollectionsLoading ? <small>Загружаем подборки…</small> : collections.length > 0 ? <div className="compare-collections-list">{collections.map((collection) => <div className="compare-collection" key={collection.id}><Button className="compare-collection-open" type="button" view="secondary" size={40} onClick={() => applyCollection(collection)} disabled={isComparing}><strong>{collection.name}</strong><small>{collection.sources.length} {accountWord(collection.sources.length)} · {periods.find((item) => item.key === collection.period)?.label}</small></Button><IconButton aria-label={`Переименовать подборку «${collection.name}»`} className="compare-collection-edit" icon={Pencil} size={32} view="transparent" onClick={() => void renameCollection(collection)} /><IconButton aria-label={`Удалить подборку «${collection.name}»`} className="compare-collection-delete" icon={Trash2} size={32} view="transparent" onClick={() => void deleteCollection(collection)} /></div>)}</div> : <small>Сохраните набор источников, чтобы возвращаться к нему позже.</small>}
+        {collectionsError && <div className="form-message" role="alert">{collectionsError}</div>}
+      </aside>
 
       {compare && (
         <div className="panel span-2">

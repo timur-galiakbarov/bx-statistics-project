@@ -19,6 +19,7 @@ import { UserModel } from '../models/User.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { VkApiError, vkApiRequest } from '../services/vkClient.js';
 import { DomainError } from '../errors/domainError.js';
+import { ComparisonCollectionModel } from '../models/ComparisonCollection.js';
 
 export const accountRouter = Router();
 
@@ -211,6 +212,51 @@ accountRouter.get('/groups/free', requireUser, async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+function comparisonCollectionFromBody(body: any) {
+  const name = typeof body?.name === 'string' ? body.name.trim() : '';
+  const period = body?.period;
+  const sources = Array.isArray(body?.sources) ? body.sources : [];
+  if (!name || name.length > 80 || sources.length < 2 || sources.length > 10 || !sources.every((source: any) =>
+    source && ['vk', 'youtube', 'telegram'].includes(source.platform) && typeof source.externalId === 'string' && source.externalId.trim() && typeof source.name === 'string' && source.name.trim()
+  )) throw new DomainError('Проверьте название и состав подборки.', { status: 400, code: 'INVALID_COMPARISON_COLLECTION' });
+  if (period !== 'week' && period !== 'twoWeek' && period !== 'month') throw new DomainError('Передан некорректный период.', { status: 400, code: 'INVALID_COMPARISON_PERIOD' });
+  return { name, period, sources: sources.map((source: any) => ({ platform: source.platform, externalId: source.externalId.trim(), name: source.name.trim(), handle: typeof source.handle === 'string' ? source.handle : undefined, photo: typeof source.photo === 'string' ? source.photo : undefined, membersCount: typeof source.membersCount === 'number' ? source.membersCount : undefined })) };
+}
+
+accountRouter.get('/comparison-collections', requireUser, async (req, res, next) => {
+  try {
+    const collections = await ComparisonCollectionModel.find({ userId: req.user!.id }).sort({ updatedAt: -1 }).lean();
+    res.json({ success: true, data: collections.map((collection) => ({ id: collection._id.toString(), name: collection.name, period: collection.period, sources: collection.sources, updatedAt: collection.updatedAt.toISOString() })) });
+  } catch (error) { next(error); }
+});
+
+accountRouter.post('/comparison-collections', requireUser, async (req, res, next) => {
+  try {
+    const collection = await ComparisonCollectionModel.create({ userId: req.user!.id, ...comparisonCollectionFromBody(req.body) });
+    res.status(201).json({ success: true, data: { id: collection.id, name: collection.name, period: collection.period, sources: collection.sources, updatedAt: collection.updatedAt.toISOString() } });
+  } catch (error) { next(error); }
+});
+
+accountRouter.patch('/comparison-collections/:collectionId', requireUser, async (req, res, next) => {
+  const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+  if (!name || name.length > 80) {
+    res.status(400).json({ success: false, error: 'INVALID_COMPARISON_COLLECTION_NAME' });
+    return;
+  }
+  try {
+    const collection = await ComparisonCollectionModel.findOneAndUpdate({ _id: req.params.collectionId, userId: req.user!.id }, { $set: { name } }, { new: true });
+    if (!collection) { res.status(404).json({ success: false, error: 'COMPARISON_COLLECTION_NOT_FOUND' }); return; }
+    res.json({ success: true, data: { id: collection.id, name: collection.name, period: collection.period, sources: collection.sources, updatedAt: collection.updatedAt.toISOString() } });
+  } catch (error) { next(error); }
+});
+
+accountRouter.delete('/comparison-collections/:collectionId', requireUser, async (req, res, next) => {
+  try {
+    await ComparisonCollectionModel.deleteOne({ _id: req.params.collectionId, userId: req.user!.id });
+    res.json({ success: true });
+  } catch (error) { next(error); }
 });
 
 accountRouter.post('/groups/free', requireUser, async (req, res, next) => {

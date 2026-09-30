@@ -13,6 +13,14 @@ export type User = {
 
 export type SocialPlatform = 'vk' | 'youtube' | 'telegram';
 
+export type ComparisonCollection = {
+  id: string;
+  name: string;
+  period: AnalyticsPeriod;
+  sources: Array<{ platform: SocialPlatform; externalId: string; name: string; handle?: string; photo?: string; membersCount?: number | null }>;
+  updatedAt: string;
+};
+
 export type TelegramAnalytics = {
   channel: {
     id: string;

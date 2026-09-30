@@ -23,6 +23,7 @@
     "mongoose": "^9.9.3",
     "morgan": "^1.10.0",
     "nanoid": "^5.0.7",
+    "redis": "^4.7.1",
     "telegram": "^2.26.22"
   },
   "devDependencies": {

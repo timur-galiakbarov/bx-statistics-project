@@ -118,12 +118,19 @@ cp api/.env.example api/.env
 - `YOUTUBE_API_KEY` - серверный ключ YouTube Data API v3 (не должен попадать во frontend)
 - `YOUTUBE_API_TIMEOUT_MS` - таймаут запросов к YouTube API, по умолчанию `10000`
 - `YOUTUBE_CACHE_TTL_MS` - TTL кэша ответов YouTube API, по умолчанию `300000`
+- `REDIS_URL` - подключение к Redis; требуется для общего кэша, блокировок и лимитов Telegram
 - `TELEGRAM_API_ID` - ID MTProto-приложения из `my.telegram.org`
 - `TELEGRAM_API_HASH` - hash MTProto-приложения (только на сервере)
 - `TELEGRAM_SESSION` - строковая пользовательская сессия Telegram (только на сервере)
 - `TELEGRAM_PROXY_HOST`, `TELEGRAM_PROXY_PORT`, `TELEGRAM_PROXY_USERNAME`, `TELEGRAM_PROXY_PASSWORD` - необязательный SOCKS-прокси для MTProto; по умолчанию используется SOCKS5, для SOCKS4 задайте `TELEGRAM_PROXY_TYPE=4`
 - `TELEGRAM_CACHE_TTL_MS` - TTL кэша Telegram, по умолчанию `300000`
 - `TELEGRAM_MAX_POSTS` - защитный лимит публикаций на один анализ, по умолчанию `2000`
+- `TELEGRAM_REQUEST_INTERVAL_MS` - минимальная пауза между MTProto-задачами, по умолчанию `350`
+- `TELEGRAM_TASK_LOCK_TTL_MS` - TTL глобального Redis-слота для MTProto, по умолчанию `900000`
+- `TELEGRAM_ANALYTICS_LOCK_TTL_MS`, `TELEGRAM_ANALYTICS_WAIT_MS` - TTL блокировки одинакового анализа и максимальное ожидание его результата
+- `TELEGRAM_USER_REQUESTS_PER_MINUTE`, `TELEGRAM_IP_REQUESTS_PER_MINUTE` - лимиты Telegram-маршрутов, по умолчанию `20` и `60`
+- `TELEGRAM_MEDIA_REQUESTS_PER_MINUTE` - лимит загрузок медиа на пользователя, по умолчанию `30`
+- `TELEGRAM_REFRESH_COOLDOWN_MS` - пауза между принудительными обновлениями одного источника, по умолчанию `60000`
 - `AUTH_SUCCESS_REDIRECT_URL` - куда вернуть пользователя после успешного входа
 - `YOOMONEY_RECEIVER` - номер кошелька ЮMoney, который принимает платежи
 - `YOOMONEY_NOTIFICATION_URL` - URL HTTP-уведомлений, который нужно указать в кабинете ЮMoney
@@ -205,6 +212,8 @@ npm run telegram:login --workspace @socstat/api
 3. Введите телефон, код Telegram и пароль 2FA при наличии. Скопируйте полученную строку в `TELEGRAM_SESSION` и перезапустите API.
 
 `TELEGRAM_SESSION` даёт доступ к Telegram-аккаунту: не добавляйте её в Git, клиентский код или логи. При утечке завершите эту сессию в официальном приложении Telegram и создайте новую.
+
+Для production Redis обязателен: он хранит результаты анализов, объединяет одинаковые запросы между API-инстансами, ограничивает частоту запросов и сериализует MTProto-работу для общей сессии. В docker-compose Redis запускается автоматически.
 
 Маршруты:
 

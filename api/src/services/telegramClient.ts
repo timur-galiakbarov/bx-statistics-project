@@ -5,6 +5,7 @@ import { DomainError } from '../errors/domainError.js';
 import { getAnalyticsPeriod, getPreviousAnalyticsPeriod, type AnalyticsPeriodRange } from './analyticsUtils.js';
 import { TtlCache } from './ttlCache.js';
 import { getTelegramProxy } from './telegramProxy.js';
+import { getTelegramAnalyticsCached, telegramQueue } from './telegramProtection.js';
 
 export type TelegramChannel = {
   id: string;
@@ -220,7 +221,7 @@ export async function resolveTelegramChannel(input: string, forceRefresh = false
     const cached = cache.get(key) as TelegramChannel | undefined;
     if (cached) return cached;
   }
-  const { channel } = await resolveChannelEntity(username);
+  const { channel } = await telegramQueue.run(() => resolveChannelEntity(username));
   cache.set(key, channel);
   return channel;
 }
@@ -233,9 +234,11 @@ export async function getTelegramChannelPhoto(input: string, forceRefresh = fals
     if (cached !== undefined) return cached;
   }
 
-  const { client, entity } = await getChannelEntity(username);
   try {
-    const downloaded = await client.downloadProfilePhoto(entity, { isBig: true });
+    const downloaded = await telegramQueue.run(async () => {
+      const { client, entity } = await getChannelEntity(username);
+      return client.downloadProfilePhoto(entity, { isBig: true });
+    });
     const photo = Buffer.isBuffer(downloaded) && downloaded.length ? downloaded : null;
     photoCache.set(key, photo);
     return photo;
@@ -260,14 +263,19 @@ export async function getTelegramPostMedia(input: string, postIdValue: string, f
     if (cached !== undefined) return cached;
   }
 
-  const { client, entity } = await getChannelEntity(username);
   try {
-    const [message] = await client.getMessages(entity, { ids: postId });
+    const [message] = await telegramQueue.run(async () => {
+      const { client, entity } = await getChannelEntity(username);
+      return client.getMessages(entity, { ids: postId });
+    });
     if (!(message instanceof Api.Message) || !message.photo) {
       postMediaCache.set(key, null);
       return null;
     }
-    const downloaded = await client.downloadMedia(message, {});
+    const downloaded = await telegramQueue.run(async () => {
+      const client = await getClient();
+      return client.downloadMedia(message, {});
+    });
     if (!Buffer.isBuffer(downloaded) || !downloaded.length) {
       postMediaCache.set(key, null);
       return null;
@@ -299,55 +307,58 @@ export async function getTelegramChannelAnalytics(input: string, periodValue: un
     const cached = cache.get(key) as ReturnType<typeof summarizeTelegramAnalytics> | undefined;
     if (cached) return cached;
   }
-  const { client, entity, channel } = await resolveChannelEntity(username);
-  const postsByKey = new Map<string, TelegramPost>();
   try {
-    for await (const message of client.iterMessages(entity, { limit: env.telegramMaxPosts * 2, offsetDate: period.unixTo + 1 })) {
-      if (!(message instanceof Api.Message)) continue;
-      if (message.date < previousPeriod.unixFrom) break;
-      if (message.date > period.unixTo || !message.post) continue;
-      const reactions = message.reactions?.results.reduce((sum, reaction) => sum + reaction.count, 0) ?? 0;
-      const comments = message.replies?.replies ?? 0;
-      const forwards = message.forwards ?? 0;
-      const postMediaType = mediaType(message);
-      const post: TelegramPost = {
-        id: message.id,
-        date: new Date(message.date * 1000).toISOString(),
-        timestamp: message.date,
-        text: message.message,
-        url: `https://t.me/${channel.username}/${message.id}`,
-        views: message.views ?? 0,
-        forwards,
-        reactions,
-        comments,
-        engagement: reactions + comments + forwards,
-        mediaType: postMediaType,
-        mediaUrl: postMediaType === 'photo' ? `/api/telegram/channels/${encodeURIComponent(channel.username)}/posts/${message.id}/media` : undefined
-      };
-      const groupKey = message.groupedId ? `album:${message.groupedId.toString()}` : `message:${message.id}`;
-      const existing = postsByKey.get(groupKey);
-      if (!existing) {
-        postsByKey.set(groupKey, post);
-      } else {
-        const merged = {
-          ...existing,
-          id: Math.min(existing.id, post.id),
-          text: existing.text || post.text,
-          views: Math.max(existing.views, post.views),
-          forwards: Math.max(existing.forwards, post.forwards),
-          reactions: Math.max(existing.reactions, post.reactions),
-          comments: Math.max(existing.comments, post.comments),
-          mediaType: existing.mediaType ?? post.mediaType
+    const result = await getTelegramAnalyticsCached(key, forceRefresh, async () => {
+      const { client, entity, channel } = await resolveChannelEntity(username);
+      const postsByKey = new Map<string, TelegramPost>();
+      for await (const message of client.iterMessages(entity, { limit: env.telegramMaxPosts * 2, offsetDate: period.unixTo + 1 })) {
+        if (!(message instanceof Api.Message)) continue;
+        if (message.date < previousPeriod.unixFrom) break;
+        if (message.date > period.unixTo || !message.post) continue;
+        const reactions = message.reactions?.results.reduce((sum, reaction) => sum + reaction.count, 0) ?? 0;
+        const comments = message.replies?.replies ?? 0;
+        const forwards = message.forwards ?? 0;
+        const postMediaType = mediaType(message);
+        const post: TelegramPost = {
+          id: message.id,
+          date: new Date(message.date * 1000).toISOString(),
+          timestamp: message.date,
+          text: message.message,
+          url: `https://t.me/${channel.username}/${message.id}`,
+          views: message.views ?? 0,
+          forwards,
+          reactions,
+          comments,
+          engagement: reactions + comments + forwards,
+          mediaType: postMediaType,
+          mediaUrl: postMediaType === 'photo' ? `/api/telegram/channels/${encodeURIComponent(channel.username)}/posts/${message.id}/media` : undefined
         };
-        postsByKey.set(groupKey, { ...merged, url: `https://t.me/${channel.username}/${merged.id}`, engagement: merged.reactions + merged.comments + merged.forwards });
+        const groupKey = message.groupedId ? `album:${message.groupedId.toString()}` : `message:${message.id}`;
+        const existing = postsByKey.get(groupKey);
+        if (!existing) {
+          postsByKey.set(groupKey, post);
+        } else {
+          const merged = {
+            ...existing,
+            id: Math.min(existing.id, post.id),
+            text: existing.text || post.text,
+            views: Math.max(existing.views, post.views),
+            forwards: Math.max(existing.forwards, post.forwards),
+            reactions: Math.max(existing.reactions, post.reactions),
+            comments: Math.max(existing.comments, post.comments),
+            mediaType: existing.mediaType ?? post.mediaType
+          };
+          postsByKey.set(groupKey, { ...merged, url: `https://t.me/${channel.username}/${merged.id}`, engagement: merged.reactions + merged.comments + merged.forwards });
+        }
       }
-    }
+      return summarizeTelegramAnalytics(channel, [...postsByKey.values()], period);
+    });
+    cache.set(key, result);
+    return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
+    if (message === 'TELEGRAM_ANALYTICS_IN_PROGRESS') throw new TelegramApiError('Такой анализ уже выполняется. Повторите через пару минут.', { status: 503, code: 'TELEGRAM_ANALYTICS_IN_PROGRESS' });
     if (/FLOOD_WAIT/i.test(message)) throw new TelegramApiError('Telegram временно ограничил частоту запросов. Повторите позже.', { status: 429, code: 'TELEGRAM_RATE_LIMITED' });
     throw new TelegramApiError('Не удалось загрузить публикации канала.', { status: 502, code: 'TELEGRAM_POSTS_UNAVAILABLE' });
   }
-  const result = summarizeTelegramAnalytics(channel, [...postsByKey.values()], period);
-  cache.set(key, result);
-  return result;
 }

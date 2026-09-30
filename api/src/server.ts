@@ -2,9 +2,11 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { connectDatabase } from './db/database.js';
 import { seedDevelopmentData } from './db/seed.js';
+import { connectRedis } from './services/redis.js';
 
 async function bootstrap() {
   await connectDatabase();
+  await connectRedis();
 
   if (env.nodeEnv !== 'production') {
     await seedDevelopmentData();

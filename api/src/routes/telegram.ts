@@ -2,17 +2,20 @@ import { Router } from 'express';
 import { requireUser } from '../middleware/auth.js';
 import { requireActiveAccess } from '../middleware/access.js';
 import { getTelegramChannelAnalytics, getTelegramChannelPhoto, getTelegramPostMedia, resolveTelegramChannel } from '../services/telegramClient.js';
+import { limitTelegramMediaRequests, limitTelegramRefresh, limitTelegramRequests } from '../middleware/telegramProtection.js';
 
 export const telegramRouter = Router();
 
-telegramRouter.get('/channels/resolve', requireUser, async (req, res, next) => {
+telegramRouter.use(requireUser, limitTelegramRequests);
+
+telegramRouter.get('/channels/resolve', async (req, res, next) => {
   try {
     const query = typeof req.query.q === 'string' ? req.query.q : '';
     res.json({ success: true, data: await resolveTelegramChannel(query, req.query.refresh === '1') });
   } catch (error) { next(error); }
 });
 
-telegramRouter.get('/channels/:username/photo', requireUser, async (req, res, next) => {
+telegramRouter.get('/channels/:username/photo', async (req, res, next) => {
   try {
     const photo = await getTelegramChannelPhoto(req.params.username, req.query.refresh === '1');
     if (!photo) {
@@ -27,7 +30,7 @@ telegramRouter.get('/channels/:username/photo', requireUser, async (req, res, ne
   } catch (error) { next(error); }
 });
 
-telegramRouter.get('/channels/:username/posts/:postId/media', requireUser, requireActiveAccess, async (req, res, next) => {
+telegramRouter.get('/channels/:username/posts/:postId/media', requireActiveAccess, limitTelegramMediaRequests, async (req, res, next) => {
   try {
     const media = await getTelegramPostMedia(req.params.username, req.params.postId, req.query.refresh === '1');
     if (!media) {
@@ -42,7 +45,7 @@ telegramRouter.get('/channels/:username/posts/:postId/media', requireUser, requi
   } catch (error) { next(error); }
 });
 
-telegramRouter.get('/channels/:username/analytics', requireUser, requireActiveAccess, async (req, res, next) => {
+telegramRouter.get('/channels/:username/analytics', requireActiveAccess, limitTelegramRefresh, async (req, res, next) => {
   try {
     const data = await getTelegramChannelAnalytics(req.params.username, req.query.period, req.query.dateFrom, req.query.dateTo, req.query.refresh === '1');
     res.json({ success: true, data });

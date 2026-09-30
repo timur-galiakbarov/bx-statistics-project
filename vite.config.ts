@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, resolve } from 'node:path';
 
 const landingFile = resolve('public/landing.html');
+const promoFile = resolve('public/promo.html');
 const legacyAssetsDirectory = resolve('legacy/local/templates/site');
 const contentTypes: Record<string, string> = {
   '.css': 'text/css',
@@ -22,8 +23,9 @@ function landingDevServer() {
       server.middlewares.use((req, res, next) => {
         const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
 
-        if (pathname === '/') {
-          void readFile(landingFile, 'utf8').then((content) => {
+        const pageFile = pathname === '/' ? landingFile : pathname === '/promo' ? promoFile : null;
+        if (pageFile) {
+          void readFile(pageFile, 'utf8').then((content) => {
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
             res.end(content);
           });

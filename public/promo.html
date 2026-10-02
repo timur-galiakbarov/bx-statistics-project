@@ -4,17 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="index,follow" />
-    <meta name="description" content="Socstat — аналитика VK, YouTube и Telegram: динамика аудитории, эффективность контента и сравнение с конкурентами в одном сервисе." />
+    <meta name="description" content="Статистика любого сообщества ВКонтакте: подписчики, охваты, вовлечённость и лучшие посты." />
     <link rel="canonical" href="https://socstat-lab.ru/promo" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ru_RU" />
     <meta property="og:site_name" content="Socstat" />
-    <meta property="og:title" content="Socstat — аналитика VK, YouTube и Telegram" />
-    <meta property="og:description" content="Понимайте, какой контент растёт у вас и у конкурентов." />
+    <meta property="og:title" content="Статистика сообществ ВКонтакте — Socstat" />
+    <meta property="og:description" content="Подписчики, охваты, вовлечённость и лучшие посты." />
     <meta property="og:url" content="https://socstat-lab.ru/promo" />
     <meta name="twitter:card" content="summary" />
     <meta name="theme-color" content="#0876ff" />
-    <title>Socstat — аналитика VK, YouTube и Telegram</title>
+    <title>Статистика сообществ ВКонтакте — Socstat</title>
     <!-- Yandex.Metrika counter -->
     <script>
       (function (m, e, t, r, i, k, a) {
@@ -39,6 +39,19 @@
       });
     </script>
     <!-- /Yandex.Metrika counter -->
+    <!-- Top.Mail.Ru counter -->
+    <script type="text/javascript">
+      var _tmr = window._tmr || (window._tmr = []);
+      _tmr.push({ id: "3798785", type: "pageView", start: (new Date()).getTime() });
+      (function (d, w, id) {
+        if (d.getElementById(id)) return;
+        var ts = d.createElement("script"); ts.type = "text/javascript"; ts.async = true; ts.id = id;
+        ts.src = "https://top-fwz1.mail.ru/js/code.js";
+        var f = function () { var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(ts, s); };
+        if (w.opera == "[object Opera]") { d.addEventListener("DOMContentLoaded", f, false); } else { f(); }
+      })(document, window, "tmr-code");
+    </script>
+    <!-- /Top.Mail.Ru counter -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -47,117 +60,96 @@
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web",
         "inLanguage": "ru",
-        "description": "Сервис аналитики сообществ VK, каналов YouTube и Telegram, включая открытые площадки конкурентов.",
+        "description": "Статистика сообществ ВКонтакте: подписчики, охваты, вовлечённость и публикации.",
         "url": "https://socstat-lab.ru/promo"
       }
     </script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap');
-
-      :root { --ink:#0e1c36; --muted:#63708a; --blue:#0876ff; --cyan:#44d7ff; --soft:#eef6ff; --line:#dce7f5; --yellow:#ffd05b; font-family:Manrope,Arial,sans-serif; color:var(--ink); background:#fff; }
+      :root { --ink:#10213d; --muted:#66748a; --blue:#0876ff; --blue-dark:#075fce; --soft:#f3f8ff; --line:#dce7f5; font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; color:var(--ink); background:#fff; }
       * { box-sizing:border-box; }
       html { scroll-behavior:smooth; }
       body { margin:0; overflow-x:hidden; }
       a { color:inherit; text-decoration:none; }
-      .wrap { width:min(1180px,calc(100% - 48px)); margin:auto; }
-      .top { background:#fff; border-bottom:1px solid rgba(14,28,54,.08); position:relative; z-index:5; }
-      .top__row { align-items:center; display:flex; height:78px; justify-content:space-between; }
-      .brand { align-items:baseline; color:#142545; display:flex; font-family:Unbounded,Manrope,sans-serif; font-size:18px; font-weight:700; letter-spacing:-.09em; gap:0; }
-      .brand:before { background:var(--blue); border-radius:50%; content:""; display:inline-block; height:7px; margin:0 7px 2px 0; width:7px; }
-      .brand b { color:var(--blue); font-weight:700; }
-      .nav { align-items:center; display:flex; font-size:14px; font-weight:700; gap:29px; }
-      .nav a:not(.nav__login) { color:#53617a; transition:color .2s ease; }
-      .nav a:not(.nav__login):hover { color:var(--blue); }
-      .nav__login { background:#eef5ff; border-radius:10px; color:var(--blue); padding:11px 17px; }
-      .hero { background:linear-gradient(118deg,#f5faff 0%,#e8f4ff 51%,#f7fbff 100%); overflow:hidden; padding:82px 0 70px; position:relative; }
-      .hero:before { background:radial-gradient(circle,rgba(68,215,255,.42) 0 2px,transparent 2.5px); background-size:20px 20px; content:""; height:350px; opacity:.45; position:absolute; right:-20px; top:30px; transform:rotate(8deg); width:440px; }
-      .hero__grid { align-items:center; display:grid; gap:54px; grid-template-columns:minmax(360px,.88fr) minmax(480px,1.12fr); position:relative; }
-      .eyebrow { align-items:center; color:#3771bc; display:flex; font-size:12px; font-weight:800; gap:8px; letter-spacing:.08em; margin:0 0 20px; text-transform:uppercase; }
-      .eyebrow:before { background:var(--blue); border-radius:9px; content:""; height:8px; width:8px; }
-      h1,h2,h3 { letter-spacing:-.045em; }
-      h1 { font-family:Unbounded,Manrope,sans-serif; font-size:clamp(34px,4.1vw,55px); font-weight:600; line-height:1.12; margin:0; }
+      button,input { font:inherit; }
+      .wrap { width:min(1120px,calc(100% - 48px)); margin:auto; }
+      .top { background:rgba(255,255,255,.96); border-bottom:1px solid rgba(16,33,61,.08); position:sticky; top:0; z-index:10; backdrop-filter:blur(12px); }
+      .top__row { align-items:center; display:flex; height:72px; justify-content:space-between; }
+      .brand { align-items:center; display:inline-flex; font-size:20px; font-weight:800; letter-spacing:-.05em; }
+      .brand:before { background:var(--blue); border-radius:50%; content:""; height:8px; margin-right:8px; width:8px; }
+      .brand b { color:var(--blue); }
+      .login { background:#edf5ff; border-radius:10px; color:var(--blue); font-size:14px; font-weight:750; padding:11px 17px; }
+      .hero { background:radial-gradient(circle at 85% 12%,rgba(65,200,255,.25),transparent 27%),linear-gradient(135deg,#f7fbff 0%,#eaf4ff 60%,#f7fbff 100%); padding:78px 0 84px; }
+      .hero__grid { align-items:center; display:grid; gap:58px; grid-template-columns:minmax(0,.9fr) minmax(440px,1.1fr); }
+      .eyebrow { color:var(--blue); font-size:13px; font-weight:800; letter-spacing:.08em; margin:0 0 18px; text-transform:uppercase; }
+      h1,h2 { letter-spacing:-.045em; }
+      h1 { font-size:clamp(39px,5vw,62px); line-height:1.06; margin:0; max-width:680px; }
       h1 em { color:var(--blue); font-style:normal; }
-      .hero__lead { color:#52637d; font-size:18px; line-height:1.6; margin:24px 0 30px; max-width:510px; }
-      .cta { align-items:center; background:var(--blue); border-radius:12px; box-shadow:0 12px 24px rgba(8,118,255,.25); color:white; display:inline-flex; font-size:15px; font-weight:800; gap:10px; padding:15px 20px; transition:transform .18s ease,box-shadow .18s ease; }
-      .cta:hover { box-shadow:0 16px 28px rgba(8,118,255,.32); transform:translateY(-2px); }
-      .cta svg { width:17px; }
-      .hero__note { color:#7a89a0; font-size:12px; margin:14px 0 0; }
-      .socials { display:flex; gap:8px; margin-top:34px; }
-      .social { align-items:center; background:#fff; border:1px solid var(--line); border-radius:11px; box-shadow:0 4px 10px rgba(34,82,140,.06); display:flex; font-size:12px; font-weight:800; gap:7px; padding:8px 10px 8px 8px; }
-      .social__icon { align-items:center; border-radius:8px; color:#fff; display:flex; height:24px; justify-content:center; width:24px; }
-      .social__icon svg { height:16px; width:16px; }
-      .vk { background:#0876ff; } .tg { background:#2aabee; } .yt { background:#ff1935; }
-      .product { filter:drop-shadow(0 24px 22px rgba(45,96,164,.19)); position:relative; }
-      .product__screen { display:block; max-width:100%; width:100%; }
-      .live-screen { background:#eef0f2; border:1px solid #d5dce3; border-radius:13px; box-shadow:0 20px 35px rgba(32,61,95,.18); color:#485360; display:grid; font-family:Roboto,Arial,sans-serif; grid-template-columns:150px minmax(0,1fr); min-height:348px; overflow:hidden; }
-      .live-sidebar { background:linear-gradient(rgba(255,255,255,.89),rgba(255,255,255,.94)),url('/sidebar-1.jpg') center/cover; border-right:1px solid #e2e5e9; padding:19px 11px; } .live-brand { border-bottom:1px solid #e2e5e9; color:#36424e; font-size:12px; margin-bottom:14px; padding:0 5px 13px; text-align:center; } .live-brand b { display:block; font-size:13px; font-weight:500; } .live-brand small { color:#777; font-size:8px; }
-      .live-nav { display:grid; gap:5px; } .live-nav div { align-items:center; border-radius:3px; display:flex; font-size:10px; gap:8px; min-height:29px; padding:0 7px; } .live-nav svg { color:#84909d; flex:0 0 auto; height:13px; stroke-width:1.8; width:13px; } .live-nav .active { background:#43b65a; box-shadow:0 3px 7px rgba(41,150,62,.28); color:#fff; font-weight:700; } .live-nav .active svg { color:#fff; }
-      .live-main { min-width:0; } .live-top { align-items:center; background:#f7f7f8; border-bottom:1px solid #e3e6e9; display:flex; font-size:12px; height:48px; justify-content:space-between; padding:0 18px; } .live-user { color:#6e417b; font-size:8px; font-weight:700; } .live-user em { color:#43a454; font-size:7px; font-style:normal; margin-left:5px; }
-      .live-card { background:#fff; border-radius:8px; box-shadow:0 1px 5px rgba(23,44,70,.08); margin:13px; padding:15px; } .live-card h3 { font-family:Roboto,Arial,sans-serif; font-size:13px; font-weight:400; letter-spacing:0; line-height:1; margin:0 0 11px; } .live-filters { align-items:center; display:flex; justify-content:space-between; margin-bottom:13px; } .live-tabs,.live-period { background:#f0f1f3; border-radius:7px; display:flex; overflow:hidden; } .live-tabs span,.live-period span { color:#56606c; font-size:7px; padding:7px 10px; } .live-tabs b,.live-period b { background:#fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.1); font-size:7px; padding:7px 10px; }
-      .live-table { border:1px solid #e8ecec; border-radius:6px; overflow:hidden; } .live-row { align-items:center; border-bottom:1px solid #edf0f1; display:grid; font-size:7px; grid-template-columns:16px 1.9fr .7fr .55fr .75fr .72fr; min-height:43px; padding:0 8px; } .live-row:last-child { border:0; } .live-row--head { background:#fafbfb; color:#78838d; font-size:6px; font-weight:700; min-height:25px; text-transform:uppercase; } .live-drag { color:#8f9ba5; font-size:12px; } .live-source { align-items:center; display:flex; font-weight:700; gap:6px; min-width:0; } .live-source img { height:15px; object-fit:contain; width:15px; } .live-source span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .live-source small { color:#8b959e; display:block; font-size:6px; font-weight:400; margin-top:2px; } .live-number { color:#56616c; font-weight:700; } .live-number.positive { color:#38a353; }
-      .dashboard { background:#f7f9fc; border:8px solid #1d2b44; border-radius:18px; box-shadow:0 0 0 1px rgba(255,255,255,.9) inset; overflow:hidden; transform:perspective(1200px) rotateY(-4deg) rotateX(2deg); }
-      .dashboard__bar { align-items:center; background:#fff; border-bottom:1px solid #e6edf5; display:flex; height:46px; padding:0 15px; }
-      .dots { display:flex; gap:5px; } .dots i { background:#d9e1ed; border-radius:50%; height:7px; width:7px; } .dots i:first-child { background:#ff8c87; } .dots i:nth-child(2) { background:#ffd46e; }
-      .dashboard__label { color:#8090aa; font-size:10px; font-weight:800; margin:auto; }
-      .dashboard__body { display:grid; grid-template-columns:101px 1fr; min-height:328px; }
-      .dash-nav { background:#172742; padding:18px 10px; } .dash-logo { color:#fff; font-size:11px; font-weight:800; margin:0 0 23px 5px; } .dash-logo b { color:#54cfff; }
-      .dash-nav span { background:rgba(255,255,255,.08); border-radius:5px; display:block; height:7px; margin:13px 3px; } .dash-nav span:nth-child(4) { background:#2186ff; } .dash-nav span:nth-child(5) { width:70%; }
-      .dash-main { background:#f6f8fc; padding:18px; } .dash-title { align-items:center; display:flex; justify-content:space-between; margin-bottom:16px; } .dash-title b { font-size:14px; } .dash-title small { background:#e6f3ff; border-radius:5px; color:#0876ff; font-size:8px; font-weight:800; padding:5px 7px; }
-      .metrics { display:grid; gap:9px; grid-template-columns:repeat(3,1fr); } .metric { background:#fff; border:1px solid #e9eef5; border-radius:7px; padding:10px; } .metric small { color:#8794aa; display:block; font-size:7px; font-weight:700; } .metric b { display:block; font-size:15px; margin:6px 0 2px; } .metric em { color:#14a66a; font-size:7px; font-style:normal; font-weight:800; }
-      .chart { background:#fff; border:1px solid #e9eef5; border-radius:7px; height:150px; margin-top:10px; overflow:hidden; padding:13px; position:relative; } .chart:before { background:repeating-linear-gradient(to bottom,transparent 0,transparent 31px,#edf1f7 32px); content:""; inset:12px; position:absolute; } .chart svg { height:100%; position:relative; width:100%; }
-      .floating { background:#fff; border:1px solid #dce9f6; border-radius:11px; box-shadow:0 16px 34px rgba(46,92,151,.17); padding:12px; position:absolute; } .floating--growth { bottom:-25px; left:-27px; } .floating--rival { right:-26px; top:34px; }
-      .float-label { color:#7d8ba1; font-size:9px; font-weight:700; } .float-value { color:#10213d; font-size:18px; font-weight:800; margin-top:4px; } .float-delta { color:#11a76a; font-size:10px; font-weight:800; }
-      .float-rival { align-items:center; display:flex; gap:8px; } .float-rival__avatar { background:linear-gradient(135deg,#9c7aff,#ee8ef2); border-radius:7px; height:27px; width:27px; } .float-rival b { display:block; font-size:10px; } .float-rival small { color:#5f78a1; display:block; font-size:9px; margin-top:3px; }
-      .section { padding:108px 0; } .section--soft { background:#f6faff; } .section__head { margin-bottom:45px; max-width:650px; } .kicker { color:#0876ff; font-size:12px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; } h2 { font-family:Unbounded,Manrope,sans-serif; font-size:clamp(27px,3.1vw,40px); font-weight:600; line-height:1.23; margin:13px 0 0; } .section__head p { color:var(--muted); font-size:16px; line-height:1.65; margin:18px 0 0; }
-      .feature-grid { display:grid; gap:16px; grid-template-columns:repeat(3,1fr); } .feature { background:#fff; border:1px solid #e0eaf6; border-radius:16px; min-height:264px; padding:24px; position:relative; transition:box-shadow .2s,transform .2s; } .feature:hover { box-shadow:0 16px 36px rgba(42,89,146,.11); transform:translateY(-3px); } .feature__icon { align-items:center; background:#eaf4ff; border-radius:12px; color:#0876ff; display:flex; height:44px; justify-content:center; margin-bottom:29px; width:44px; } .feature__icon svg { width:22px; } .feature h3 { font-size:18px; margin:0 0 10px; } .feature p { color:#65738b; font-size:14px; line-height:1.55; margin:0; } .feature__preview { border:1px solid #dfe7ef; border-radius:8px; display:block; height:108px; margin-top:17px; object-fit:cover; object-position:center 40%; width:100%; }
-      .screen-block { background:#eef0f2; border:1px solid #dae1e7; border-radius:16px; box-shadow:0 16px 32px rgba(42,74,112,.12); color:#4d5865; overflow:hidden; } .screen-block__top { align-items:center; background:#f7f7f8; border-bottom:1px solid #e3e6e9; display:flex; font:12px Roboto,Arial,sans-serif; justify-content:space-between; padding:15px 20px; } .screen-block__top span:last-child { color:#6e417b; font-size:9px; font-weight:700; } .analytics-panel { background:white; border-radius:8px; font-family:Roboto,Arial,sans-serif; margin:14px; padding:18px; } .analytics-panel h3 { font-size:14px; font-weight:400; letter-spacing:0; margin:0 0 8px; } .analytics-panel p { color:#747e89; font-size:10px; margin:0 0 14px; } .analytics-source { align-items:center; background:#f6f8f4; border:1px solid #edf0eb; display:flex; font-size:11px; font-weight:700; gap:8px; padding:10px; } .analytics-source img { height:21px; width:21px; } .analytics-source small { color:#7a8591; display:block; font-size:8px; font-weight:400; margin-top:2px; } .analytic-charts { display:grid; gap:12px; grid-template-columns:1fr 1fr; margin-top:14px; } .analytic-chart { border:1px solid #e5e9ec; border-radius:6px; min-height:153px; padding:12px; } .analytic-chart b { font-size:10px; } .analytic-chart svg { height:108px; margin-top:8px; width:100%; }
-      .compare { background:#11264a; color:#fff; overflow:hidden; position:relative; } .compare:after { border:1px solid rgba(96,204,255,.25); border-radius:50%; content:""; height:640px; position:absolute; right:-230px; top:-220px; width:640px; } .compare__grid { align-items:center; display:grid; gap:70px; grid-template-columns:.85fr 1.15fr; position:relative; z-index:1; } .compare h2 { color:white; } .compare p { color:#b8c8e0; font-size:16px; line-height:1.65; margin:20px 0 28px; } .checks { display:grid; gap:14px; list-style:none; margin:0; padding:0; } .checks li { align-items:flex-start; color:#e2ebf9; display:flex; font-size:14px; gap:11px; } .checks i { align-items:center; background:#1a98e7; border-radius:50%; color:#fff; display:flex; flex:0 0 auto; font-size:11px; height:19px; justify-content:center; margin-top:1px; width:19px; }
-      .compare-card { background:#fff; border-radius:12px; box-shadow:0 26px 35px rgba(0,0,0,.2); overflow:hidden; transform:rotate(1.5deg); } .compare-card__image { display:block; height:auto; width:100%; }
-      .screen-section { display:grid; gap:48px; grid-template-columns:minmax(0,1.2fr) minmax(290px,.8fr); align-items:center; } .screen-shot { background:#edf4fa; border:1px solid #dae7f3; border-radius:18px; padding:12px; } .screen-shot img { border-radius:10px; display:block; max-width:100%; } .report-list { display:grid; gap:18px; list-style:none; margin:24px 0 0; padding:0; } .report-list li { border-bottom:1px solid #e1ebf5; padding-bottom:16px; } .report-list b { display:block; font-size:15px; margin-bottom:5px; } .report-list span { color:#68758b; font-size:14px; line-height:1.5; }
-      .bottom-cta { background:linear-gradient(121deg,#0876ff,#1250c9); color:#fff; overflow:hidden; padding:74px 0; position:relative; } .bottom-cta:after { border:1px solid rgba(255,255,255,.18); border-radius:50%; content:""; height:480px; position:absolute; right:-100px; top:-190px; width:480px; } .bottom-cta__row { align-items:center; display:flex; justify-content:space-between; position:relative; z-index:1; } .bottom-cta h2 { font-size:clamp(26px,3vw,38px); margin:0; max-width:710px; } .bottom-cta p { color:#d9ecff; font-size:15px; margin:14px 0 0; } .cta--light { background:#fff; box-shadow:none; color:#0876ff; flex:0 0 auto; }
-      footer { background:#0c1e3b; color:#a8bad3; padding:28px 0; } .footer__row { align-items:center; display:flex; font-size:12px; justify-content:space-between; } .footer__brand { color:#fff; font-size:16px; font-weight:800; } .footer__brand b { color:#54cfff; }
-      @media (max-width:880px) { .hero__grid,.compare__grid { grid-template-columns:1fr; } .hero__copy { max-width:620px; } .product { margin:10px 35px 0; } .feature-grid { grid-template-columns:repeat(2,1fr); } .trust__list { gap:12px; } .trust__item strong { font-size:14px; } }
-      @media (max-width:880px) { .screen-section { grid-template-columns:1fr; } }
-      @media (max-width:620px) { .wrap { width:min(100% - 32px,1180px); } .top__row { height:65px; } .nav a:not(.nav__login) { display:none; } .brand { font-size:16px; } .hero { padding:55px 0 66px; } .hero__lead { font-size:16px; } .socials { flex-wrap:wrap; } .product { margin:10px 0 0; } .product__screen { min-height:0; } .section { padding:73px 0; } .feature-grid { grid-template-columns:1fr; } .feature { min-height:0; padding:22px; } .compare__grid { gap:42px; } .bottom-cta__row { align-items:flex-start; flex-direction:column; gap:27px; } .footer__row { align-items:flex-start; flex-direction:column; gap:10px; } }
+      .hero__lead { color:#4f6079; font-size:20px; line-height:1.55; margin:24px 0 28px; }
+      .button { align-items:center; background:var(--blue); border:0; border-radius:12px; box-shadow:0 12px 25px rgba(8,118,255,.22); color:#fff; cursor:pointer; display:inline-flex; font-weight:800; justify-content:center; min-height:52px; padding:0 22px; white-space:nowrap; }
+      .button:hover { background:var(--blue-dark); }
+      .hero__note { color:#67768c; font-size:13px; margin:13px 0 0; }
+      .product-shot { background:#fff; border:1px solid rgba(86,121,165,.18); border-radius:20px; box-shadow:0 28px 60px rgba(36,80,132,.18); overflow:hidden; transform:rotate(1deg); }
+      .product-shot__bar { align-items:center; background:#f7f9fc; border-bottom:1px solid #e4ebf3; display:flex; gap:6px; height:34px; padding:0 14px; }
+      .product-shot__bar i { background:#d4dde8; border-radius:50%; height:7px; width:7px; }
+      .product-shot__bar i:first-child { background:#ff8d87; }
+      .product-shot__bar i:nth-child(2) { background:#ffd06c; }
+      .product-shot img { display:block; height:auto; width:100%; }
+      .section { padding:96px 0; }
+      .section--soft { background:var(--soft); }
+      .section__head { max-width:720px; }
+      h2 { font-size:clamp(31px,4vw,46px); line-height:1.15; margin:0; }
+      .section__lead { color:var(--muted); font-size:17px; line-height:1.65; margin:18px 0 0; }
+      .facts { display:grid; gap:14px; grid-template-columns:repeat(5,1fr); list-style:none; margin:42px 0 0; padding:0; }
+      .facts li { background:#fff; border:1px solid var(--line); border-radius:15px; font-size:15px; font-weight:680; line-height:1.45; min-height:150px; padding:22px 18px; }
+      .facts li:before { align-items:center; background:#e8f3ff; border-radius:50%; color:var(--blue); content:"✓"; display:flex; font-size:13px; height:27px; justify-content:center; margin-bottom:20px; width:27px; }
+      .showcase { align-items:center; display:grid; gap:64px; grid-template-columns:minmax(280px,.72fr) minmax(0,1.28fr); }
+      .showcase--reverse { grid-template-columns:minmax(0,1.28fr) minmax(280px,.72fr); }
+      .showcase__copy p { color:var(--muted); font-size:17px; line-height:1.65; margin:20px 0 0; }
+      .screen { background:#eaf1f8; border:1px solid #d5e1ee; border-radius:18px; box-shadow:0 18px 38px rgba(36,75,119,.13); padding:10px; }
+      .screen img { border-radius:10px; display:block; height:auto; width:100%; }
+      .competitors { background:#10284f; color:#fff; }
+      .competitors .section__lead { color:#c3d2e8; }
+      .competitors__grid { align-items:center; display:grid; gap:70px; grid-template-columns:1fr 1fr; }
+      .competitor-list { display:grid; gap:15px; list-style:none; margin:30px 0 0; padding:0; }
+      .competitor-list li { align-items:flex-start; display:flex; gap:12px; line-height:1.5; }
+      .competitor-list li:before { align-items:center; background:#1689e2; border-radius:50%; content:"✓"; display:flex; flex:0 0 auto; font-size:11px; height:21px; justify-content:center; margin-top:1px; width:21px; }
+      .competitors .screen { background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.16); box-shadow:0 22px 44px rgba(0,0,0,.24); }
+      .final { background:linear-gradient(120deg,#0876ff,#0754bf); color:#fff; padding:82px 0; text-align:center; }
+      .final h2 { margin-inline:auto; max-width:720px; }
+      .final p { color:#e3efff; font-size:18px; line-height:1.7; margin:20px auto 30px; max-width:680px; }
+      .final .button { background:#fff; box-shadow:none; color:var(--blue); padding-inline:27px; }
+      .final .button:hover { background:#f0f6ff; }
+      footer { background:#0b1d38; color:#9fb2ce; font-size:13px; padding:27px 0; }
+      .footer__row { align-items:center; display:flex; justify-content:space-between; }
+      .footer__row a { color:#d9e7fb; }
+      @media (max-width:900px) { .hero__grid,.showcase,.showcase--reverse,.competitors__grid { grid-template-columns:1fr; } .hero__copy { max-width:680px; } .showcase--reverse .showcase__copy { order:-1; } .facts { grid-template-columns:repeat(2,1fr); } .product-shot { margin-inline:30px; transform:none; } }
+      @media (max-width:620px) { .wrap { width:min(100% - 32px,1120px); } .top__row { height:64px; } .hero { padding:54px 0 62px; } h1 { font-size:38px; } .hero__lead { font-size:17px; } .product-shot { margin:10px 0 0; } .section { padding:70px 0; } .facts { grid-template-columns:1fr; } .facts li { min-height:0; } .showcase,.competitors__grid { gap:36px; } .footer__row { align-items:flex-start; flex-direction:column; gap:10px; } }
     </style>
   </head>
   <body>
     <noscript><div><img src="https://mc.yandex.ru/watch/38791285" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-    <header class="top">
-      <div class="wrap top__row">
-        <a class="brand" href="/promo" aria-label="Socstat — на главную">soc<b>stat</b></a>
-        <nav class="nav" aria-label="Навигация по странице">
-          <a href="#features">Возможности</a><a href="#competitors">Конкуренты</a><a href="#start">Как начать</a><a class="nav__login" href="/app/login">Войти</a>
-        </nav>
-      </div>
-    </header>
+    <noscript><div><img src="https://top-fwz1.mail.ru/counter?id=3798785;js=na" style="position:absolute;left:-9999px;" alt="Top.Mail.Ru" /></div></noscript>
+    <header class="top"><div class="wrap top__row"><a class="brand" href="/promo" aria-label="Socstat — на главную">soc<b>stat</b></a><a class="login" href="/app/login">Войти</a></div></header>
     <main>
-      <section class="hero" aria-labelledby="hero-title">
-        <div class="wrap hero__grid">
-          <div class="hero__copy">
-            <p class="eyebrow">Аналитика социальных медиа</p>
-            <h1 id="hero-title">Аналитика <em>VK, YouTube и Telegram</em> — своих площадок и конкурентов</h1>
-            <p class="hero__lead">Смотрите рост аудитории, эффективность публикаций и контент, который приносит результат в вашей нише.</p>
-            <a class="cta" href="/app/login">Начать анализ <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-            <p class="hero__note">Вход через VK — без сложной настройки.</p>
-            <div class="socials" aria-label="Поддерживаемые площадки">
-              <span class="social"><span class="social__icon vk"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 17.8c-5.47 0-8.6-3.75-8.73-10h2.74c.1 4.59 2.11 6.53 3.7 6.93V7.8h2.58v3.96c1.57-.17 3.22-1.97 3.78-3.96H20c-.43 2.45-2.22 4.25-3.5 4.99 1.28.6 3.33 2.17 4.11 5.01h-3.04c-.61-1.91-2.12-3.38-4.09-3.58v3.58h-.28Z"/></svg></span>VK</span>
-              <span class="social"><span class="social__icon yt"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.58 7.19a2.97 2.97 0 0 0-2.09-2.1C17.65 4.6 12 4.6 12 4.6s-5.65 0-7.49.49a2.97 2.97 0 0 0-2.09 2.1C1.93 9.03 1.93 12 1.93 12s0 2.97.49 4.81a2.97 2.97 0 0 0 2.09 2.1c1.84.49 7.49.49 7.49.49s5.65 0 7.49-.49a2.97 2.97 0 0 0 2.09-2.1c.49-1.84.49-4.81.49-4.81s0-2.97-.49-4.81ZM10.2 14.97V9.03L15.43 12l-5.23 2.97Z"/></svg></span>YouTube</span>
-              <span class="social"><span class="social__icon tg"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m20.67 4.5-3.05 14.38c-.23 1.02-.83 1.28-1.68.8l-4.64-3.42-2.24 2.15c-.25.25-.46.46-.94.46l.33-4.73 8.62-7.79c.38-.33-.08-.51-.58-.18L5.83 12.89l-4.58-1.43c-1-.31-1.02-1-.21-1.48L19 3.09c.83-.31 1.55.2 1.67 1.41Z"/></svg></span>Telegram</span>
-            </div>
-          </div>
-          <figure class="product" aria-label="Экран отслеживаемых источников в интерфейсе Socstat"><div class="live-screen"><aside class="live-sidebar"><div class="live-brand"><b>SOCSTAT.RU</b><small>Аналитика соцсетей</small></div><div class="live-nav"><div class="active"><svg viewBox="0 0 24 24" fill="none"><path d="m3 11 9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9Z" stroke="currentColor" stroke-linejoin="round"/></svg>Главная</div><div><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10m5 10V4m5 16v-7m5 7V7" stroke="currentColor" stroke-linecap="round"/><path d="M3 20.5h18" stroke="currentColor" stroke-linecap="round"/></svg>Аналитика</div><div><svg viewBox="0 0 24 24" fill="none"><circle cx="6" cy="6" r="2.5" stroke="currentColor"/><circle cx="18" cy="18" r="2.5" stroke="currentColor"/><circle cx="18" cy="6" r="2.5" stroke="currentColor"/><path d="M8.5 6h7M6 8.5v7M8 18h7.5" stroke="currentColor" stroke-linecap="round"/></svg>Сравнение</div><div><svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l3 3v15H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-linejoin="round"/><path d="M14 3v4h4M8 12h6M8 16h6" stroke="currentColor" stroke-linecap="round"/></svg>Публикации</div><div><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor"/><path d="M3 10h18M7 15h3" stroke="currentColor" stroke-linecap="round"/></svg>Профиль и оплата</div></div></aside><div class="live-main"><div class="live-top"><span>Главная</span><span class="live-user">Пользователь <em>Доступ активен</em></span></div><div class="live-card"><h3>Отслеживаемые источники</h3><div class="live-filters"><div class="live-tabs"><b>Все (10)</b><span>Мои (2)</span><span>Чужие (8)</span></div><div class="live-period"><b>Последние 7 дней</b><span>Сегодня</span><span>Этот месяц</span></div></div><div class="live-table"><div class="live-row live-row--head"><span></span><span>Сеть · сообщество</span><span>Участники</span><span>Прирост</span><span>Просмотры</span><span>Реакции</span></div><div class="live-row"><span class="live-drag">⠿</span><span class="live-source"><img src="/youtube-logo.png" alt="YouTube"/><span>Городской проект<small>YouTube-канал</small></span></span><span class="live-number">348 000</span><span>—</span><span>2 069</span><span>58</span></div><div class="live-row"><span class="live-drag">⠿</span><span class="live-source"><img src="/vk-network-logo.png" alt="VK"/><span>Сообщество конкурента<small>Чужое сообщество</small></span></span><span class="live-number">398 538</span><span class="live-number positive">+236</span><span>22 046</span><span>401</span></div><div class="live-row"><span class="live-drag">⠿</span><span class="live-source"><img src="/telegram-logo.svg" alt="Telegram"/><span>Новости города<small>Telegram-канал</small></span></span><span class="live-number">17 331</span><span>—</span><span>5 457</span><span>66</span></div><div class="live-row"><span class="live-drag">⠿</span><span class="live-source"><img src="/vk-network-logo.png" alt="VK"/><span>Ваше сообщество<small>Моё сообщество</small></span></span><span class="live-number">86 210</span><span class="live-number positive">+112</span><span>8 906</span><span>224</span></div></div></div></div></div></figure>
+      <section class="hero" aria-labelledby="hero-title"><div class="wrap hero__grid">
+        <div class="hero__copy"><p class="eyebrow">Аналитика социальных медиа</p><h1 id="hero-title">Аналитика <em>VK, YouTube и Telegram</em> — своих площадок и конкурентов</h1><p class="hero__lead">Смотрите рост аудитории, эффективность публикаций и контент, который приносит результат в вашей нише.</p>
+          <a class="button" data-goal="promo_start_analysis" href="/app/login">Начать анализ</a><p class="hero__note">Вход через VK — без сложной настройки.</p>
         </div>
-      </section>
-      <section class="section section--soft" id="features" aria-labelledby="features-title"><div class="wrap"><div class="section__head"><span class="kicker">Возможности</span><h2 id="features-title">От цифр к понятным решениям для контента</h2><p>Не просто наблюдайте за метриками. Находите закономерности, которые можно применить в следующей публикации.</p></div><div class="feature-grid">
-        <article class="feature"><span class="feature__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3" stroke-linecap="round"/><path d="M3 19.5h18" stroke-linecap="round"/></svg></span><h3>Динамика без догадок</h3><p>Отслеживайте подписчиков, просмотры, охват и вовлечение в нужном разрезе времени.</p><img class="feature__preview" src="/promo-analytics.png" alt="График вовлечённости аудитории в аналитике Socstat" /></article>
-        <article class="feature"><span class="feature__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 18 3.5 21l.9-4.6A7.7 7.7 0 0 1 3 12c0-4.4 4-8 9-8s9 3.6 9 8-4 8-9 8c-1.8 0-3.5-.46-5-1.25Z"/><path d="M8 12h.01M12 12h.01M16 12h.01" stroke-linecap="round" stroke-width="2.5"/></svg></span><h3>Лучшие публикации</h3><p>Сортируйте посты и видео по реакции аудитории, чтобы увидеть темы и форматы, которые заходят.</p><img class="feature__preview" src="/promo-posts.png" alt="Карточки лучших публикаций с показателями реакции аудитории" /></article>
-        <article class="feature"><span class="feature__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="m12 7 1.5 3 3.5.5-2.5 2.5.6 3.5-3.1-1.7-3.1 1.7.6-3.5L7 10.5l3.5-.5L12 7Z"/></svg></span><h3>Сравнение площадок</h3><p>Сопоставляйте несколько сообществ и каналов по росту, активности аудитории и результату контента.</p><img class="feature__preview" src="/promo-compare.png" alt="Сравнение нескольких площадок по реакциям и вовлечённости" /></article>
-      </div></div></section>
-      <section class="section compare" id="competitors" aria-labelledby="competitors-title"><div class="wrap compare__grid"><div><span class="kicker" style="color:#66d5ff">Не только свои аккаунты</span><h2 id="competitors-title">Конкуренты — это тоже источник роста</h2><p>Добавляйте в анализ открытые сообщества VK, YouTube-каналы и Telegram-каналы конкурентов. Смотрите, где они растут, что публикуют и на что реагирует их аудитория.</p><ul class="checks"><li><i>✓</i><span>Находите публикации, которые собрали максимум внимания</span></li><li><i>✓</i><span>Сравнивайте скорость роста и вовлечение с вашими площадками</span></li><li><i>✓</i><span>Собирайте рабочие ориентиры для контент-плана, а не копируйте вслепую</span></li></ul></div><div class="compare-card"><img class="compare-card__image" src="/promo-competitors.png" alt="Сводная таблица сравнения конкурентов по вовлечённости, просмотрам и форматам" /></div></div></section>
-      <section class="section" id="start" aria-labelledby="report-title"><div class="wrap"><div class="section__head"><span class="kicker">Рабочий кабинет</span><h2 id="report-title">Данные для работы с контентом, а не для отчёта «ради отчёта»</h2><p>Динамика аудитории, реакция на публикации и сравнение площадок собраны в одной логике — чтобы быстро увидеть, что менять в своей стратегии.</p></div></div></section>
-      <section class="bottom-cta"><div class="wrap bottom-cta__row"><div><h2>Ваша следующая сильная публикация уже есть в данных</h2><p>Начните смотреть на соцсети как аналитик, а не как наблюдатель.</p></div><a class="cta cta--light" href="/app/login">Перейти в Socstat <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div></section>
+        <div class="product-shot" aria-label="Графики Socstat"><div class="product-shot__bar" aria-hidden="true"><i></i><i></i><i></i></div><img src="/promo-analytics.png" alt="Графики подписчиков, охватов и активности в Socstat" /></div>
+      </div></section>
+      <section class="section section--soft" aria-labelledby="all-statistics-title"><div class="wrap"><div class="section__head"><h2 id="all-statistics-title">Вся статистика сообщества в одном месте</h2></div><ul class="facts"><li>Как меняется число подписчиков</li><li>Сколько просмотров получают посты</li><li>Какие публикации собирают больше реакций</li><li>Как меняется вовлечённость</li><li>Как часто выходят новые посты</li></ul></div></section>
+      <section class="section" aria-labelledby="charts-title"><div class="wrap showcase"><div class="showcase__copy"><h2 id="charts-title">Смотрите, как меняются показатели</h2><p>Графики покажут рост подписчиков, охваты и активность по дням.</p></div><div class="screen"><img loading="lazy" src="/promo-analytics.png" alt="Графики показателей сообщества в Socstat" /></div></div></section>
+      <section class="section section--soft" aria-labelledby="posts-title"><div class="wrap showcase showcase--reverse"><div class="screen"><img loading="lazy" src="/promo-posts.png" alt="Список публикаций с просмотрами и реакциями в Socstat" /></div><div class="showcase__copy"><h2 id="posts-title">Находите лучшие посты</h2><p>Смотрите, какие публикации получили больше просмотров, лайков, комментариев и репостов.</p></div></div></section>
+      <section class="section competitors" aria-labelledby="competitors-title"><div class="wrap competitors__grid"><div><h2 id="competitors-title">Сравнивайте с конкурентами</h2><p class="section__lead">Добавьте другое сообщество и посмотрите:</p><ul class="competitor-list"><li>как быстро растёт сообщество;</li><li>какие посты набирают больше просмотров;</li><li>насколько активно реагирует аудитория;</li><li>как часто выходят публикации.</li></ul></div><div class="screen"><img loading="lazy" src="/promo-compare.png" alt="Сравнение сообществ в Socstat" /></div></div></section>
+      <section class="final" aria-labelledby="trial-title"><div class="wrap"><h2 id="trial-title">Попробуйте бесплатно</h2><p>Все возможности Socstat доступны бесплатно 3 дня.<br />Карта не нужна.<br />После пробного периода — от 500 ₽ в месяц.</p><a class="button" data-goal="promo_trial_click" href="/app/login">Попробовать бесплатно</a></div></section>
     </main>
-    <footer><div class="wrap footer__row"><span class="footer__brand">soc<b>stat</b></span><span>Аналитика социальных медиа · VK, YouTube, Telegram</span><a href="https://vk.com/socstat_ru" target="_blank" rel="noreferrer">Поддержка</a></div></footer>
+    <footer><div class="wrap footer__row"><span>socstat.ru · статистика сообществ ВКонтакте</span><a href="https://vk.com/socstat_ru" rel="noreferrer" target="_blank">Поддержка</a></div></footer>
+    <script>
+      document.querySelectorAll('[data-goal]').forEach(function (link) {
+        link.addEventListener('click', function () {
+          if (typeof window.ym === 'function') window.ym(38791285, 'reachGoal', link.getAttribute('data-goal'));
+        });
+      });
+    </script>
   </body>
 </html>

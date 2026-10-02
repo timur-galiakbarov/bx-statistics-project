@@ -52,6 +52,7 @@ export function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const topMailLastUrlRef = useRef(`${location.pathname}${location.search}`);
 
   const loadAccount = useCallback(
     () =>
@@ -80,6 +81,12 @@ export function App() {
   useEffect(() => {
     if (import.meta.env.PROD) {
       window.ym?.(38791285, 'hit', `${location.pathname}${location.search}`);
+    }
+
+    const currentUrl = `${location.pathname}${location.search}`;
+    if (topMailLastUrlRef.current !== currentUrl) {
+      topMailLastUrlRef.current = currentUrl;
+      window._tmr?.push({ id: '3798785', type: 'pageView', url: currentUrl });
     }
   }, [location.pathname, location.search]);
 

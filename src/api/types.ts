@@ -15,6 +15,7 @@ export type SocialPlatform = 'vk' | 'youtube' | 'telegram';
 
 export type ComparisonCollection = {
   id: string;
+  purpose?: 'comparison' | 'posts';
   name: string;
   period: AnalyticsPeriod;
   sources: Array<{ platform: SocialPlatform; externalId: string; name: string; handle?: string; photo?: string; membersCount?: number | null }>;
@@ -402,6 +403,7 @@ export type CompareResult = {
 
 export type PostsAnalysisGroup = {
   groupId: string;
+  platform?: SocialPlatform;
   group: CommunityAnalytics['group'] | null;
   summary: null | {
     totalPosts: number;
@@ -430,7 +432,7 @@ export type PostsAnalysisPost = {
   text: string;
   url: string;
   media: Array<{
-    type: 'photo' | 'video' | 'gif';
+    type: 'photo' | 'video' | 'gif' | 'document' | 'poll' | 'other';
     url: string;
     title: string;
   }>;
@@ -441,6 +443,7 @@ export type PostsAnalysisPost = {
   actions: number;
   er: number;
   isAd: boolean;
+  contentType?: string;
 };
 
 export type PostsAnalysisResult = {
@@ -534,4 +537,11 @@ export type RecentAdminUser = {
   lastLoginAt: string;
   lastActivityAt: string;
   activeTo: string;
+};
+
+export type AdminActiveUsers = {
+  total: number;
+  paid: number;
+  withoutPayment: number;
+  users: Array<RecentAdminUser & { hasPaidPayment: boolean }>;
 };

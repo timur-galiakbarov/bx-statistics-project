@@ -3,16 +3,19 @@ import {
   BarChart3,
   Eye,
   ExternalLink,
+  FileText,
+  Forward,
   Heart,
   Image,
   MessageCircle,
   Play,
-  Repeat2
+  Repeat2,
+  SmilePlus
 } from 'lucide-react';
 import type { CommunityAnalytics } from '../api/types';
 
 type PostMedia = {
-  type: 'photo' | 'video' | 'gif';
+  type: 'photo' | 'video' | 'gif' | 'document' | 'poll' | 'other';
   url: string;
   title: string;
 };
@@ -49,17 +52,19 @@ function getPostPreview(post: PostCardData) {
 
 export function PostCard({ post }: Props) {
   const preview = getPostPreview(post);
+  const isTelegram = post.group.platform === 'telegram';
+  const PreviewIcon = preview?.type === 'video' ? Play : preview?.type === 'document' ? FileText : Image;
 
   return (
-    <article className="post-card">
-      <div className="post-card-media">
+    <article className={`post-card ${isTelegram ? 'telegram-post-card' : ''}`}>
+      <div className={`post-card-media ${isTelegram ? 'telegram-post-card-media' : ''}`}>
         {preview ? (
           <>
-            <img src={preview.url} alt="" />
+            {preview.url ? <img src={preview.url} alt="" /> : <div className="post-card-media-empty"><PreviewIcon size={34} /></div>}
             {preview.type !== 'photo' && (
               <span className="post-media-kind">
-                {preview.type === 'video' ? <Play size={15} /> : <Image size={15} />}
-                {preview.type === 'video' ? 'Видео' : 'GIF'}
+                <PreviewIcon size={15} />
+                {preview.title}
               </span>
             )}
             {post.media.length > 1 && <span className="post-media-count">+{post.media.length - 1}</span>}
@@ -87,7 +92,9 @@ export function PostCard({ post }: Props) {
 
         <div className="post-card-tags">
           <span>{post.contentType ?? (preview ? preview.title : 'Текст')}</span>
-          {post.group.platform !== 'youtube' && <span className={post.isAd ? 'post-ad-badge' : 'post-organic-badge'}>{post.isAd ? 'Реклама' : 'Органический'}</span>}
+          {isTelegram
+            ? <span className="telegram-public-badge">Публичные данные</span>
+            : post.group.platform !== 'youtube' && <span className={post.isAd ? 'post-ad-badge' : 'post-organic-badge'}>{post.isAd ? 'Реклама' : 'Органический'}</span>}
           {post.resultBadge && <strong className="post-result-badge">{post.resultBadge}</strong>}
         </div>
 
@@ -96,12 +103,12 @@ export function PostCard({ post }: Props) {
         {post.resultReason && <small className="post-result-reason">{post.resultReason}</small>}
 
         <div className="post-metrics">
-          <span title="Лайки" aria-label={`Лайки: ${formatNumber(post.likes)}`}>
-            <Heart size={15} />
+          <span title={isTelegram ? 'Реакции' : 'Лайки'} aria-label={`${isTelegram ? 'Реакции' : 'Лайки'}: ${formatNumber(post.likes)}`}>
+            {isTelegram ? <SmilePlus size={15} /> : <Heart size={15} />}
             {formatNumber(post.likes)}
           </span>
-          {post.group.platform !== 'youtube' && <span title="Репосты" aria-label={`Репосты: ${formatNumber(post.reposts)}`}>
-            <Repeat2 size={15} />
+          {post.group.platform !== 'youtube' && <span title={isTelegram ? 'Пересылки' : 'Репосты'} aria-label={`${isTelegram ? 'Пересылки' : 'Репосты'}: ${formatNumber(post.reposts)}`}>
+            {isTelegram ? <Forward size={15} /> : <Repeat2 size={15} />}
             {formatNumber(post.reposts)}
           </span>}
           <span title="Комментарии" aria-label={`Комментарии: ${formatNumber(post.comments)}`}>
@@ -112,7 +119,7 @@ export function PostCard({ post }: Props) {
             <Eye size={15} />
             {formatNumber(post.views)}
           </span>
-          <span title={post.group.platform === 'youtube' ? 'Вовлечённость по просмотрам' : 'ER'} aria-label={`Вовлечённость: ${post.er}%`}>
+          <span title={post.group.platform === 'youtube' || isTelegram ? 'Вовлечённость по просмотрам' : 'ER'} aria-label={`Вовлечённость: ${post.er}%`}>
             <Activity size={15} />
             {post.er === null ? 'Недоступно' : `${post.er}%`}
           </span>

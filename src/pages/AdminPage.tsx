@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../api/client';
 import type {
   AdminPaymentActionResult,
+  AdminActiveUsers,
   AdminPaymentHistoryItem,
   AdminPaymentsMonthlySummary,
   AdminTodayActivitySummary,
@@ -22,6 +23,7 @@ type Props = {
 };
 
 type AdminSection = 'statistics' | 'payments' | 'settings';
+type ActiveUsersFilter = 'all' | 'paid' | 'withoutPayment';
 
 const paymentStatusOptions = [
   { key: 'all', label: 'Все' },
@@ -69,6 +71,8 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [payments, setPayments] = useState<AdminPaymentHistoryItem[]>([]);
   const [paymentsMonthlySummary, setPaymentsMonthlySummary] = useState<AdminPaymentsMonthlySummary | null>(null);
   const [todayActivity, setTodayActivity] = useState<AdminTodayActivitySummary | null>(null);
+  const [activeUsers, setActiveUsers] = useState<AdminActiveUsers | null>(null);
+  const [activeUsersFilter, setActiveUsersFilter] = useState<ActiveUsersFilter>('all');
   const [recentUsers, setRecentUsers] = useState<RecentAdminUser[]>([]);
   const [manualPermissions, setManualPermissions] = useState<VkPermissions | null>(null);
   const [manualStats, setManualStats] = useState<VkManualStatsResult | null>(null);
@@ -79,6 +83,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [paymentsError, setPaymentsError] = useState<string | null>(null);
   const [paymentsMonthlySummaryError, setPaymentsMonthlySummaryError] = useState<string | null>(null);
   const [todayActivityError, setTodayActivityError] = useState<string | null>(null);
+  const [activeUsersError, setActiveUsersError] = useState<string | null>(null);
   const [recentUsersError, setRecentUsersError] = useState<string | null>(null);
   const [manualError, setManualError] = useState<string | null>(null);
   const [paymentActionId, setPaymentActionId] = useState<string | null>(null);
@@ -103,6 +108,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [isPaymentsLoading, setIsPaymentsLoading] = useState(false);
   const [isPaymentsMonthlySummaryLoading, setIsPaymentsMonthlySummaryLoading] = useState(false);
   const [isTodayActivityLoading, setIsTodayActivityLoading] = useState(false);
+  const [isActiveUsersLoading, setIsActiveUsersLoading] = useState(false);
   const [isRecentUsersLoading, setIsRecentUsersLoading] = useState(false);
   const [isManualPermissionsLoading, setIsManualPermissionsLoading] = useState(false);
   const [isManualStatsLoading, setIsManualStatsLoading] = useState(false);
@@ -115,6 +121,11 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' });
   const currentMonthName = monthFormatter.format(new Date());
   const previousMonthName = monthFormatter.format(new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - 1, 1)));
+  const displayedActiveUsers = activeUsers?.users.filter((activeUser) => {
+    if (activeUsersFilter === 'paid') return activeUser.hasPaidPayment;
+    if (activeUsersFilter === 'withoutPayment') return !activeUser.hasPaidPayment;
+    return true;
+  }) ?? [];
 
   const getPaymentStatusLabel = (status: string) => {
     if (status === 'paid') {
@@ -320,6 +331,21 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     }
   };
 
+  const loadActiveUsers = async () => {
+    setIsActiveUsersLoading(true);
+    setActiveUsersError(null);
+
+    try {
+      const data = await apiGet<AdminActiveUsers>('/api/account/admin/users/active');
+      setActiveUsers(data);
+    } catch (nextError) {
+      setActiveUsers(null);
+      setActiveUsersError(nextError instanceof Error ? nextError.message : 'Не удалось загрузить активных пользователей');
+    } finally {
+      setIsActiveUsersLoading(false);
+    }
+  };
+
   const confirmPayment = async (payment: AdminPaymentHistoryItem) => {
     setPaymentActionId(payment.id);
     setPaymentsError(null);
@@ -364,7 +390,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     try {
       const data = await apiPost<AdminUserAccessResult>(`/api/payments/admin/users/${userId}/access`, payload);
       updateUserRows(data.user);
-      await loadRecentUsers();
+      await Promise.all([loadActiveUsers(), loadRecentUsers()]);
     } catch (nextError) {
       setPaymentsError(nextError instanceof Error ? nextError.message : 'Не удалось изменить дату доступа');
     } finally {
@@ -389,7 +415,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     try {
       await apiPost<{ user: RecentAdminUser }>('/api/account/admin/users', newUser);
       setIsCreateUserModalOpen(false);
-      await loadRecentUsers();
+      await Promise.all([loadActiveUsers(), loadRecentUsers()]);
     } catch (error) {
       setCreateUserError(error instanceof Error ? error.message : 'Не удалось добавить пользователя.');
     } finally {
@@ -432,6 +458,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     loadPayments();
     loadPaymentsMonthlySummary();
     loadTodayActivity();
+    loadActiveUsers();
     loadRecentUsers();
   }, []);
 
@@ -482,6 +509,70 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             <div><span>Всего</span><strong>{todayActivity.total.toLocaleString('ru-RU')}</strong></div>
             <div><span>Новые</span><strong>{todayActivity.new.toLocaleString('ru-RU')}</strong></div>
             <div><span>Вернувшиеся</span><strong>{todayActivity.returning.toLocaleString('ru-RU')}</strong></div>
+          </div>
+        )}
+      </div>
+
+      <div className="panel admin-summary-panel">
+        <div className="panel-header compact">
+          <div>
+            <h2>Пользователи с активным доступом</h2>
+            <p>Доступ не истёк на текущий момент</p>
+          </div>
+          <button className="secondary-button inline" type="button" onClick={loadActiveUsers} disabled={isActiveUsersLoading}>
+            {isActiveUsersLoading ? <RefreshCw className="spin" size={18} /> : <RefreshCw size={18} />}
+            Обновить
+          </button>
+        </div>
+        {activeUsersError && <div className="debug-error">{activeUsersError}</div>}
+        {activeUsers && !activeUsersError && (
+          <div className="admin-active-users-count">
+            <div><span>Всего с доступом</span><strong>{activeUsers.total.toLocaleString('ru-RU')}</strong></div>
+            <div><span>Есть успешная оплата</span><strong>{activeUsers.paid.toLocaleString('ru-RU')}</strong></div>
+            <div><span>Без успешной оплаты</span><strong>{activeUsers.withoutPayment.toLocaleString('ru-RU')}</strong></div>
+          </div>
+        )}
+      </div>
+
+      <div className="panel span-2">
+        <div className="panel-header compact">
+          <div>
+            <h2>Список пользователей с активным доступом</h2>
+            <p>Разделение основано на наличии успешного платежа</p>
+          </div>
+        </div>
+        {activeUsers && <div className="admin-active-users-filters" role="group" aria-label="Фильтр пользователей с активным доступом">
+          <button className={activeUsersFilter === 'all' ? 'active' : ''} type="button" onClick={() => setActiveUsersFilter('all')}>Все · {activeUsers.total.toLocaleString('ru-RU')}</button>
+          <button className={activeUsersFilter === 'paid' ? 'active' : ''} type="button" onClick={() => setActiveUsersFilter('paid')}>Оплачивали · {activeUsers.paid.toLocaleString('ru-RU')}</button>
+          <button className={activeUsersFilter === 'withoutPayment' ? 'active' : ''} type="button" onClick={() => setActiveUsersFilter('withoutPayment')}>Без оплаты · {activeUsers.withoutPayment.toLocaleString('ru-RU')}</button>
+        </div>}
+        {displayedActiveUsers.length === 0 && !activeUsersError && !isActiveUsersLoading && (
+          <div className="empty-state">
+            {activeUsersFilter === 'paid'
+              ? 'Среди пользователей с активным доступом нет успешных оплат.'
+              : activeUsersFilter === 'withoutPayment'
+                ? 'Нет пользователей с активным доступом без успешной оплаты.'
+                : 'Пользователей с активным доступом пока нет.'}
+          </div>
+        )}
+        {displayedActiveUsers.length > 0 && (
+          <div className="table analytics-posts recent-users-table">
+            <div className="table-row table-head admin-active-users-row">
+              <span>Пользователь</span>
+              <span>VK ID</span>
+              <span>Последняя активность</span>
+              <span>Доступ до</span>
+              <span>Основание доступа</span>
+            </div>
+            {displayedActiveUsers.map((activeUser) => (
+              <div className="table-row admin-active-users-row" key={activeUser.id}>
+                <span data-label="Пользователь"><strong>{activeUser.name}</strong></span>
+                <span data-label="VK ID">{activeUser.vkId ?? '—'}</span>
+                <span data-label="Последняя активность">{formatAdminDateTime(activeUser.lastActivityAt)}</span>
+                <span data-label="Доступ до">{formatAdminDate(activeUser.activeTo)}</span>
+                <span data-label="Основание доступа"><span className={`admin-payment-origin ${activeUser.hasPaidPayment ? 'paid' : 'granted'}`}>{activeUser.hasPaidPayment ? 'Оплачивал' : 'Без оплаты'}</span></span>
+              </div>
+            ))}
           </div>
         )}
       </div>

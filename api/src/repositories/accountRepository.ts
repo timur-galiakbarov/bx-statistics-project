@@ -1,6 +1,7 @@
 import type { Types } from 'mongoose';
 import { randomBytes } from 'node:crypto';
 import { NewsModel } from '../models/News.js';
+import { PaymentModel } from '../models/Payment.js';
 import { SavedGroupModel } from '../models/SavedGroup.js';
 import { SessionModel } from '../models/Session.js';
 import { UserModel } from '../models/User.js';
@@ -62,6 +63,17 @@ export type RecentAdminUser = {
   lastLoginAt: string;
   lastActivityAt: string;
   activeTo: string;
+};
+
+export type ActiveAdminUser = RecentAdminUser & {
+  hasPaidPayment: boolean;
+};
+
+export type AdminActiveUsers = {
+  total: number;
+  paid: number;
+  withoutPayment: number;
+  users: ActiveAdminUser[];
 };
 
 export function mapUser(user: UserDocument): AccountUser {
@@ -444,7 +456,7 @@ export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[
         firstName?: string;
         lastName?: string;
         createdAt: Date;
-        lastLoginAt: Date;
+        lastLoginAt?: Date;
         lastActivityAt?: Date;
         activeTo: Date;
       }>
@@ -459,8 +471,62 @@ export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[
     name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени',
     hasActiveAccess: user.activeTo > now,
     registeredAt: user.createdAt.toISOString(),
-    lastLoginAt: user.lastLoginAt.toISOString(),
-    lastActivityAt: (user.lastActivityAt ?? user.lastLoginAt).toISOString(),
+    lastLoginAt: (user.lastLoginAt ?? user.lastActivityAt ?? user.createdAt).toISOString(),
+    lastActivityAt: (user.lastActivityAt ?? user.lastLoginAt ?? user.createdAt).toISOString(),
     activeTo: user.activeTo.toISOString().slice(0, 10)
   }));
+}
+
+/**
+ * Returns accounts whose paid access has not expired yet. Unlike the recent
+ * activity list, this includes users even if they have not visited lately.
+ */
+export async function getActiveAdminUsers(limit = 300): Promise<AdminActiveUsers> {
+  const now = new Date();
+  const activeAccessQuery = { activeTo: { $gt: now } };
+  const [users, activeUserRecords] = await Promise.all([
+    UserModel.find(activeAccessQuery)
+      .sort({ activeTo: 1, lastActivityAt: -1, lastLoginAt: -1 })
+      .limit(Math.min(limit, 300))
+      .select({ legacy: 1, vkId: 1, firstName: 1, lastName: 1, createdAt: 1, lastLoginAt: 1, lastActivityAt: 1, activeTo: 1 })
+      .lean<
+        Array<{
+          _id: Types.ObjectId;
+          legacy?: { bitrixId?: number };
+          vkId?: string;
+          firstName?: string;
+          lastName?: string;
+          createdAt: Date;
+          lastLoginAt?: Date;
+          lastActivityAt?: Date;
+          activeTo: Date;
+        }>
+      >(),
+    UserModel.find(activeAccessQuery).select({ _id: 1 }).lean<Array<{ _id: Types.ObjectId }>>()
+  ]);
+  const activeUserIds = activeUserRecords.map((user) => user._id);
+  const paidUserIds = await PaymentModel.distinct('userId', {
+    status: 'paid',
+    amount: { $gt: 0 },
+    userId: { $in: activeUserIds }
+  });
+  const paidUserIdSet = new Set(paidUserIds.map((userId) => userId.toString()));
+
+  return {
+    total: activeUserIds.length,
+    paid: paidUserIds.length,
+    withoutPayment: activeUserIds.length - paidUserIds.length,
+    users: users.map((user) => ({
+      id: user._id.toString(),
+      bitrixId: user.legacy?.bitrixId,
+      vkId: user.vkId,
+      name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени',
+      hasActiveAccess: true,
+      hasPaidPayment: paidUserIdSet.has(user._id.toString()),
+      registeredAt: user.createdAt.toISOString(),
+      lastLoginAt: (user.lastLoginAt ?? user.lastActivityAt ?? user.createdAt).toISOString(),
+      lastActivityAt: (user.lastActivityAt ?? user.lastLoginAt ?? user.createdAt).toISOString(),
+      activeTo: user.activeTo.toISOString().slice(0, 10)
+    }))
+  };
 }

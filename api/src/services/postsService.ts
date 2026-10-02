@@ -2,6 +2,7 @@ import { DomainError } from '../errors/domainError.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { vkApiRequest, VkApiError } from './vkClient.js';
 import { getYoutubeChannelAnalytics } from './youtubeAnalyticsService.js';
+import { getTelegramChannelAnalytics } from './telegramClient.js';
 
 type PostsPeriod = 'week' | 'twoWeek' | 'month';
 
@@ -189,6 +190,42 @@ function parseGroupIds(value: unknown) {
   return [...new Set(groupIds)];
 }
 
+type PostsPlatform = 'vk' | 'youtube' | 'telegram';
+
+function parseSources(value: unknown) {
+  if (typeof value !== 'string') {
+    throw new DomainError('Не переданы источники для анализа.', {
+      status: 400,
+      code: 'POST_SOURCES_REQUIRED'
+    });
+  }
+
+  const sources = value.split(',').map((item) => {
+    const separator = item.indexOf(':');
+    const platform = item.slice(0, separator) as PostsPlatform;
+    const id = item.slice(separator + 1).trim();
+    if (separator <= 0 || !['vk', 'youtube', 'telegram'].includes(platform) || !id) {
+      throw new DomainError('Передан некорректный источник публикаций.', {
+        status: 400,
+        code: 'INVALID_POST_SOURCE'
+      });
+    }
+    return { platform, id };
+  });
+
+  const uniqueSources = Array.from(new Map(sources.map((source) => [`${source.platform}:${source.id}`, source])).values());
+  if (!uniqueSources.length) {
+    throw new DomainError('Не переданы источники для анализа.', { status: 400, code: 'POST_SOURCES_REQUIRED' });
+  }
+  if (uniqueSources.length > 10) {
+    throw new DomainError('За один раз можно анализировать не больше 10 источников.', {
+      status: 400,
+      code: 'GROUP_IDS_LIMIT_EXCEEDED'
+    });
+  }
+  return uniqueSources;
+}
+
 function summarizeGroup(wall: VkWallResponse, posts: VkWallPost[], membersCount: number) {
   const totals = posts.reduce(
     (acc, post) => ({
@@ -217,6 +254,105 @@ function summarizeGroup(wall: VkWallResponse, posts: VkWallPost[], membersCount:
 }
 
 export async function getPostsAnalysis(userId: string, groupIdsValue: unknown, periodValue: unknown, platformValue: unknown = 'vk') {
+  if (platformValue === 'telegram') {
+    const period = getPeriod(periodValue);
+    const groupIds = parseGroupIds(groupIdsValue);
+    const groups: any[] = [];
+    const posts: any[] = [];
+
+    for (const groupId of groupIds) {
+      try {
+        const analytics = await getTelegramChannelAnalytics(groupId, periodValue);
+        const group = {
+          id: analytics.channel.id,
+          platform: 'telegram',
+          externalId: analytics.channel.username,
+          name: analytics.channel.title,
+          screenName: analytics.channel.username,
+          photo: analytics.channel.photo,
+          membersCount: analytics.channel.subscribers,
+          url: analytics.channel.url
+        };
+        groups.push({
+          groupId: analytics.channel.username,
+          platform: 'telegram',
+          group,
+          summary: {
+            totalPosts: analytics.summary.posts,
+            periodPosts: analytics.summary.posts,
+            likes: analytics.summary.reactions,
+            reposts: analytics.summary.forwards,
+            comments: analytics.summary.comments,
+            views: analytics.summary.views,
+            actions: analytics.summary.actions,
+            averageActionsPerPost: analytics.summary.posts ? round(analytics.summary.actions / analytics.summary.posts, 1) : 0,
+            averageViewsPerPost: analytics.summary.averageViews,
+            erAverage: analytics.summary.engagementRate
+          },
+          error: null
+        });
+        posts.push(...analytics.posts.map((post) => ({
+          id: `telegram_${analytics.channel.username}_${post.id}`,
+          vkId: post.id,
+          group,
+          date: post.date,
+          text: post.text,
+          url: post.url,
+          media: post.mediaType
+            ? [{
+              type: post.mediaType,
+              url: post.mediaUrl ?? '',
+              title: post.mediaType === 'photo'
+                ? 'Фото'
+                : post.mediaType === 'video'
+                  ? 'Видео'
+                  : post.mediaType === 'document'
+                    ? 'Файл'
+                    : post.mediaType === 'poll'
+                      ? 'Опрос'
+                      : 'Медиа'
+            }]
+            : [],
+          contentType: post.mediaType === 'document'
+            ? 'Файл'
+            : post.mediaType === 'poll'
+              ? 'Опрос'
+              : post.mediaType === 'other'
+                ? 'Медиа'
+                : post.mediaType === 'photo'
+                  ? 'Фото'
+                  : post.mediaType === 'video'
+                    ? 'Видео'
+                    : 'Текст',
+          likes: post.reactions,
+          reposts: post.forwards,
+          comments: post.comments,
+          views: post.views,
+          actions: post.engagement,
+          er: post.views ? round(post.engagement / post.views * 100, 3) : 0,
+          isAd: false
+        })));
+      } catch (error) {
+        groups.push({
+          groupId,
+          platform: 'telegram',
+          group: null,
+          summary: null,
+          error: {
+            code: error instanceof DomainError ? error.code : 'TELEGRAM_POSTS_FAILED',
+            message: error instanceof Error ? error.message : 'Не удалось получить публикации Telegram.'
+          }
+        });
+      }
+    }
+
+    return {
+      period: { key: period.key, dateFrom: formatDate(period.dateFrom), dateTo: formatDate(period.dateTo) },
+      groups,
+      posts
+    };
+  }
+
   if (platformValue === 'youtube') {
     const period = getPeriod(periodValue);
     const groupIds = parseGroupIds(groupIdsValue);
@@ -282,6 +418,7 @@ export async function getPostsAnalysis(userId: string, groupIdsValue: unknown, p
       const periodPosts = wall.items.filter((post) => post.date >= period.unixFrom && post.date <= period.unixTo);
       const group = {
         id: groupInfo.id,
+        platform: 'vk' as const,
         name: groupInfo.name,
         screenName: groupInfo.screen_name,
         photo: groupInfo.photo_200 ?? groupInfo.photo_100,
@@ -340,5 +477,24 @@ export async function getPostsAnalysis(userId: string, groupIdsValue: unknown, p
     },
     groups,
     posts
+  };
+}
+
+export async function getMixedPostsAnalysis(userId: string, sourcesValue: unknown, periodValue: unknown) {
+  const sources = parseSources(sourcesValue);
+  const sourcesByPlatform = new Map<PostsPlatform, string[]>();
+  for (const source of sources) {
+    sourcesByPlatform.set(source.platform, [...(sourcesByPlatform.get(source.platform) ?? []), source.id]);
+  }
+
+  const results = await Promise.all(Array.from(sourcesByPlatform, ([platform, ids]) =>
+    getPostsAnalysis(userId, ids.join(','), periodValue, platform)
+  ));
+  const period = getPeriod(periodValue);
+
+  return {
+    period: { key: period.key, dateFrom: formatDate(period.dateFrom), dateTo: formatDate(period.dateTo) },
+    groups: results.flatMap((result) => result.groups),
+    posts: results.flatMap((result) => result.posts)
   };
 }

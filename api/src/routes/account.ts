@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   addGroup,
+  getActiveAdminUsers,
   getAdminTodayActivitySummary,
   getRecentAdminUsers,
   getAdminStat,
@@ -217,25 +218,35 @@ accountRouter.get('/groups/free', requireUser, async (req, res, next) => {
 function comparisonCollectionFromBody(body: any) {
   const name = typeof body?.name === 'string' ? body.name.trim() : '';
   const period = body?.period;
+  const purpose: 'comparison' | 'posts' = body?.purpose === 'posts' ? 'posts' : 'comparison';
   const sources = Array.isArray(body?.sources) ? body.sources : [];
   if (!name || name.length > 80 || sources.length < 2 || sources.length > 10 || !sources.every((source: any) =>
     source && ['vk', 'youtube', 'telegram'].includes(source.platform) && typeof source.externalId === 'string' && source.externalId.trim() && typeof source.name === 'string' && source.name.trim()
   )) throw new DomainError('Проверьте название и состав подборки.', { status: 400, code: 'INVALID_COMPARISON_COLLECTION' });
   if (period !== 'week' && period !== 'twoWeek' && period !== 'month') throw new DomainError('Передан некорректный период.', { status: 400, code: 'INVALID_COMPARISON_PERIOD' });
-  return { name, period, sources: sources.map((source: any) => ({ platform: source.platform, externalId: source.externalId.trim(), name: source.name.trim(), handle: typeof source.handle === 'string' ? source.handle : undefined, photo: typeof source.photo === 'string' ? source.photo : undefined, membersCount: typeof source.membersCount === 'number' ? source.membersCount : undefined })) };
+  return { purpose, name, period, sources: sources.map((source: any) => ({ platform: source.platform, externalId: source.externalId.trim(), name: source.name.trim(), handle: typeof source.handle === 'string' ? source.handle : undefined, photo: typeof source.photo === 'string' ? source.photo : undefined, membersCount: typeof source.membersCount === 'number' ? source.membersCount : undefined })) };
+}
+
+function comparisonCollectionFilter(userId: string, purposeValue: unknown) {
+  if (purposeValue === 'posts') return { userId, purpose: 'posts' as const };
+  return { userId, $or: [{ purpose: 'comparison' as const }, { purpose: { $exists: false } }] };
+}
+
+function comparisonCollectionData(collection: any) {
+  return { id: collection._id.toString(), purpose: collection.purpose ?? 'comparison', name: collection.name, period: collection.period, sources: collection.sources, updatedAt: collection.updatedAt.toISOString() };
 }
 
 accountRouter.get('/comparison-collections', requireUser, async (req, res, next) => {
   try {
-    const collections = await ComparisonCollectionModel.find({ userId: req.user!.id }).sort({ updatedAt: -1 }).lean();
-    res.json({ success: true, data: collections.map((collection) => ({ id: collection._id.toString(), name: collection.name, period: collection.period, sources: collection.sources, updatedAt: collection.updatedAt.toISOString() })) });
+    const collections = await ComparisonCollectionModel.find(comparisonCollectionFilter(req.user!.id, req.query.purpose)).sort({ updatedAt: -1 }).lean();
+    res.json({ success: true, data: collections.map(comparisonCollectionData) });
   } catch (error) { next(error); }
 });
 
 accountRouter.post('/comparison-collections', requireUser, async (req, res, next) => {
   try {
     const collection = await ComparisonCollectionModel.create({ userId: req.user!.id, ...comparisonCollectionFromBody(req.body) });
-    res.status(201).json({ success: true, data: { id: collection.id, name: collection.name, period: collection.period, sources: collection.sources, updatedAt: collection.updatedAt.toISOString() } });
+    res.status(201).json({ success: true, data: comparisonCollectionData(collection) });
   } catch (error) { next(error); }
 });
 
@@ -246,15 +257,15 @@ accountRouter.patch('/comparison-collections/:collectionId', requireUser, async 
     return;
   }
   try {
-    const collection = await ComparisonCollectionModel.findOneAndUpdate({ _id: req.params.collectionId, userId: req.user!.id }, { $set: { name } }, { new: true });
+    const collection = await ComparisonCollectionModel.findOneAndUpdate({ _id: req.params.collectionId, ...comparisonCollectionFilter(req.user!.id, req.query.purpose) }, { $set: { name } }, { new: true });
     if (!collection) { res.status(404).json({ success: false, error: 'COMPARISON_COLLECTION_NOT_FOUND' }); return; }
-    res.json({ success: true, data: { id: collection.id, name: collection.name, period: collection.period, sources: collection.sources, updatedAt: collection.updatedAt.toISOString() } });
+    res.json({ success: true, data: comparisonCollectionData(collection) });
   } catch (error) { next(error); }
 });
 
 accountRouter.delete('/comparison-collections/:collectionId', requireUser, async (req, res, next) => {
   try {
-    await ComparisonCollectionModel.deleteOne({ _id: req.params.collectionId, userId: req.user!.id });
+    await ComparisonCollectionModel.deleteOne({ _id: req.params.collectionId, ...comparisonCollectionFilter(req.user!.id, req.query.purpose) });
     res.json({ success: true });
   } catch (error) { next(error); }
 });
@@ -395,6 +406,19 @@ accountRouter.get('/admin/users/recent', requireUser, async (req, res, next) => 
 
   try {
     res.json({ success: true, data: await getRecentAdminUsers(300) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.get('/admin/users/active', requireUser, async (req, res, next) => {
+  if (!req.user!.isAdmin) {
+    res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    return;
+  }
+
+  try {
+    res.json({ success: true, data: await getActiveAdminUsers(300) });
   } catch (error) {
     next(error);
   }

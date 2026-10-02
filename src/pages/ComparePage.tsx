@@ -5,6 +5,8 @@ import type { AnalyticsPeriod, CommunityAnalytics, ComparisonCollection, Compare
 import { TelegramLogo } from '../components/TelegramLogo';
 import { Button } from '@alfalab/core-components-button';
 import { IconButton } from '@alfalab/core-components-icon-button';
+import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
+import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
 
 const CompareChart = lazy(() => import('../components/CompareChart'));
 
@@ -314,11 +316,11 @@ export function ComparePage({ groups, user }: Props) {
           {selectedGroups.length > 0 && <Button className="compare-reset" type="button" view="secondary" size={40} onClick={clearGroups} disabled={isComparing}>Новое сравнение</Button>}
         </div>
 
-        <div className="compare-platforms" role="group" aria-label="Платформа">
-          <Button className={`compare-platform-button ${platform === 'vk' ? 'compare-action-button' : ''}`} view={platform === 'vk' ? 'primary' : 'secondary'} size={40} type="button" onClick={() => changePlatform('vk')} disabled={isComparing}>ВКонтакте</Button>
-          <Button className={`compare-platform-button ${platform === 'youtube' ? 'compare-action-button' : ''}`} view={platform === 'youtube' ? 'primary' : 'secondary'} size={40} type="button" onClick={() => changePlatform('youtube')} disabled={isComparing}>YouTube</Button>
-          <Button className={`compare-platform-button ${platform === 'telegram' ? 'compare-action-button' : ''}`} view={platform === 'telegram' ? 'primary' : 'secondary'} size={40} type="button" onClick={() => changePlatform('telegram')} disabled={isComparing}>Telegram</Button>
-        </div>
+        <SegmentedControl className="social-platform-switcher" selectedId={platform} size={40} disabled={isComparing} onChange={(id) => changePlatform(id as ComparePlatform)}>
+          <Segment id="vk" title={<PlatformSegmentTitle platform="vk" />} />
+          <Segment id="youtube" title={<PlatformSegmentTitle platform="youtube" />} />
+          <Segment id="telegram" title={<PlatformSegmentTitle platform="telegram" />} />
+        </SegmentedControl>
 
         <form className="compare-search-form" onSubmit={search}>
           <label htmlFor="compare-search">Кого сравниваем?</label>

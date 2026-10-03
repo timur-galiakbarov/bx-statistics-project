@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import type { CommunityAnalytics } from '../api/types';
 import { PostCard } from './PostCard';
 import { SubscriberHistoryPanel } from './SubscriberHistoryPanel';
+import { PostViewsCurvePanel } from './PostViewsCurvePanel';
 
 type YoutubePost = CommunityAnalytics['wall']['topPosts'][number];
 type YoutubeSort = 'views' | 'velocity' | 'engagement' | 'likes' | 'comments' | 'date';
@@ -119,6 +120,7 @@ export function YoutubeAnalyticsView({ analytics, section }: { analytics: Commun
       </div>
     </div>
     <SubscriberHistoryPanel platform="youtube" sourceId={analytics.group.id} period={analytics.period} currentSubscribers={analytics.group.membersCount} />
+    <PostViewsCurvePanel platform="youtube" sourceId={String(analytics.group.id)} subscribers={analytics.group.membersCount} knownPosts={analytics.wall.topPosts} />
     <div className="panel span-2 analytics-section">
       <div className="section-title"><div><h2>Результаты видео за выбранный период</h2><p>Видео, опубликованные с {new Date(`${analytics.period.dateFrom}T00:00:00`).toLocaleDateString('ru-RU')} по {new Date(`${analytics.period.dateTo}T00:00:00`).toLocaleDateString('ru-RU')}.</p></div><Tooltip content="Период отбирает видео по дате публикации. Метрики показывают их значения на момент обновления." position="left" targetTag="span" view="hint"><button className="youtube-data-info" type="button"><CircleHelp size={18} /> О данных</button></Tooltip></div>
       <div className="youtube-period-kpis">

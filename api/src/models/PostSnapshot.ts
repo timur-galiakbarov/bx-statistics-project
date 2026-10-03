@@ -4,7 +4,7 @@ import { Schema, model } from 'mongoose';
 // просмотров (сколько пост набрал за 24/48/72 часа).
 const postSnapshotSchema = new Schema(
   {
-    platform: { type: String, enum: ['youtube', 'telegram'], required: true },
+    platform: { type: String, enum: ['vk', 'youtube', 'telegram'], required: true },
     externalId: { type: String, required: true },
     postId: { type: String, required: true },
     date: { type: String, required: true },

@@ -3663,3 +3663,30 @@ a {
 .growth-help-content p { margin: 0; }
 
 @media (min-width: 841px) { .analytics-kpi-grid.summary-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.analytics-kpi-heading .kpi-help-button { margin-left: auto; }
+.analytics-kpi-heading .kpi-help-button svg { color: inherit; }
+.insight-card span:not(.insight-action) { color: #7b8780; font-size: 13px; }
+.insight-card .insight-action { color: #3c4858; font-weight: 500; margin-top: 6px; }
+.chart-outlier-note { color: #7b8780; font-size: 12px; line-height: 1.4; margin: 8px 0 0; }
+.chart-outlier-note button { background: none; border: 0; color: #2f9f7b; cursor: pointer; font: inherit; margin-left: 6px; padding: 0; text-decoration: underline; }
+
+.post-curve .section-title p svg { color: #4caf50; margin-right: 6px; vertical-align: -2px; }
+.post-curve-milestones { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 16px; }
+.post-curve-milestones > div { border: 1px solid #edf0ee; border-radius: 6px; display: grid; gap: 4px; padding: 12px 14px; }
+.post-curve-milestones span, .post-curve-milestones small { color: #687684; font-size: 12px; }
+.post-curve-milestones strong { color: #3c4858; font-size: 20px; font-variant-numeric: tabular-nums; font-weight: 500; }
+.post-curve-list { margin-top: 18px; }
+.post-curve-list h3 { color: #3c4858; font-size: 15px; font-weight: 500; margin: 0 0 6px; }
+.post-curve-row { align-items: center; border-top: 1px solid #edf0ee; color: inherit; display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr) 90px 56px 14px; padding: 10px 0; text-decoration: none; }
+.post-curve-row:hover { background: #f4faf5; }
+.post-curve-row > svg { color: #9aa59e; }
+.post-curve-title, .post-curve-value { display: grid; gap: 2px; min-width: 0; }
+.post-curve-title strong { color: #3c4858; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.post-curve-title small, .post-curve-value small { color: #7b8780; font-size: 11px; }
+.post-curve-value { text-align: right; }
+.post-curve-value strong { color: #3c4858; font-size: 14px; font-variant-numeric: tabular-nums; font-weight: 500; }
+.post-curve-ratio { color: #687684; font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; }
+.post-curve-ratio.good { color: #2f9f7b; }
+.post-curve-ratio.warn { color: #c95b50; }
+.post-curve-hint { color: #7b8780; font-size: 12px; margin: 10px 0 0; }
+@media (max-width: 640px) { .post-curve-milestones { grid-template-columns: 1fr; } .post-curve-row { grid-template-columns: minmax(0, 1fr) 70px 48px; } .post-curve-row > svg { display: none; } }

@@ -561,3 +561,18 @@ export type AdminActiveUsers = {
   withoutPayment: number;
   users: Array<RecentAdminUser & { hasPaidPayment: boolean }>;
 };
+
+export type PostViewCurves = {
+  days: number;
+  /** Сколько постов попало в ночные срезы за период. */
+  snapshotPosts: number;
+  milestones: Array<{ hours: number; median: number | null; posts: number }>;
+  curve: Array<{ hours: number; median: number | null; posts: number }>;
+  posts: Array<{
+    postId: string;
+    publishedAt: string;
+    latestViews: number | null;
+    latestHours: number;
+    milestones: Record<string, number | null>;
+  }>;
+};

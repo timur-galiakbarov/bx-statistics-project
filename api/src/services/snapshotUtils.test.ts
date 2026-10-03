@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildSubscriberHistory, hoursSince, snapshotGrowthForPeriod, snapshotDateKey, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
+import { buildSubscriberHistory, chainedMedians, hoursSince, median, snapshotGrowthForPeriod, viewsAtHour, snapshotDateKey, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
 
 test('дата и час среза считаются по Москве', () => {
   assert.equal(snapshotDateKey(new Date('2026-10-02T21:30:00Z')), '2026-10-03');
@@ -57,4 +57,46 @@ test('без срезов в периоде прирост неизвестен'
   assert.deepEqual(snapshotGrowthForPeriod([], '2026-10-01', '2026-10-06', '2026-10-06', 500, null), { total: null, since: null, historySince: null });
   // Один срез за вчера, а сегодняшнего ещё нет: сравнивать не с чем.
   assert.deepEqual(snapshotGrowthForPeriod([{ date: '2026-10-05', subscribers: 10 }], '2026-10-05', '2026-10-05', '2026-10-06', 12, '2026-10-05'), { total: null, since: '2026-10-05', historySince: '2026-10-05' });
+});
+
+test('просмотры за 24 часа интерполируются между ночными срезами', () => {
+  const points = [
+    { hoursSincePublished: 6, views: 400 },
+    { hoursSincePublished: 30, views: 1_000 },
+    { hoursSincePublished: 54, views: 1_240 }
+  ];
+  assert.equal(viewsAtHour(points, 24), 850);
+  assert.equal(viewsAtHour(points, 48), 1_180);
+  // Пост ещё не прожил 72 часа.
+  assert.equal(viewsAtHour(points, 72), null);
+  assert.equal(viewsAtHour([{ hoursSincePublished: 24, views: 77 }], 24), 77);
+});
+
+test('без среза до отметки кривая начинается с нуля, но только если следующий срез близко', () => {
+  assert.equal(viewsAtHour([{ hoursSincePublished: 30, views: 600 }], 24), 480);
+  // Первый срез через 40 часов: оценка за сутки была бы гаданием.
+  assert.equal(viewsAtHour([{ hoursSincePublished: 40, views: 600 }], 24), null);
+  // Скрытый счётчик не участвует.
+  assert.equal(viewsAtHour([{ hoursSincePublished: 10, views: null }, { hoursSincePublished: 30, views: 600 }], 24), 480);
+});
+
+test('медиана устойчива к одному вирусному посту', () => {
+  assert.equal(median([100, 120, 90, 5_000]), 110);
+  assert.equal(median([3, 1, 2]), 2);
+  assert.equal(median([]), null);
+});
+
+test('типичная кривая не падает, когда до поздних отметок доживают только старые посты', () => {
+  const series = [
+    [100, 150, 180],
+    [120, 180, 210],
+    [90, 135, null],
+    [400, null, null],
+    [300, null, null]
+  ];
+  // Медиана за 24 ч — по всем постам, дальше — медианный прирост постов, у которых есть обе отметки.
+  const result = chainedMedians(series, 2);
+  assert.deepEqual(result.map((item) => item.median), [120, 180, 213]);
+  assert.deepEqual(result.map((item) => item.posts), [5, 3, 2]);
+  assert.equal(chainedMedians(series, 3)[2].median, null);
 });

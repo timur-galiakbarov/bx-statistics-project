@@ -7,7 +7,7 @@ import { SnapshotSourceModel } from '../models/SnapshotSource.js';
 import { UserModel } from '../models/User.js';
 import { VkTokenModel } from '../models/VkToken.js';
 import { redis } from './redis.js';
-import { buildSubscriberHistory, hoursSince, snapshotDateKey, snapshotGrowthForPeriod, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
+import { buildSubscriberHistory, chainedMedians, hoursSince, snapshotDateKey, snapshotGrowthForPeriod, VIEW_MILESTONE_HOURS, viewsAtHour, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
 import { getTelegramChannelSnapshot, TelegramApiError } from './telegramClient.js';
 import { vkApiRequest } from './vkClient.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
@@ -33,6 +33,21 @@ type PostSnapshotInput = {
 };
 
 const VK_GROUPS_PER_REQUEST = 400;
+// Fresh posts are on the first page of a wall even for busy communities.
+const VK_WALL_PAGE_SIZE = 100;
+// VK allows 3 requests per second per user token.
+const VK_REQUEST_DELAY_MS = 350;
+
+type VkWallSnapshotResponse = {
+  items: Array<{
+    id: number;
+    date: number;
+    views?: { count?: number };
+    likes?: { count?: number };
+    reposts?: { count?: number };
+    comments?: { count?: number };
+  }>;
+};
 // Telegram errors that make further requests in this pass pointless.
 const TELEGRAM_STOP_CODES = new Set(['TELEGRAM_RATE_LIMITED', 'TELEGRAM_NOT_CONFIGURED', 'TELEGRAM_SESSION_INVALID']);
 
@@ -80,7 +95,7 @@ async function saveChannelSnapshot(
   await ChannelSnapshotModel.updateOne({ platform, externalId, date }, { $set: data }, { upsert: true });
 }
 
-async function savePostSnapshots(platform: 'youtube' | 'telegram', externalId: string, date: string, posts: PostSnapshotInput[], now: Date) {
+async function savePostSnapshots(platform: SnapshotPlatform, externalId: string, date: string, posts: PostSnapshotInput[], now: Date) {
   if (!posts.length) return;
   await PostSnapshotModel.bulkWrite(posts.map((post) => ({
     updateOne: {
@@ -109,7 +124,7 @@ async function findVkAccessToken() {
   return anyToken?.accessToken;
 }
 
-async function snapshotVk(ids: string[], date: string): Promise<PlatformResult> {
+async function snapshotVk(ids: string[], date: string, now: Date): Promise<PlatformResult> {
   const result: PlatformResult = { ...emptyResult(), pending: ids.length };
   if (!ids.length) return result;
   const accessToken = await findVkAccessToken();
@@ -130,6 +145,27 @@ async function snapshotVk(ids: string[], date: string): Promise<PlatformResult> 
     } catch (error) {
       console.error('VK snapshot batch failed', error);
       result.failed += batch.length;
+    }
+  }
+
+  // Post counters for the views curve. A closed or deleted wall must not break the subscriber snapshot above.
+  const unixFrom = Math.floor(now.getTime() / 1000) - env.snapshotPostWindowDays * 86_400;
+  for (const id of ids) {
+    await sleep(VK_REQUEST_DELAY_MS);
+    try {
+      const wall = await vkApiRequest<VkWallSnapshotResponse>('wall.get', accessToken, { owner_id: -Number(id), count: VK_WALL_PAGE_SIZE });
+      await savePostSnapshots('vk', id, date, wall.items
+        .filter((post) => post.date >= unixFrom)
+        .map((post) => ({
+          postId: String(post.id),
+          publishedAt: new Date(post.date * 1000),
+          views: post.views?.count ?? null,
+          reactions: post.likes?.count ?? null,
+          comments: post.comments?.count ?? null,
+          forwards: post.reposts?.count ?? null
+        })), now);
+    } catch (error) {
+      console.error(`VK wall snapshot failed for ${id}`, error);
     }
   }
   return result;
@@ -213,7 +249,7 @@ export async function runSnapshotPass(now = new Date()): Promise<SnapshotPassRes
 
   return {
     date,
-    vk: await snapshotVk(vkPending, date),
+    vk: await snapshotVk(vkPending, date, now),
     youtube: await snapshotYoutube(youtubePending, date, now),
     telegram: await snapshotTelegram(telegramPending, date, now)
   };
@@ -282,4 +318,50 @@ export async function getSnapshotGrowth(platform: SnapshotPlatform, externalId: 
     currentSubscribers,
     first?.date ?? null
   );
+}
+
+// Curve points every 24 hours while a post stays in the snapshot window.
+const CURVE_STEP_HOURS = 24;
+// A median over one or two posts says nothing about the channel.
+const MIN_POSTS_FOR_MEDIAN = 3;
+
+/**
+ * How posts of a source gain views: per-post views at 24/48/72 hours and channel medians,
+ * from the nightly post snapshots of the last `days` days of publications.
+ */
+export async function getPostViewCurves(platform: SnapshotPlatform, externalId: string, days: number) {
+  const publishedAfter = new Date(Date.now() - days * 86_400_000);
+  const snapshots = await PostSnapshotModel.find(
+    { platform, externalId, publishedAt: { $gte: publishedAfter } },
+    { _id: 0, postId: 1, publishedAt: 1, hoursSincePublished: 1, views: 1 }
+  ).lean();
+
+  const byPost = new Map<string, typeof snapshots>();
+  for (const snapshot of snapshots) byPost.set(snapshot.postId, [...(byPost.get(snapshot.postId) ?? []), snapshot]);
+
+  const curveHours = Array.from({ length: Math.floor((env.snapshotPostWindowDays * 24) / CURVE_STEP_HOURS) }, (_, index) => (index + 1) * CURVE_STEP_HOURS);
+  const posts = [...byPost.entries()].map(([postId, points]) => {
+    const sorted = [...points].sort((left, right) => left.hoursSincePublished - right.hoursSincePublished);
+    const latest = sorted.at(-1)!;
+    const curvePoints = sorted.map((point) => ({ hoursSincePublished: point.hoursSincePublished, views: point.views ?? null }));
+    return {
+      postId,
+      publishedAt: latest.publishedAt.toISOString(),
+      latestViews: latest.views ?? null,
+      latestHours: latest.hoursSincePublished,
+      milestones: Object.fromEntries(VIEW_MILESTONE_HOURS.map((hours) => [hours, viewsAtHour(curvePoints, hours)])) as Record<number, number | null>,
+      curve: curveHours.map((hours) => viewsAtHour(curvePoints, hours))
+    };
+  }).sort((left, right) => right.publishedAt.localeCompare(left.publishedAt));
+
+  const curve = chainedMedians(posts.map((post) => post.curve), MIN_POSTS_FOR_MEDIAN).map((item, index) => ({ hours: curveHours[index], ...item }));
+
+  return {
+    days,
+    snapshotPosts: posts.length,
+    // Milestones are points of the same chained curve, so 48 h never shows less than 24 h.
+    milestones: VIEW_MILESTONE_HOURS.map((hours) => curve.find((point) => point.hours === hours) ?? { hours, median: null, posts: 0 }),
+    curve,
+    posts: posts.map(({ curve: _curve, ...post }) => post)
+  };
 }

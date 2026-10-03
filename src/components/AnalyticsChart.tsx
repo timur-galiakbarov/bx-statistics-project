@@ -8,9 +8,10 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
+import { useState } from 'react';
 import { formatDate } from '../utils/date';
 
-type ChartKind = 'reach' | 'activity' | 'views' | 'comments' | 'engagement' | 'subscribers';
+type ChartKind = 'reach' | 'activity' | 'views' | 'comments' | 'engagement' | 'subscribers' | 'viewsCurve';
 
 type ChartPoint = {
   date: string;
@@ -25,6 +26,8 @@ type Props = {
   currentPeriodLabel: string;
   previousPeriodLabel?: string;
   connectNulls?: boolean;
+  /** Подпись точки по оси X; по умолчанию значение — дата. */
+  formatX?: (value: string) => string;
 };
 
 const chartTooltipStyle = {
@@ -49,8 +52,28 @@ function formatTooltipValue(kind: ChartKind, value: unknown) {
   return kind === 'engagement' ? formatPercent(numericValue) : formatNumber(numericValue);
 }
 
-export default function AnalyticsChart({ kind, title, data, currentPeriodLabel, previousPeriodLabel, connectNulls = true }: Props) {
-  const valueLabel = kind === 'subscribers' ? 'Подписчики, человек' : kind === 'reach' ? 'Охват, человек' : kind === 'activity' ? 'Реакции' : kind === 'views' ? 'Средние просмотры поста' : kind === 'comments' ? 'Комментарии на пост' : 'ER';
+const OUTLIER_RATIO = 3;
+const MAX_OUTLIERS = 2;
+
+// Один вирусный пост растягивает шкалу, и остальные дни прижимаются к нулю. Если выбиваются
+// один-два дня (в 3+ раза выше медианы), обрезаем шкалу по обычным дням и подписываем выбросы.
+function findOutliers(data: ChartPoint[]) {
+  const values = data.map((point) => point.current).filter((value): value is number => typeof value === 'number' && value > 0);
+  if (values.length < 5) return null;
+  const sorted = [...values].sort((left, right) => left - right);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  const outliers = data.filter((point) => typeof point.current === 'number' && point.current > median * OUTLIER_RATIO);
+  if (!outliers.length || outliers.length > MAX_OUTLIERS) return null;
+  const outlierDates = new Set(outliers.map((point) => point.date));
+  const regularMax = Math.max(...data.flatMap((point) => [outlierDates.has(point.date) ? null : point.current, point.previous]).filter((value): value is number => typeof value === 'number'));
+  return { outliers, median, cap: Math.ceil(regularMax * 1.2) };
+}
+
+export default function AnalyticsChart({ kind, title, data, currentPeriodLabel, previousPeriodLabel, connectNulls = true, formatX = (value) => formatDate(value) }: Props) {
+  const [showFullScale, setShowFullScale] = useState(false);
+  const outlierInfo = kind === 'subscribers' || kind === 'viewsCurve' ? null : findOutliers(data);
+  const isCapped = Boolean(outlierInfo) && !showFullScale;
+  const valueLabel = kind === 'viewsCurve' ? 'Медиана просмотров поста' : kind === 'subscribers' ? 'Подписчики, человек' : kind === 'reach' ? 'Охват, человек' : kind === 'activity' ? 'Реакции' : kind === 'views' ? 'Средние просмотры поста' : kind === 'comments' ? 'Комментарии на пост' : 'ER';
 
   return (
     <div className="chart-panel">
@@ -62,11 +85,11 @@ export default function AnalyticsChart({ kind, title, data, currentPeriodLabel, 
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 18, bottom: 8, left: 0 }}>
             <CartesianGrid stroke="#e5eaf0" strokeDasharray="3 3" />
-            <XAxis dataKey="date" tick={{ fill: '#687684', fontSize: 12 }} tickFormatter={(value) => formatDate(String(value))} />
-            <YAxis domain={kind === 'subscribers' ? ['auto', 'auto'] : undefined} tick={{ fill: '#687684', fontSize: 12 }} tickFormatter={(value) => kind === 'engagement' ? formatPercent(Number(value)) : formatNumber(Number(value))} width={52} />
+            <XAxis dataKey="date" tick={{ fill: '#687684', fontSize: 12 }} tickFormatter={(value) => formatX(String(value))} />
+            <YAxis allowDataOverflow={isCapped} domain={kind === 'subscribers' ? ['auto', 'auto'] : isCapped ? [0, outlierInfo!.cap] : undefined} tick={{ fill: '#687684', fontSize: 12 }} tickFormatter={(value) => kind === 'engagement' ? formatPercent(Number(value)) : formatNumber(Number(value))} width={52} />
             <Tooltip
               contentStyle={chartTooltipStyle}
-              labelFormatter={(label) => formatDate(String(label))}
+              labelFormatter={(label) => formatX(String(label))}
               formatter={(value, name) => [formatTooltipValue(kind, value), String(name)]}
             />
             <Legend verticalAlign="top" height={30} />
@@ -94,6 +117,11 @@ export default function AnalyticsChart({ kind, title, data, currentPeriodLabel, 
           </LineChart>
         </ResponsiveContainer>
       </div>
+      {outlierInfo && <p className="chart-outlier-note">
+        {isCapped ? 'Шкала обрезана, чтобы были видны обычные дни. Выбивается: ' : 'Выбивается: '}
+        {outlierInfo.outliers.map((point) => `${formatDate(point.date)} — ${formatTooltipValue(kind, point.current)} (в ${formatNumber(Math.round((point.current ?? 0) / outlierInfo.median))} раз выше обычного)`).join('; ')}.
+        <button type="button" onClick={() => setShowFullScale((value) => !value)}>{isCapped ? 'Показать целиком' : 'Обрезать выбросы'}</button>
+      </p>}
     </div>
   );
 }

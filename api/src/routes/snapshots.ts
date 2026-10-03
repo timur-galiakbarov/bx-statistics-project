@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { requireUser } from '../middleware/auth.js';
-import { getSubscriberHistory, type SnapshotPlatform } from '../services/snapshotService.js';
+import { getPostViewCurves, getSubscriberHistory, type SnapshotPlatform } from '../services/snapshotService.js';
 import { snapshotDateKey, snapshotGrowthForPeriod, telegramUsernameFromSource } from '../services/snapshotUtils.js';
 
 export const snapshotsRouter = Router();
 
 const MAX_HISTORY_DAYS = 365;
+const MAX_POST_CURVE_DAYS = 90;
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 snapshotsRouter.get('/history', requireUser, async (req, res, next) => {
@@ -31,6 +32,26 @@ snapshotsRouter.get('/history', requireUser, async (req, res, next) => {
       ? snapshotGrowthForPeriod(points, from, to, snapshotDateKey(), Number.isFinite(current) ? current : null, points.find((point) => point.subscribers !== null)?.date ?? null)
       : null;
     res.json({ success: true, data: { platform, externalId, days, points, periodGrowth } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+snapshotsRouter.get('/posts', requireUser, async (req, res, next) => {
+  try {
+    const platform = req.query.platform;
+    const rawId = typeof req.query.id === 'string' ? req.query.id.trim() : '';
+    if (platform !== 'vk' && platform !== 'youtube' && platform !== 'telegram') {
+      res.status(400).json({ success: false, error: 'INVALID_PLATFORM' });
+      return;
+    }
+    const externalId = platform === 'telegram' ? telegramUsernameFromSource({ externalId: rawId }) : platform === 'vk' ? rawId.replace(/^-/, '') : rawId;
+    if (!externalId) {
+      res.status(400).json({ success: false, error: 'INVALID_SOURCE_ID' });
+      return;
+    }
+    const days = Math.min(MAX_POST_CURVE_DAYS, Math.max(7, Number(req.query.days) || 30));
+    res.json({ success: true, data: await getPostViewCurves(platform, externalId, days) });
   } catch (error) {
     next(error);
   }

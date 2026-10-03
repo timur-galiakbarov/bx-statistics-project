@@ -1,6 +1,7 @@
-import { ArrowDown, ArrowUp, Check, ExternalLink, Eye, GripVertical, Heart, LockKeyhole, MessageCircle, MoreHorizontal, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarClock, Check, CircleHelp, ExternalLink, Eye, GripVertical, Heart, LockKeyhole, MessageCircle, MoreHorizontal, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
 import { IconButton } from '@alfalab/core-components-icon-button';
 import { Input } from '@alfalab/core-components-input';
+import { Tooltip } from '@alfalab/core-components-tooltip';
 import { Modal } from '@alfalab/core-components-modal';
 import { Button } from '@alfalab/core-components-button';
 import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
@@ -59,6 +60,7 @@ function failedDashboardItem(group: SavedGroup, error: unknown): DashboardSummar
     traffic: { visitors: 0, views: 0 },
     reach: { subscribers: 0, total: 0 },
     activity: { likes: 0, reposts: 0, comments: 0 },
+    snapshotGrowth: null,
     warnings: [],
     error: {
       code: 'DASHBOARD_GROUP_REQUEST_FAILED',
@@ -307,7 +309,7 @@ function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChan
     <p className="communities-reorder-hint"><GripVertical size={16} />Перетащите источник за значок слева, чтобы изменить порядок.</p>
     {reorderError && <div className="form-message">{reorderError}</div>}
     <div className="communities-table">
-      <div className="communities-table-head"><span aria-label="Перемещение" /><span>Сеть</span><span>Сообщество</span><span>Участники</span><span>Прирост</span><span>Посещения<br />Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span>Реакции<br />Репосты / пересылки<br />Комментарии</span><span aria-label="Действия" /></div>
+      <div className="communities-table-head"><span aria-label="Перемещение" /><span>Сеть</span><span>Сообщество</span><span>Участники</span><span className="communities-table-head-help">Прирост<GrowthHelp /></span><span>Посещения<br />Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span>Реакции<br />Репосты / пересылки<br />Комментарии</span><span aria-label="Действия" /></div>
       {visibleRows.length ? visibleRows.map(({ group, summaryItem, isManaged }) => {
         const membersCount = summaryItem?.membersCount ?? group.membersCount;
         const selectGroup = () => onSelect(group);
@@ -316,7 +318,7 @@ function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChan
           <span className="communities-table-network"><PlatformIcon platform={group.platform} /></span>
           <span className="communities-table-name">{group.platform === 'telegram' ? <TelegramAvatar src={summaryItem?.group.photo ?? group.photo} size={30} /> : group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<span><strong>{group.name}</strong><small className={`communities-table-owner ${isManaged ? 'managed' : ''}`}><PlatformIcon platform={group.platform} mobile />{group.platform === 'youtube' ? 'YouTube-канал' : group.platform === 'telegram' ? 'Telegram-канал' : isManaged ? 'Моё сообщество' : 'Чужое сообщество'}</small></span></span>
           <MetricValue value={membersCount} loading={!summaryItem} />
-          {group.platform !== 'vk' ? <MetricValue /> : <GrowthValue item={summaryItem} />}
+          {group.platform !== 'vk' ? <SnapshotGrowthValue item={summaryItem} periodFrom={summary?.period.dateFrom} /> : <GrowthValue item={summaryItem} periodFrom={summary?.period.dateFrom} />}
           {group.platform !== 'vk' ? <MetricValue value={summaryItem?.traffic.views} loading={!summaryItem} /> : <PairValue first={summaryItem?.traffic.visitors} second={summaryItem?.traffic.views} firstIcon={Users} secondIcon={Eye} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
           {!hasPaidAccess ? <TariffUnavailableValue /> : group.platform !== 'vk' ? <MetricValue /> : <PairValue first={summaryItem?.reach.subscribers} second={summaryItem?.reach.total} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
           {!hasPaidAccess ? <TariffUnavailableValue /> : <TripleValue item={summaryItem} loading={!summaryItem} platform={group.platform} />}
@@ -332,6 +334,19 @@ function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChan
   </section>;
 }
 
+function GrowthHelp() {
+  return <Tooltip
+    content={<div className="growth-help-content">
+      <p><b>ВКонтакте, ваши сообщества:</b> подписавшиеся минус отписавшиеся из официальной статистики VK.</p>
+      <p><b>Telegram, YouTube и чужие группы VK:</b> платформы не отдают историю подписчиков, поэтому Socstat каждую ночь сам сохраняет их число. Прирост — разница между первым срезом в периоде и текущим значением.</p>
+      <p>История начинается с момента, когда источник впервые добавили в отслеживаемые, и задним числом не восстанавливается. Подпись «с 4 окт.» значит, что срезов за начало периода ещё нет.</p>
+    </div>}
+    position="bottom"
+    targetTag="span"
+    view="hint"
+  ><button aria-label="Как считается прирост" className="growth-help-button" type="button"><CircleHelp size={14} /></button></Tooltip>;
+}
+
 function isStatsUnavailable(item?: DashboardSummaryItem) {
   return Boolean(item && (item.statsAvailable === false || item.statsAvailable === null || item.error));
 }
@@ -344,10 +359,29 @@ function TariffUnavailableValue() {
   return <span className="communities-table-metric tariff-unavailable" title="Расчёт недоступен: срок действия тарифа истёк"><span className="tariff-unavailable-label"><LockKeyhole size={14} /><span>Тариф истёк</span></span></span>;
 }
 
-function GrowthValue({ item }: { item?: DashboardSummaryItem }) {
+function GrowthValue({ item, periodFrom }: { item?: DashboardSummaryItem; periodFrom?: string }) {
   if (!item) return <MetricValue loading />;
-  if (isStatsUnavailable(item)) return <MetricValue />;
+  if (isStatsUnavailable(item)) return item.snapshotGrowth ? <SnapshotGrowthValue item={item} periodFrom={periodFrom} /> : <MetricValue />;
   return <span className="communities-table-pair"><strong>{item.growth.total > 0 ? '+' : ''}{number(item.growth.total)}</strong><small><ArrowUp size={12} />{number(item.growth.subscribed)} <ArrowDown size={12} />{number(item.growth.unsubscribed)}</small></span>;
+}
+
+const shortDateFormatter = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+function shortDate(value: string) {
+  return shortDateFormatter.format(new Date(`${value}T00:00:00Z`));
+}
+
+// Прирост по ежедневным срезам Socstat. Пока история короче периода, честно показываем, с какого дня он посчитан.
+function SnapshotGrowthValue({ item, periodFrom }: { item?: DashboardSummaryItem; periodFrom?: string }) {
+  if (!item) return <MetricValue loading />;
+  const growth = item.snapshotGrowth;
+  if (item.error || !growth) return <MetricValue />;
+  const title = 'Прирост по ежедневным срезам Socstat: каждый день мы сохраняем число подписчиков, поэтому видна динамика даже там, где платформа её не отдаёт.';
+  if (growth.total === null) {
+    return <span className="communities-table-pair snapshot-growth" title={title}><strong>—</strong><small><CalendarClock size={12} />{growth.historySince ? `История с ${shortDate(growth.historySince)}` : 'Первый срез — ночью'}</small></span>;
+  }
+  const isPartial = Boolean(growth.since && periodFrom && growth.since > periodFrom);
+  return <span className="communities-table-pair snapshot-growth" title={title}><strong>{growth.total > 0 ? '+' : ''}{number(growth.total)}</strong><small><CalendarClock size={12} />{isPartial ? `с ${shortDate(growth.since!)}` : 'по срезам'}</small></span>;
 }
 
 function PairValue({ first, second, firstIcon: FirstIcon, secondIcon: SecondIcon, unavailable, loading }: { first?: number; second?: number; firstIcon?: typeof Users; secondIcon?: typeof Users; unavailable: boolean; loading: boolean }) {

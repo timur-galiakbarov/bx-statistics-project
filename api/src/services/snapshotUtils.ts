@@ -44,6 +44,41 @@ export function buildSubscriberHistory(points: SubscriberPoint[]): SubscriberHis
     });
 }
 
+export type SnapshotGrowth = {
+  /** Change of subscribers over the period; null while there is not enough history. */
+  total: number | null;
+  /** Date the change is counted from: later than the period start while history is short. */
+  since: string | null;
+  /** First known snapshot of the source. */
+  historySince: string | null;
+};
+
+/**
+ * Subscriber change for a period of snapshot days. A snapshot is taken early in the morning,
+ * so the period ends with the next day's snapshot or, for periods up to today, the live value.
+ */
+export function snapshotGrowthForPeriod(
+  points: SubscriberPoint[],
+  dateFrom: string,
+  dateTo: string,
+  today: string,
+  currentSubscribers: number | null,
+  historySince: string | null
+): SnapshotGrowth {
+  const known = points
+    .filter((point): point is { date: string; subscribers: number } => point.subscribers !== null)
+    .sort((left, right) => left.date.localeCompare(right.date));
+  const baseline = known.find((point) => point.date >= dateFrom && point.date <= dateTo);
+  if (!baseline) return { total: null, since: null, historySince };
+
+  if (dateTo >= today && currentSubscribers !== null) {
+    return { total: currentSubscribers - baseline.subscribers, since: baseline.date, historySince };
+  }
+  const end = known.find((point) => point.date > dateTo) ?? known.filter((point) => point.date <= dateTo).at(-1);
+  if (!end || end.date === baseline.date) return { total: null, since: baseline.date, historySince };
+  return { total: end.subscribers - baseline.subscribers, since: baseline.date, historySince };
+}
+
 /** Saved Telegram sources keep the username in `handle` or `externalId`; numeric IDs cannot be resolved. */
 export function telegramUsernameFromSource(source: { handle?: string | null; externalId?: string | null }) {
   for (const value of [source.handle, source.externalId]) {

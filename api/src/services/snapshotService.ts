@@ -7,7 +7,7 @@ import { SnapshotSourceModel } from '../models/SnapshotSource.js';
 import { UserModel } from '../models/User.js';
 import { VkTokenModel } from '../models/VkToken.js';
 import { redis } from './redis.js';
-import { buildSubscriberHistory, hoursSince, snapshotDateKey, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
+import { buildSubscriberHistory, hoursSince, snapshotDateKey, snapshotGrowthForPeriod, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
 import { getTelegramChannelSnapshot, TelegramApiError } from './telegramClient.js';
 import { vkApiRequest } from './vkClient.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
@@ -266,4 +266,20 @@ export async function getSubscriberHistory(platform: SnapshotPlatform, externalI
     { _id: 0, date: 1, subscribers: 1 }
   ).sort({ date: 1 }).lean();
   return buildSubscriberHistory(snapshots.map((snapshot) => ({ date: snapshot.date, subscribers: snapshot.subscribers ?? null })));
+}
+
+/** Subscriber change of a source over the dashboard period, based on daily snapshots. */
+export async function getSnapshotGrowth(platform: SnapshotPlatform, externalId: string, dateFrom: string, dateTo: string, currentSubscribers: number | null) {
+  const [points, first] = await Promise.all([
+    ChannelSnapshotModel.find({ platform, externalId, date: { $gte: dateFrom } }, { _id: 0, date: 1, subscribers: 1 }).sort({ date: 1 }).lean(),
+    ChannelSnapshotModel.findOne({ platform, externalId, subscribers: { $ne: null } }, { _id: 0, date: 1 }).sort({ date: 1 }).lean()
+  ]);
+  return snapshotGrowthForPeriod(
+    points.map((point) => ({ date: point.date, subscribers: point.subscribers ?? null })),
+    dateFrom,
+    dateTo,
+    snapshotDateKey(),
+    currentSubscribers,
+    first?.date ?? null
+  );
 }

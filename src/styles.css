@@ -1011,6 +1011,7 @@ a {
 .communities-table-pair small, .communities-table-triple small { color: #68756d; font-size: 11px; }
 .communities-table-pair small svg:first-child { color: #4caf50; }
 .communities-table-pair small svg + svg { color: #c95b50; margin-left: 4px; }
+.communities-table-pair.snapshot-growth small svg:first-child { color: #7b8780; }
 .communities-table-triple small svg { color: #7b8780; }
 .community-actions { position: relative; }
 .community-actions summary { align-items: center; color: #89938d; cursor: pointer; display: flex; height: 32px; justify-content: center; list-style: none; width: 32px; }
@@ -1964,7 +1965,7 @@ a {
   gap: 10px;
 }
 
-.youtube-channel-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.youtube-channel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .youtube-period-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 .youtube-kpi {
@@ -3648,3 +3649,17 @@ a {
 }
 
 :focus-visible { outline: 3px solid rgba(47, 159, 123, .55); outline-offset: 2px; }
+
+.subscriber-history .section-title p svg { color: #4caf50; margin-right: 6px; vertical-align: -2px; }
+.subscriber-history-stats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 16px; }
+.subscriber-history-stats > div { border: 1px solid #edf0ee; border-radius: 6px; display: grid; gap: 4px; padding: 12px 14px; }
+.subscriber-history-stats span { color: #687684; font-size: 12px; }
+.subscriber-history-stats strong { color: #3c4858; font-size: 20px; font-variant-numeric: tabular-nums; font-weight: 500; }
+
+.communities-table-head-help { align-items: center; display: inline-flex; gap: 4px; }
+.growth-help-button { align-items: center; background: none; border: 0; color: #9aa59e; cursor: help; display: inline-flex; padding: 0; }
+.growth-help-button:hover, .growth-help-button:focus-visible { color: #4caf50; }
+.growth-help-content { display: grid; font-size: 13px; gap: 8px; line-height: 1.4; max-width: 320px; text-transform: none; }
+.growth-help-content p { margin: 0; }
+
+@media (min-width: 841px) { .analytics-kpi-grid.summary-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

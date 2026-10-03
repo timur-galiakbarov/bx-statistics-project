@@ -5,6 +5,8 @@ import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.
 import { TtlCache } from './ttlCache.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
 import { getTelegramChannelAnalytics } from './telegramClient.js';
+import { getSnapshotGrowth } from './snapshotService.js';
+import { telegramUsernameFromSource, type SnapshotGrowth } from './snapshotUtils.js';
 
 type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'last90days' | 'currentMonth';
 
@@ -78,6 +80,8 @@ export type DashboardSummaryItem = {
     reposts: number;
     comments: number;
   };
+  /** Subscriber change from daily snapshots: the only growth source for Telegram, YouTube and VK groups without stats access. */
+  snapshotGrowth: SnapshotGrowth | null;
   warnings: string[];
   error: null | {
     code: string;
@@ -229,9 +233,15 @@ function emptySummaryItem(savedGroupId: string, source: string, platform: Social
       reposts: 0,
       comments: 0
     },
+    snapshotGrowth: null,
     warnings: [],
     error: null
   };
+}
+
+function loadSnapshotGrowth(platform: SocialPlatform, externalId: string | null, period: ReturnType<typeof getPeriod>, currentSubscribers: number | null) {
+  if (!externalId) return Promise.resolve(null);
+  return getSnapshotGrowth(platform, externalId, formatDate(period.dateFrom), formatDate(period.dateTo), currentSubscribers).catch(() => null);
 }
 
 function formatPeriod(period: ReturnType<typeof getPeriod>) {
@@ -287,6 +297,7 @@ async function buildDashboardSummaryItem(
     try {
       const channel = await resolveYoutubeChannel(groupId, forceRefresh);
       const videos = await getYoutubeVideos(channel, period.dateFrom, period.dateTo, forceRefresh);
+      const snapshotGrowth = await loadSnapshotGrowth('youtube', channel.id, period, channel.followersCount);
       const likes = videos.reduce((sum, video) => sum + (video.likes ?? 0), 0);
       const comments = videos.reduce((sum, video) => sum + (video.comments ?? 0), 0);
       return {
@@ -296,7 +307,8 @@ async function buildDashboardSummaryItem(
         statsAvailable: true,
         traffic: { visitors: 0, views: videos.reduce((sum, video) => sum + (video.views ?? 0), 0) },
         activity: includePremiumMetrics ? { likes, reposts: 0, comments } : fallback.activity,
-        warnings: ['Просмотры и реакции YouTube — текущие накопительные показатели видео, опубликованных в выбранном периоде. Репосты и динамика аудитории недоступны.']
+        snapshotGrowth,
+        warnings: ['Просмотры и реакции YouTube — текущие накопительные показатели видео, опубликованных в выбранном периоде. Репосты недоступны, прирост подписчиков считается по ежедневным срезам Socstat.']
       };
     } catch (error) {
       return { ...fallback, error: { code: error instanceof Error ? error.name : 'YOUTUBE_DASHBOARD_FAILED', message: error instanceof Error ? error.message : 'Не удалось получить данные YouTube-канала.' } };
@@ -313,6 +325,7 @@ async function buildDashboardSummaryItem(
         formatDate(period.dateTo),
         forceRefresh
       );
+      const snapshotGrowth = await loadSnapshotGrowth('telegram', telegramUsernameFromSource(savedGroup), period, analytics.channel.subscribers);
       return {
         ...fallback,
         group: {
@@ -327,7 +340,8 @@ async function buildDashboardSummaryItem(
         activity: includePremiumMetrics
           ? { likes: analytics.summary.reactions, reposts: analytics.summary.forwards, comments: analytics.summary.comments }
           : fallback.activity,
-        warnings: ['Telegram показывает текущие публичные счётчики публикаций. Динамика аудитории и охват подписчиков недоступны.']
+        snapshotGrowth,
+        warnings: ['Telegram показывает текущие публичные счётчики публикаций. Охват подписчиков недоступен, прирост считается по ежедневным срезам Socstat.']
       };
     } catch (error) {
       return {
@@ -378,6 +392,8 @@ async function buildDashboardSummaryItem(
         })
       : null;
     const stat = sumStats(stats);
+    const membersCount = groupInfo.members_count ?? savedGroup.membersCount ?? 0;
+    const snapshotGrowth = statsUnavailable ? await loadSnapshotGrowth('vk', String(groupInfo.id), period, membersCount) : null;
     const activity = wall ? sumWallActivity(wall, period.unixFrom, period.unixTo) : fallback.activity;
 
     if (includePremiumMetrics) await delay(350);
@@ -392,7 +408,7 @@ async function buildDashboardSummaryItem(
         screenName: groupInfo.screen_name,
         photo: groupInfo.photo_100 ?? groupInfo.photo_200
       },
-      membersCount: groupInfo.members_count ?? savedGroup.membersCount ?? 0,
+      membersCount,
       isManagedByUser,
       statsAvailable: !statsUnavailable,
       growth: {
@@ -403,6 +419,7 @@ async function buildDashboardSummaryItem(
       traffic: { visitors: stat.visitors, views: stat.views },
       reach: includePremiumMetrics ? { subscribers: stat.reachSubscribers, total: stat.reach } : fallback.reach,
       activity,
+      snapshotGrowth,
       warnings: statsUnavailable ? ['Статистика группы недоступна в VK.'] : [],
       error: null
     };

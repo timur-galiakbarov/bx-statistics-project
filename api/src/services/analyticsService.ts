@@ -450,9 +450,6 @@ async function loadCommunityAnalytics(
   const previousStats = await getStatsForPeriod(accessToken, groupInfo.id, previousPeriod, () => {
     previousStatsUnavailable = true;
   });
-  if (statsUnavailable) {
-    warnings.push('VK не выдал право stats, прирост, посещения и охват сообщества недоступны.');
-  }
 
   const WALL_PAGE_SIZE = 100;
   // A busy community can publish more than 1,000 posts within the compared periods.

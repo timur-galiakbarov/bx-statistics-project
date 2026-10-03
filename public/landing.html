@@ -4,8 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="yandex-verification" content="7b8f5f86e582c7ce" />
-    <meta name="description" content="Socstat — аналитика и статистика групп ВКонтакте." />
-    <title>Socstat — аналитика групп ВКонтакте</title>
+    <title>Статистика групп ВКонтакте, Telegram и YouTube каналов — Socstat</title>
+    <meta name="description" content="Аналитика ВКонтакте, Telegram и YouTube в одной подписке: статистика своих и чужих групп и каналов, лучшие посты конкурентов, вовлечённость, охваты и сравнение. 3 дня бесплатно." />
+    <link rel="canonical" href="https://socstat.ru/" />
+    <link rel="icon" href="/socstat-logo.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#2b8a3e" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Socstat" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:url" content="https://socstat.ru/" />
+    <meta property="og:title" content="Socstat — аналитика ВКонтакте, Telegram и YouTube" />
+    <meta property="og:description" content="Статистика своих и чужих групп и каналов, лучшие посты конкурентов и сравнение площадок. 3 дня бесплатно." />
+    <meta property="og:image" content="https://socstat.ru/landing/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preload" as="image" href="/landing/hero-app.webp" type="image/webp" />
     <script>
       fetch('/api/account/me', { credentials: 'include' })
         .then(function (response) {
@@ -44,25 +58,593 @@
       })(document, window, "tmr-code");
     </script>
     <!-- /Top.Mail.Ru counter -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://socstat.ru/#org",
+            "name": "Socstat",
+            "url": "https://socstat.ru/",
+            "logo": "https://socstat.ru/socstat-logo.svg",
+            "foundingDate": "2016",
+            "sameAs": ["https://vk.com/socstat"]
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Socstat",
+            "url": "https://socstat.ru/",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "inLanguage": "ru",
+            "description": "Сервис аналитики ВКонтакте, Telegram и YouTube: статистика своих и чужих сообществ и каналов, анализ публикаций конкурентов и сравнение площадок.",
+            "publisher": { "@id": "https://socstat.ru/#org" },
+            "offers": [
+              { "@type": "Offer", "name": "1 месяц", "price": "499", "priceCurrency": "RUB" },
+              { "@type": "Offer", "name": "3 месяца", "price": "899", "priceCurrency": "RUB" },
+              { "@type": "Offer", "name": "1 год", "price": "1999", "priceCurrency": "RUB" }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              { "@type": "Question", "name": "Как посмотреть статистику чужой группы ВКонтакте?", "acceptedAnswer": { "@type": "Answer", "text": "Добавьте ссылку на открытую группу в Socstat. Сервис покажет число подписчиков, публикации, просмотры, лайки, репосты, комментарии, вовлечённость (ER) и лучшие посты за выбранный период. Права администратора не нужны." } },
+              { "@type": "Question", "name": "Как посмотреть статистику Telegram-канала?", "acceptedAnswer": { "@type": "Answer", "text": "Введите @username или ссылку t.me на публичный канал. Socstat покажет подписчиков, просмотры и реакции каждого поста, пересылки, комментарии, средний охват, ER по просмотрам и самые просматриваемые публикации." } },
+              { "@type": "Question", "name": "Можно ли посмотреть статистику чужого YouTube-канала?", "acceptedAnswer": { "@type": "Answer", "text": "Да. По ссылке, @handle или ID канала Socstat покажет подписчиков, общие просмотры, видео за период, просмотры, лайки и комментарии каждого ролика, вовлечённость и лидеров по просмотрам." } },
+              { "@type": "Question", "name": "Какие данные недоступны?", "acceptedAnswer": { "@type": "Answer", "text": "Закрытая статистика (посещаемость, охват, прирост и отписки по дням) доступна только для сообществ ВКонтакте, где вы администратор. Для чужих групп, Telegram и YouTube используются публичные счётчики." } },
+              { "@type": "Question", "name": "Сколько стоит Socstat?", "acceptedAnswer": { "@type": "Answer", "text": "Первые 3 дня бесплатно и без ограничений. Затем 499 ₽ за месяц, 899 ₽ за 3 месяца или 1999 ₽ за год. ВКонтакте, Telegram и YouTube входят в любую подписку." } },
+              { "@type": "Question", "name": "Это безопасно? Нужно ли давать пароль?", "acceptedAnswer": { "@type": "Answer", "text": "Вход выполняется через официальную авторизацию ВКонтакте, пароль от аккаунта Socstat не получает. Сервис ничего не публикует от вашего имени." } }
+            ]
+          }
+        ]
+      }
+    </script>
     <style>
-      :root { color:#34495e; font-family:Arial, sans-serif; } * { box-sizing:border-box; } body { margin:0; background:#f6f6f6; line-height:1.6; } a { color:inherit; text-decoration:none; } .container { width:min(1120px, calc(100% - 40px)); margin:auto; } .header { background:#fff; border-top:3px solid #3498db; box-shadow:0 1px 5px #0001; } .nav { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:24px; } .logo { font-size:23px; font-weight:900; letter-spacing:.6px; color:#34495e; } .logo span { color:#3498db; } .menu { display:flex; align-items:center; gap:26px; font-size:14px; } .menu a:hover { color:#3498db; } .menu .login { padding:9px 16px; background:#3498db; color:#fff; border-radius:3px; } .hero { min-height:450px; color:#fff; background:#3498db url('/legacy-site/demos/slider_bg.png') center/cover; overflow:hidden; } .hero-inner { min-height:450px; display:flex; align-items:center; justify-content:space-between; gap:40px; } .hero-copy { max-width:530px; } .hero h1 { margin:0 0 18px; font-size:38px; line-height:1.25; font-weight:300; } .hero p { font-size:24px; margin:0 0 22px; } .button { display:inline-block; padding:12px 27px; border-radius:4px; background:#2ecc71; color:#fff; font-size:18px; font-weight:bold; box-shadow:0 2px 0 #229955; } .hero img { width:min(430px, 43vw); align-self:flex-end; } section { padding:68px 0; } .intro { background:#fff; } .title { text-align:center; margin:0 0 30px; } .title h2 { margin:0; font-size:28px; font-weight:400; color:#34495e; } .title p { margin:4px 0 0; color:#89949f; } .title:after { content:''; display:block; width:54px; height:2px; background:#3498db; margin:17px auto 0; } .copy { max-width:800px; margin:auto; font-size:16px; } .cta { background:#34495e; color:#fff; text-align:center; } .cta h2 { margin:0; font-size:35px; font-weight:300; } .cta h2 span { color:#3498db; } .cta p { margin:14px auto 26px; font-size:18px; } .features { background:#3498db; color:#fff; } .features .title h2, .features .title p { color:#fff; } .features .title:after { background:#fff; } .feature-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:40px 28px; } .feature { text-align:center; } .icon { display:grid; place-items:center; width:72px; height:72px; margin:0 auto 18px; border:2px solid #fff; border-radius:50%; font-size:31px; } .feature h3 { margin:0 0 8px; font-size:19px; } .feature p { margin:0; font-size:14px; } .showcase { background:#fff; } .showcase.alt { background:#edf4f7; } .showcase-row { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:58px; } .showcase-copy h2 { margin:0; font-size:27px; font-weight:400; } .showcase-copy h2:after { content:''; display:block; width:50px; height:2px; background:#3498db; margin:13px 0 18px; } .showcase-copy p { margin:0; } .showcase-copy ul { padding-left:20px; } .showcase img { max-width:100%; display:block; } .pricing { background:#fff; text-align:center; } .plans { display:grid; grid-template-columns:repeat(4, 1fr); gap:20px; } .plan { border:1px solid #e1e6e9; padding:28px 20px; box-shadow:0 2px 8px #0000000d; } .plan h3 { margin:0; font-size:21px; } .price { margin:20px 0; color:#3498db; font-size:44px; font-weight:bold; } .plan p { min-height:52px; } .plan ul { padding:0; list-style:none; border-top:1px solid #e7ecee; } .plan li { padding:8px; border-bottom:1px solid #e7ecee; } .footer { padding:25px 0; background:#283a4a; color:#c5d0d8; font-size:14px; } @media (max-width:760px) { .menu a:not(.login) { display:none; } .hero-inner { min-height:540px; padding:45px 0 0; display:block; text-align:center; } .hero h1 { font-size:31px; } .hero p { font-size:19px; } .hero img { display:block; width:330px; max-width:100%; margin:30px auto 0; } .feature-grid, .plans { grid-template-columns:1fr; } .showcase-row { grid-template-columns:1fr; gap:28px; } .showcase-row.reverse .showcase-copy { order:-1; } section { padding:48px 0; } }
+      :root {
+        --ink: #17212b;
+        --muted: #5b6875;
+        --line: #e3e8ec;
+        --bg: #ffffff;
+        --soft: #f4f7f5;
+        --green: #2b8a3e;
+        --green-dark: #23722f;
+        --green-bright: #4caf50;
+        --green-tint: #e8f5e9;
+        --vk: #0077ff;
+        --tg: #229ed9;
+        --yt: #ff0033;
+        --radius: 18px;
+        --shadow: 0 1px 2px rgba(23, 33, 43, .06), 0 12px 32px rgba(23, 33, 43, .08);
+        --shadow-lg: 0 2px 6px rgba(23, 33, 43, .06), 0 30px 80px rgba(23, 33, 43, .16);
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+      img { max-width: 100%; height: auto; display: block; }
+      a { color: inherit; }
+      h1, h2, h3 { line-height: 1.15; letter-spacing: -.02em; margin: 0; }
+      p { margin: 0; }
+      .container { width: min(1240px, calc(100% - 40px)); margin: 0 auto; }
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+      /* Buttons */
+      .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 26px; border-radius: 14px; font-weight: 700; font-size: 17px; text-decoration: none; transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+      .btn:focus-visible { outline: 3px solid #9bd3a5; outline-offset: 3px; }
+      .btn-primary { background: var(--green); color: #fff; box-shadow: 0 8px 20px rgba(43, 138, 62, .28); }
+      .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); box-shadow: 0 12px 26px rgba(43, 138, 62, .32); }
+      .btn-ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+      .btn-ghost:hover { border-color: #c9d2d9; }
+      .btn svg { width: 20px; height: 20px; flex: none; }
+
+      /* Header */
+      .header { position: sticky; top: 0; z-index: 20; background: rgba(255, 255, 255, .86); backdrop-filter: saturate(180%) blur(14px); border-bottom: 1px solid rgba(227, 232, 236, .8); }
+      .nav { height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+      .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; text-decoration: none; letter-spacing: -.01em; }
+      .logo img { width: 32px; height: 32px; }
+      .menu { display: flex; align-items: center; gap: 28px; font-size: 15px; }
+      .menu a { text-decoration: none; color: var(--muted); }
+      .menu a:hover { color: var(--ink); }
+      .menu .btn { min-height: 42px; padding: 0 18px; font-size: 15px; color: #fff; }
+
+      /* Hero */
+      .hero { position: relative; overflow: hidden; padding: 72px 0 0; background: radial-gradient(1100px 520px at 85% -10%, #e3f4e6 0, rgba(227, 244, 230, 0) 60%), radial-gradient(800px 420px at -10% 10%, #eaf4ff 0, rgba(234, 244, 255, 0) 60%), #fff; }
+      .hero-copy { max-width: 820px; margin: 0 auto; text-align: center; }
+      .eyebrow { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 8px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 14px; color: var(--muted); box-shadow: 0 1px 2px rgba(23, 33, 43, .05); }
+      .eyebrow .dots { display: inline-flex; }
+      .eyebrow .dots img { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; margin-left: -6px; background: #fff; }
+      .eyebrow .dots img:first-child { margin-left: 0; }
+      .hero h1 { margin: 22px 0 18px; font-size: clamp(36px, 5.4vw, 62px); font-weight: 800; }
+      .hero h1 .accent { background: linear-gradient(90deg, var(--green) 0%, #1c7ed6 55%, #e8590c 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      .hero .lead { font-size: clamp(18px, 2vw, 21px); color: var(--muted); max-width: 680px; margin: 0 auto; }
+      .hero-cta { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+      .hero-note { margin-top: 14px; font-size: 14px; color: var(--muted); }
+      .hero-shot { position: relative; margin: 56px auto 0; max-width: 1120px; }
+      .browser { border-radius: 16px 16px 0 0; background: #fff; box-shadow: var(--shadow-lg); border: 1px solid var(--line); border-bottom: 0; overflow: hidden; }
+      .browser-bar { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 16px; background: #f3f5f7; border-bottom: 1px solid var(--line); }
+      .browser-bar i { width: 11px; height: 11px; border-radius: 50%; background: #d7dde2; }
+      .browser-bar span { margin: 0 auto; padding: 3px 14px; border-radius: 8px; background: #fff; font-size: 12px; color: var(--muted); }
+      .float-card { position: absolute; display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--line); font-size: 14px; line-height: 1.3; }
+      .float-card b { display: block; font-size: 18px; }
+      .float-card small { color: var(--muted); }
+      .float-card .ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; color: #fff; flex: none; }
+      .float-a { left: -36px; top: 22%; }
+      .float-b { right: -30px; top: 48%; }
+
+      /* Stats strip */
+      .strip { border-block: 1px solid var(--line); background: #fff; }
+      .strip-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+      .strip-item { padding: 28px 20px; text-align: center; }
+      .strip-item + .strip-item { border-left: 1px solid var(--line); }
+      .strip-item b { display: block; font-size: 28px; letter-spacing: -.02em; }
+      .strip-item span { font-size: 15px; color: var(--muted); }
+
+      /* Sections */
+      section { padding: 96px 0; }
+      .section-head { max-width: 760px; margin: 0 auto 52px; text-align: center; }
+      .kicker { display: inline-block; margin-bottom: 12px; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--green); }
+      .section-head h2, .feature h2 { font-size: clamp(30px, 3.6vw, 44px); font-weight: 800; }
+      .section-head p { margin-top: 16px; font-size: 19px; color: var(--muted); }
+      .soft { background: var(--soft); }
+
+      /* Audience */
+      .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+      .card { padding: 28px 24px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); }
+      .card .ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--green-tint); color: var(--green); margin-bottom: 18px; }
+      .card .ic svg { width: 24px; height: 24px; }
+      .card h3 { font-size: 19px; margin-bottom: 8px; }
+      .card p { font-size: 15.5px; color: var(--muted); }
+
+      /* Features */
+      .feature { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 56px; align-items: center; }
+      .feature + .feature { margin-top: 120px; }
+      .feature.reverse { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); }
+      .feature.reverse .feature-copy { order: 2; }
+      .tag { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; margin-bottom: 18px; }
+      .tag img { width: 18px; height: 18px; }
+      .tag-tg { background: #e7f5fc; color: #0b6fa0; }
+      .tag-yt { background: #ffe9ed; color: #c70028; }
+      .tag-vk { background: #e6f1ff; color: #005ccc; }
+      .tag-all { background: var(--green-tint); color: var(--green); }
+      .feature h2 { margin-bottom: 18px; }
+      .feature-copy > p { font-size: 18px; color: var(--muted); }
+      .checks { list-style: none; padding: 0; margin: 26px 0 0; display: grid; gap: 14px; }
+      .checks li { position: relative; padding-left: 36px; font-size: 16.5px; }
+      .checks li::before { content: ""; position: absolute; left: 0; top: 2px; width: 24px; height: 24px; border-radius: 50%; background: var(--green-tint) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232b8a3e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/14px no-repeat; }
+      .checks b { font-weight: 700; }
+      .shot { position: relative; margin: 0; border-radius: var(--radius); overflow: hidden; background: #f3f4f6; box-shadow: var(--shadow-lg); border: 1px solid var(--line); cursor: zoom-in; }
+      .shot::after { content: "Увеличить"; position: absolute; right: 14px; bottom: 14px; padding: 6px 12px; border-radius: 999px; background: rgba(23, 33, 43, .72); color: #fff; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .15s ease; }
+      .shot:hover::after, .shot:focus-visible::after { opacity: 1; }
+      .shot:focus-visible { outline: 3px solid #9bd3a5; outline-offset: 4px; }
+      .zoom { width: min(1400px, 96vw); max-height: 92vh; padding: 0; border: 0; border-radius: 16px; background: #fff; box-shadow: var(--shadow-lg); overflow: auto; }
+      .zoom::backdrop { background: rgba(15, 22, 29, .7); }
+      .zoom img { width: 100%; }
+      .zoom button { position: sticky; top: 12px; float: right; margin: 12px 12px -56px 0; width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(23, 33, 43, .8); color: #fff; font-size: 24px; cursor: pointer; z-index: 1; }
+      .shot img { width: 100%; }
+      .shot.tall { max-height: 640px; }
+      .shot.tall img { object-fit: cover; object-position: top; }
+      .feature-note { margin-top: 18px; font-size: 14px; color: var(--muted); }
+
+      /* Steps */
+      .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; counter-reset: step; }
+      .step { position: relative; padding: 32px 28px; background: #fff; border-radius: var(--radius); border: 1px solid var(--line); }
+      .step::before { counter-increment: step; content: counter(step); display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--green); color: #fff; font-weight: 800; margin-bottom: 20px; }
+      .step h3 { font-size: 20px; margin-bottom: 8px; }
+      .step p { color: var(--muted); font-size: 16px; }
+
+      /* Pricing */
+      .plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: stretch; }
+      .plan { position: relative; display: flex; flex-direction: column; padding: 30px 26px; border-radius: var(--radius); border: 1px solid var(--line); background: #fff; }
+      .plan.best { border: 2px solid var(--green); box-shadow: 0 20px 50px rgba(43, 138, 62, .16); }
+      .badge { position: absolute; top: -13px; left: 26px; padding: 4px 12px; border-radius: 999px; background: var(--green); color: #fff; font-size: 13px; font-weight: 700; }
+      .plan h3 { font-size: 18px; color: var(--muted); font-weight: 700; }
+      .price { margin: 12px 0 4px; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
+      .price small { font-size: 17px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+      .per { font-size: 15px; color: var(--green); font-weight: 700; min-height: 24px; }
+      .plan ul { list-style: none; padding: 0; margin: 22px 0 26px; display: grid; gap: 10px; font-size: 15.5px; color: var(--muted); }
+      .plan li::before { content: "✓"; color: var(--green); font-weight: 800; margin-right: 8px; }
+      .plan .btn { margin-top: auto; width: 100%; }
+      .pricing-note { margin-top: 28px; text-align: center; font-size: 15px; color: var(--muted); }
+
+      /* FAQ */
+      .faq { max-width: 860px; margin: 0 auto; display: grid; gap: 12px; }
+      .faq details { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 0 24px; }
+      .faq summary { cursor: pointer; list-style: none; padding: 22px 36px 22px 0; position: relative; font-weight: 700; font-size: 18px; }
+      .faq summary::-webkit-details-marker { display: none; }
+      .faq summary::after { content: "+"; position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 26px; font-weight: 400; color: var(--muted); }
+      .faq details[open] summary::after { content: "−"; }
+      .faq details p { padding: 0 0 22px; color: var(--muted); font-size: 16.5px; }
+
+      /* Final CTA */
+      .final { padding: 0 0 96px; }
+      .final-box { position: relative; overflow: hidden; padding: 64px 48px; border-radius: 28px; text-align: center; color: #fff; background: radial-gradient(600px 300px at 90% 0%, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0)), linear-gradient(135deg, #1f6f32 0%, #2b8a3e 55%, #37a24b 100%); }
+      .final-box h2 { font-size: clamp(30px, 3.8vw, 46px); font-weight: 800; }
+      .final-box p { margin: 16px auto 30px; max-width: 620px; font-size: 19px; color: rgba(255, 255, 255, .88); }
+      .final-box .btn { background: #fff; color: var(--green-dark); box-shadow: 0 10px 30px rgba(0, 0, 0, .18); }
+      .final-box .btn:hover { transform: translateY(-1px); }
+
+      /* Footer */
+      .footer { padding: 40px 0; border-top: 1px solid var(--line); font-size: 15px; color: var(--muted); }
+      .footer-grid { display: flex; flex-wrap: wrap; gap: 20px 40px; align-items: center; justify-content: space-between; }
+      .footer nav { display: flex; flex-wrap: wrap; gap: 20px; }
+      .footer a { text-decoration: none; }
+      .footer a:hover { color: var(--ink); }
+
+      @media (max-width: 1100px) {
+        .float-card { display: none; }
+        .cards { grid-template-columns: repeat(2, 1fr); }
+        .plans { grid-template-columns: repeat(2, 1fr); row-gap: 28px; }
+      }
+      @media (max-width: 900px) {
+        .menu a:not(.btn) { display: none; }
+        .feature, .feature.reverse { grid-template-columns: 1fr; gap: 32px; }
+        .feature.reverse .feature-copy { order: 0; }
+        .feature + .feature { margin-top: 80px; }
+        .steps { grid-template-columns: 1fr; }
+        .strip-grid { grid-template-columns: repeat(2, 1fr); }
+        .strip-item:nth-child(3) { border-left: 0; }
+        .strip-item:nth-child(n + 3) { border-top: 1px solid var(--line); }
+      }
+      @media (max-width: 600px) {
+        body { font-size: 16px; }
+        .container { width: calc(100% - 32px); }
+        section { padding: 64px 0; }
+        .hero { padding-top: 44px; }
+        .hero-cta .btn { width: 100%; }
+        .hero-shot { margin-top: 36px; }
+        .browser-bar span { display: none; }
+        .eyebrow-tail { display: none; }
+        .cards, .plans { grid-template-columns: 1fr; }
+        .strip-item { padding: 20px 10px; }
+        .strip-item b { font-size: 22px; }
+        .final-box { padding: 44px 22px; border-radius: 22px; }
+        .final-box .btn { width: 100%; }
+        .faq details { padding: 0 18px; }
+        .faq summary { font-size: 16.5px; }
+      }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn { transition: none; } }
     </style>
   </head>
   <body>
     <noscript><div><img src="https://mc.yandex.ru/watch/38791285" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     <noscript><div><img src="https://top-fwz1.mail.ru/counter?id=3798785;js=na" style="position:absolute;left:-9999px;" alt="Top.Mail.Ru" /></div></noscript>
-    <header class="header"><div class="container nav"><a class="logo" href="/">SOC<span>STAT.RU</span></a><nav class="menu"><a href="#about">О сервисе</a><a href="#features">Возможности</a><a href="#prices">Цены</a><a class="login" href="/app/login">Войти</a></nav></div></header>
+
+    <header class="header">
+      <div class="container nav">
+        <a class="logo" href="/" aria-label="Socstat — на главную"><img src="/socstat-logo.svg" alt="" width="32" height="32" />Socstat</a>
+        <nav class="menu" aria-label="Основная навигация">
+          <a href="#telegram">Telegram</a>
+          <a href="#youtube">YouTube</a>
+          <a href="#vk">ВКонтакте</a>
+          <a href="#prices">Цены</a>
+          <a href="#faq">Вопросы</a>
+          <a class="btn btn-primary" href="/app/login" data-goal="landing_login">Войти</a>
+        </nav>
+      </div>
+    </header>
+
     <main>
-      <section class="hero"><div class="container hero-inner"><div class="hero-copy"><h1>Простой и понятный инструмент аналитики групп ВКонтакте</h1><p>Анализируйте свои группы и группы конкурентов</p><a class="button" href="/app/login">Начать работу</a></div><img src="/legacy-site/images/firstPicture.png" alt="Интерфейс Socstat" /></div></section>
-      <section id="about" class="intro"><div class="container"><div class="title"><h2>О сервисе socstat.ru</h2><p>Качественный инструмент SMM-менеджера «ВКонтакте»</p></div><div class="copy"><p>Socstat — инструмент для анализа любой группы «ВКонтакте»: динамики активности и вовлечённости подписчиков, статистики посещаемости, численности аудитории и частоты обновления контента.</p><p>Для открытых групп можно найти наиболее интересный контент, отфильтровать его по вовлечённости, лайкам, репостам и комментариям. Это помогает понять, что нравится аудитории конкурентов, и принимать решения при подготовке собственных публикаций.</p></div></div></section>
-      <section class="cta"><div class="container"><h2>Будьте <span>впереди</span>!</h2><p>Анализируйте поведение подписчиков в своих группах и у конкурентов.<br />Проводите конкурентную разведку. Оперативно делайте сравнения и выводы.</p><a class="button" href="/app/login">Начать работу</a></div></section>
-      <section id="features" class="features"><div class="container"><div class="title"><h2>Возможности сервиса</h2></div><div class="feature-grid"><article class="feature"><div class="icon">▥</div><h3>Аналитика сообществ</h3><p>Статистика посещений, динамика аудитории, данные по контенту и вовлечённости за выбранный период.</p></article><article class="feature"><div class="icon">★</div><h3>Анализ публикаций</h3><p>Находите лучшие и взрывные посты, чтобы понимать, какой контент нравится пользователям.</p></article><article class="feature"><div class="icon">◔</div><h3>Сравнение аудитории</h3><p>Сравнивайте аудитории нескольких групп, узнавайте пересечения и обрабатывайте большие сообщества.</p></article><article class="feature"><div class="icon">⌕</div><h3>Поиск групп подписчиков</h3><p>Получайте топ сообществ, на которые подписана аудитория исследуемой группы.</p></article><article class="feature"><div class="icon">⊘</div><h3>Поиск «мёртвых» подписчиков</h3><p>Получайте список и количество забаненных или удалённых подписчиков.</p></article></div></div></section>
-      <section class="showcase alt"><div class="container showcase-row"><div class="showcase-copy"><h2>Поиск групп подписчиков</h2><p>Получение топ-50 групп, на которые подписаны участники исследуемого сообщества. Анализируйте до 30&nbsp;000 подписчиков и формируйте XLSX-отчёт.</p></div><img src="/legacy-site/images/main-example-analog.png" alt="Поиск групп подписчиков" /></div></section>
-      <section class="showcase"><div class="container showcase-row reverse"><img src="/legacy-site/images/item-single.png" alt="Общая статистика группы" /><div class="showcase-copy"><h2>Общая статистика групп</h2><p>Посещаемость, численность и активность аудитории.</p><ul><li><strong>Посещаемость</strong> — просмотры, посетители и охват.</li><li><strong>Динамика численности</strong> — изменение количества подписчиков.</li><li><strong>Активность</strong> — лайки, репосты и комментарии.</li><li><strong>Контент</strong> — публикации, фотографии и видео.</li></ul></div></div></section>
-      <section class="showcase alt"><div class="container showcase-row"><div class="showcase-copy"><h2>Анализ публикаций</h2><p>Находите лучшие посты в группах с открытой стеной и фильтруйте их по лайкам, репостам, комментариям и вовлечённости аудитории.</p></div><img src="/legacy-site/images/main-example-publish2.png" alt="Анализ публикаций" /></div></section>
-      <section class="showcase"><div class="container showcase-row reverse"><img src="/legacy-site/images/main-example-compare3.png" alt="Сравнение аудиторий" /><div class="showcase-copy"><h2>Сравнение аудитории</h2><p>Вычисляйте количество и процент пересечений аудиторий двух и более групп — даже при большом количестве подписчиков.</p></div></div></section>
-      <section id="prices" class="pricing"><div class="container"><div class="title"><h2>Привлекательные цены</h2><p>Мы держим цены низкими, а качество высоким — убедитесь сами.</p></div><div class="plans"><article class="plan"><h3>Пробный</h3><div class="price">0 ₽</div><p>Пробный период — 3 дня с момента первой авторизации. Сервис доступен без ограничений.</p><ul><li>Период — 3 дня</li><li>Без ограничений</li></ul><a class="button" href="/app/login">Начать работу</a></article><article class="plan"><h3>1 месяц</h3><div class="price">499 ₽</div><p>Оплата доступа на 1 месяц.</p><ul><li>Период — 1 месяц</li><li>Без ограничений</li></ul><a class="button" href="/app/login">Начать работу</a></article><article class="plan"><h3>3 месяца</h3><div class="price">899 ₽</div><p>Оплата доступа на 3 месяца со скидкой 598 ₽.</p><ul><li>Период — 3 месяца</li><li>Без ограничений</li></ul><a class="button" href="/app/login">Начать работу</a></article><article class="plan"><h3>1 год</h3><div class="price">1 999 ₽</div><p>Оплата доступа на 12 месяцев со скидкой 3 989 ₽.</p><ul><li>Период — 1 год</li><li>Без ограничений</li></ul><a class="button" href="/app/login">Начать работу</a></article></div></div></section>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="container">
+          <div class="hero-copy">
+            <span class="eyebrow">
+              <span class="dots"><img src="/vk-network-logo.png" alt="" width="22" height="22" /><img src="/telegram-logo.svg" alt="" width="22" height="22" /><img src="/youtube-logo.png" alt="" width="22" height="22" /></span>
+              ВКонтакте, Telegram и YouTube<span class="eyebrow-tail">&nbsp;в одной подписке</span>
+            </span>
+            <h1 id="hero-title">Статистика групп и каналов — <span class="accent">ваших и конкурентов</span></h1>
+            <p class="lead">Socstat показывает, какие посты заходят, как растёт аудитория и где конкуренты обгоняют вас. Без прав администратора и без таблиц вручную.</p>
+            <div class="hero-cta">
+              <a class="btn btn-primary" href="/app/login" data-goal="landing_trial">
+                Попробовать 3 дня бесплатно
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </a>
+              <a class="btn btn-ghost" href="#features">Что умеет сервис</a>
+            </div>
+            <p class="hero-note">Вход через ВКонтакте за 10 секунд · без карты · без автосписаний</p>
+          </div>
+          <div class="hero-shot">
+            <div class="browser">
+              <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>socstat.ru/app/dashboard</span></div>
+              <img src="/landing/hero-app.webp" width="1440" height="900" alt="Главная Socstat: группы ВКонтакте, Telegram и YouTube каналы в одной таблице с подписчиками, приростом, просмотрами и реакциями" fetchpriority="high" />
+            </div>
+            <div class="float-card float-a" aria-hidden="true">
+              <span class="ic" style="background: var(--tg)"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M21.5 4.3 2.9 11.5c-1 .4-1 1.7.1 2l4.6 1.4 1.8 5.6c.3.8 1.3 1 1.9.4l2.6-2.4 4.6 3.4c.7.5 1.7.1 1.9-.7l3.2-15.3c.2-1.1-.8-1.9-1.9-1.4Z"/></svg></span>
+              <span><b>+18,4%</b><small>просмотров за месяц</small></span>
+            </div>
+            <div class="float-card float-b" aria-hidden="true">
+              <span class="ic" style="background: var(--green)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 18l6-6 4 4 6-8"/></svg></span>
+              <span><b>ER 4,6%</b><small>лучший пост конкурента</small></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="strip">
+        <div class="container strip-grid">
+          <div class="strip-item"><b>3 площадки</b><span>ВКонтакте, Telegram, YouTube</span></div>
+          <div class="strip-item"><b>Любые чужие</b><span>группы и каналы без админки</span></div>
+          <div class="strip-item"><b>с 2016 года</b><span>помогаем SMM-специалистам</span></div>
+          <div class="strip-item"><b>от 167 ₽/мес</b><span>при оплате за год</span></div>
+        </div>
+      </div>
+
+      <section id="audience" aria-labelledby="audience-title">
+        <div class="container">
+          <div class="section-head">
+            <span class="kicker">Кому пригодится</span>
+            <h2 id="audience-title">Решения на цифрах, а не на ощущениях</h2>
+            <p>Socstat собирает публичные данные соцсетей в понятные отчёты, чтобы вы тратили время на контент, а не на сбор статистики.</p>
+          </div>
+          <div class="cards">
+            <article class="card">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" /></svg></div>
+              <h3>SMM-специалистам</h3>
+              <p>Найдите рубрики и форматы, которые дают охват, и соберите контент-план на основе лучших постов ниши.</p>
+            </article>
+            <article class="card">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" /></svg></div>
+              <h3>Владельцам бизнеса</h3>
+              <p>Проверьте, растёт ли ваша группа и канал, и сравните себя с конкурентами из своего города.</p>
+            </article>
+            <article class="card">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /><path d="M8 11h6" /></svg></div>
+              <h3>Закупщикам рекламы</h3>
+              <p>Перед покупкой поста посмотрите реальные просмотры и вовлечённость канала, а не только число подписчиков.</p>
+            </article>
+            <article class="card">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7 9h10M7 13h6" /></svg></div>
+              <h3>Агентствам</h3>
+              <p>Ведите клиентов и их конкурентов в одной таблице и быстро готовьте аналитику к созвону.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" class="soft" aria-label="Возможности Socstat">
+        <div class="container">
+          <article class="feature" id="telegram">
+            <div class="feature-copy">
+              <span class="tag tag-tg"><img src="/telegram-logo.svg" alt="" width="18" height="18" />Telegram</span>
+              <h2>Статистика любого Telegram-канала</h2>
+              <p>Введите @username или ссылку t.me — и получите отчёт по публичному каналу за минуту. Свой канал или канал конкурента — неважно.</p>
+              <ul class="checks">
+                <li><b>Просмотры, реакции, пересылки и комментарии</b> каждого поста</li>
+                <li><b>Средний охват и ER по просмотрам</b> — видно, жива ли аудитория</li>
+                <li><b>Самые просматриваемые публикации</b> за выбранный период</li>
+                <li><b>Динамика по дням</b> и частота выхода постов</li>
+              </ul>
+              <p class="feature-note">Пригодится перед покупкой рекламы: сравните средние просмотры с числом подписчиков.</p>
+            </div>
+            <figure class="shot"><img src="/landing/telegram.webp" width="1160" height="960" loading="lazy" decoding="async" alt="Аналитика Telegram-канала в Socstat: подписчики, публикации, просмотры, средние просмотры поста, реакции, пересылки и график просмотров по дням" /></figure>
+          </article>
+
+          <article class="feature reverse" id="youtube">
+            <div class="feature-copy">
+              <span class="tag tag-yt"><img src="/youtube-logo.png" alt="" width="18" height="18" />YouTube</span>
+              <h2>Статистика YouTube-канала — и чужого тоже</h2>
+              <p>Вставьте ссылку на канал, @handle или ID. Socstat покажет, какие ролики набирают просмотры и вовлекают зрителей.</p>
+              <ul class="checks">
+                <li><b>Подписчики, общие просмотры и число видео</b> канала</li>
+                <li><b>Просмотры, лайки и комментарии</b> каждого ролика за период</li>
+                <li><b>Лидеры с поправкой на возраст видео</b> — честное сравнение новых и старых</li>
+                <li><b>Вовлечённость на 1 000 просмотров</b> и медиана просмотров</li>
+              </ul>
+            </div>
+            <figure class="shot tall"><img src="/landing/youtube.webp" width="1160" height="1248" loading="lazy" decoding="async" alt="Статистика YouTube-канала в Socstat: подписчики, просмотры канала, видео за период, лайки и комментарии на 1000 просмотров, рейтинг видео" /></figure>
+          </article>
+
+          <article class="feature" id="vk">
+            <div class="feature-copy">
+              <span class="tag tag-vk"><img src="/vk-network-logo.png" alt="" width="18" height="18" />ВКонтакте</span>
+              <h2>Аналитика групп ВКонтакте: своих и чужих</h2>
+              <p>Для открытых групп — публикации, просмотры и вовлечённость. Для групп, где вы администратор, — ещё и закрытая статистика: охват, посещения, подписки и отписки по дням.</p>
+              <ul class="checks">
+                <li><b>Сравнение с прошлым периодом</b> по каждой метрике</li>
+                <li><b>Охват и посещения по дням</b> для ваших сообществ</li>
+                <li><b>Инсайты простым языком:</b> что изменилось и что сделать</li>
+                <li><b>Лучшие посты</b> по лайкам, репостам, комментариям и ER</li>
+              </ul>
+            </div>
+            <figure class="shot"><img src="/landing/vk.webp" width="1160" height="960" loading="lazy" decoding="async" alt="Статистика группы ВКонтакте в Socstat: подписчики, прирост, охват, посещения, реакции, ER и график охвата по дням в сравнении с прошлым периодом" /></figure>
+          </article>
+        </div>
+      </section>
+
+      <section id="posts" aria-label="Анализ публикаций и сравнение">
+        <div class="container">
+          <article class="feature reverse">
+            <div class="feature-copy">
+              <span class="tag tag-all">До 10 источников сразу</span>
+              <h2>Лучшие посты конкурентов — в одной ленте</h2>
+              <p>Соберите группы и каналы своей ниши и отсортируйте их публикации по вовлечённости. Готовые идеи для контент-плана за пару минут.</p>
+              <ul class="checks">
+                <li><b>Фильтры по формату:</b> фото, видео, без вложений, реклама</li>
+                <li><b>Сортировка</b> по лайкам, репостам, комментариям, просмотрам и ER</li>
+                <li><b>Сводка по каждому источнику:</b> посты, реакции, средние просмотры</li>
+              </ul>
+            </div>
+            <figure class="shot tall"><img src="/landing/posts.webp" width="1160" height="1400" loading="lazy" decoding="async" alt="Анализ публикаций конкурентов в Socstat: сводная таблица по группам и лента лучших постов с лайками, репостами, комментариями, просмотрами и ER" /></figure>
+          </article>
+
+          <article class="feature">
+            <div class="feature-copy">
+              <span class="tag tag-all">Сравнение</span>
+              <h2>Сравните себя с конкурентами</h2>
+              <p>Поставьте рядом несколько сообществ или каналов и сразу увидьте, у кого выше реакции, охват и вовлечённость — и за счёт чего.</p>
+              <ul class="checks">
+                <li><b>Реакции на пост и в день</b>, лайки, репосты, комментарии</li>
+                <li><b>Средний, максимальный и минимальный охват</b> публикаций</li>
+                <li><b>Средний и максимальный ER</b>, форматы контента</li>
+              </ul>
+            </div>
+            <figure class="shot tall"><img src="/landing/compare.webp" width="1160" height="1180" loading="lazy" decoding="async" alt="Сравнение групп ВКонтакте в Socstat: график реакций и таблицы вовлечённости, просмотров и ER по каждой группе" /></figure>
+          </article>
+
+          <article class="feature reverse">
+            <div class="feature-copy">
+              <span class="tag tag-all">Главная</span>
+              <h2>Все площадки на одном экране</h2>
+              <p>Добавьте свои и чужие группы и каналы в отслеживаемые — и каждый день видьте участников, прирост, просмотры и реакции без переключения между вкладками.</p>
+              <ul class="checks">
+                <li><b>ВКонтакте, Telegram и YouTube</b> в одной таблице</li>
+                <li><b>Фильтр «мои / чужие»</b> и периоды: сегодня, вчера, 7 дней, месяц</li>
+              </ul>
+            </div>
+            <figure class="shot"><img src="/landing/dashboard.webp" width="1160" height="779" loading="lazy" decoding="async" alt="Таблица отслеживаемых источников Socstat: группы ВКонтакте, Telegram и YouTube каналы с участниками, приростом, просмотрами и реакциями" /></figure>
+          </article>
+        </div>
+      </section>
+
+      <section class="soft" id="how" aria-labelledby="how-title">
+        <div class="container">
+          <div class="section-head">
+            <span class="kicker">Как начать</span>
+            <h2 id="how-title">Первый отчёт — через минуту</h2>
+          </div>
+          <div class="steps">
+            <div class="step"><h3>Войдите через ВКонтакте</h3><p>Без регистрации и паролей. Пробный период на 3 дня включится автоматически.</p></div>
+            <div class="step"><h3>Добавьте группы и каналы</h3><p>Вставьте ссылку на группу ВК, Telegram-канал или YouTube-канал — свой или конкурента.</p></div>
+            <div class="step"><h3>Смотрите, что работает</h3><p>Отчёты, лучшие посты и сравнение готовы сразу. Выберите период и применяйте выводы.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="prices" aria-labelledby="prices-title">
+        <div class="container">
+          <div class="section-head">
+            <span class="kicker">Цены</span>
+            <h2 id="prices-title">Все площадки в любом тарифе</h2>
+            <p>Никаких доплат за Telegram или YouTube. Оплаченный период добавляется к текущему.</p>
+          </div>
+          <div class="plans">
+            <article class="plan">
+              <h3>Пробный</h3>
+              <div class="price">0 ₽</div>
+              <div class="per">3 дня</div>
+              <ul><li>Все функции без ограничений</li><li>ВКонтакте, Telegram, YouTube</li><li>Без карты</li></ul>
+              <a class="btn btn-ghost" href="/app/login" data-goal="landing_plan_trial">Начать бесплатно</a>
+            </article>
+            <article class="plan">
+              <h3>1 месяц</h3>
+              <div class="price">499 <small>₽</small></div>
+              <div class="per">&nbsp;</div>
+              <ul><li>Все функции</li><li>Все площадки</li><li>Оплата картой или ЮMoney</li></ul>
+              <a class="btn btn-ghost" href="/app/login" data-goal="landing_plan_month">Выбрать</a>
+            </article>
+            <article class="plan best">
+              <span class="badge">Выгодно</span>
+              <h3>3 месяца</h3>
+              <div class="price">899 <small>₽</small></div>
+              <div class="per">300 ₽ в месяц · выгода 40%</div>
+              <ul><li>Все функции</li><li>Все площадки</li><li>Хватит на квартальный отчёт</li></ul>
+              <a class="btn btn-primary" href="/app/login" data-goal="landing_plan_quarter">Выбрать</a>
+            </article>
+            <article class="plan">
+              <h3>1 год</h3>
+              <div class="price">1 999 <small>₽</small></div>
+              <div class="per">167 ₽ в месяц · выгода 66%</div>
+              <ul><li>Все функции</li><li>Все площадки</li><li>Самая низкая цена месяца</li></ul>
+              <a class="btn btn-ghost" href="/app/login" data-goal="landing_plan_year">Выбрать</a>
+            </article>
+          </div>
+          <p class="pricing-note">Подписка не продлевается автоматически — вы платите только тогда, когда решите сами.</p>
+        </div>
+      </section>
+
+      <section class="soft" id="faq" aria-labelledby="faq-title">
+        <div class="container">
+          <div class="section-head">
+            <span class="kicker">Вопросы</span>
+            <h2 id="faq-title">Частые вопросы</h2>
+          </div>
+          <div class="faq">
+            <details open>
+              <summary>Как посмотреть статистику чужой группы ВКонтакте?</summary>
+              <p>Добавьте ссылку на открытую группу в Socstat. Сервис покажет число подписчиков, публикации, просмотры, лайки, репосты, комментарии, вовлечённость (ER) и лучшие посты за выбранный период. Права администратора не нужны.</p>
+            </details>
+            <details>
+              <summary>Как посмотреть статистику Telegram-канала?</summary>
+              <p>Введите @username или ссылку t.me на публичный канал. Socstat покажет подписчиков, просмотры и реакции каждого поста, пересылки, комментарии, средний охват, ER по просмотрам и самые просматриваемые публикации.</p>
+            </details>
+            <details>
+              <summary>Можно ли посмотреть статистику чужого YouTube-канала?</summary>
+              <p>Да. По ссылке, @handle или ID канала Socstat покажет подписчиков, общие просмотры, видео за период, просмотры, лайки и комментарии каждого ролика, вовлечённость и лидеров по просмотрам.</p>
+            </details>
+            <details>
+              <summary>Какие данные недоступны?</summary>
+              <p>Закрытая статистика (посещаемость, охват, прирост и отписки по дням) доступна только для сообществ ВКонтакте, где вы администратор. Для чужих групп, Telegram и YouTube используются публичные счётчики: Socstat честно показывает, какие метрики площадка не отдаёт.</p>
+            </details>
+            <details>
+              <summary>Сколько стоит Socstat?</summary>
+              <p>Первые 3 дня бесплатно и без ограничений. Затем 499 ₽ за месяц, 899 ₽ за 3 месяца или 1 999 ₽ за год. ВКонтакте, Telegram и YouTube входят в любую подписку.</p>
+            </details>
+            <details>
+              <summary>Это безопасно? Нужно ли давать пароль?</summary>
+              <p>Вход выполняется через официальную авторизацию ВКонтакте, пароль от аккаунта Socstat не получает. Сервис ничего не публикует от вашего имени.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="final" aria-labelledby="final-title">
+        <div class="container">
+          <div class="final-box">
+            <h2 id="final-title">Ваша следующая сильная публикация уже есть в данных</h2>
+            <p>Посмотрите, что работает у вас и у конкурентов во ВКонтакте, Telegram и YouTube. 3 дня бесплатно.</p>
+            <a class="btn" href="/app/login" data-goal="landing_final">Попробовать бесплатно</a>
+          </div>
+        </div>
+      </section>
     </main>
-    <footer class="footer"><div class="container">socstat.ru 2016–2026 — анализ и статистика групп ВКонтакте</div></footer>
+
+    <footer class="footer">
+      <div class="container footer-grid">
+        <a class="logo" href="/"><img src="/socstat-logo.svg" alt="" width="28" height="28" />Socstat</a>
+        <nav aria-label="Ссылки в подвале">
+          <a href="#telegram">Статистика Telegram-канала</a>
+          <a href="#youtube">Статистика YouTube-канала</a>
+          <a href="#vk">Статистика группы ВКонтакте</a>
+          <a href="#prices">Цены</a>
+          <a href="https://vk.com/socstat" rel="noopener" target="_blank">Поддержка ВКонтакте</a>
+        </nav>
+        <span>© 2016–2026 socstat.ru</span>
+      </div>
+    </footer>
+
+    <dialog class="zoom" id="zoom" aria-label="Скриншот в полном размере">
+      <button type="button" aria-label="Закрыть">×</button>
+      <img alt="" />
+    </dialog>
+
+    <script>
+      (function () {
+        var dialog = document.getElementById('zoom');
+        if (!dialog || !dialog.showModal) return;
+        var image = dialog.querySelector('img');
+        document.querySelectorAll('.shot').forEach(function (shot) {
+          var source = shot.querySelector('img');
+          shot.setAttribute('tabindex', '0');
+          shot.setAttribute('role', 'button');
+          shot.setAttribute('aria-label', 'Увеличить скриншот: ' + source.alt);
+          var open = function () {
+            image.src = source.currentSrc || source.src;
+            image.alt = source.alt;
+            dialog.showModal();
+            dialog.scrollTop = 0;
+          };
+          shot.addEventListener('click', open);
+          shot.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); }
+          });
+        });
+        dialog.querySelector('button').addEventListener('click', function () { dialog.close(); });
+        dialog.addEventListener('click', function (event) { if (event.target === dialog) dialog.close(); });
+      })();
+
+      document.addEventListener('click', function (event) {
+        var link = event.target.closest && event.target.closest('[data-goal]');
+        if (link && window.ym) window.ym(38791285, 'reachGoal', link.getAttribute('data-goal'));
+      });
+    </script>
   </body>
 </html>

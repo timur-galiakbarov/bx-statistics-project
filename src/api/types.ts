@@ -178,12 +178,28 @@ export type DashboardSummaryItem = {
     reposts: number;
     comments: number;
   };
+  /** Прирост подписчиков по ежедневным срезам Socstat (Telegram, YouTube и VK без доступа к статистике). */
+  snapshotGrowth: SnapshotGrowth | null;
   warnings: string[];
   error: null | {
     code: string;
     message: string;
     vkCode?: number;
   };
+};
+
+export type SnapshotGrowth = {
+  total: number | null;
+  since: string | null;
+  historySince: string | null;
+};
+
+export type SubscriberHistory = {
+  platform: SocialPlatform;
+  externalId: string;
+  days: number;
+  points: Array<{ date: string; subscribers: number | null; change: number | null }>;
+  periodGrowth: SnapshotGrowth | null;
 };
 
 export type DashboardSummary = {

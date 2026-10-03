@@ -119,12 +119,17 @@ export function PostCard({ post }: Props) {
             <Eye size={15} />
             {formatNumber(post.views)}
           </span>
-          <span title={post.group.platform === 'youtube' || isTelegram ? 'Вовлечённость по просмотрам' : 'ER'} aria-label={`Вовлечённость: ${post.er}%`}>
+          <span title={post.group.platform === 'youtube' || isTelegram ? 'Вовлечённость по просмотрам' : 'ER'} aria-label={`Вовлечённость: ${post.er === null ? 'недоступно' : formatEr(post.er)}`}>
             <Activity size={15} />
-            {post.er === null ? 'Недоступно' : `${post.er}%`}
+            {post.er === null ? 'Недоступно' : formatEr(post.er)}
           </span>
         </div>
       </div>
     </article>
   );
+}
+
+function formatEr(value: number) {
+  // Маленький ER (доли процента у больших сообществ) показываем с тремя знаками, чтобы не превращать его в 0%.
+  return `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: Math.abs(value) < 1 ? 3 : 2 }).format(value)}%`;
 }

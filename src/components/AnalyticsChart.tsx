@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import { formatDate } from '../utils/date';
 
-type ChartKind = 'reach' | 'activity' | 'views' | 'comments' | 'engagement';
+type ChartKind = 'reach' | 'activity' | 'views' | 'comments' | 'engagement' | 'subscribers';
 
 type ChartPoint = {
   date: string;
@@ -50,7 +50,7 @@ function formatTooltipValue(kind: ChartKind, value: unknown) {
 }
 
 export default function AnalyticsChart({ kind, title, data, currentPeriodLabel, previousPeriodLabel, connectNulls = true }: Props) {
-  const valueLabel = kind === 'reach' ? 'Охват, человек' : kind === 'activity' ? 'Реакции' : kind === 'views' ? 'Средние просмотры поста' : kind === 'comments' ? 'Комментарии на пост' : 'ER';
+  const valueLabel = kind === 'subscribers' ? 'Подписчики, человек' : kind === 'reach' ? 'Охват, человек' : kind === 'activity' ? 'Реакции' : kind === 'views' ? 'Средние просмотры поста' : kind === 'comments' ? 'Комментарии на пост' : 'ER';
 
   return (
     <div className="chart-panel">
@@ -63,7 +63,7 @@ export default function AnalyticsChart({ kind, title, data, currentPeriodLabel, 
           <LineChart data={data} margin={{ top: 8, right: 18, bottom: 8, left: 0 }}>
             <CartesianGrid stroke="#e5eaf0" strokeDasharray="3 3" />
             <XAxis dataKey="date" tick={{ fill: '#687684', fontSize: 12 }} tickFormatter={(value) => formatDate(String(value))} />
-            <YAxis tick={{ fill: '#687684', fontSize: 12 }} tickFormatter={(value) => kind === 'engagement' ? formatPercent(Number(value)) : formatNumber(Number(value))} width={52} />
+            <YAxis domain={kind === 'subscribers' ? ['auto', 'auto'] : undefined} tick={{ fill: '#687684', fontSize: 12 }} tickFormatter={(value) => kind === 'engagement' ? formatPercent(Number(value)) : formatNumber(Number(value))} width={52} />
             <Tooltip
               contentStyle={chartTooltipStyle}
               labelFormatter={(label) => formatDate(String(label))}

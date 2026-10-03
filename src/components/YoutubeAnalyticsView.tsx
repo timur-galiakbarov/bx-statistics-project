@@ -1,10 +1,11 @@
-import { Activity, ArrowDownUp, BarChart3, CircleHelp, Eye, Heart, MessageCircle, Play, TrendingUp, Users } from 'lucide-react';
+import { Activity, ArrowDownUp, BarChart3, CircleHelp, Eye, Heart, MessageCircle, Play, TrendingUp } from 'lucide-react';
 import { Button } from '@alfalab/core-components-button';
 import { Select } from '@alfalab/core-components-select';
 import { Tooltip } from '@alfalab/core-components-tooltip';
 import { useMemo, useState } from 'react';
 import type { CommunityAnalytics } from '../api/types';
 import { PostCard } from './PostCard';
+import { SubscriberHistoryPanel } from './SubscriberHistoryPanel';
 
 type YoutubePost = CommunityAnalytics['wall']['topPosts'][number];
 type YoutubeSort = 'views' | 'velocity' | 'engagement' | 'likes' | 'comments' | 'date';
@@ -113,11 +114,11 @@ export function YoutubeAnalyticsView({ analytics, section }: { analytics: Commun
     <div className="panel span-2 analytics-section youtube-channel-summary">
       <div className="section-title"><div><h2>Канал сейчас</h2><p>Основные публичные показатели канала.</p></div></div>
       <div className="youtube-channel-kpis">
-        <YoutubeMetric icon={Users} label="Подписчики" value={analytics.group.membersCount === null ? 'Скрыты' : number(analytics.group.membersCount)} caption="Текущая аудитория канала" />
         <YoutubeMetric icon={Eye} label="Просмотры канала" value={number(analytics.group.channelViewCount ?? 0)} caption="За всё время" />
         <YoutubeMetric icon={Play} label="Публичные видео" value={number(analytics.group.publicVideoCount ?? 0)} caption="Всего на канале" />
       </div>
     </div>
+    <SubscriberHistoryPanel platform="youtube" sourceId={analytics.group.id} period={analytics.period} currentSubscribers={analytics.group.membersCount} />
     <div className="panel span-2 analytics-section">
       <div className="section-title"><div><h2>Результаты видео за выбранный период</h2><p>Видео, опубликованные с {new Date(`${analytics.period.dateFrom}T00:00:00`).toLocaleDateString('ru-RU')} по {new Date(`${analytics.period.dateTo}T00:00:00`).toLocaleDateString('ru-RU')}.</p></div><Tooltip content="Период отбирает видео по дате публикации. Метрики показывают их значения на момент обновления." position="left" targetTag="span" view="hint"><button className="youtube-data-info" type="button"><CircleHelp size={18} /> О данных</button></Tooltip></div>
       <div className="youtube-period-kpis">

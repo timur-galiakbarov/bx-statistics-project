@@ -151,6 +151,52 @@ function mediaType(message: Api.Message): TelegramPost['mediaType'] {
   return message.media ? 'other' : null;
 }
 
+/** Reads channel posts between two unix timestamps, merging album parts into one post. */
+async function collectChannelPosts(client: TelegramClient, entity: Api.Channel, channel: TelegramChannel, unixFrom: number, unixTo: number) {
+  const postsByKey = new Map<string, TelegramPost>();
+  for await (const message of client.iterMessages(entity, { limit: env.telegramMaxPosts * 2, offsetDate: unixTo + 1 })) {
+    if (!(message instanceof Api.Message)) continue;
+    if (message.date < unixFrom) break;
+    if (message.date > unixTo || !message.post) continue;
+    const reactions = message.reactions?.results.reduce((sum, reaction) => sum + reaction.count, 0) ?? 0;
+    const comments = message.replies?.replies ?? 0;
+    const forwards = message.forwards ?? 0;
+    const postMediaType = mediaType(message);
+    const post: TelegramPost = {
+      id: message.id,
+      date: new Date(message.date * 1000).toISOString(),
+      timestamp: message.date,
+      text: message.message,
+      url: `https://t.me/${channel.username}/${message.id}`,
+      views: message.views ?? 0,
+      forwards,
+      reactions,
+      comments,
+      engagement: reactions + comments + forwards,
+      mediaType: postMediaType,
+      mediaUrl: postMediaType === 'photo' ? `/api/telegram/channels/${encodeURIComponent(channel.username)}/posts/${message.id}/media` : undefined
+    };
+    const groupKey = message.groupedId ? `album:${message.groupedId.toString()}` : `message:${message.id}`;
+    const existing = postsByKey.get(groupKey);
+    if (!existing) {
+      postsByKey.set(groupKey, post);
+    } else {
+      const merged = {
+        ...existing,
+        id: Math.min(existing.id, post.id),
+        text: existing.text || post.text,
+        views: Math.max(existing.views, post.views),
+        forwards: Math.max(existing.forwards, post.forwards),
+        reactions: Math.max(existing.reactions, post.reactions),
+        comments: Math.max(existing.comments, post.comments),
+        mediaType: existing.mediaType ?? post.mediaType
+      };
+      postsByKey.set(groupKey, { ...merged, url: `https://t.me/${channel.username}/${merged.id}`, engagement: merged.reactions + merged.comments + merged.forwards });
+    }
+  }
+  return [...postsByKey.values()];
+}
+
 function formatDate(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
@@ -293,6 +339,26 @@ export async function getTelegramPostMedia(input: string, postIdValue: string, f
   }
 }
 
+/**
+ * Fresh channel info and posts published since `unixFrom`, bypassing caches.
+ * Used by the daily snapshot job; errors keep the same TelegramApiError codes.
+ */
+export async function getTelegramChannelSnapshot(input: string, unixFrom: number) {
+  const username = normalizeTelegramChannelInput(input);
+  try {
+    return await telegramQueue.run(async () => {
+      const { client, entity, channel } = await resolveChannelEntity(username);
+      const posts = await collectChannelPosts(client, entity, channel, unixFrom, Math.floor(Date.now() / 1000));
+      return { channel, posts };
+    });
+  } catch (error) {
+    if (error instanceof TelegramApiError) throw error;
+    const message = error instanceof Error ? error.message : '';
+    if (/FLOOD_WAIT/i.test(message)) throw new TelegramApiError('Telegram временно ограничил частоту запросов. Повторите позже.', { status: 429, code: 'TELEGRAM_RATE_LIMITED' });
+    throw new TelegramApiError('Не удалось загрузить публикации канала.', { status: 502, code: 'TELEGRAM_POSTS_UNAVAILABLE' });
+  }
+}
+
 export async function getTelegramChannelAnalytics(input: string, periodValue: unknown, dateFromValue?: unknown, dateToValue?: unknown, forceRefresh = false) {
   let period: AnalyticsPeriodRange;
   try {
@@ -311,48 +377,8 @@ export async function getTelegramChannelAnalytics(input: string, periodValue: un
   try {
     const result = await getTelegramAnalyticsCached(key, forceRefresh, async () => {
       const { client, entity, channel } = await resolveChannelEntity(username);
-      const postsByKey = new Map<string, TelegramPost>();
-      for await (const message of client.iterMessages(entity, { limit: env.telegramMaxPosts * 2, offsetDate: period.unixTo + 1 })) {
-        if (!(message instanceof Api.Message)) continue;
-        if (message.date < previousPeriod.unixFrom) break;
-        if (message.date > period.unixTo || !message.post) continue;
-        const reactions = message.reactions?.results.reduce((sum, reaction) => sum + reaction.count, 0) ?? 0;
-        const comments = message.replies?.replies ?? 0;
-        const forwards = message.forwards ?? 0;
-        const postMediaType = mediaType(message);
-        const post: TelegramPost = {
-          id: message.id,
-          date: new Date(message.date * 1000).toISOString(),
-          timestamp: message.date,
-          text: message.message,
-          url: `https://t.me/${channel.username}/${message.id}`,
-          views: message.views ?? 0,
-          forwards,
-          reactions,
-          comments,
-          engagement: reactions + comments + forwards,
-          mediaType: postMediaType,
-          mediaUrl: postMediaType === 'photo' ? `/api/telegram/channels/${encodeURIComponent(channel.username)}/posts/${message.id}/media` : undefined
-        };
-        const groupKey = message.groupedId ? `album:${message.groupedId.toString()}` : `message:${message.id}`;
-        const existing = postsByKey.get(groupKey);
-        if (!existing) {
-          postsByKey.set(groupKey, post);
-        } else {
-          const merged = {
-            ...existing,
-            id: Math.min(existing.id, post.id),
-            text: existing.text || post.text,
-            views: Math.max(existing.views, post.views),
-            forwards: Math.max(existing.forwards, post.forwards),
-            reactions: Math.max(existing.reactions, post.reactions),
-            comments: Math.max(existing.comments, post.comments),
-            mediaType: existing.mediaType ?? post.mediaType
-          };
-          postsByKey.set(groupKey, { ...merged, url: `https://t.me/${channel.username}/${merged.id}`, engagement: merged.reactions + merged.comments + merged.forwards });
-        }
-      }
-      return summarizeTelegramAnalytics(channel, [...postsByKey.values()], period);
+      const posts = await collectChannelPosts(client, entity, channel, previousPeriod.unixFrom, period.unixTo);
+      return summarizeTelegramAnalytics(channel, posts, period);
     });
     cache.set(key, result);
     return result;

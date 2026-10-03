@@ -12,7 +12,9 @@
     "import:legacy-users": "tsx src/scripts/importLegacyBitrixUsers.ts",
     "import:legacy-payments": "tsx src/scripts/importLegacyBitrixPayments.ts",
     "telegram:login": "tsx src/scripts/createTelegramSession.ts",
-    "telegram:smoke": "tsx src/scripts/testTelegramConnection.ts"
+    "telegram:smoke": "tsx src/scripts/testTelegramConnection.ts",
+    "snapshots:run": "tsx src/scripts/runSnapshots.ts",
+    "snapshots:seed": "tsx src/scripts/seedSnapshotSources.ts"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",

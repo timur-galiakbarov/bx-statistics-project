@@ -44,6 +44,12 @@ export const env = {
   telegramIpRequestsPerMinute: Number(process.env.TELEGRAM_IP_REQUESTS_PER_MINUTE ?? 60),
   telegramMediaRequestsPerMinute: Number(process.env.TELEGRAM_MEDIA_REQUESTS_PER_MINUTE ?? 30),
   telegramRefreshCooldownMs: Number(process.env.TELEGRAM_REFRESH_COOLDOWN_MS ?? 60_000),
+  // Ежедневные срезы подписчиков и публикаций. По умолчанию включены только в production.
+  snapshotsEnabled: (process.env.SNAPSHOTS_ENABLED ?? (process.env.NODE_ENV === 'production' ? '1' : '0')) === '1',
+  snapshotStartHour: Number(process.env.SNAPSHOT_START_HOUR ?? 3),
+  snapshotPostWindowDays: Number(process.env.SNAPSHOT_POST_WINDOW_DAYS ?? 7),
+  snapshotTelegramDelayMs: Number(process.env.SNAPSHOT_TELEGRAM_DELAY_MS ?? 3_000),
+  snapshotTelegramMaxPerRun: Number(process.env.SNAPSHOT_TELEGRAM_MAX_PER_RUN ?? 200),
   authSuccessRedirectUrl: process.env.AUTH_SUCCESS_REDIRECT_URL ?? 'http://localhost:5173/app/dashboard',
   yoomoneyReceiver: process.env.YOOMONEY_RECEIVER ?? '',
   yoomoneyNotificationUrl: process.env.YOOMONEY_NOTIFICATION_URL ?? 'http://localhost:4000/api/payments/callback',

@@ -16,6 +16,7 @@ import { postsRouter } from './routes/posts.js';
 import { vkRouter } from './routes/vk.js';
 import { youtubeRouter } from './routes/youtube.js';
 import { telegramRouter } from './routes/telegram.js';
+import { snapshotsRouter } from './routes/snapshots.js';
 import { VkApiError } from './services/vkClient.js';
 import { DomainError } from './errors/domainError.js';
 
@@ -45,6 +46,7 @@ export function createApp() {
   app.use('/api/vk', vkRouter);
   app.use('/api/youtube', youtubeRouter);
   app.use('/api/telegram', telegramRouter);
+  app.use('/api/snapshots', snapshotsRouter);
   app.use('/controllers', legacyRouter);
 
   app.use((error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

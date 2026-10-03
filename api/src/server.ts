@@ -3,6 +3,7 @@ import { env } from './config/env.js';
 import { connectDatabase } from './db/database.js';
 import { seedDevelopmentData } from './db/seed.js';
 import { connectRedis } from './services/redis.js';
+import { startSnapshotScheduler } from './services/snapshotService.js';
 
 async function bootstrap() {
   await connectDatabase();
@@ -20,6 +21,8 @@ async function bootstrap() {
   createApp().listen(env.port, () => {
     console.log(`Socstat API listening on http://localhost:${env.port}`);
   });
+
+  startSnapshotScheduler();
 }
 
 bootstrap().catch((error) => {

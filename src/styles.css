@@ -294,26 +294,6 @@ a {
   color: #fff;
 }
 
-.nav a.nav-promo-link {
-  border-top: 1px solid rgba(180, 180, 180, 0.3);
-  border-radius: 0;
-  color: #777;
-  font-size: 14px;
-  margin-top: 15px;
-  min-height: 44px;
-  padding-top: 15px;
-}
-
-.nav a.nav-promo-link:hover {
-  background: transparent;
-  box-shadow: none;
-  color: #4caf50;
-}
-
-.nav a.nav-promo-link:hover svg {
-  color: #4caf50;
-}
-
 .main {
   background: #eeeeee;
   grid-column: 2;

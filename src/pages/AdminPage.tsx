@@ -24,7 +24,7 @@ type Props = {
   onAccountChanged: () => Promise<void>;
 };
 
-type AdminSection = 'statistics' | 'payments' | 'settings';
+type AdminSection = 'statistics' | 'payments' | 'system' | 'settings';
 type ActiveUsersFilter = 'all' | 'paid' | 'withoutPayment';
 
 const paymentStatusOptions = [
@@ -511,6 +511,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
       <div className="admin-tabs span-2" role="tablist" aria-label="Разделы админки">
         <button aria-selected={adminSection === 'statistics'} className={adminSection === 'statistics' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('statistics')}>Пользователи</button>
         <button aria-selected={adminSection === 'payments'} className={adminSection === 'payments' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('payments')}>Платежи</button>
+        <button aria-selected={adminSection === 'system'} className={adminSection === 'system' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('system')}>Система</button>
         <button aria-selected={adminSection === 'settings'} className={adminSection === 'settings' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('settings')}>Настройки</button>
       </div>
 
@@ -535,7 +536,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
       </div>
       )}
 
-      {adminSection === 'statistics' && <>
+      {adminSection === 'system' && (
       <div className="panel span-2">
         <div className="panel-header compact">
           <div>
@@ -580,7 +581,9 @@ export function AdminPage({ user, onAccountChanged }: Props) {
           </div>
         )}
       </div>
+      )}
 
+      {adminSection === 'statistics' && <>
       <div className="panel admin-summary-panel">
         <div className="panel-header compact">
           <div>

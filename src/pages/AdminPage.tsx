@@ -1,4 +1,4 @@
-import { Bug, CheckCircle2, CreditCard, Info, Link, MoreHorizontal, RefreshCw, Search, Trash2, UserPlus, Users, XCircle } from 'lucide-react';
+import { Bug, CheckCircle2, ChevronDown, CreditCard, Info, Link, MoreHorizontal, RefreshCw, Search, Trash2, UserPlus, Users, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../api/client';
 import type {
@@ -102,6 +102,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [isSnapshotCoverageLoading, setIsSnapshotCoverageLoading] = useState(false);
   const [activeUsers, setActiveUsers] = useState<AdminActiveUsers | null>(null);
   const [activeUsersFilter, setActiveUsersFilter] = useState<ActiveUsersFilter>('all');
+  const [isActiveUsersListOpen, setIsActiveUsersListOpen] = useState(false);
   const [recentUsers, setRecentUsers] = useState<RecentAdminUser[]>([]);
   const [manualPermissions, setManualPermissions] = useState<VkPermissions | null>(null);
   const [manualStats, setManualStats] = useState<VkManualStatsResult | null>(null);
@@ -627,12 +628,20 @@ export function AdminPage({ user, onAccountChanged }: Props) {
       </div>
 
       <div className="panel span-2">
-        <div className="panel-header compact">
+        <button
+          aria-controls="admin-active-users-list"
+          aria-expanded={isActiveUsersListOpen}
+          className="panel-header compact admin-accordion-toggle"
+          type="button"
+          onClick={() => setIsActiveUsersListOpen((isOpen) => !isOpen)}
+        >
           <div>
             <h2>Список пользователей с активным доступом</h2>
             <p>Разделение основано на наличии успешного платежа</p>
           </div>
-        </div>
+          <ChevronDown aria-hidden="true" size={20} />
+        </button>
+        {isActiveUsersListOpen && <div id="admin-active-users-list">
         {activeUsers && <div className="admin-active-users-filters" role="group" aria-label="Фильтр пользователей с активным доступом">
           <button className={activeUsersFilter === 'all' ? 'active' : ''} type="button" onClick={() => setActiveUsersFilter('all')}>Все · {activeUsers.total.toLocaleString('ru-RU')}</button>
           <button className={activeUsersFilter === 'paid' ? 'active' : ''} type="button" onClick={() => setActiveUsersFilter('paid')}>Оплачивали · {activeUsers.paid.toLocaleString('ru-RU')}</button>
@@ -667,6 +676,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             ))}
           </div>
         )}
+        </div>}
       </div>
 
       <div className="panel span-2">

@@ -635,6 +635,36 @@ a {
   margin: 0;
 }
 
+.admin-accordion-toggle {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.admin-accordion-toggle[aria-expanded='false'] {
+  margin-bottom: 0;
+}
+
+.admin-accordion-toggle > svg {
+  color: #777;
+  flex: 0 0 auto;
+  transition: transform 0.2s ease;
+}
+
+.admin-accordion-toggle[aria-expanded='true'] > svg {
+  transform: rotate(180deg);
+}
+
+.admin-accordion-toggle:focus-visible {
+  outline: 2px solid #4caf50;
+  outline-offset: 4px;
+}
+
 .limit-badge {
   background: #4caf50;
   border: 0;

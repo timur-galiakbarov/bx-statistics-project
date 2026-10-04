@@ -48,6 +48,7 @@ export const env = {
   snapshotsEnabled: (process.env.SNAPSHOTS_ENABLED ?? (process.env.NODE_ENV === 'production' ? '1' : '0')) === '1',
   snapshotStartHour: Number(process.env.SNAPSHOT_START_HOUR ?? 3),
   snapshotPostWindowDays: Number(process.env.SNAPSHOT_POST_WINDOW_DAYS ?? 7),
+  snapshotPostMaxAttempts: Number(process.env.SNAPSHOT_POST_MAX_ATTEMPTS ?? 5),
   snapshotTelegramDelayMs: Number(process.env.SNAPSHOT_TELEGRAM_DELAY_MS ?? 3_000),
   snapshotTelegramMaxPerRun: Number(process.env.SNAPSHOT_TELEGRAM_MAX_PER_RUN ?? 200),
   authSuccessRedirectUrl: process.env.AUTH_SUCCESS_REDIRECT_URL ?? 'http://localhost:5173/app/dashboard',

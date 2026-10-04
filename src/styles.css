@@ -3100,6 +3100,17 @@ a {
   min-height: 400px;
   overflow: auto;
 }
+.admin-snapshot-row {
+  grid-template-columns: minmax(110px, 0.8fr) repeat(3, minmax(120px, 1fr)) minmax(110px, 0.8fr);
+}
+
+.admin-snapshot-row small {
+  color: #777;
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 
 .recent-users-table .table-head {
   background: #fff;
@@ -3593,8 +3604,8 @@ a {
   .community-actions summary { min-height: 44px; min-width: 44px; }
   .community-actions .community-delete-button { min-height: 44px !important; min-width: 44px !important; right: 0; top: 48px; }
   .analytics-posts { overflow: visible; }
-  .analytics-posts .table-head { display: none; }
-  .table-row.analytics-post-row, .table-row.analytics-day-row, .table-row.posts-group-row, .table-row.payment-history-row, .table-row.admin-payment-row, .table-row.admin-recent-users-row, .table-row.admin-active-users-row, .table-row.compare-row { border: 1px solid #e5e9e6; border-radius: 8px; display: grid; gap: 9px; grid-template-columns: 1fr; margin-bottom: 10px; min-width: 0; padding: 13px; }
+  .analytics-posts .table-row.table-head { display: none; }
+  .table-row.analytics-post-row, .table-row.analytics-day-row, .table-row.posts-group-row, .table-row.payment-history-row, .table-row.admin-payment-row, .table-row.admin-snapshot-row, .table-row.admin-recent-users-row, .table-row.admin-active-users-row, .table-row.compare-row { border: 1px solid #e5e9e6; border-radius: 8px; display: grid; gap: 9px; grid-template-columns: 1fr; margin-bottom: 10px; min-width: 0; padding: 13px; }
   .analytics-posts .table-row > span { align-items: start; display: grid; gap: 7px; grid-template-columns: minmax(92px, .7fr) minmax(0, 1.3fr); min-width: 0; }
   .analytics-posts .table-row > span::before { color: #7b8780; content: attr(data-label); font-size: 10px; font-weight: 700; text-transform: uppercase; }
   .analytics-posts .posts-group-row > span:nth-child(1)::before { content: 'Источник'; }

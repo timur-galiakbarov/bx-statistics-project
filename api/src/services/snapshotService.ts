@@ -3,18 +3,19 @@ import { env } from '../config/env.js';
 import { ChannelSnapshotModel } from '../models/ChannelSnapshot.js';
 import { PostSnapshotModel } from '../models/PostSnapshot.js';
 import { SavedGroupModel } from '../models/SavedGroup.js';
+import { SnapshotDayModel } from '../models/SnapshotDay.js';
 import { SnapshotSourceModel } from '../models/SnapshotSource.js';
 import { UserModel } from '../models/User.js';
 import { VkTokenModel } from '../models/VkToken.js';
 import { redis } from './redis.js';
 import { buildSubscriberHistory, chainedMedians, hoursSince, snapshotDateKey, snapshotGrowthForPeriod, VIEW_MILESTONE_HOURS, viewsAtHour, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
 import { getTelegramChannelSnapshot, TelegramApiError } from './telegramClient.js';
-import { vkApiRequest } from './vkClient.js';
+import { VkApiError, vkApiRequest } from './vkClient.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
 
 export type SnapshotPlatform = 'vk' | 'youtube' | 'telegram';
 
-type PlatformResult = { pending: number; saved: number; failed: number; stoppedReason?: string };
+type PlatformResult = { pending: number; saved: number; failed: number; postsFailed?: number; stoppedReason?: string };
 
 export type SnapshotPassResult = {
   date: string;
@@ -37,6 +38,8 @@ const VK_GROUPS_PER_REQUEST = 400;
 const VK_WALL_PAGE_SIZE = 100;
 // VK allows 3 requests per second per user token.
 const VK_REQUEST_DELAY_MS = 350;
+// Wall errors that will not go away today: access denied, deleted or banned community, private wall.
+const VK_WALL_PERMANENT_CODES = new Set([7, 15, 18, 30]);
 
 type VkWallSnapshotResponse = {
   items: Array<{
@@ -90,7 +93,7 @@ async function saveChannelSnapshot(
   platform: SnapshotPlatform,
   externalId: string,
   date: string,
-  data: { title?: string; subscribers: number | null; totalViews?: number; videoCount?: number }
+  data: { title?: string; subscribers: number | null; totalViews?: number; videoCount?: number; postsCollected?: boolean; postsAttempts?: number }
 ) {
   await ChannelSnapshotModel.updateOne({ platform, externalId, date }, { $set: data }, { upsert: true });
 }
@@ -124,9 +127,21 @@ async function findVkAccessToken() {
   return anyToken?.accessToken;
 }
 
-async function snapshotVk(ids: string[], date: string, now: Date): Promise<PlatformResult> {
-  const result: PlatformResult = { ...emptyResult(), pending: ids.length };
-  if (!ids.length) return result;
+/** VK sources of the day whose subscribers are saved but posts are not yet, with attempts left. */
+async function vkPostsPending(sourceIds: Set<string>, date: string) {
+  const ids: string[] = await ChannelSnapshotModel.distinct('externalId', {
+    platform: 'vk',
+    date,
+    postsCollected: false,
+    postsAttempts: { $lt: env.snapshotPostMaxAttempts }
+  });
+  return ids.filter((id) => sourceIds.has(id));
+}
+
+async function snapshotVk(ids: string[], sourceIds: Set<string>, date: string, now: Date): Promise<PlatformResult> {
+  const result: PlatformResult = { ...emptyResult(), pending: ids.length, postsFailed: 0 };
+  const postsPending = await vkPostsPending(sourceIds, date);
+  if (!ids.length && !postsPending.length) return result;
   const accessToken = await findVkAccessToken();
   if (!accessToken) return { ...result, stoppedReason: 'VK_TOKEN_REQUIRED' };
 
@@ -138,7 +153,12 @@ async function snapshotVk(ids: string[], date: string, now: Date): Promise<Platf
         fields: 'members_count'
       });
       for (const group of groups) {
-        await saveChannelSnapshot('vk', String(group.id), date, { title: group.name, subscribers: group.members_count ?? null });
+        await saveChannelSnapshot('vk', String(group.id), date, {
+          title: group.name,
+          subscribers: group.members_count ?? null,
+          postsCollected: false,
+          postsAttempts: 0
+        });
         result.saved += 1;
       }
       result.failed += batch.length - groups.length;
@@ -148,9 +168,10 @@ async function snapshotVk(ids: string[], date: string, now: Date): Promise<Platf
     }
   }
 
-  // Post counters for the views curve. A closed or deleted wall must not break the subscriber snapshot above.
+  // Post counters for the views curve, in a separate step: a failed wall request is retried by later
+  // passes of the day without taking the subscriber snapshot again.
   const unixFrom = Math.floor(now.getTime() / 1000) - env.snapshotPostWindowDays * 86_400;
-  for (const id of ids) {
+  for (const id of await vkPostsPending(sourceIds, date)) {
     await sleep(VK_REQUEST_DELAY_MS);
     try {
       const wall = await vkApiRequest<VkWallSnapshotResponse>('wall.get', accessToken, { owner_id: -Number(id), count: VK_WALL_PAGE_SIZE });
@@ -164,8 +185,18 @@ async function snapshotVk(ids: string[], date: string, now: Date): Promise<Platf
           comments: post.comments?.count ?? null,
           forwards: post.reposts?.count ?? null
         })), now);
+      await ChannelSnapshotModel.updateOne({ platform: 'vk', externalId: id, date }, { $set: { postsCollected: true }, $inc: { postsAttempts: 1 } });
     } catch (error) {
-      console.error(`VK wall snapshot failed for ${id}`, error);
+      // A closed or deleted wall has no posts to collect: retrying it all day is pointless.
+      const permanent = error instanceof VkApiError && VK_WALL_PERMANENT_CODES.has(error.vkCode ?? -1);
+      if (!permanent) {
+        console.error(`VK wall snapshot failed for ${id}`, error);
+        result.postsFailed! += 1;
+      }
+      await ChannelSnapshotModel.updateOne(
+        { platform: 'vk', externalId: id, date },
+        permanent ? { $set: { postsCollected: true }, $inc: { postsAttempts: 1 } } : { $inc: { postsAttempts: 1 } }
+      );
     }
   }
   return result;
@@ -247,12 +278,61 @@ export async function runSnapshotPass(now = new Date()): Promise<SnapshotPassRes
     pendingIds('telegram', sources.telegram, date)
   ]);
 
-  return {
+  const result: SnapshotPassResult = {
     date,
-    vk: await snapshotVk(vkPending, date, now),
+    vk: await snapshotVk(vkPending, sources.vk, date, now),
     youtube: await snapshotYoutube(youtubePending, date, now),
     telegram: await snapshotTelegram(telegramPending, date, now)
   };
+  await saveCoverage(result, sources).catch((error) => console.error('Failed to save snapshot coverage', error));
+  return result;
+}
+
+/** Records how many of today's sources are already snapshotted, so gaps show up before the day is over. */
+async function saveCoverage(result: SnapshotPassResult, sources: Record<SnapshotPlatform, Set<string>>) {
+  const { date } = result;
+  const coverage = async (platform: SnapshotPlatform) => {
+    const done: string[] = await ChannelSnapshotModel.distinct('externalId', { platform, date });
+    const postsPending: string[] = platform === 'vk'
+      ? await ChannelSnapshotModel.distinct('externalId', { platform, date, postsCollected: false })
+      : [];
+    return {
+      sources: sources[platform].size,
+      collected: done.filter((id) => sources[platform].has(id)).length,
+      postsPending: postsPending.filter((id) => sources[platform].has(id)).length,
+      stoppedReason: result[platform].stoppedReason ?? null
+    };
+  };
+  const [vk, youtube, telegram] = await Promise.all([coverage('vk'), coverage('youtube'), coverage('telegram')]);
+  await SnapshotDayModel.updateOne({ date }, { $set: { lastPassAt: new Date(), vk, youtube, telegram } }, { upsert: true });
+}
+
+/**
+ * Coverage of the last `days` snapshot days, newest first. Days before coverage records existed are
+ * counted from the snapshots themselves (expected sources unknown); a day without snapshots comes back as null.
+ */
+export async function getSnapshotCoverage(days: number) {
+  const dates = Array.from({ length: days }, (_, index) => snapshotDateKey(new Date(Date.now() - index * 86_400_000)));
+  const records = await SnapshotDayModel.find({ date: { $gte: dates.at(-1)! } }, { _id: 0, __v: 0, createdAt: 0, updatedAt: 0 }).lean();
+  const byDate = new Map(records.map((record) => [record.date, record]));
+  const missing = dates.filter((date) => !byDate.has(date));
+  const counted = missing.length
+    ? await ChannelSnapshotModel.aggregate<{ _id: { date: string; platform: SnapshotPlatform }; count: number }>([
+      { $match: { date: { $in: missing } } },
+      { $group: { _id: { date: '$date', platform: '$platform' }, count: { $sum: 1 } } }
+    ])
+    : [];
+  const countOf = (date: string, platform: SnapshotPlatform) => {
+    const count = counted.find((item) => item._id.date === date && item._id.platform === platform)?.count;
+    return count ? { sources: null, collected: count, postsPending: 0, stoppedReason: null } : null;
+  };
+  return dates.map((date) => byDate.get(date) ?? {
+    date,
+    lastPassAt: null,
+    vk: countOf(date, 'vk'),
+    youtube: countOf(date, 'youtube'),
+    telegram: countOf(date, 'telegram')
+  });
 }
 
 const RUN_LOCK_KEY = 'socstat:snapshots:run-lock';
@@ -275,7 +355,7 @@ async function tick() {
   running = true;
   try {
     const result = await runSnapshotPass();
-    const touched = (['vk', 'youtube', 'telegram'] as const).some((platform) => result[platform].pending > 0);
+    const touched = (['vk', 'youtube', 'telegram'] as const).some((platform) => result[platform].pending > 0) || Boolean(result.vk.postsFailed);
     if (touched) console.log('Snapshot pass finished', JSON.stringify(result));
   } catch (error) {
     console.error('Snapshot pass failed', error);

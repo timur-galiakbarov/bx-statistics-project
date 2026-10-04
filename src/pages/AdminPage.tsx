@@ -9,6 +9,8 @@ import type {
   AdminTodayActivitySummary,
   AdminUserAccessResult,
   RecentAdminUser,
+  SnapshotDayCoverage,
+  SnapshotPlatformCoverage,
   User,
   VkAppInfo,
   VkManualStatsResult,
@@ -50,6 +52,30 @@ const dateTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
   timeZone: 'UTC'
 });
 
+const snapshotPlatforms = [
+  { key: 'vk', label: 'ВКонтакте' },
+  { key: 'youtube', label: 'YouTube' },
+  { key: 'telegram', label: 'Telegram' }
+] as const;
+
+const snapshotStopReasons: Record<string, string> = {
+  VK_TOKEN_REQUIRED: 'нет VK-токена',
+  YOUTUBE_API_KEY_REQUIRED: 'нет ключа YouTube API',
+  TELEGRAM_RATE_LIMITED: 'лимит Telegram',
+  TELEGRAM_NOT_CONFIGURED: 'Telegram не настроен',
+  TELEGRAM_SESSION_INVALID: 'сессия Telegram недействительна'
+};
+
+const snapshotDayFormatter = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', weekday: 'short', timeZone: 'UTC' });
+const snapshotTimeFormatter = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
+
+function getSnapshotCoverageStatus(coverage: SnapshotPlatformCoverage | null): 'paid' | 'pending' | 'failed' | null {
+  if (!coverage) return 'failed';
+  if (coverage.sources === null || coverage.sources === 0) return null;
+  if (coverage.stoppedReason || coverage.collected === 0) return 'failed';
+  return coverage.collected < coverage.sources || coverage.postsPending > 0 ? 'pending' : 'paid';
+}
+
 function formatAdminDate(value: string) {
   return dateFormatter.format(new Date(value));
 }
@@ -71,6 +97,9 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [payments, setPayments] = useState<AdminPaymentHistoryItem[]>([]);
   const [paymentsMonthlySummary, setPaymentsMonthlySummary] = useState<AdminPaymentsMonthlySummary | null>(null);
   const [todayActivity, setTodayActivity] = useState<AdminTodayActivitySummary | null>(null);
+  const [snapshotCoverage, setSnapshotCoverage] = useState<SnapshotDayCoverage[]>([]);
+  const [snapshotCoverageError, setSnapshotCoverageError] = useState<string | null>(null);
+  const [isSnapshotCoverageLoading, setIsSnapshotCoverageLoading] = useState(false);
   const [activeUsers, setActiveUsers] = useState<AdminActiveUsers | null>(null);
   const [activeUsersFilter, setActiveUsersFilter] = useState<ActiveUsersFilter>('all');
   const [recentUsers, setRecentUsers] = useState<RecentAdminUser[]>([]);
@@ -316,6 +345,20 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     }
   };
 
+  const loadSnapshotCoverage = async () => {
+    setIsSnapshotCoverageLoading(true);
+    setSnapshotCoverageError(null);
+
+    try {
+      setSnapshotCoverage(await apiGet<SnapshotDayCoverage[]>('/api/snapshots/coverage?days=14'));
+    } catch (nextError) {
+      setSnapshotCoverage([]);
+      setSnapshotCoverageError(nextError instanceof Error ? nextError.message : 'Не удалось загрузить сбор данных');
+    } finally {
+      setIsSnapshotCoverageLoading(false);
+    }
+  };
+
   const loadRecentUsers = async () => {
     setIsRecentUsersLoading(true);
     setRecentUsersError(null);
@@ -458,6 +501,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     loadPayments();
     loadPaymentsMonthlySummary();
     loadTodayActivity();
+    loadSnapshotCoverage();
     loadActiveUsers();
     loadRecentUsers();
   }, []);
@@ -492,6 +536,51 @@ export function AdminPage({ user, onAccountChanged }: Props) {
       )}
 
       {adminSection === 'statistics' && <>
+      <div className="panel span-2">
+        <div className="panel-header compact">
+          <div>
+            <h2>Ночной сбор данных</h2>
+            <p>Снято источников из ожидаемых за последние 14 дней. Пропущенный день потом не восстановить: недостающее можно дособрать только до полуночи по Москве.</p>
+          </div>
+          <button className="secondary-button inline" type="button" onClick={loadSnapshotCoverage} disabled={isSnapshotCoverageLoading}>
+            <RefreshCw className={isSnapshotCoverageLoading ? 'spin' : undefined} size={18} />
+            Обновить
+          </button>
+        </div>
+        {snapshotCoverageError && <div className="debug-error">{snapshotCoverageError}</div>}
+        {snapshotCoverage.length > 0 && (
+          <div className="table analytics-posts">
+            <div className="table-row table-head admin-snapshot-row">
+              <span>Дата</span>
+              {snapshotPlatforms.map((platform) => <span key={platform.key}>{platform.label}</span>)}
+              <span>Последний проход</span>
+            </div>
+            {snapshotCoverage.map((day, index) => (
+              <div className="table-row admin-snapshot-row" key={day.date}>
+                <span data-label="Дата">{snapshotDayFormatter.format(new Date(`${day.date}T00:00:00Z`))}</span>
+                {snapshotPlatforms.map((platform) => {
+                  const coverage = day[platform.key];
+                  // Today's pass may simply not have started yet.
+                  if (!coverage && index === 0) return <span data-label={platform.label} key={platform.key}><small>ещё не запускался</small></span>;
+                  const status = getSnapshotCoverageStatus(coverage);
+                  return (
+                    <span data-label={platform.label} key={platform.key}>
+                      {!coverage && <span className="payment-status failed">не собрано</span>}
+                      {coverage?.sources === 0 && <small>нет источников</small>}
+                      {coverage?.sources === null && <>{coverage.collected}<small>сколько ожидалось, неизвестно</small></>}
+                      {status && coverage?.sources ? <span className={`payment-status ${status}`}>{coverage.collected} из {coverage.sources}</span> : null}
+                      {coverage && coverage.postsPending > 0 && <small>без постов: {coverage.postsPending}</small>}
+                      {coverage?.stoppedReason && <small>{snapshotStopReasons[coverage.stoppedReason] ?? coverage.stoppedReason}</small>}
+                    </span>
+                  );
+                })}
+                <span data-label="Последний проход">{day.lastPassAt ? snapshotTimeFormatter.format(new Date(day.lastPassAt)) : '—'}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="panel admin-summary-panel">
         <div className="panel-header compact">
           <div>

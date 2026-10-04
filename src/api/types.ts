@@ -528,6 +528,22 @@ export type AdminPaymentsMonthlySummary = {
   previous: { count: number; amount: number };
 };
 
+export type SnapshotPlatformCoverage = {
+  /** null for days before coverage records: only the number of snapshots is known. */
+  sources: number | null;
+  collected: number;
+  postsPending: number;
+  stoppedReason: string | null;
+};
+
+export type SnapshotDayCoverage = {
+  date: string;
+  lastPassAt: string | null;
+  vk: SnapshotPlatformCoverage | null;
+  youtube: SnapshotPlatformCoverage | null;
+  telegram: SnapshotPlatformCoverage | null;
+};
+
 export type AdminTodayActivitySummary = {
   total: number;
   new: number;

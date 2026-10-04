@@ -12,7 +12,12 @@ const channelSnapshotSchema = new Schema(
     subscribers: { type: Number, default: null },
     // Только YouTube: накопительные счётчики канала.
     totalViews: { type: Number },
-    videoCount: { type: Number }
+    videoCount: { type: Number },
+    // Только VK: подписчики и посты снимаются разными запросами. false — посты
+    // ещё не собраны, следующий проход повторит wall.get (не больше
+    // SNAPSHOT_POST_MAX_ATTEMPTS раз за день).
+    postsCollected: { type: Boolean },
+    postsAttempts: { type: Number }
   },
   { timestamps: true }
 );

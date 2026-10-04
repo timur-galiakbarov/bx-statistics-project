@@ -1,12 +1,13 @@
 import { Router } from 'express';
-import { requireUser } from '../middleware/auth.js';
-import { getPostViewCurves, getSubscriberHistory, type SnapshotPlatform } from '../services/snapshotService.js';
+import { requireAdmin, requireUser } from '../middleware/auth.js';
+import { getPostViewCurves, getSnapshotCoverage, getSubscriberHistory, type SnapshotPlatform } from '../services/snapshotService.js';
 import { snapshotDateKey, snapshotGrowthForPeriod, telegramUsernameFromSource } from '../services/snapshotUtils.js';
 
 export const snapshotsRouter = Router();
 
 const MAX_HISTORY_DAYS = 365;
 const MAX_POST_CURVE_DAYS = 90;
+const MAX_COVERAGE_DAYS = 90;
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 snapshotsRouter.get('/history', requireUser, async (req, res, next) => {
@@ -52,6 +53,16 @@ snapshotsRouter.get('/posts', requireUser, async (req, res, next) => {
     }
     const days = Math.min(MAX_POST_CURVE_DAYS, Math.max(7, Number(req.query.days) || 30));
     res.json({ success: true, data: await getPostViewCurves(platform, externalId, days) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Покрытие ночных срезов по дням: сколько источников ожидалось и сколько снято.
+snapshotsRouter.get('/coverage', requireUser, requireAdmin, async (req, res, next) => {
+  try {
+    const days = Math.min(MAX_COVERAGE_DAYS, Math.max(1, Number(req.query.days) || 14));
+    res.json({ success: true, data: await getSnapshotCoverage(days) });
   } catch (error) {
     next(error);
   }

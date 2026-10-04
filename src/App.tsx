@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   BarChart3,
   ChevronRight,
   CreditCard,
@@ -195,6 +196,10 @@ export function App() {
               <span>{item.label}</span>
             </NavLink>
           ))}
+          <a className="nav-promo-link" href="/">
+            <ArrowLeft size={18} />
+            <span>На сайт socstat.ru</span>
+          </a>
         </nav>
         {user && <div className="mobile-menu-account">
           <NavLink className="profile-pill" to="/account" onClick={closeMobileMenu}>

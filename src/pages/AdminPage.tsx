@@ -988,7 +988,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
         </div>
       )}
 
-      {adminSection === 'settings' && <>
+      {adminSection === 'system' && <>
       <div className="panel span-2">
         <div className="panel-header compact">
           <div>

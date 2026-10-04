@@ -46,6 +46,7 @@ function TelegramAnalyticsRedirect() {
 export function App() {
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
+  const isSendingGoalsRef = useRef(false);
   const [groups, setGroups] = useState<SavedGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
@@ -89,6 +90,36 @@ export function App() {
       window._tmr?.push({ id: '3798785', type: 'pageView', url: currentUrl });
     }
   }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    // Регистрация и оплата фиксируются на сервере, а в счётчики VK Ads и Метрики уходят отсюда.
+    if (isSendingGoalsRef.current) {
+      return;
+    }
+
+    isSendingGoalsRef.current = true;
+    apiGet<Array<{ id: string; goal: string; value?: number }>>('/api/account/goals')
+      .then((goals) => {
+        if (!goals.length) {
+          return;
+        }
+
+        goals.forEach(({ goal, value }) => {
+          window._tmr?.push({ type: 'reachGoal', id: '3798785', goal, ...(value ? { value } : {}) });
+          window.ym?.(38791285, 'reachGoal', goal, value ? { order_price: value, currency: 'RUB' } : undefined);
+        });
+
+        return apiPost('/api/account/goals/ack', { ids: goals.map(({ id }) => id) });
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        isSendingGoalsRef.current = false;
+      });
+  }, [user]);
 
   useEffect(() => {
     if (!user) {

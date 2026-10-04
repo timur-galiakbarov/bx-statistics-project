@@ -348,6 +348,7 @@ async function confirmPayment(paymentId: string, options: { operationId?: string
   user.activeTo = plan.days
     ? extendActiveToByDays(user.activeTo, plan.days)
     : extendActiveTo(user.activeTo, plan.months ?? 0);
+  user.pendingGoals.push({ goal: 'payment', value: payment.amount });
   payment.status = 'paid';
   payment.providerTransactionId = options.operationId ?? payment.providerTransactionId;
   payment.rawCallbackPayload = options.rawPayload ?? {

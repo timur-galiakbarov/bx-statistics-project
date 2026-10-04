@@ -173,12 +173,85 @@ export async function removeSession(token?: string) {
   await SessionModel.deleteOne({ token });
 }
 
+export type Acquisition = {
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  utmTerm?: string;
+  rbClickId?: string;
+  landingPath?: string;
+  firstVisitAt?: Date;
+};
+
+export type PendingGoal = {
+  id: string;
+  goal: string;
+  value?: number;
+};
+
+const acquisitionCookieFields: Record<string, keyof Acquisition> = {
+  utm_source: 'utmSource',
+  utm_medium: 'utmMedium',
+  utm_campaign: 'utmCampaign',
+  utm_content: 'utmContent',
+  utm_term: 'utmTerm',
+  rb_clickid: 'rbClickId',
+  path: 'landingPath'
+};
+
+// Cookie ставит лендинг при первом заходе с метками: JSON с utm_*, rb_clickid, path и ts.
+export function parseAcquisitionCookie(raw: unknown): Acquisition | undefined {
+  if (typeof raw !== 'string' || !raw) {
+    return undefined;
+  }
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return undefined;
+  }
+
+  const acquisition: Acquisition = {};
+  for (const [cookieKey, field] of Object.entries(acquisitionCookieFields)) {
+    const value = (payload as Record<string, unknown>)[cookieKey];
+    if (typeof value === 'string' && value.trim()) {
+      (acquisition as Record<string, string>)[field] = value.trim().slice(0, 200);
+    }
+  }
+
+  const ts = Number((payload as Record<string, unknown>).ts);
+  if (Number.isFinite(ts) && ts > 0) {
+    acquisition.firstVisitAt = new Date(ts);
+  }
+
+  return Object.keys(acquisition).length ? acquisition : undefined;
+}
+
+export async function getPendingGoals(userId: string): Promise<PendingGoal[]> {
+  const user = await UserModel.findById(userId, { pendingGoals: 1 }).lean();
+  return (user?.pendingGoals ?? []).map((item) => ({
+    id: item._id.toString(),
+    goal: item.goal,
+    value: item.value ?? undefined
+  }));
+}
+
+export async function ackPendingGoals(userId: string, goalIds: string[]) {
+  await UserModel.updateOne({ _id: userId }, { $pull: { pendingGoals: { _id: { $in: goalIds } } } });
+}
+
 export async function upsertVkUser(profile: {
   vkId: string;
   firstName: string;
   lastName: string;
   photo?: string;
-}) {
+}, acquisition?: Acquisition) {
   const fallbackActiveTo = new Date();
   fallbackActiveTo.setDate(fallbackActiveTo.getDate() + 3);
   const trialEndsAt = new Date(fallbackActiveTo);
@@ -197,7 +270,9 @@ export async function upsertVkUser(profile: {
       $setOnInsert: {
         activeTo: fallbackActiveTo,
         trialEndsAt,
-        ...(isAdmin ? {} : { isAdmin: false })
+        ...(isAdmin ? {} : { isAdmin: false }),
+        ...(acquisition ? { acquisition } : {}),
+        pendingGoals: [{ goal: 'registration' }]
       }
     },
     { new: true, upsert: true }

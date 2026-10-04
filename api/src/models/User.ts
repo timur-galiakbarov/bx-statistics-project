@@ -20,7 +20,26 @@ const userSchema = new Schema(
     enforceAccessRestrictions: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date, index: true },
-    lastActivityAt: { type: Date, index: true }
+    lastActivityAt: { type: Date, index: true },
+    // Первое касание до регистрации: UTM-метки и rb_clickid VK Ads из cookie лендинга.
+    acquisition: {
+      utmSource: { type: String },
+      utmMedium: { type: String },
+      utmCampaign: { type: String },
+      utmContent: { type: String },
+      utmTerm: { type: String },
+      rbClickId: { type: String },
+      landingPath: { type: String },
+      firstVisitAt: { type: Date }
+    },
+    // Цели для рекламных счётчиков, которые фронт ещё не отправил (регистрация, оплата).
+    pendingGoals: [
+      {
+        goal: { type: String, required: true },
+        value: { type: Number },
+        createdAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   { timestamps: true }
 );

@@ -5,6 +5,7 @@ import {
   createSession,
   getDemoUser,
   removeSession,
+  parseAcquisitionCookie,
   saveVkToken,
   upsertVkUser
 } from '../repositories/accountRepository.js';
@@ -65,6 +66,8 @@ const sessionCookieOptions = {
   secure: env.nodeEnv === 'production',
   path: '/'
 };
+
+const acquisitionCookie = 'socstat_utm';
 
 export const authRouter = Router();
 
@@ -154,6 +157,7 @@ async function createVkSession(options: {
   userId: number;
   expiresIn?: number;
   scope?: string | number;
+  acquisitionCookie?: unknown;
 }) {
   const vkUser = await fetchVkUser(options.accessToken, options.userId);
   const user = await upsertVkUser({
@@ -161,7 +165,7 @@ async function createVkSession(options: {
     firstName: vkUser.first_name,
     lastName: vkUser.last_name,
     photo: vkUser.photo_200
-  });
+  }, parseAcquisitionCookie(options.acquisitionCookie));
 
   await saveVkToken({
     userId: user.id,
@@ -250,7 +254,8 @@ authRouter.get('/vk/callback', async (req, res, next) => {
       accessToken: tokenPayload.access_token,
       userId: tokenPayload.user_id,
       expiresIn: tokenPayload.expires_in,
-      scope: tokenPayload.scope
+      scope: tokenPayload.scope,
+      acquisitionCookie: req.cookies?.[acquisitionCookie]
     });
 
     res.clearCookie(env.oauthStateCookie, { path: '/' });
@@ -292,7 +297,8 @@ authRouter.post('/vk/implicit-callback', async (req, res, next) => {
       accessToken: body.accessToken,
       userId: body.userId,
       expiresIn: body.expiresIn,
-      scope: body.scope
+      scope: body.scope,
+      acquisitionCookie: req.cookies?.[acquisitionCookie]
     });
 
     res.clearCookie(env.oauthStateCookie, { path: '/' });

@@ -58,6 +58,21 @@
       })(document, window, "tmr-code");
     </script>
     <!-- /Top.Mail.Ru counter -->
+    <script>
+      // Метки рекламного перехода: API привяжет их к пользователю при регистрации.
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'rb_clickid'];
+        var data = { path: window.location.pathname, ts: Date.now() };
+        var hasMarks = false;
+        keys.forEach(function (key) {
+          var value = params.get(key);
+          if (value) { data[key] = value.slice(0, 200); hasMarks = true; }
+        });
+        if (!hasMarks) return;
+        document.cookie = 'socstat_utm=' + encodeURIComponent(JSON.stringify(data)) + '; path=/; max-age=' + 30 * 24 * 3600 + '; samesite=lax';
+      })();
+    </script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",

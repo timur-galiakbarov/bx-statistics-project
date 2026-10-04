@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  ackPendingGoals,
   addGroup,
   getActiveAdminUsers,
   getAdminTodayActivitySummary,
@@ -7,6 +8,7 @@ import {
   getAdminStat,
   getGroups,
   getNews,
+  getPendingGoals,
   reorderGroups,
   removeGroup,
   removeFreeGroups,
@@ -72,6 +74,26 @@ accountRouter.get('/me', requireUser, (req, res) => {
       }
     }
   });
+});
+
+accountRouter.get('/goals', requireUser, async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await getPendingGoals(req.user!.id) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.post('/goals/ack', requireUser, async (req, res, next) => {
+  try {
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.filter((id: unknown): id is string => typeof id === 'string' && /^[a-f0-9]{24}$/.test(id))
+      : [];
+    await ackPendingGoals(req.user!.id, ids);
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
 });
 
 accountRouter.get('/events', requireUser, (req, res) => {

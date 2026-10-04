@@ -44,6 +44,9 @@ export function LoginPage({ onDevLogin }: Props) {
             <VkIcon />
             Войти через VK
           </a>
+          <a className="login-promo-link" href="/">
+            ← Подробнее о сервисе
+          </a>
         </div>
         {import.meta.env.DEV && (
           <div className="login-dev-tools">

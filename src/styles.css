@@ -147,6 +147,17 @@ a {
   width: 26px;
 }
 
+.login-promo-link {
+  color: #687684;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.login-promo-link:hover {
+  color: #07f;
+  text-decoration: underline;
+}
+
 .login-dev-tools {
   bottom: 18px;
   left: 50%;

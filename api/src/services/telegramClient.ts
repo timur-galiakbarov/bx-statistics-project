@@ -1,7 +1,10 @@
+import mongoose from 'mongoose';
 import { Api, TelegramClient } from 'telegram';
+import { returnBigInt } from 'telegram/Helpers.js';
 import { StringSession } from 'telegram/sessions/StringSession.js';
 import { env } from '../config/env.js';
 import { DomainError } from '../errors/domainError.js';
+import { TelegramPeerModel } from '../models/TelegramPeer.js';
 import { getAnalyticsPeriod, getPreviousAnalyticsPeriod, type AnalyticsPeriodRange } from './analyticsUtils.js';
 import { TtlCache } from './ttlCache.js';
 import { getTelegramProxy } from './telegramProxy.js';
@@ -92,20 +95,73 @@ async function getClient() {
   return clientPromise;
 }
 
+/** Whether the channel still owns the username: it may have been renamed and the username taken by another chat. */
+export function channelHasUsername(channel: { username?: string | null; usernames?: Array<{ username: string; active?: boolean }> | null }, username: string) {
+  const wanted = username.toLowerCase();
+  if (channel.username?.toLowerCase() === wanted) return true;
+  return (channel.usernames ?? []).some((item) => item.active !== false && item.username.toLowerCase() === wanted);
+}
+
+// Stored peers are an optimization: without a database connection (smoke scripts) or on DB errors
+// the client falls back to contacts.resolveUsername.
+function peerStoreAvailable() {
+  return mongoose.connection.readyState === 1;
+}
+
+async function rememberPeer(username: string, entity: Api.Channel) {
+  if (!entity.accessHash || !peerStoreAvailable()) return;
+  await TelegramPeerModel.updateOne(
+    { username: username.toLowerCase() },
+    { $set: { channelId: entity.id.toString(), accessHash: entity.accessHash.toString() } },
+    { upsert: true }
+  ).catch((error) => console.error(`Failed to store Telegram peer @${username}`, error));
+}
+
+async function forgetPeer(username: string) {
+  if (!peerStoreAvailable()) return;
+  await TelegramPeerModel.deleteOne({ username: username.toLowerCase() }).catch(() => undefined);
+}
+
+/** Opens a channel by the stored id and access_hash; null when there is no usable record. */
+async function loadStoredChannel(client: TelegramClient, username: string) {
+  if (!peerStoreAvailable()) return null;
+  const peer = await TelegramPeerModel.findOne({ username: username.toLowerCase() }).lean().catch(() => null);
+  if (!peer) return null;
+  try {
+    const full = await client.invoke(new Api.channels.GetFullChannel({
+      channel: new Api.InputChannel({ channelId: returnBigInt(peer.channelId), accessHash: returnBigInt(peer.accessHash) })
+    }));
+    const entity = full.chats.find((chat): chat is Api.Channel => chat instanceof Api.Channel && chat.id.toString() === peer.channelId);
+    if (entity?.broadcast && channelHasUsername(entity, username)) return { entity, full };
+  } catch (error) {
+    // A stale access_hash (other session account) or a channel that went private: resolve it again.
+    const message = error instanceof Error ? error.message : '';
+    if (!/CHANNEL_INVALID|CHANNEL_PRIVATE|CHANNEL_PUBLIC_GROUP_NA/i.test(message)) throw error;
+  }
+  await forgetPeer(username);
+  return null;
+}
+
+async function resolveByUsername(client: TelegramClient, username: string) {
+  const resolved = await client.invoke(new Api.contacts.ResolveUsername({ username }));
+  const entity = resolved.chats.find((chat): chat is Api.Channel =>
+    chat instanceof Api.Channel &&
+    chat.broadcast === true
+  );
+  if (!(resolved.peer instanceof Api.PeerChannel) || !entity) {
+    throw new TelegramApiError('Указанный адрес не является публичным Telegram-каналом.', { status: 400, code: 'TELEGRAM_NOT_A_CHANNEL' });
+  }
+  const full = await client.invoke(new Api.channels.GetFullChannel({ channel: entity }));
+  await rememberPeer(username, entity);
+  return { entity, full };
+}
+
 async function resolveChannelEntity(input: string) {
   const username = normalizeTelegramChannelInput(input);
   try {
     const client = await getClient();
-    const resolved = await client.invoke(new Api.contacts.ResolveUsername({ username }));
-    const entity = resolved.chats.find((chat): chat is Api.Channel =>
-      chat instanceof Api.Channel &&
-      chat.broadcast === true
-    );
-    if (!(resolved.peer instanceof Api.PeerChannel) || !entity) {
-      throw new TelegramApiError('Указанный адрес не является публичным Telegram-каналом.', { status: 400, code: 'TELEGRAM_NOT_A_CHANNEL' });
-    }
+    const { entity, full } = await loadStoredChannel(client, username) ?? await resolveByUsername(client, username);
     channelEntityCache.set(username.toLowerCase(), entity);
-    const full = await client.invoke(new Api.channels.GetFullChannel({ channel: entity }));
     if (!(full.fullChat instanceof Api.ChannelFull)) {
       throw new TelegramApiError('Не удалось получить сведения о Telegram-канале.', { status: 502, code: 'TELEGRAM_API_ERROR' });
     }

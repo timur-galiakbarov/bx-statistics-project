@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { getAnalyticsPeriod } from './analyticsUtils.js';
-import { normalizeTelegramChannelInput, summarizeTelegramAnalytics, summarizeTelegramPosts, type TelegramChannel, type TelegramPost } from './telegramClient.js';
+import { channelHasUsername, normalizeTelegramChannelInput, summarizeTelegramAnalytics, summarizeTelegramPosts, type TelegramChannel, type TelegramPost } from './telegramClient.js';
 
 test('normalizeTelegramChannelInput accepts username and Telegram links', () => {
   assert.equal(normalizeTelegramChannelInput('@durov'), 'durov');
@@ -11,6 +11,13 @@ test('normalizeTelegramChannelInput accepts username and Telegram links', () => 
 
 test('normalizeTelegramChannelInput rejects private invite links', () => {
   assert.throws(() => normalizeTelegramChannelInput('https://t.me/+secret'), /публичный username/);
+});
+
+test('channelHasUsername matches main and active extra usernames case-insensitively', () => {
+  assert.equal(channelHasUsername({ username: 'Durov' }, 'durov'), true);
+  assert.equal(channelHasUsername({ username: null, usernames: [{ username: 'durov', active: true }] }, 'DUROV'), true);
+  assert.equal(channelHasUsername({ username: null, usernames: [{ username: 'durov', active: false }] }, 'durov'), false);
+  assert.equal(channelHasUsername({ username: 'renamed' }, 'durov'), false);
 });
 
 test('summarizeTelegramPosts calculates public channel metrics', () => {

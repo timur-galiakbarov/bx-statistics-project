@@ -6,7 +6,6 @@ import type {
   AdminActiveUsers,
   AdminPaymentHistoryItem,
   AdminPaymentsMonthlySummary,
-  AdminTodayActivitySummary,
   AdminUserAccessResult,
   RecentAdminUser,
   SnapshotDayCoverage,
@@ -18,13 +17,14 @@ import type {
   VkPermissions,
   VkTokenStatus
 } from '../api/types';
+import { AdminActivityStats } from '../components/AdminActivityStats';
 
 type Props = {
   user: User;
   onAccountChanged: () => Promise<void>;
 };
 
-type AdminSection = 'statistics' | 'payments' | 'system' | 'settings';
+type AdminSection = 'activity' | 'statistics' | 'payments' | 'system' | 'settings';
 type ActiveUsersFilter = 'all' | 'paid' | 'withoutPayment';
 
 const paymentStatusOptions = [
@@ -85,7 +85,7 @@ function formatAdminDateTime(value: string) {
 }
 
 export function AdminPage({ user, onAccountChanged }: Props) {
-  const [adminSection, setAdminSection] = useState<AdminSection>('statistics');
+  const [adminSection, setAdminSection] = useState<AdminSection>('activity');
   const [permissions, setPermissions] = useState<VkPermissions | null>(null);
   const [tokenStatus, setTokenStatus] = useState<VkTokenStatus | null>(null);
   const [appInfo, setAppInfo] = useState<VkAppInfo | null>(null);
@@ -96,7 +96,6 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [paymentQuery, setPaymentQuery] = useState('');
   const [payments, setPayments] = useState<AdminPaymentHistoryItem[]>([]);
   const [paymentsMonthlySummary, setPaymentsMonthlySummary] = useState<AdminPaymentsMonthlySummary | null>(null);
-  const [todayActivity, setTodayActivity] = useState<AdminTodayActivitySummary | null>(null);
   const [snapshotCoverage, setSnapshotCoverage] = useState<SnapshotDayCoverage[]>([]);
   const [snapshotCoverageError, setSnapshotCoverageError] = useState<string | null>(null);
   const [isSnapshotCoverageLoading, setIsSnapshotCoverageLoading] = useState(false);
@@ -112,7 +111,6 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [oauthDebugError, setOauthDebugError] = useState<string | null>(null);
   const [paymentsError, setPaymentsError] = useState<string | null>(null);
   const [paymentsMonthlySummaryError, setPaymentsMonthlySummaryError] = useState<string | null>(null);
-  const [todayActivityError, setTodayActivityError] = useState<string | null>(null);
   const [activeUsersError, setActiveUsersError] = useState<string | null>(null);
   const [recentUsersError, setRecentUsersError] = useState<string | null>(null);
   const [manualError, setManualError] = useState<string | null>(null);
@@ -137,7 +135,6 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [isOauthDebugLoading, setIsOauthDebugLoading] = useState(false);
   const [isPaymentsLoading, setIsPaymentsLoading] = useState(false);
   const [isPaymentsMonthlySummaryLoading, setIsPaymentsMonthlySummaryLoading] = useState(false);
-  const [isTodayActivityLoading, setIsTodayActivityLoading] = useState(false);
   const [isActiveUsersLoading, setIsActiveUsersLoading] = useState(false);
   const [isRecentUsersLoading, setIsRecentUsersLoading] = useState(false);
   const [isManualPermissionsLoading, setIsManualPermissionsLoading] = useState(false);
@@ -331,21 +328,6 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     }
   };
 
-  const loadTodayActivity = async () => {
-    setIsTodayActivityLoading(true);
-    setTodayActivityError(null);
-
-    try {
-      const data = await apiGet<AdminTodayActivitySummary>('/api/account/admin/activity/today');
-      setTodayActivity(data);
-    } catch (nextError) {
-      setTodayActivity(null);
-      setTodayActivityError(nextError instanceof Error ? nextError.message : 'Не удалось загрузить активность за сегодня');
-    } finally {
-      setIsTodayActivityLoading(false);
-    }
-  };
-
   const loadSnapshotCoverage = async () => {
     setIsSnapshotCoverageLoading(true);
     setSnapshotCoverageError(null);
@@ -501,7 +483,6 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   useEffect(() => {
     loadPayments();
     loadPaymentsMonthlySummary();
-    loadTodayActivity();
     loadSnapshotCoverage();
     loadActiveUsers();
     loadRecentUsers();
@@ -510,6 +491,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   return (
     <section className="page-grid">
       <div className="admin-tabs span-2" role="tablist" aria-label="Разделы админки">
+        <button aria-selected={adminSection === 'activity'} className={adminSection === 'activity' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('activity')}>Посещаемость</button>
         <button aria-selected={adminSection === 'statistics'} className={adminSection === 'statistics' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('statistics')}>Пользователи</button>
         <button aria-selected={adminSection === 'payments'} className={adminSection === 'payments' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('payments')}>Платежи</button>
         <button aria-selected={adminSection === 'system'} className={adminSection === 'system' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('system')}>Система</button>
@@ -584,29 +566,10 @@ export function AdminPage({ user, onAccountChanged }: Props) {
       </div>
       )}
 
-      {adminSection === 'statistics' && <>
-      <div className="panel admin-summary-panel">
-        <div className="panel-header compact">
-          <div>
-            <h2>Посетители сегодня</h2>
-            <p>По полю «Последняя активность»</p>
-          </div>
-          <button className="secondary-button inline" type="button" onClick={loadTodayActivity} disabled={isTodayActivityLoading}>
-            {isTodayActivityLoading ? <RefreshCw className="spin" size={18} /> : <RefreshCw size={18} />}
-            Обновить
-          </button>
-        </div>
-        {todayActivityError && <div className="debug-error">{todayActivityError}</div>}
-        {todayActivity && (
-          <div className="admin-today-activity">
-            <div><span>Всего</span><strong>{todayActivity.total.toLocaleString('ru-RU')}</strong></div>
-            <div><span>Новые</span><strong>{todayActivity.new.toLocaleString('ru-RU')}</strong></div>
-            <div><span>Вернувшиеся</span><strong>{todayActivity.returning.toLocaleString('ru-RU')}</strong></div>
-          </div>
-        )}
-      </div>
+      {adminSection === 'activity' && <AdminActivityStats />}
 
-      <div className="panel admin-summary-panel">
+      {adminSection === 'statistics' && <>
+      <div className="panel admin-summary-panel span-2">
         <div className="panel-header compact">
           <div>
             <h2>Пользователи с активным доступом</h2>

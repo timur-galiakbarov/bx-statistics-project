@@ -26,6 +26,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { PostsPage } from './pages/PostsPage';
 import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
 import { formatDate } from './utils/date';
+import { startVisitHeartbeat, trackPageView } from './utils/visit';
 
 const navItems = [
   { to: '/dashboard', label: 'Главная', icon: Home },
@@ -90,6 +91,14 @@ export function App() {
       window._tmr?.push({ id: '3798785', type: 'pageView', url: currentUrl });
     }
   }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (user) {
+      trackPageView(location.pathname);
+    }
+  }, [location.pathname, user?.id]);
+
+  useEffect(() => (user ? startVisitHeartbeat() : undefined), [user?.id]);
 
   useEffect(() => {
     if (!user) {

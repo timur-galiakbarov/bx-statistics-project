@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireActiveAccess } from '../middleware/access.js';
 import { requireUser } from '../middleware/auth.js';
 import { resolveYoutubeChannel, searchYoutubeChannels } from '../services/youtubeClient.js';
+import { trackActivity } from '../services/activityTracking.js';
 
 export const youtubeRouter = Router();
 
@@ -9,6 +10,7 @@ youtubeRouter.get('/channels/search', requireUser, requireActiveAccess, async (r
   try {
     const query = typeof req.query.q === 'string' ? req.query.q : '';
     const items = await searchYoutubeChannels(query, req.query.refresh === '1');
+    trackActivity(req, 'source_search', { platform: 'youtube', label: query });
     res.json({ success: true, data: { count: items.length, items } });
   } catch (error) {
     next(error);

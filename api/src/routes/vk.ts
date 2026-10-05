@@ -5,6 +5,7 @@ import { requireUser } from '../middleware/auth.js';
 import { getVkAccessToken, getVkTokenStatus } from '../repositories/accountRepository.js';
 import { VkApiError, vkApiRequest } from '../services/vkClient.js';
 import { buildVkAuthorizeUrl } from './auth.js';
+import { trackActivity } from '../services/activityTracking.js';
 
 export const vkRouter = Router();
 
@@ -291,6 +292,7 @@ vkRouter.get('/groups/search', requireUser, async (req, res, next) => {
       offset: toPositiveInt(req.query.offset, 0, 1000)
     });
 
+    trackActivity(req, 'source_search', { platform: 'vk', label: query });
     res.json({ success: true, data });
   } catch (error) {
     next(error);

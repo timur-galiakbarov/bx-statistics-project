@@ -3,7 +3,6 @@ import {
   ackPendingGoals,
   addGroup,
   getActiveAdminUsers,
-  getAdminTodayActivitySummary,
   getRecentAdminUsers,
   getAdminStat,
   getGroups,
@@ -23,6 +22,8 @@ import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { VkApiError, vkApiRequest } from '../services/vkClient.js';
 import { DomainError } from '../errors/domainError.js';
 import { ComparisonCollectionModel } from '../models/ComparisonCollection.js';
+import { parseVisitId, recordVisitHit, trackActivity } from '../services/activityTracking.js';
+import { getAdminActivityStats } from '../services/activityStatsService.js';
 
 export const accountRouter = Router();
 
@@ -90,6 +91,23 @@ accountRouter.post('/goals/ack', requireUser, async (req, res, next) => {
       ? req.body.ids.filter((id: unknown): id is string => typeof id === 'string' && /^[a-f0-9]{24}$/.test(id))
       : [];
     await ackPendingGoals(req.user!.id, ids);
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.post('/activity', requireUser, async (req, res, next) => {
+  const visitId = parseVisitId(req.body?.visitId);
+  const type = req.body?.type;
+
+  if (!visitId || (type !== 'page_view' && type !== 'heartbeat')) {
+    res.status(400).json({ success: false, error: 'INVALID_ACTIVITY' });
+    return;
+  }
+
+  try {
+    await recordVisitHit({ userId: req.user!.id, visitId, type, path: req.body?.path, userAgent: req.header('user-agent') });
     res.json({ success: true });
   } catch (error) {
     next(error);
@@ -268,6 +286,7 @@ accountRouter.get('/comparison-collections', requireUser, async (req, res, next)
 accountRouter.post('/comparison-collections', requireUser, async (req, res, next) => {
   try {
     const collection = await ComparisonCollectionModel.create({ userId: req.user!.id, ...comparisonCollectionFromBody(req.body) });
+    trackActivity(req, 'collection_saved', { label: collection.purpose ?? 'comparison' });
     res.status(201).json({ success: true, data: comparisonCollectionData(collection) });
   } catch (error) { next(error); }
 });
@@ -299,6 +318,7 @@ accountRouter.post('/groups/free', requireUser, async (req, res, next) => {
       savedSourceFromBody(req.body, 'free'),
       {}
     );
+    trackActivity(req, 'group_added', { platform: group.platform, label: group.name });
 
     res.status(201).json({ success: true, data: group, id: group.id });
   } catch (error) {
@@ -332,6 +352,7 @@ accountRouter.post('/groups/bonus', requireUser, async (req, res, next) => {
       savedSourceFromBody(req.body, 'bonus'),
       { allowBonusGroup: true }
     );
+    trackActivity(req, 'group_added', { platform: group.platform, label: group.name });
 
     res.status(201).json({ success: true, data: group, id: group.id });
   } catch (error) {
@@ -349,6 +370,7 @@ accountRouter.post('/groups', requireUser, async (req, res, next) => {
     }
 
     const group = await addGroup(req.user!.id, savedSourceFromBody(req.body, source));
+    trackActivity(req, 'group_added', { platform: group.platform, label: group.name });
 
     res.status(201).json({ success: true, data: group, id: group.id });
   } catch (error) {
@@ -388,6 +410,7 @@ accountRouter.post('/groups/:source', requireUser, async (req, res, next) => {
 accountRouter.delete('/groups/:groupId', requireUser, async (req, res, next) => {
   try {
     await removeGroup(req.user!.id, req.params.groupId);
+    trackActivity(req, 'group_removed');
     res.json({ success: true });
   } catch (error) {
     next(error);
@@ -407,14 +430,14 @@ accountRouter.get('/admin/stat', requireUser, async (req, res, next) => {
   }
 });
 
-accountRouter.get('/admin/activity/today', requireUser, async (req, res, next) => {
+accountRouter.get('/admin/activity/stats', requireUser, async (req, res, next) => {
   if (!req.user!.isAdmin) {
     res.status(403).json({ success: false, error: 'FORBIDDEN' });
     return;
   }
 
   try {
-    res.json({ success: true, data: await getAdminTodayActivitySummary() });
+    res.json({ success: true, data: await getAdminActivityStats(req.query.days) });
   } catch (error) {
     next(error);
   }

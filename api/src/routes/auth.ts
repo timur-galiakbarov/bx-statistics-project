@@ -9,6 +9,7 @@ import {
   saveVkToken,
   upsertVkUser
 } from '../repositories/accountRepository.js';
+import { trackActivity } from '../services/activityTracking.js';
 
 type VkTokenResponse = {
   access_token: string;
@@ -174,6 +175,7 @@ async function createVkSession(options: {
     expiresIn: options.expiresIn
   });
 
+  trackActivity({ userId: user.id }, 'login');
   return createSession(user.id);
 }
 

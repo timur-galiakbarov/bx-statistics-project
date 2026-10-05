@@ -6,6 +6,7 @@ import { requireUser } from '../middleware/auth.js';
 import { PaymentModel } from '../models/Payment.js';
 import { UserModel } from '../models/User.js';
 import { publishAccountUpdated } from '../services/accountEvents.js';
+import { trackActivity } from '../services/activityTracking.js';
 
 export const paymentsRouter = Router();
 
@@ -620,6 +621,7 @@ paymentsRouter.post('/create', requireUser, async (req, res, next) => {
       period: plan.title,
       status: 'pending'
     });
+    trackActivity(req, 'payment_started', { label: `${plan.title} · ${plan.priceRub} ₽` });
     res.status(201).json({
       success: true,
       data: {

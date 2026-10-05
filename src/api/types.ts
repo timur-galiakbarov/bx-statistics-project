@@ -544,10 +544,70 @@ export type SnapshotDayCoverage = {
   telegram: SnapshotPlatformCoverage | null;
 };
 
-export type AdminTodayActivitySummary = {
-  total: number;
-  new: number;
-  returning: number;
+export type AdminActivitySummary = {
+  users: number;
+  newUsers: number;
+  returningUsers: number;
+  visits: number;
+  pageViews: number;
+  bounceRate: number | null;
+  avgVisitSeconds: number | null;
+  pagesPerVisit: number | null;
+  actions: number;
+  groupsAdded: number;
+  usersAddedGroups: number;
+  payments: number;
+  revenue: number;
+};
+
+export type AdminActivityDay = {
+  date: string;
+  users: number;
+  newUsers: number;
+  visits: number;
+  bounces: number;
+  groupsAdded: number;
+  payments: number;
+  revenue: number;
+};
+
+export type AdminActivityFeedItem = {
+  id: string;
+  at: string;
+  userId: string;
+  userName: string;
+  type: string;
+  platform?: string;
+  label?: string;
+  amount?: number;
+};
+
+export type AdminActivityStats = {
+  days: number;
+  trackingSince: string | null;
+  periods: Record<'today' | 'yesterday' | 'week' | 'previousWeek' | 'month', AdminActivitySummary>;
+  daily: AdminActivityDay[];
+  engagement: {
+    avgDau7: number;
+    mau: number;
+    stickiness: number | null;
+    avgActiveDays30: number | null;
+    visitsPerUser30: number | null;
+    returnRate: number | null;
+    returnCohort: number;
+  };
+  funnel: { registered: number; addedGroup: number; usedAnalytics: number; returned: number; paid: number };
+  acquisition: Array<{ source: string; campaign: string; registrations: number; addedGroup: number; paid: number }>;
+  groups: {
+    byPlatform: Array<{ key: string; count: number }>;
+    bySource: Array<{ key: string; count: number }>;
+    top: Array<{ name: string; platform: string; users: number }>;
+  };
+  pages: Array<{ path: string; visits: number; users: number; entries: number }>;
+  actions: Array<{ type: string; count: number; users: number }>;
+  devices: Array<{ key: string; visits: number }>;
+  hours: number[];
+  feed: AdminActivityFeedItem[];
 };
 
 export type AdminUserAccessResult = {

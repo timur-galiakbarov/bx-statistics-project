@@ -21,7 +21,8 @@ const userSchema = new Schema(
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date, index: true },
     lastActivityAt: { type: Date, index: true },
-    // Первое касание до регистрации: UTM-метки и rb_clickid VK Ads из cookie лендинга.
+    // Первое касание до регистрации: UTM-метки, rb_clickid VK Ads, yclid Директа
+    // или внешний referrer из cookie лендинга.
     acquisition: {
       utmSource: { type: String },
       utmMedium: { type: String },
@@ -29,6 +30,8 @@ const userSchema = new Schema(
       utmContent: { type: String },
       utmTerm: { type: String },
       rbClickId: { type: String },
+      yclid: { type: String },
+      referrer: { type: String },
       landingPath: { type: String },
       firstVisitAt: { type: Date }
     },

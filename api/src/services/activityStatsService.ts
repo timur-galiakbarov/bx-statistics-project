@@ -4,6 +4,7 @@ import { PaymentModel } from '../models/Payment.js';
 import { SavedGroupModel } from '../models/SavedGroup.js';
 import { UserModel } from '../models/User.js';
 import { VisitModel } from '../models/Visit.js';
+import type { Acquisition } from '../repositories/accountRepository.js';
 
 // Москва живёт в UTC+3 без перехода на летнее время, поэтому хватает фиксированного сдвига.
 const MSK_OFFSET_MS = 3 * 3_600_000;
@@ -111,6 +112,14 @@ export function isBounce(visit: Pick<VisitRow, 'pageViews' | 'actions' | 'starte
     && visit.lastSeenAt.getTime() - visit.startedAt.getTime() < BOUNCE_MAX_MS;
 }
 
+// Источник регистрации: UTM, иначе клик-ID рекламной сети, иначе домен referrer.
+function acquisitionSource(acquisition?: Acquisition) {
+  if (acquisition?.utmSource) return acquisition.utmSource;
+  if (acquisition?.rbClickId) return 'vk_ads';
+  if (acquisition?.yclid) return 'yandex_direct';
+  return acquisition?.referrer;
+}
+
 function ratio(numerator: number, denominator: number) {
   return denominator > 0 ? numerator / denominator : null;
 }
@@ -153,7 +162,7 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
         _id: Types.ObjectId;
         createdAt: Date;
         lastActivityAt?: Date;
-        acquisition?: { utmSource?: string; utmCampaign?: string; rbClickId?: string };
+        acquisition?: Acquisition;
       }>>(),
     SavedGroupModel.find({ createdAt: { $gte: windowStart }, userId: notAdmin })
       .select({ userId: 1, platform: 1, source: 1, name: 1, externalId: 1, vkGroupId: 1, createdAt: 1 })
@@ -173,7 +182,7 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
     ActivityEventModel.find({ userId: notAdmin }).sort({ createdAt: -1 }).limit(FEED_LIMIT).lean<EventRow[]>(),
     UserModel.find({ isAdmin: { $ne: true } }).sort({ createdAt: -1 }).limit(20)
       .select({ createdAt: 1, acquisition: 1 })
-      .lean<Array<{ _id: Types.ObjectId; createdAt: Date; acquisition?: { utmSource?: string } }>>(),
+      .lean<Array<{ _id: Types.ObjectId; createdAt: Date; acquisition?: Acquisition }>>(),
     PaymentModel.find({ status: 'paid', amount: { $gt: 0 }, paidAt: { $exists: true }, userId: notAdmin })
       .sort({ paidAt: -1 }).limit(20)
       .select({ userId: 1, amount: 1, period: 1, paidAt: 1 })
@@ -285,7 +294,7 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
 
   const acquisitionRows = new Map<string, { source: string; campaign: string; registrations: number; addedGroup: number; paid: number }>();
   for (const user of cohort) {
-    const source = user.acquisition?.utmSource ?? (user.acquisition?.rbClickId ? 'vk_ads' : 'без меток');
+    const source = acquisitionSource(user.acquisition) ?? 'без меток';
     const campaign = user.acquisition?.utmCampaign ?? '';
     const key = `${source}\u0000${campaign}`;
     const row = acquisitionRows.get(key) ?? { source, campaign, registrations: 0, addedGroup: 0, paid: 0 };
@@ -362,7 +371,7 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
       userId: user._id.toString(),
       userName: nameOf(user._id.toString()),
       type: 'registration' as const,
-      label: user.acquisition?.utmSource
+      label: acquisitionSource(user.acquisition)
     })),
     ...feedPayments.map((payment) => ({
       id: `payment:${payment._id.toString()}`,

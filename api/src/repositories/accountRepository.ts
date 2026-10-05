@@ -180,6 +180,8 @@ export type Acquisition = {
   utmContent?: string;
   utmTerm?: string;
   rbClickId?: string;
+  yclid?: string;
+  referrer?: string;
   landingPath?: string;
   firstVisitAt?: Date;
 };
@@ -197,10 +199,12 @@ const acquisitionCookieFields: Record<string, keyof Acquisition> = {
   utm_content: 'utmContent',
   utm_term: 'utmTerm',
   rb_clickid: 'rbClickId',
+  yclid: 'yclid',
+  referrer: 'referrer',
   path: 'landingPath'
 };
 
-// Cookie ставит лендинг при первом заходе с метками: JSON с utm_*, rb_clickid, path и ts.
+// Cookie ставит лендинг при первом заходе с метками: JSON с utm_*, rb_clickid, yclid, referrer, path и ts.
 export function parseAcquisitionCookie(raw: unknown): Acquisition | undefined {
   if (typeof raw !== 'string' || !raw) {
     return undefined;

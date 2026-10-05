@@ -9,7 +9,9 @@ export const activityEventTypes = [
   'compare_run',
   'posts_analyze',
   'collection_saved',
-  'payment_started'
+  'payment_started',
+  // Уже зарегистрированный пользователь пришёл с рекламными метками.
+  'ad_return'
 ] as const;
 
 export type ActivityEventType = (typeof activityEventTypes)[number];

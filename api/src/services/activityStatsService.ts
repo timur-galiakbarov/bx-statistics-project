@@ -4,7 +4,7 @@ import { PaymentModel } from '../models/Payment.js';
 import { SavedGroupModel } from '../models/SavedGroup.js';
 import { UserModel } from '../models/User.js';
 import { VisitModel } from '../models/Visit.js';
-import type { Acquisition } from '../repositories/accountRepository.js';
+import { acquisitionSource, type Acquisition } from '../repositories/accountRepository.js';
 
 // Москва живёт в UTC+3 без перехода на летнее время, поэтому хватает фиксированного сдвига.
 const MSK_OFFSET_MS = 3 * 3_600_000;
@@ -72,6 +72,7 @@ export type AdminActivityStats = {
   };
   funnel: { registered: number; addedGroup: number; usedAnalytics: number; returned: number; paid: number };
   acquisition: Array<{ source: string; campaign: string; registrations: number; addedGroup: number; paid: number }>;
+  adReturns: Array<{ label: string; users: number; paid: number; revenue: number }>;
   groups: {
     byPlatform: Array<{ key: string; count: number }>;
     bySource: Array<{ key: string; count: number }>;
@@ -110,14 +111,6 @@ export function isBounce(visit: Pick<VisitRow, 'pageViews' | 'actions' | 'starte
   return (visit.pageViews ?? 0) <= 1
     && (visit.actions ?? 0) === 0
     && visit.lastSeenAt.getTime() - visit.startedAt.getTime() < BOUNCE_MAX_MS;
-}
-
-// Источник регистрации: UTM, иначе клик-ID рекламной сети, иначе домен referrer.
-function acquisitionSource(acquisition?: Acquisition) {
-  if (acquisition?.utmSource) return acquisition.utmSource;
-  if (acquisition?.rbClickId) return 'vk_ads';
-  if (acquisition?.yclid) return 'yandex_direct';
-  return acquisition?.referrer;
 }
 
 function ratio(numerator: number, denominator: number) {
@@ -309,6 +302,26 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
   const rangeGroups = groups.filter((group) => group.createdAt >= rangeStart);
   const rangeEvents = events.filter((event) => event.createdAt >= rangeStart);
 
+  // Возвраты по рекламе: первый возврат пользователя за период и оплаты в 30 дней после него.
+  const firstReturns = new Map<string, { label: string; at: Date }>();
+  for (const event of rangeEvents) {
+    if (event.type !== 'ad_return') continue;
+    const id = event.userId.toString();
+    const current = firstReturns.get(id);
+    if (!current || event.createdAt < current.at) firstReturns.set(id, { label: event.label ?? 'без меток', at: event.createdAt });
+  }
+  const adReturnRows = new Map<string, { label: string; users: number; paid: number; revenue: number }>();
+  for (const [userId, touch] of firstReturns) {
+    const row = adReturnRows.get(touch.label) ?? { label: touch.label, users: 0, paid: 0, revenue: 0 };
+    const paidAfter = payments.filter((payment) => payment.userId.toString() === userId
+      && payment.paidAt >= touch.at
+      && payment.paidAt.getTime() - touch.at.getTime() <= 30 * DAY_MS);
+    row.users += 1;
+    if (paidAfter.length) row.paid += 1;
+    row.revenue += paidAfter.reduce((total, payment) => total + payment.amount, 0);
+    adReturnRows.set(touch.label, row);
+  }
+
   const pages = new Map<string, { visits: number; users: Set<string>; entries: number }>();
   for (const visit of rangeVisits) {
     for (const path of new Set(visit.paths ?? [])) {
@@ -408,6 +421,7 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
       paid: cohort.filter((user) => paidSet.has(user._id.toString())).length
     },
     acquisition: [...acquisitionRows.values()].sort((a, b) => b.registrations - a.registrations).slice(0, 15),
+    adReturns: [...adReturnRows.values()].sort((a, b) => b.users - a.users).slice(0, 15),
     groups: {
       byPlatform: countBy(rangeGroups, (group) => group.platform ?? 'vk'),
       bySource: countBy(rangeGroups, (group) => group.source),

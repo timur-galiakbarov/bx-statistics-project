@@ -2,10 +2,13 @@ import { randomBytes } from 'node:crypto';
 import { Router } from 'express';
 import { env } from '../config/env.js';
 import {
+  acquisitionCookieName,
   createSession,
+  hasAdMarks,
   getDemoUser,
   removeSession,
   parseAcquisitionCookie,
+  recordAdReturn,
   saveVkToken,
   upsertVkUser
 } from '../repositories/accountRepository.js';
@@ -68,7 +71,7 @@ const sessionCookieOptions = {
   path: '/'
 };
 
-const acquisitionCookie = 'socstat_utm';
+const acquisitionCookie = acquisitionCookieName;
 
 export const authRouter = Router();
 
@@ -161,12 +164,18 @@ async function createVkSession(options: {
   acquisitionCookie?: unknown;
 }) {
   const vkUser = await fetchVkUser(options.accessToken, options.userId);
-  const user = await upsertVkUser({
+  const acquisition = parseAcquisitionCookie(options.acquisitionCookie);
+  const { user, isNew } = await upsertVkUser({
     vkId: String(vkUser.id),
     firstName: vkUser.first_name,
     lastName: vkUser.last_name,
     photo: vkUser.photo_200
-  }, parseAcquisitionCookie(options.acquisitionCookie));
+  }, acquisition);
+
+  // Новому пользователю метки уже записаны как первое касание, старому — как возврат.
+  if (!isNew && acquisition && hasAdMarks(acquisition)) {
+    void recordAdReturn(user.id, acquisition).catch((error) => console.error('Failed to record ad return', error));
+  }
 
   await saveVkToken({
     userId: user.id,
@@ -261,6 +270,7 @@ authRouter.get('/vk/callback', async (req, res, next) => {
     });
 
     res.clearCookie(env.oauthStateCookie, { path: '/' });
+    res.clearCookie(acquisitionCookie, { path: '/' });
     res.cookie(env.sessionCookie, session.token, {
       ...sessionCookieOptions,
       expires: session.expiresAt
@@ -304,6 +314,7 @@ authRouter.post('/vk/implicit-callback', async (req, res, next) => {
     });
 
     res.clearCookie(env.oauthStateCookie, { path: '/' });
+    res.clearCookie(acquisitionCookie, { path: '/' });
     res.cookie(env.sessionCookie, session.token, {
       ...sessionCookieOptions,
       expires: session.expiresAt

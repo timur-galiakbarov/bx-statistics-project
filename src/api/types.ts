@@ -598,6 +598,7 @@ export type AdminActivityStats = {
   };
   funnel: { registered: number; addedGroup: number; usedAnalytics: number; returned: number; paid: number };
   acquisition: Array<{ source: string; campaign: string; registrations: number; addedGroup: number; paid: number }>;
+  adReturns: Array<{ label: string; users: number; paid: number; revenue: number }>;
   groups: {
     byPlatform: Array<{ key: string; count: number }>;
     bySource: Array<{ key: string; count: number }>;

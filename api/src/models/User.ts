@@ -35,6 +35,20 @@ const userSchema = new Schema(
       landingPath: { type: String },
       firstVisitAt: { type: Date }
     },
+    // Последнее рекламное касание уже зарегистрированного пользователя.
+    lastAcquisition: {
+      utmSource: { type: String },
+      utmMedium: { type: String },
+      utmCampaign: { type: String },
+      utmContent: { type: String },
+      utmTerm: { type: String },
+      rbClickId: { type: String },
+      yclid: { type: String },
+      referrer: { type: String },
+      landingPath: { type: String },
+      firstVisitAt: { type: Date },
+      at: { type: Date }
+    },
     // Цели для рекламных счётчиков, которые фронт ещё не отправил (регистрация, оплата).
     pendingGoals: [
       {

@@ -39,6 +39,7 @@ const actionLabels: Record<string, string> = {
   posts_analyze: 'Анализ публикаций',
   collection_saved: 'Сохранил подборку',
   payment_started: 'Перешёл к оплате',
+  ad_return: 'Вернулся по рекламе',
   payment: 'Оплатил'
 };
 
@@ -420,6 +421,23 @@ export function AdminActivityStats() {
                   <span>{formatNumber(row.registrations)}</span>
                   <span>{formatNumber(row.addedGroup)} <small>{formatShare(row.addedGroup, row.registrations)}</small></span>
                   <span>{formatNumber(row.paid)} <small>{formatShare(row.paid, row.registrations)}</small></span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="panel activity-panel span-2">
+          <div className="panel-header compact"><div><h2>Возвраты по рекламе</h2><p className="activity-note">Уже зарегистрированные пользователи, пришедшие по ссылке с метками, за {stats.days} дней; оплаты — в 30 дней после возврата</p></div></div>
+          {stats.adReturns.length === 0 ? <div className="empty-state">За период возвратов по рекламе не было.</div> : (
+            <div className="activity-mini-table four">
+              <div className="head"><span>Источник / кампания</span><span>Вернулись</span><span>Оплатили</span><span>Выручка</span></div>
+              {stats.adReturns.map((row) => (
+                <div key={row.label}>
+                  <span>{row.label}</span>
+                  <span>{formatNumber(row.users)}</span>
+                  <span>{formatNumber(row.paid)} <small>{formatShare(row.paid, row.users)}</small></span>
+                  <span>{formatNumber(row.revenue)} ₽</span>
                 </div>
               ))}
             </div>

@@ -1,5 +1,6 @@
 import type { Types } from 'mongoose';
 import { randomBytes } from 'node:crypto';
+import { ActivityEventModel } from '../models/ActivityEvent.js';
 import { NewsModel } from '../models/News.js';
 import { PaymentModel } from '../models/Payment.js';
 import { SavedGroupModel } from '../models/SavedGroup.js';
@@ -192,6 +193,8 @@ export type PendingGoal = {
   value?: number;
 };
 
+export const acquisitionCookieName = 'socstat_utm';
+
 const acquisitionCookieFields: Record<string, keyof Acquisition> = {
   utm_source: 'utmSource',
   utm_medium: 'utmMedium',
@@ -237,6 +240,34 @@ export function parseAcquisitionCookie(raw: unknown): Acquisition | undefined {
   return Object.keys(acquisition).length ? acquisition : undefined;
 }
 
+// Источник: UTM, иначе клик-ID рекламной сети, иначе домен referrer.
+export function acquisitionSource(acquisition?: Acquisition) {
+  if (acquisition?.utmSource) return acquisition.utmSource;
+  if (acquisition?.rbClickId) return 'vk_ads';
+  if (acquisition?.yclid) return 'yandex_direct';
+  return acquisition?.referrer;
+}
+
+// Рекламным считаем только переход с метками, а не просто внешний referrer.
+export function hasAdMarks(acquisition?: Acquisition) {
+  return Boolean(acquisition?.utmSource || acquisition?.rbClickId || acquisition?.yclid);
+}
+
+export async function recordAdReturn(userId: string, acquisition: Acquisition) {
+  const label = [acquisitionSource(acquisition), acquisition.utmCampaign].filter(Boolean).join(' / ');
+  // Приложение шлёт несколько запросов разом, и все несут одну cookie: условие по
+  // времени захода (ts из cookie) не даёт записать один возврат дважды.
+  const result = await UserModel.updateOne(
+    acquisition.firstVisitAt
+      ? { _id: userId, 'lastAcquisition.firstVisitAt': { $ne: acquisition.firstVisitAt } }
+      : { _id: userId },
+    { $set: { lastAcquisition: { ...acquisition, at: new Date() } } }
+  );
+  if (result.modifiedCount === 0) return;
+  // Событие пишем напрямую, без trackActivity: возврат не должен считаться действием визита.
+  await ActivityEventModel.create({ userId, type: 'ad_return', label: label.slice(0, 120) });
+}
+
 export async function getPendingGoals(userId: string): Promise<PendingGoal[]> {
   const user = await UserModel.findById(userId, { pendingGoals: 1 }).lean();
   return (user?.pendingGoals ?? []).map((item) => ({
@@ -256,6 +287,7 @@ export async function upsertVkUser(profile: {
   lastName: string;
   photo?: string;
 }, acquisition?: Acquisition) {
+  const isNew = !(await UserModel.exists({ vkId: profile.vkId }));
   const fallbackActiveTo = new Date();
   fallbackActiveTo.setDate(fallbackActiveTo.getDate() + 3);
   const trialEndsAt = new Date(fallbackActiveTo);
@@ -282,7 +314,7 @@ export async function upsertVkUser(profile: {
     { new: true, upsert: true }
   ).lean<UserDocument>();
 
-  return mapUser(user);
+  return { user: mapUser(user), isNew };
 }
 
 export function hasTrialAccess(user: AccountUser | undefined) {

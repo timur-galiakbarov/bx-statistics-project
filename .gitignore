@@ -18,3 +18,4 @@ upload/
 .idea/*
 build/
 .claude/launch.json
+exports/

@@ -3785,6 +3785,7 @@ a {
 .activity-feed-type { background: #f2f4f3; border-radius: 999px; color: #42564a; font-size: 12px; font-weight: 600; justify-self: start; padding: 2px 9px; }
 .activity-feed-type.registration { background: #e3f2fd; color: #1565c0; }
 .activity-feed-type.payment, .activity-feed-type.payment_started { background: #e8f5e9; color: #2e7d32; }
+.activity-feed-type.ad_return { background: #ede7f6; color: #5e35b1; }
 .activity-feed-type.group_added { background: #fff8e1; color: #8a6100; }
 
 @media (max-width: 840px) {

@@ -8,7 +8,9 @@ export type AnalyticsPeriodRange = {
   unixTo: number;
 };
 
-const MAX_CUSTOM_PERIOD_DAYS = 93;
+/** One cap for every custom range: VK, YouTube and Telegram analytics and the dashboard. */
+export const MAX_CUSTOM_PERIOD_DAYS = 90;
+export const CUSTOM_PERIOD_TOO_LONG_MESSAGE = `Период не может быть длиннее ${MAX_CUSTOM_PERIOD_DAYS} дней.`;
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -111,8 +113,6 @@ export function buildDailySeries<T extends { date: number }>(
   }
   return result;
 }
-
-export { MAX_CUSTOM_PERIOD_DAYS };
 
 export function buildReachSeries(
   period: AnalyticsPeriodRange,

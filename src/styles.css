@@ -922,6 +922,8 @@ a {
 .communities-panel {
   display: grid;
   gap: 16px;
+  /* Without an explicit track the column grows to the widest child and spills past narrow screens. */
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
 }
 
@@ -984,8 +986,12 @@ a {
 
 .communities-controls { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
 .communities-mobile-select { display: none; }
-.communities-period { max-width: 100%; overflow-x: auto; padding: 2px 0; }
+.communities-period { align-items: center; display: flex; gap: 8px; max-width: 100%; overflow-x: auto; padding: 2px 0; }
 .communities-period-control { min-width: 560px; }
+.communities-period-custom { flex-shrink: 0; }
+.communities-period-custom.active { box-shadow: inset 0 0 0 2px #4caf50; }
+.dashboard-custom-period { align-self: flex-start; max-width: 100%; }
+.dashboard-custom-period .custom-period-hint { white-space: normal; }
 .communities-period-segment { padding-left: 13px !important; padding-right: 13px !important; }
 .communities-reorder-hint { align-items: center; color: #68756d; display: flex; font-size: 13px; gap: 5px; margin: 0; }
 

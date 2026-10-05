@@ -30,6 +30,9 @@ test('валидирует произвольный период, будущие
   assert.throws(() => getAnalyticsPeriod('custom', '2026-08-20', '2026-08-10', now), /INVALID_ANALYTICS_PERIOD/);
   assert.throws(() => getAnalyticsPeriod('custom', '2026-08-20', '2026-08-26', now), /INVALID_ANALYTICS_PERIOD/);
   assert.throws(() => getAnalyticsPeriod('custom', '2026-01-01', '2026-05-01', now), /ANALYTICS_PERIOD_TOO_LONG/);
+  // Ровно 90 дней включительно разрешены, 91 — уже нет.
+  assert.equal(dateKey(getAnalyticsPeriod('custom', '2026-05-28', '2026-08-25', now).dateFrom), '2026-05-28');
+  assert.throws(() => getAnalyticsPeriod('custom', '2026-05-27', '2026-08-25', now), /ANALYTICS_PERIOD_TOO_LONG/);
   assert.equal(dateKey(getAnalyticsPeriod('custom', '2026-08-01', '2026-08-25', now).dateFrom), '2026-08-01');
 });
 

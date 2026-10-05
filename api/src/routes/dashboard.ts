@@ -12,7 +12,9 @@ dashboardRouter.get('/summary/groups/:savedGroupId', requireUser, async (req, re
       req.params.savedGroupId,
       req.query.period,
       req.query.refresh === '1',
-      hasActiveAccess(req.user)
+      hasActiveAccess(req.user),
+      req.query.dateFrom,
+      req.query.dateTo
     );
     res.json({ success: true, data });
   } catch (error) {
@@ -26,7 +28,9 @@ dashboardRouter.get('/summary', requireUser, async (req, res, next) => {
       req.user!.id,
       req.query.period,
       req.query.refresh === '1',
-      hasActiveAccess(req.user)
+      hasActiveAccess(req.user),
+      req.query.dateFrom,
+      req.query.dateTo
     );
     res.json({ success: true, data });
   } catch (error) {

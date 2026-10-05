@@ -2,6 +2,7 @@ import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.js';
 import { TtlCache } from './ttlCache.js';
 import {
+  CUSTOM_PERIOD_TOO_LONG_MESSAGE,
   buildDailySeries,
   buildReachSeries,
   getAnalyticsPeriod,
@@ -425,7 +426,7 @@ async function loadCommunityAnalytics(
     period = getAnalyticsPeriod(periodValue, dateFromValue, dateToValue);
   } catch (error) {
     const code = error instanceof Error ? error.message : 'INVALID_ANALYTICS_PERIOD';
-    throw new VkApiError(code === 'ANALYTICS_PERIOD_TOO_LONG' ? 'Произвольный период не может быть длиннее 93 дней.' : 'Укажите корректный период без будущих дат.', { status: 400, code });
+    throw new VkApiError(code === 'ANALYTICS_PERIOD_TOO_LONG' ? CUSTOM_PERIOD_TOO_LONG_MESSAGE : 'Укажите корректный период без будущих дат.', { status: 400, code });
   }
   const previousPeriod = getPreviousAnalyticsPeriod(period);
   const warnings: string[] = [];

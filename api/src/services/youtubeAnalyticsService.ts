@@ -1,4 +1,4 @@
-import { getAnalyticsPeriod, getPreviousAnalyticsPeriod, buildDailySeries, type AnalyticsPeriodRange } from './analyticsUtils.js';
+import { CUSTOM_PERIOD_TOO_LONG_MESSAGE, getAnalyticsPeriod, getPreviousAnalyticsPeriod, buildDailySeries, type AnalyticsPeriodRange } from './analyticsUtils.js';
 import { getYoutubeVideos, resolveYoutubeChannel, YoutubeApiError, type YoutubeChannel, type YoutubeVideo } from './youtubeClient.js';
 
 function formatDate(date: Date) {
@@ -107,7 +107,7 @@ export async function getYoutubeChannelAnalytics(
     period = getAnalyticsPeriod(periodValue, dateFromValue, dateToValue);
   } catch (error) {
     const code = error instanceof Error ? error.message : 'INVALID_ANALYTICS_PERIOD';
-    throw new YoutubeApiError(code === 'ANALYTICS_PERIOD_TOO_LONG' ? 'Произвольный период не может быть длиннее 93 дней.' : 'Укажите корректный период без будущих дат.', { status: 400, code });
+    throw new YoutubeApiError(code === 'ANALYTICS_PERIOD_TOO_LONG' ? CUSTOM_PERIOD_TOO_LONG_MESSAGE : 'Укажите корректный период без будущих дат.', { status: 400, code });
   }
   const previousPeriod = getPreviousAnalyticsPeriod(period);
   const channel = await resolveYoutubeChannel(channelId, forceRefresh);

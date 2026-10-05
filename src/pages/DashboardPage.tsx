@@ -1,9 +1,10 @@
-import { ArrowDown, ArrowUp, CalendarClock, Check, CircleHelp, ExternalLink, Eye, GripVertical, Heart, LockKeyhole, MessageCircle, MoreHorizontal, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarClock, CalendarDays, Check, CircleHelp, ExternalLink, Eye, GripVertical, Heart, LockKeyhole, MessageCircle, MoreHorizontal, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
 import { IconButton } from '@alfalab/core-components-icon-button';
 import { Input } from '@alfalab/core-components-input';
 import { Tooltip } from '@alfalab/core-components-tooltip';
 import { Modal } from '@alfalab/core-components-modal';
 import { Button } from '@alfalab/core-components-button';
+import { CalendarInput } from '@alfalab/core-components-calendar-input';
 import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,13 +13,17 @@ import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
 import { TelegramAvatar, TelegramLogo } from '../components/TelegramLogo';
 import type { DashboardPeriod, DashboardSummary, DashboardSummaryItem, SavedGroup, SocialPlatform, TelegramAnalytics, TelegramChannel, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
 import { number } from './dashboardSelectors';
+import { MAX_CUSTOM_PERIOD_DAYS } from '../utils/date';
 
 type Props = { groups: SavedGroup[]; hasPaidAccess: boolean; isTrialActive: boolean; onGroupsChanged: () => Promise<void> };
 type AddMode = 'tracked' | 'free' | 'bonus';
 type Platform = SocialPlatform;
 type SearchResult = VkGroup | YoutubeChannel | TelegramChannel;
 const DASHBOARD_PERIOD_STORAGE_KEY = 'socstat.dashboard.period';
-const dashboardPeriodValues: DashboardPeriod[] = ['last7days', 'today', 'yesterday', 'currentMonth'];
+const DASHBOARD_CUSTOM_RANGE_STORAGE_KEY = 'socstat.dashboard.customRange';
+const DAY_MS = 86_400_000;
+const dashboardPeriodValues: DashboardPeriod[] = ['last7days', 'last30days', 'today', 'yesterday', 'currentMonth', 'custom'];
+type DateRange = { dateFrom: string; dateTo: string };
 
 function getSavedDashboardPeriod(): DashboardPeriod {
   try {
@@ -26,6 +31,36 @@ function getSavedDashboardPeriod(): DashboardPeriod {
     return savedPeriod && dashboardPeriodValues.includes(savedPeriod) ? savedPeriod : 'last7days';
   } catch {
     return 'last7days';
+  }
+}
+
+function formatIsoDate(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDatePickerValue(value: string) {
+  const [year, month, day] = value.split('-');
+  return year && month && day ? `${day}.${month}.${year}` : '';
+}
+
+function dateTimestamp(value: string) {
+  return new Date(`${value}T00:00:00`).getTime();
+}
+
+function isValidCustomRange(range: DateRange | null): range is DateRange {
+  if (!range?.dateFrom || !range.dateTo || range.dateFrom > range.dateTo || range.dateTo > formatIsoDate(new Date())) return false;
+  return Math.round((dateTimestamp(range.dateTo) - dateTimestamp(range.dateFrom)) / DAY_MS) + 1 <= MAX_CUSTOM_PERIOD_DAYS;
+}
+
+function getSavedCustomRange(): DateRange | null {
+  try {
+    const savedRange = JSON.parse(window.localStorage.getItem(DASHBOARD_CUSTOM_RANGE_STORAGE_KEY) ?? 'null') as DateRange | null;
+    return isValidCustomRange(savedRange) ? savedRange : null;
+  } catch {
+    return null;
   }
 }
 
@@ -73,6 +108,12 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
   const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [period, setPeriod] = useState<DashboardPeriod>(getSavedDashboardPeriod);
+  const [customRange, setCustomRange] = useState<DateRange | null>(getSavedCustomRange);
+  // A custom period without a chosen range has nothing to load until the user applies dates.
+  const isPeriodReady = period !== 'custom' || Boolean(customRange);
+  const periodQuery = period === 'custom' && customRange
+    ? `period=custom&dateFrom=${customRange.dateFrom}&dateTo=${customRange.dateTo}`
+    : `period=${period}`;
   const [message, setMessage] = useState('');
   const [query, setQuery] = useState('');
   const [searchError, setSearchError] = useState('');
@@ -97,7 +138,7 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
     const updateItem = (item: DashboardSummaryItem, response?: DashboardSummary) => {
       if (summaryRequestId.current !== requestId) return;
       setSummary((current) => ({
-        period: response?.period ?? current?.period ?? { key: period, dateFrom: '', dateTo: '' },
+        period: response?.period ?? current?.period ?? { key: period, dateFrom: customRange?.dateFrom ?? '', dateTo: customRange?.dateTo ?? '' },
         groups: [...(current?.groups ?? []).filter((currentItem) => currentItem.savedGroupId !== item.savedGroupId), item]
       }));
     };
@@ -107,7 +148,7 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
         const group = pendingGroups[nextGroupIndex++];
         if (!group) return;
         try {
-          const response = await apiGet<DashboardSummary>(`/api/dashboard/summary/groups/${encodeURIComponent(group.id)}?period=${period}${forceRefresh ? '&refresh=1' : ''}`);
+          const response = await apiGet<DashboardSummary>(`/api/dashboard/summary/groups/${encodeURIComponent(group.id)}?${periodQuery}${forceRefresh ? '&refresh=1' : ''}`);
           const item = response.groups[0];
           if (item) updateItem(item, response);
         } catch (error) {
@@ -133,12 +174,19 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
       // The dashboard still works when browser storage is unavailable.
     }
   }, [period]);
+  useEffect(() => {
+    try {
+      if (customRange) window.localStorage.setItem(DASHBOARD_CUSTOM_RANGE_STORAGE_KEY, JSON.stringify(customRange));
+    } catch {
+      // The dashboard still works when browser storage is unavailable.
+    }
+  }, [customRange]);
   const trackedGroupsKey = groups.filter((group) => group.isTracked).map((group) => `${group.id}:${group.externalId}:${group.platform}:${group.source}`).join(',');
   useEffect(() => {
-    if (trackedGroupsKey) void loadSummary();
+    if (trackedGroupsKey && isPeriodReady) void loadSummary();
     else { summaryRequestId.current += 1; setSummary(null); setIsSummaryLoading(false); }
     return () => { summaryRequestId.current += 1; };
-  }, [trackedGroupsKey, hasPaidAccess, period]);
+  }, [trackedGroupsKey, hasPaidAccess, periodQuery]);
   const search = async (event: FormEvent) => {
     event.preventDefault();
     if (!query.trim()) {
@@ -183,7 +231,7 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
     .map((group) => `${group.platform}:${group.externalId}`);
   const managementProps = { platform, setPlatform: (next: Platform) => { setPlatform(next); setResults([]); setSearchError(''); }, query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds };
   return <div className="page-grid dashboard-page">
-    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onAdd={() => openAddModal('tracked')} onRefresh={() => void loadSummary(true)} onReorder={async (groupIds) => { await apiPost('/api/account/groups/order', { groupIds }); await onGroupsChanged(); }} onRemove={remove} onSelect={(group) => navigate(group.platform === 'telegram' ? `/analytics?platform=telegram&channel=${encodeURIComponent(group.handle ?? group.externalId)}` : `/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
+    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} customRange={customRange} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onCustomRangeApply={setCustomRange} onAdd={() => openAddModal('tracked')} onRefresh={() => isPeriodReady && void loadSummary(true)} onReorder={async (groupIds) => { await apiPost('/api/account/groups/order', { groupIds }); await onGroupsChanged(); }} onRemove={remove} onSelect={(group) => navigate(group.platform === 'telegram' ? `/analytics?platform=telegram&channel=${encodeURIComponent(group.handle ?? group.externalId)}` : `/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
     <FreeCommunitiesPanel groups={freeGroups} isTrialActive={isTrialActive} onAdd={openAddModal} />
     {message && <div className="form-message span-2">{message}</div>}
     <AddCommunityModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} managementProps={managementProps} />
@@ -231,13 +279,32 @@ function FreeCommunitySlot({ title, description, isActive, group }: { title: str
 }
 
 const dashboardPeriods: Array<{ id: DashboardPeriod; title: string }> = [
-  { id: 'last7days', title: 'Последние 7 дней' },
+  { id: 'last7days', title: '7 дней' },
+  { id: 'last30days', title: '30 дней' },
   { id: 'today', title: 'Сегодня' },
   { id: 'yesterday', title: 'Вчера' },
-  { id: 'currentMonth', title: 'Этот месяц' }
+  { id: 'currentMonth', title: 'Этот месяц' },
+  { id: 'custom', title: 'Свой период' }
 ];
 
-function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChange, onAdd, onRefresh, onReorder, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; period: DashboardPeriod; hasPaidAccess: boolean; onPeriodChange: (period: DashboardPeriod) => void; onAdd: () => void; onRefresh: () => void; onReorder: (groupIds: string[]) => Promise<void>; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
+function CustomPeriodForm({ range, onApply }: { range: DateRange | null; onApply: (range: DateRange) => void }) {
+  const [dateFrom, setDateFrom] = useState(range?.dateFrom ?? '');
+  const [dateTo, setDateTo] = useState(range?.dateTo ?? '');
+  const draft = { dateFrom, dateTo };
+  const isApplied = range?.dateFrom === dateFrom && range.dateTo === dateTo;
+  const dateFromTimestamp = dateFrom ? dateTimestamp(dateFrom) : undefined;
+  const dateToMax = dateFromTimestamp ? Math.min(Date.now(), dateFromTimestamp + (MAX_CUSTOM_PERIOD_DAYS - 1) * DAY_MS) : Date.now();
+  return <div className="custom-period-form dashboard-custom-period">
+    <div className="custom-period-fields">
+      <CalendarInput className="custom-period-picker" client="desktop" label="Дата начала" maxDate={dateTo ? dateTimestamp(dateTo) : Date.now()} size={40} value={formatDatePickerValue(dateFrom)} onChange={(_, { date }) => !Number.isNaN(date.getTime()) && setDateFrom(formatIsoDate(date))} />
+      <CalendarInput className="custom-period-picker" client="desktop" label="Дата окончания" maxDate={dateToMax} minDate={dateFromTimestamp} size={40} value={formatDatePickerValue(dateTo)} onChange={(_, { date }) => !Number.isNaN(date.getTime()) && setDateTo(formatIsoDate(date))} />
+      <Button className="custom-period-submit" client="desktop" disabled={!isValidCustomRange(draft) || isApplied} size={40} type="button" view="primary" onClick={() => onApply(draft)}>Применить период</Button>
+    </div>
+    <span className="custom-period-hint">{dateFrom && dateTo && !isValidCustomRange(draft) ? `Укажите период до ${MAX_CUSTOM_PERIOD_DAYS} дней без будущих дат.` : `Можно выбрать период до ${MAX_CUSTOM_PERIOD_DAYS} дней включительно.`}</span>
+  </div>;
+}
+
+function CommunitiesTable({ groups, summary, period, customRange, hasPaidAccess, onPeriodChange, onCustomRangeApply, onAdd, onRefresh, onReorder, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; period: DashboardPeriod; customRange: DateRange | null; hasPaidAccess: boolean; onPeriodChange: (period: DashboardPeriod) => void; onCustomRangeApply: (range: DateRange) => void; onAdd: () => void; onRefresh: () => void; onReorder: (groupIds: string[]) => Promise<void>; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
   const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'mine' | 'other'>('all');
   const [orderedGroupIds, setOrderedGroupIds] = useState(groups.map((group) => group.id));
   const [draggedGroupId, setDraggedGroupId] = useState<string | null>(null);
@@ -301,11 +368,14 @@ function CommunitiesTable({ groups, summary, period, hasPaidAccess, onPeriodChan
         </select>
       </label>
       <div className="communities-period" aria-label="Период статистики">
+        {/* SegmentedControl renders at most five segments, so the custom range gets its own button. */}
         <SegmentedControl className="communities-period-control" onChange={(id) => onPeriodChange(id as DashboardPeriod)} selectedId={period} size={40}>
-          {dashboardPeriods.map((item) => <Segment className="communities-period-segment" id={item.id} key={item.id} title={item.title} />)}
+          {dashboardPeriods.filter((item) => item.id !== 'custom').map((item) => <Segment className="communities-period-segment" id={item.id} key={item.id} title={item.title} />)}
         </SegmentedControl>
+        <Button className={`communities-period-custom ${period === 'custom' ? 'active' : ''}`} aria-pressed={period === 'custom'} leftAddons={<CalendarDays size={16} />} size={40} type="button" view="secondary" onClick={() => onPeriodChange('custom')}>Свой период</Button>
       </div>
     </div>
+    {period === 'custom' && <CustomPeriodForm range={customRange} onApply={onCustomRangeApply} />}
     <p className="communities-reorder-hint"><GripVertical size={16} />Перетащите источник за значок слева, чтобы изменить порядок.</p>
     {reorderError && <div className="form-message">{reorderError}</div>}
     <div className="communities-table">

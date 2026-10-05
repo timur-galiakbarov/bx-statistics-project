@@ -5,7 +5,7 @@ import { StringSession } from 'telegram/sessions/StringSession.js';
 import { env } from '../config/env.js';
 import { DomainError } from '../errors/domainError.js';
 import { TelegramPeerModel } from '../models/TelegramPeer.js';
-import { getAnalyticsPeriod, getPreviousAnalyticsPeriod, type AnalyticsPeriodRange } from './analyticsUtils.js';
+import { CUSTOM_PERIOD_TOO_LONG_MESSAGE, getAnalyticsPeriod, getPreviousAnalyticsPeriod, type AnalyticsPeriodRange } from './analyticsUtils.js';
 import { TtlCache } from './ttlCache.js';
 import { getTelegramProxy } from './telegramProxy.js';
 import { getTelegramAnalyticsCached, telegramQueue } from './telegramProtection.js';
@@ -421,7 +421,7 @@ export async function getTelegramChannelAnalytics(input: string, periodValue: un
     period = getAnalyticsPeriod(periodValue, dateFromValue, dateToValue);
   } catch (error) {
     const code = error instanceof Error ? error.message : 'INVALID_ANALYTICS_PERIOD';
-    throw new TelegramApiError(code === 'ANALYTICS_PERIOD_TOO_LONG' ? 'Период не может быть длиннее 93 дней.' : 'Укажите корректный период без будущих дат.', { status: 400, code });
+    throw new TelegramApiError(code === 'ANALYTICS_PERIOD_TOO_LONG' ? CUSTOM_PERIOD_TOO_LONG_MESSAGE : 'Укажите корректный период без будущих дат.', { status: 400, code });
   }
   const username = normalizeTelegramChannelInput(input);
   const previousPeriod = getPreviousAnalyticsPeriod(period);

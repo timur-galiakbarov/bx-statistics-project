@@ -145,7 +145,7 @@ export type VkListResponse<T> = {
   items: T[];
 };
 
-export type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'last90days' | 'currentMonth';
+export type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'last90days' | 'currentMonth' | 'custom';
 
 export type DashboardSummaryItem = {
   savedGroupId: string;

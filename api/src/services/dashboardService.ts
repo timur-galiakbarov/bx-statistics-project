@@ -7,8 +7,9 @@ import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
 import { getTelegramChannelAnalytics } from './telegramClient.js';
 import { getSnapshotGrowth } from './snapshotService.js';
 import { telegramUsernameFromSource, type SnapshotGrowth } from './snapshotUtils.js';
+import { CUSTOM_PERIOD_TOO_LONG_MESSAGE, getAnalyticsPeriod } from './analyticsUtils.js';
 
-type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'last90days' | 'currentMonth';
+type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'last90days' | 'currentMonth' | 'custom';
 
 type VkGroupInfo = {
   id: number;
@@ -106,12 +107,26 @@ const managedGroupIdsCache = new TtlCache<Set<number>>(DASHBOARD_SUMMARY_CACHE_T
 const pendingSummaryItems = new Map<string, Promise<DashboardSummaryItem>>();
 const pendingManagedGroupIds = new Map<string, Promise<Set<number>>>();
 
-function getPeriod(period: unknown) {
+function getPeriod(period: unknown, dateFromValue?: unknown, dateToValue?: unknown) {
   const now = new Date();
   const value = typeof period === 'string' ? period : 'last7days';
-  const normalized: DashboardPeriod = ['today', 'yesterday', 'last7days', 'last30days', 'last90days', 'currentMonth'].includes(value)
+  const normalized: DashboardPeriod = ['today', 'yesterday', 'last7days', 'last30days', 'last90days', 'currentMonth', 'custom'].includes(value)
     ? (value as DashboardPeriod)
     : 'last7days';
+
+  if (normalized === 'custom') {
+    // The custom range follows the analytics rules, including the shared length cap.
+    try {
+      const { dateFrom, dateTo, unixFrom, unixTo } = getAnalyticsPeriod('custom', dateFromValue, dateToValue, now);
+      return { key: normalized, dateFrom, dateTo, unixFrom, unixTo };
+    } catch (error) {
+      const code = error instanceof Error ? error.message : 'INVALID_ANALYTICS_PERIOD';
+      throw new DomainError(
+        code === 'ANALYTICS_PERIOD_TOO_LONG' ? CUSTOM_PERIOD_TOO_LONG_MESSAGE : 'Укажите корректный период без будущих дат.',
+        { status: 400, code }
+      );
+    }
+  }
 
   const start = new Date(now);
   const end = new Date(now);
@@ -252,8 +267,13 @@ function formatPeriod(period: ReturnType<typeof getPeriod>) {
   };
 }
 
+// Dates are part of the key: custom ranges share one period key, and presets shift at midnight.
+function getPeriodCacheKey(period: ReturnType<typeof getPeriod>) {
+  return `${period.key}:${period.unixFrom}-${period.unixTo}`;
+}
+
 function getSummaryItemCacheKey(userId: string, savedGroup: SavedGroup, period: ReturnType<typeof getPeriod>, includePremiumMetrics: boolean) {
-  return [userId, period.key, savedGroup.id, savedGroup.platform, savedGroup.externalId, savedGroup.source, includePremiumMetrics ? 'full' : 'basic'].join(':');
+  return [userId, getPeriodCacheKey(period), savedGroup.id, savedGroup.platform, savedGroup.externalId, savedGroup.source, includePremiumMetrics ? 'full' : 'basic'].join(':');
 }
 
 async function getManagedGroupIds(userId: string, accessToken: string, forceRefresh: boolean) {
@@ -460,8 +480,8 @@ async function loadDashboardSummaryItem(
   return request;
 }
 
-export async function getDashboardSummaryItem(userId: string, savedGroupId: string, periodValue: unknown, forceRefresh = false, includePremiumMetrics = true): Promise<DashboardSummaryResult> {
-  const period = getPeriod(periodValue);
+export async function getDashboardSummaryItem(userId: string, savedGroupId: string, periodValue: unknown, forceRefresh = false, includePremiumMetrics = true, dateFrom?: unknown, dateTo?: unknown): Promise<DashboardSummaryResult> {
+  const period = getPeriod(periodValue, dateFrom, dateTo);
   const savedGroup = (await getGroups(userId)).find((group) => group.id === savedGroupId && group.isTracked);
   if (!savedGroup) {
     throw new DomainError('Сообщество не найдено в списке отслеживаемых.', { status: 404, code: 'DASHBOARD_GROUP_NOT_FOUND' });
@@ -479,10 +499,10 @@ export async function getDashboardSummaryItem(userId: string, savedGroupId: stri
   return { period: formatPeriod(period), groups: [item] };
 }
 
-export async function getDashboardSummary(userId: string, periodValue: unknown, forceRefresh = false, includePremiumMetrics = true): Promise<DashboardSummaryResult> {
-  const period = getPeriod(periodValue);
+export async function getDashboardSummary(userId: string, periodValue: unknown, forceRefresh = false, includePremiumMetrics = true, dateFrom?: unknown, dateTo?: unknown): Promise<DashboardSummaryResult> {
+  const period = getPeriod(periodValue, dateFrom, dateTo);
   const groups = (await getGroups(userId)).filter((group) => group.isTracked);
-  const cacheKey = [userId, period.key, includePremiumMetrics ? 'full' : 'basic', groups.map((group) => `${group.id}:${group.platform}:${group.externalId}:${group.source}`).join(',')].join(':');
+  const cacheKey = [userId, getPeriodCacheKey(period), includePremiumMetrics ? 'full' : 'basic', groups.map((group) => `${group.id}:${group.platform}:${group.externalId}:${group.source}`).join(',')].join(':');
 
   if (!forceRefresh) {
     const cached = dashboardSummaryCache.get(cacheKey);

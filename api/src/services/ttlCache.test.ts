@@ -12,3 +12,12 @@ test('returns an entry until its TTL expires', () => {
   now += 900_000;
   assert.equal(cache.get('group'), undefined);
 });
+
+test('uses a per-entry TTL when given', () => {
+  let now = 1_000;
+  const cache = new TtlCache<string>(900_000, () => now);
+
+  cache.set('group', 'cached analytics', 1_000);
+  now += 1_000;
+  assert.equal(cache.get('group'), undefined);
+});

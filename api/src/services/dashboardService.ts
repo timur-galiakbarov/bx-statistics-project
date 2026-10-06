@@ -3,6 +3,7 @@ import { DomainError } from '../errors/domainError.js';
 import type { SavedGroup, SocialPlatform } from '../store/types.js';
 import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.js';
 import { TtlCache } from './ttlCache.js';
+import { RedisJsonCache } from './redisJsonCache.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
 import { getTelegramChannelAnalytics } from './telegramClient.js';
 import { getSnapshotGrowth } from './snapshotService.js';
@@ -101,8 +102,8 @@ type DashboardSummaryResult = {
 };
 
 const DASHBOARD_SUMMARY_CACHE_TTL_MS = 60 * 60 * 1_000;
-const dashboardSummaryCache = new TtlCache<DashboardSummaryResult>(DASHBOARD_SUMMARY_CACHE_TTL_MS);
-const dashboardSummaryItemCache = new TtlCache<DashboardSummaryItem>(DASHBOARD_SUMMARY_CACHE_TTL_MS);
+const dashboardSummaryCache = new RedisJsonCache<DashboardSummaryResult>('dashboard:summary', DASHBOARD_SUMMARY_CACHE_TTL_MS);
+const dashboardSummaryItemCache = new RedisJsonCache<DashboardSummaryItem>('dashboard:summary-item', DASHBOARD_SUMMARY_CACHE_TTL_MS);
 const managedGroupIdsCache = new TtlCache<Set<number>>(DASHBOARD_SUMMARY_CACHE_TTL_MS);
 const pendingSummaryItems = new Map<string, Promise<DashboardSummaryItem>>();
 const pendingManagedGroupIds = new Map<string, Promise<Set<number>>>();
@@ -462,7 +463,7 @@ async function loadDashboardSummaryItem(
 ) {
   const cacheKey = getSummaryItemCacheKey(userId, savedGroup, period, includePremiumMetrics);
   if (!forceRefresh) {
-    const cached = dashboardSummaryItemCache.get(cacheKey);
+    const cached = await dashboardSummaryItemCache.get(cacheKey);
     if (cached) return cached;
   }
 
@@ -471,8 +472,8 @@ async function loadDashboardSummaryItem(
   if (pending) return pending;
 
   const request = buildDashboardSummaryItem(savedGroup, period, accessToken, managedGroupIds, forceRefresh, includePremiumMetrics)
-    .then((item) => {
-      dashboardSummaryItemCache.set(cacheKey, item);
+    .then(async (item) => {
+      await dashboardSummaryItemCache.set(cacheKey, item);
       return item;
     })
     .finally(() => pendingSummaryItems.delete(pendingKey));
@@ -505,7 +506,7 @@ export async function getDashboardSummary(userId: string, periodValue: unknown, 
   const cacheKey = [userId, getPeriodCacheKey(period), includePremiumMetrics ? 'full' : 'basic', groups.map((group) => `${group.id}:${group.platform}:${group.externalId}:${group.source}`).join(',')].join(':');
 
   if (!forceRefresh) {
-    const cached = dashboardSummaryCache.get(cacheKey);
+    const cached = await dashboardSummaryCache.get(cacheKey);
     if (cached) return cached;
   }
 
@@ -530,7 +531,7 @@ export async function getDashboardSummary(userId: string, periodValue: unknown, 
     period: formatPeriod(period),
     groups: summaryGroups
   };
-  dashboardSummaryCache.set(cacheKey, summary);
+  await dashboardSummaryCache.set(cacheKey, summary);
 
   return summary;
 }

@@ -26,10 +26,10 @@ export class TtlCache<T> {
     return entry.value;
   }
 
-  set(key: string, value: T) {
+  set(key: string, value: T, ttlMs = this.ttlMs) {
     this.entries.set(key, {
       value,
-      expiresAt: this.now() + this.ttlMs
+      expiresAt: this.now() + ttlMs
     });
   }
 }

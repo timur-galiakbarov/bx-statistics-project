@@ -27,6 +27,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiGet } from '../api/client';
 import type { AnalyticsPeriod, CommunityAnalytics, SavedGroup, TelegramAnalytics, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
 import { AccessExpiredModal } from '../components/AccessExpiredModal';
+import { AnalyticsLanding, type AnalyticsChannel, type AnalyticsPlatform, analyticsExamples } from '../components/AnalyticsLanding';
 import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
 import { PostCard } from '../components/PostCard';
 import { Tooltip } from '@alfalab/core-components-tooltip';
@@ -35,22 +36,13 @@ import { SubscriberHistoryPanel } from '../components/SubscriberHistoryPanel';
 import { PostViewsCurvePanel } from '../components/PostViewsCurvePanel';
 import { TelegramPage } from './TelegramPage';
 import { formatDate, MAX_CUSTOM_PERIOD_DAYS } from '../utils/date';
+import { detectPlatform, normalizeVkQuery } from '../utils/sourceQuery';
 
 type ChartMetric = 'views' | 'activity' | 'comments' | 'engagement';
 type AnalyticsSection = 'summary' | 'audience' | 'posts';
 type AnalyticsPostSort = 'likes' | 'reposts' | 'comments' | 'actions' | 'views' | 'er' | 'date';
 type AnalyticsPostListFilter = 'all' | 'media' | 'photo' | 'video' | 'gif' | 'text';
 type AnalyticsPost = CommunityAnalytics['wall']['topPosts'][number];
-type AnalyticsChannel = {
-  id: string | number;
-  name: string;
-  platform: 'vk' | 'youtube' | 'telegram';
-  screen_name?: string;
-  photo_50?: string;
-  photo_100?: string;
-  members_count?: number | null;
-  url?: string;
-};
 
 const AnalyticsChart = lazy(() => import('../components/AnalyticsChart'));
 const VIEWS_CHART_TITLE = 'Средние просмотры поста по дате публикации';
@@ -142,9 +134,7 @@ function formatIsoDate(value: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function normalizeQuery(value: string) {
-  return value.trim().replace(/^https?:\/\/vk\.com\//, '').replace(/^vk\.com\//, '');
-}
+const normalizeQuery = normalizeVkQuery;
 
 function getPostActions(post: AnalyticsPost) {
   return post.likes + post.reposts + post.comments;
@@ -241,10 +231,12 @@ function KpiCard({
 export function AnalyticsPage({
   groups,
   hasPaidAccess,
+  isTrialActive,
   activeTo
 }: {
   groups: SavedGroup[];
   hasPaidAccess: boolean;
+  isTrialActive: boolean;
   activeTo?: string;
 }) {
   const [searchParams] = useSearchParams();
@@ -253,16 +245,18 @@ export function AnalyticsPage({
     return <TelegramPage />;
   }
 
-  return <CommunityAnalyticsPage groups={groups} hasPaidAccess={hasPaidAccess} activeTo={activeTo} />;
+  return <CommunityAnalyticsPage groups={groups} hasPaidAccess={hasPaidAccess} isTrialActive={isTrialActive} activeTo={activeTo} />;
 }
 
 function CommunityAnalyticsPage({
   groups,
   hasPaidAccess,
+  isTrialActive,
   activeTo
 }: {
   groups: SavedGroup[];
   hasPaidAccess: boolean;
+  isTrialActive: boolean;
   activeTo?: string;
 }) {
   const [searchParams] = useSearchParams();
@@ -270,7 +264,7 @@ function CommunityAnalyticsPage({
   const groupIdParam = searchParams.get('groupId');
   const platformParam = searchParams.get('platform');
   const analyticsPlatform = platformParam === 'youtube' || platformParam === 'telegram' ? platformParam : 'vk';
-  const [searchPlatform, setSearchPlatform] = useState<'vk' | 'youtube' | 'telegram'>(analyticsPlatform);
+  const [searchPlatform, setSearchPlatform] = useState<AnalyticsPlatform>(analyticsPlatform);
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<AnalyticsChannel[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<AnalyticsChannel | null>(null);
@@ -368,27 +362,47 @@ function CommunityAnalyticsPage({
     loadAnalytics({ id: groupIdParam, name: groupIdParam, platform: analyticsPlatform });
   }, [groupIdParam, analyticsPlatform]);
 
-  const search = async (event: FormEvent) => {
-    event.preventDefault();
-    const normalized = normalizeQuery(query);
-    if (!normalized) return setMessage('Введите название или адрес сообщества.');
+  const runSearch = async (text: string, platform: AnalyticsPlatform, openSingleResult = false) => {
+    const normalized = normalizeQuery(text);
+    if (!normalized) return setMessage('Вставьте ссылку или введите название канала.');
     setIsSearching(true); setMessage(null); setSearchResults([]);
     try {
-      if (searchPlatform === 'telegram') {
-        const channel = await apiGet<TelegramAnalytics['channel']>(`/api/telegram/channels/resolve?q=${encodeURIComponent(query.trim())}`);
-        setSearchResults([{ id: channel.id, name: channel.title, platform: 'telegram', screen_name: channel.username, photo_100: channel.photo, members_count: channel.subscribers, url: channel.url }]);
-      } else if (searchPlatform === 'youtube') {
-        const data = await apiGet<VkListResponse<YoutubeChannel>>(`/api/youtube/channels/search?q=${encodeURIComponent(query.trim())}`);
-        setSearchResults(data.items.map((channel) => ({ id: channel.id, name: channel.name, platform: 'youtube', screen_name: channel.handle, photo_100: channel.photo, members_count: channel.followersCount, url: channel.url })));
-        setMessage(data.items.length ? null : 'YouTube-каналы не найдены.');
+      let results: AnalyticsChannel[];
+      if (platform === 'telegram') {
+        const channel = await apiGet<TelegramAnalytics['channel']>(`/api/telegram/channels/resolve?q=${encodeURIComponent(text.trim())}`);
+        results = [{ id: channel.id, name: channel.title, platform: 'telegram', screen_name: channel.username, photo_100: channel.photo, members_count: channel.subscribers, url: channel.url }];
+      } else if (platform === 'youtube') {
+        const data = await apiGet<VkListResponse<YoutubeChannel>>(`/api/youtube/channels/search?q=${encodeURIComponent(text.trim())}`);
+        results = data.items.map((channel) => ({ id: channel.id, name: channel.name, platform: 'youtube', screen_name: channel.handle, photo_100: channel.photo, members_count: channel.followersCount, url: channel.url }));
+        if (!results.length) setMessage('YouTube-каналы не найдены.');
       } else {
         const data = await apiGet<VkListResponse<VkGroup>>(`/api/vk/groups/search?q=${encodeURIComponent(normalized)}&count=10`);
-        setSearchResults(data.items.map((group) => ({ ...group, platform: 'vk' })));
-        setMessage(data.items.length ? null : 'Сообщества не найдены.');
+        results = data.items.map((group) => ({ ...group, platform: 'vk' }));
+        if (!results.length) setMessage('Сообщества не найдены.');
       }
+      const exactMatch = platform === 'vk' ? results.find((group) => group.screen_name?.toLowerCase() === normalized.toLowerCase()) : undefined;
+      if (exactMatch || (openSingleResult && results.length)) {
+        loadAnalytics(exactMatch ?? results[0]);
+        return;
+      }
+      setSearchResults(results);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось найти сообщества.');
     } finally { setIsSearching(false); }
+  };
+
+  const search = (event: FormEvent) => {
+    event.preventDefault();
+    // По ссылке площадку определяем сами, а если пришёл ровно один канал — сразу открываем отчёт.
+    const detectedPlatform = detectPlatform(query);
+    const platform = detectedPlatform ?? searchPlatform;
+    setSearchPlatform(platform);
+    void runSearch(query, platform, detectedPlatform === 'telegram' || detectedPlatform === 'youtube');
+  };
+
+  const openExample = (example: (typeof analyticsExamples)[number]) => {
+    setSearchPlatform(example.platform);
+    void runSearch(example.query, example.platform, true);
   };
 
   const changePeriod = (nextPeriod: AnalyticsPeriod) => {
@@ -547,13 +561,29 @@ function CommunityAnalyticsPage({
 
   return <>
     <section className="page-grid analytics-page">
-    <div className="panel span-2 analytics-workbench">
+    {!selectedGroup ? <AnalyticsLanding
+      query={query}
+      searchPlatform={searchPlatform}
+      isSearching={isSearching}
+      searchResults={searchResults}
+      message={message}
+      recentGroups={recentGroups}
+      savedGroups={[...trackedGroups, ...bonusGroups]}
+      hasPaidAccess={hasPaidAccess}
+      isTrialActive={isTrialActive}
+      activeTo={activeTo}
+      onQueryChange={setQuery}
+      onPlatformChange={(platform) => { setSearchPlatform(platform); setSearchResults([]); setMessage(null); }}
+      onSearch={search}
+      onExample={openExample}
+      onPick={(group) => loadAnalytics(group)}
+    /> : <div className="panel span-2 analytics-workbench">
       <div className="panel-header analytics-controls-header"><div className="analytics-heading"><h2>Аналитика</h2><p>{selectedGroup?.platform === 'youtube' ? 'Оцените результативность канала и опубликованных видео.' : 'Оцените динамику, контент и следующие действия за один рабочий проход.'}</p><div className="period-tabs">{periods.filter((item) => quickPeriodKeys.includes(item.key)).map((item) => <Button className={`period-tab-button ${period === item.key ? 'period-tab-button-active' : ''}`} client="desktop" disabled={isLoadingAnalytics} key={item.key} size={40} type="button" view="secondary" onClick={() => changePeriod(item.key)}>{item.label}</Button>)}<Select className="analytics-period-select" client="desktop" disabled={isLoadingAnalytics} options={otherPeriodOptions} optionsListWidth="content" placeholder="Другой период" selected={quickPeriodKeys.includes(period) ? null : period} size={40} onChange={({ selected }) => selected && changePeriod(selected.key as AnalyticsPeriod)} /></div></div></div>
       {period === 'custom' && <div className="custom-period-form"><div className="custom-period-fields"><CalendarInput className="custom-period-picker" client="desktop" label="Дата начала" maxDate={customDateToTimestamp ?? Date.now()} size={40} value={formatDatePickerValue(customDateFrom)} onChange={(_, { date }) => !Number.isNaN(date.getTime()) && setCustomDateFrom(formatIsoDate(date))} /><CalendarInput className="custom-period-picker" client="desktop" label="Дата окончания" maxDate={customPeriodEndMaxDate} minDate={customDateFromTimestamp} size={40} value={formatDatePickerValue(customDateTo)} onChange={(_, { date }) => !Number.isNaN(date.getTime()) && setCustomDateTo(formatIsoDate(date))} /><Button className="custom-period-submit" client="desktop" disabled={!selectedGroup || !customDateFrom || !customDateTo || isLoadingAnalytics} size={40} type="button" view="primary" onClick={() => selectedGroup && loadAnalytics(selectedGroup, 'custom')}>Применить период</Button></div><span className="custom-period-hint">Можно выбрать период до {MAX_CUSTOM_PERIOD_DAYS} дней включительно.</span></div>}
       {selectedGroup && <div className="selected-community-control">{selectedGroup.photo_100 ?? selectedGroup.photo_50 ? <img src={selectedGroup.photo_100 ?? selectedGroup.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><small className="analytics-platform-label"><img className="analytics-platform-icon" src={selectedGroup.platform === 'youtube' ? '/youtube-logo.png' : '/vk-network-logo.png'} alt="" />{selectedGroup.platform === 'youtube' ? 'YouTube' : 'ВКонтакте'}</small><strong>{selectedGroup.name}</strong></span><div className="analytics-actions"><Button className="analytics-action-button" client="desktop" leftAddons={<ArrowLeftRight size={16} />} size={40} type="button" view="secondary" onClick={() => setIsCommunityPickerOpen((value) => !value)}>Сменить</Button><Button className="analytics-action-button" client="desktop" disabled={isLoadingAnalytics} leftAddons={<RefreshCw size={16} />} size={40} type="button" view="secondary" onClick={() => loadAnalytics(selectedGroup, period, true)}>Обновить</Button><Button className="analytics-action-button" client="desktop" href={analytics?.group.url ?? selectedGroup.url ?? `https://vk.com/${analytics?.group.screenName ?? selectedGroup.screen_name ?? `club${selectedGroup.id}`}`} leftAddons={<ExternalLink size={16} />} rel="noreferrer" size={40} target="_blank" view="secondary">Открыть {selectedGroup.platform === 'youtube' ? 'YouTube' : 'VK'}</Button></div></div>}
-      {isCommunityPickerOpen && <div className="community-picker">{!selectedGroup && <div className="community-picker-intro"><h3>Выберите источник</h3><p>Выберите сохранённый источник или найдите публичный VK, YouTube- или Telegram-канал.</p></div>}{recentGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Clock3 size={17} /><strong>Недавно анализировали</strong></div><div className="community-options">{recentGroups.map((group) => renderCommunityOption(group, 'недавний анализ'))}</div></div>}{bonusGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Бонусные источники</strong></div><div className="community-options">{bonusGroups.map((group) => renderCommunityOption(group, 'доступно без тарифа'))}</div></div>}{trackedGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Отслеживаемые источники</strong></div><div className="community-options">{trackedGroups.map((group) => renderCommunityOption(group))}</div></div>}<SegmentedControl className="social-platform-switcher" onChange={(id) => { setSearchPlatform(id as 'vk' | 'youtube' | 'telegram'); setSearchResults([]); setMessage(null); }} selectedId={searchPlatform} size={40}><Segment id="vk" title={<PlatformSegmentTitle platform="vk" />} /><Segment id="youtube" title={<PlatformSegmentTitle platform="youtube" />} /><Segment id="telegram" title={<PlatformSegmentTitle platform="telegram" />} /></SegmentedControl><form className="search-form" onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={searchPlatform === 'youtube' ? 'URL, @handle, channel ID или название' : searchPlatform === 'telegram' ? '@username или ссылка t.me' : 'Название, screen name или ссылка VK'} /><button type="submit" disabled={isSearching}><Search size={18} />{isSearching ? 'Ищем' : 'Найти'}</button></form>{searchResults.length > 0 && <div className="search-results">{searchResults.map((group) => <button className="analytics-result" key={`${group.platform}:${group.id}`} type="button" onClick={() => loadAnalytics(group)}>{group.photo_100 ?? group.photo_50 ? <img src={group.photo_100 ?? group.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><strong>{group.name}</strong><small>{group.screen_name ?? group.id}{group.members_count === null ? ' · Подписчики: Недоступно' : group.members_count ? ` · ${formatNumber(group.members_count)} подписчиков` : ''}</small></span></button>)}</div>}</div>}
+      {isCommunityPickerOpen && <div className="community-picker">{recentGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Clock3 size={17} /><strong>Недавно анализировали</strong></div><div className="community-options">{recentGroups.map((group) => renderCommunityOption(group, 'недавний анализ'))}</div></div>}{bonusGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Бонусные источники</strong></div><div className="community-options">{bonusGroups.map((group) => renderCommunityOption(group, 'доступно без тарифа'))}</div></div>}{trackedGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Отслеживаемые источники</strong></div><div className="community-options">{trackedGroups.map((group) => renderCommunityOption(group))}</div></div>}<SegmentedControl className="social-platform-switcher" onChange={(id) => { setSearchPlatform(id as AnalyticsPlatform); setSearchResults([]); setMessage(null); }} selectedId={searchPlatform} size={40}><Segment id="vk" title={<PlatformSegmentTitle platform="vk" />} /><Segment id="youtube" title={<PlatformSegmentTitle platform="youtube" />} /><Segment id="telegram" title={<PlatformSegmentTitle platform="telegram" />} /></SegmentedControl><form className="search-form" onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={searchPlatform === 'youtube' ? 'URL, @handle, channel ID или название' : searchPlatform === 'telegram' ? '@username или ссылка t.me' : 'Название, screen name или ссылка VK'} /><button type="submit" disabled={isSearching}><Search size={18} />{isSearching ? 'Ищем' : 'Найти'}</button></form>{searchResults.length > 0 && <div className="search-results">{searchResults.map((group) => <button className="analytics-result" key={`${group.platform}:${group.id}`} type="button" onClick={() => loadAnalytics(group)}>{group.photo_100 ?? group.photo_50 ? <img src={group.photo_100 ?? group.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><strong>{group.name}</strong><small>{group.screen_name ?? group.id}{group.members_count === null ? ' · Подписчики: Недоступно' : group.members_count ? ` · ${formatNumber(group.members_count)} подписчиков` : ''}</small></span></button>)}</div>}</div>}
       {message && <div className="form-message">{message}</div>}
-    </div>
+    </div>}
     {analytics && <div className="span-2 analytics-community-heading"><h2>{analyticsCommunityTitle}</h2><p>{analyticsCommunityPeriodLabel}</p></div>}
     {isLoadingAnalytics && <div className="panel span-2 analytics-loading" aria-live="polite" role="status"><div><strong>Готовим аналитику</strong><span>{activeLoadingSteps[analyticsLoadingStep].label}</span></div><div aria-label={activeLoadingSteps[analyticsLoadingStep].label} className="analytics-loading-progress" role="progressbar"><span /></div></div>}
     {analytics && !isLoadingAnalytics && <>

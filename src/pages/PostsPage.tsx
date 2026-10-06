@@ -1,19 +1,18 @@
 import { Button } from '@alfalab/core-components-button';
-import { IconButton } from '@alfalab/core-components-icon-button';
 import { Input } from '@alfalab/core-components-input';
 import { Select } from '@alfalab/core-components-select';
-import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
-import { ArrowDownUp, BookmarkPlus, FileText, FolderOpen, Pencil, RotateCcw, Search, Trash2, X } from 'lucide-react';
+import { ArrowDownUp, BookmarkPlus, FileText } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
-import type { AnalyticsPeriod, ComparisonCollection, PostsAnalysisPost, PostsAnalysisResult, SavedGroup, TelegramAnalytics, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
+import type { AnalyticsPeriod, ComparisonCollection, PostsAnalysisPost, PostsAnalysisResult, SavedGroup } from '../api/types';
 import { PostCard } from '../components/PostCard';
-import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
+import { SourceSetup, pickUnambiguousSource, searchSources, sourceKey, type SourceChannel, type SourceExample } from '../components/SourceSetup';
+import { detectPlatform } from '../utils/sourceQuery';
 
 const periods: Array<{ key: AnalyticsPeriod; label: string }> = [
-  { key: 'week', label: 'Неделя' },
-  { key: 'twoWeek', label: 'Две недели' },
-  { key: 'month', label: 'Последние 30 дней' }
+  { key: 'week', label: '7 дней' },
+  { key: 'twoWeek', label: '14 дней' },
+  { key: 'month', label: '30 дней' }
 ];
 
 const sortOptions = [
@@ -37,22 +36,19 @@ const filterOptions = [
 ] as const;
 
 const POSTS_PAGE_SIZE = 18;
+const postsExample: SourceExample = {
+  label: 'Лучшие посты РБК, ТАСС и РИА Новости',
+  sources: [{ platform: 'telegram', query: 'rbc_news' }, { platform: 'telegram', query: 'tass_agency' }, { platform: 'telegram', query: 'rian_ru' }]
+};
 
 type PostSort = (typeof sortOptions)[number]['key'];
 type PostFilter = (typeof filterOptions)[number]['key'];
-type PostsChannel = { id: string | number; name: string; platform: 'vk' | 'youtube' | 'telegram'; screen_name?: string; photo_50?: string; photo_100?: string; members_count?: number | null };
+type PostsChannel = SourceChannel;
 type PostsPlatform = PostsChannel['platform'];
 type Props = { groups: SavedGroup[] };
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value);
-}
-
-function normalizeQuery(value: string) {
-  return value
-    .trim()
-    .replace(/^https?:\/\/vk\.com\//, '')
-    .replace(/^vk\.com\//, '');
 }
 
 function getPostSortValue(post: PostsAnalysisPost, sort: PostSort) {
@@ -138,10 +134,10 @@ export function PostsPage({ groups }: Props) {
     () => Array.from(new Map(
       groups
         .map(accountToPostsChannel)
-        .filter((group): group is PostsChannel => group?.platform === platform)
+        .filter((group): group is PostsChannel => group !== null)
         .map((group) => [`${group.platform}:${group.id}`, group])
     ).values()),
-    [groups, platform]
+    [groups]
   );
   const postsCollections = collections;
 
@@ -183,33 +179,52 @@ export function PostsPage({ groups }: Props) {
 
   const search = async (event: FormEvent) => {
     event.preventDefault();
-    const normalized = normalizeQuery(query);
+    const text = query.trim();
 
-    if (!normalized) {
-      setMessage('Введите название или адрес сообщества.');
+    if (!text) {
+      setMessage('Вставьте ссылку или введите название канала.');
       return;
     }
 
+    const detectedPlatform = detectPlatform(text);
+    const requestedPlatform = detectedPlatform ?? platform;
+    const requestId = ++searchRequest.current;
+    setPlatform(requestedPlatform);
     setIsSearching(true);
     setMessage(null);
     setSearchResults([]);
     setHasSearched(true);
-    const requestId = ++searchRequest.current;
-    const requestedPlatform = platform;
 
     try {
-      if (requestedPlatform === 'telegram') {
-        const channel = await apiGet<TelegramAnalytics['channel']>(`/api/telegram/channels/resolve?q=${encodeURIComponent(query.trim())}`);
-        if (requestId === searchRequest.current) setSearchResults([{ id: channel.username, name: channel.title, platform: 'telegram', screen_name: channel.username, photo_100: channel.photo, members_count: channel.subscribers }]);
-      } else if (requestedPlatform === 'youtube') {
-        const data = await apiGet<VkListResponse<YoutubeChannel>>(`/api/youtube/channels/search?q=${encodeURIComponent(query.trim())}`);
-        if (requestId === searchRequest.current) setSearchResults(data.items.map((item) => ({ id: item.id, name: item.name, platform: 'youtube', screen_name: item.handle, photo_100: item.photo, members_count: item.followersCount })));
-      } else {
-        const data = await apiGet<VkListResponse<VkGroup>>(`/api/vk/groups/search?q=${encodeURIComponent(normalized)}&count=10`);
-        if (requestId === searchRequest.current) setSearchResults(data.items.map((item) => ({ ...item, platform: 'vk' })));
+      const results = await searchSources(text, requestedPlatform);
+      if (requestId !== searchRequest.current) return;
+      const match = pickUnambiguousSource(results, text, requestedPlatform, Boolean(detectedPlatform));
+      if (match) {
+        addGroup(match);
+        setQuery('');
+        setHasSearched(false);
+        return;
       }
+      setSearchResults(results);
     } catch (error) {
       if (requestId === searchRequest.current) setMessage(error instanceof Error ? error.message : 'Не удалось найти сообщества.');
+    } finally {
+      if (requestId === searchRequest.current) setIsSearching(false);
+    }
+  };
+
+  const openExample = async () => {
+    const requestId = ++searchRequest.current;
+    setIsSearching(true);
+    setMessage(null);
+    try {
+      const results = await Promise.all(postsExample.sources.map((source) => searchSources(source.query, source.platform).then((items) => items[0])));
+      if (requestId !== searchRequest.current) return;
+      const exampleGroups = results.filter((group): group is PostsChannel => Boolean(group));
+      setSelectedGroups(exampleGroups);
+      void runAnalysis(exampleGroups);
+    } catch (error) {
+      if (requestId === searchRequest.current) setMessage(error instanceof Error ? error.message : 'Не удалось загрузить пример.');
     } finally {
       if (requestId === searchRequest.current) setIsSearching(false);
     }
@@ -218,7 +233,7 @@ export function PostsPage({ groups }: Props) {
   const addGroup = (group: PostsChannel) => {
     setMessage(null);
 
-    if (selectedGroups.some((item) => item.platform === group.platform && item.id === group.id)) {
+    if (selectedGroups.some((item) => sourceKey(item) === sourceKey(group))) {
       setMessage('Этот источник уже добавлен в анализ публикаций.');
       return;
     }
@@ -229,6 +244,7 @@ export function PostsPage({ groups }: Props) {
     }
 
     setSelectedGroups((current) => [...current, group]);
+    setSearchResults([]);
     setAnalysis(null);
   };
 
@@ -248,11 +264,9 @@ export function PostsPage({ groups }: Props) {
     searchRequest.current += 1;
     setPlatform(nextPlatform);
     setSearchResults([]);
-    setAnalysis(null);
     setMessage(null);
     setHasSearched(false);
     setIsSearching(false);
-    setFilterBy('all');
   };
 
   const applyCollection = (collection: ComparisonCollection) => {
@@ -323,8 +337,8 @@ export function PostsPage({ groups }: Props) {
     }
   };
 
-  const runAnalysis = async () => {
-    if (selectedGroups.length === 0) {
+  const runAnalysis = async (groupsToAnalyze: PostsChannel[] = selectedGroups) => {
+    if (groupsToAnalyze.length === 0) {
       setMessage('Добавьте хотя бы одно сообщество для анализа.');
       return;
     }
@@ -333,7 +347,7 @@ export function PostsPage({ groups }: Props) {
     setMessage(null);
 
     try {
-      const sources = selectedGroups.map((group) => `${group.platform}:${group.id}`).join(',');
+      const sources = groupsToAnalyze.map((group) => `${group.platform}:${group.id}`).join(',');
       const data = await apiGet<PostsAnalysisResult>(
         `/api/posts/analyze?sources=${encodeURIComponent(sources)}&period=${encodeURIComponent(period)}`
       );
@@ -349,60 +363,43 @@ export function PostsPage({ groups }: Props) {
 
   return (
     <section className="page-grid posts-page">
-      <div className="panel posts-setup">
-        <div className="posts-setup-heading">
-          <div>
-            <h2>Анализ публикаций</h2>
-            <p>Соберите до 10 сообществ или каналов и найдите публикации с лучшей вовлечённостью.</p>
-          </div>
-          {selectedGroups.length > 0 && <Button type="button" view="secondary" size={40} leftAddons={<RotateCcw size={16} />} onClick={clearGroups} disabled={isAnalyzing}>Начать заново</Button>}
-        </div>
-
-        <SegmentedControl className="social-platform-switcher" selectedId={platform} size={40} disabled={isAnalyzing} onChange={(id) => changePlatform(id as PostsPlatform)}>
-          <Segment id="vk" title={<PlatformSegmentTitle platform="vk" />} />
-          <Segment id="youtube" title={<PlatformSegmentTitle platform="youtube" />} />
-          <Segment id="telegram" title={<PlatformSegmentTitle platform="telegram" />} />
-        </SegmentedControl>
-
-        <form className="posts-search-form" onSubmit={search}>
-          <label htmlFor="posts-search">Найдите источник</label>
-          <div>
-            <Input
-              block
-              className="posts-search-input"
-              id="posts-search"
-              value={query}
-              onChange={(_, payload) => setQuery(payload.value)}
-              placeholder={platform === 'youtube' ? 'URL, @handle, channel ID или название' : platform === 'telegram' ? '@username или ссылка t.me' : 'Название, screen name или ссылка VK'}
-            />
-            <Button className="brand-primary-button" type="submit" view="primary" size={48} leftAddons={<Search size={18} />} loading={isSearching} disabled={isAnalyzing}>Найти</Button>
-          </div>
-        </form>
-
-        {message && <div className="form-message" role="alert">{message}</div>}
-        {!isSearching && !message && hasSearched && searchResults.length === 0 && <div className="posts-feedback">Ничего не найдено. Попробуйте другое название или ссылку.</div>}
-
-        {searchResults.length > 0 && <div className="posts-source-section"><strong>Результаты поиска</strong><div className="compare-options">{searchResults.map((group) => {
-          const isAdded = selectedGroups.some((item) => item.platform === group.platform && item.id === group.id);
-          return <div className="compare-option" key={`${group.platform}:${group.id}`}>{group.photo_100 ?? group.photo_50 ? <img src={group.photo_100 ?? group.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><strong>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}{group.members_count ? ` · ${formatNumber(group.members_count)} ${platform === 'vk' ? 'участников' : 'подписчиков'}` : ''}</small></span><Button type="button" view="secondary" size={40} onClick={() => addGroup(group)} disabled={isAdded || selectedGroups.length >= 10 || isAnalyzing}>{isAdded ? 'Добавлено' : 'Добавить'}</Button></div>;
-        })}</div></div>}
-
-        {savedGroups.length > 0 && <div className="posts-source-section posts-saved"><strong>Ваши сохранённые источники</strong><div className="compare-options">{savedGroups.map((group) => {
-          const isAdded = selectedGroups.some((item) => item.platform === group.platform && item.id === group.id);
-          return <div className="compare-option" key={`saved:${group.platform}:${group.id}`}>{group.photo_100 ? <img src={group.photo_100} alt="" /> : <span className="community-avatar-placeholder" />}<span><strong>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}</small></span><Button type="button" view="secondary" size={40} onClick={() => addGroup(group)} disabled={isAdded || selectedGroups.length >= 10 || isAnalyzing}>{isAdded ? 'Добавлено' : 'Добавить'}</Button></div>;
-        })}</div></div>}
-
-        <div className="posts-selection-heading"><strong>Выбрано для анализа</strong><span>{selectedGroups.length} из 10</span></div>
-        {selectedGroups.length > 0 ? <div className="posts-selected">{selectedGroups.map((group) => <div className="posts-selected-card" key={`${group.platform}:${group.id}`}><span className="posts-avatar">{group.photo_100 ?? group.photo_50 ? <img src={group.photo_100 ?? group.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<PostsPlatformIcon platform={group.platform} /></span><span><strong title={group.name}>{group.name}</strong><small>{group.screen_name ? `@${group.screen_name}` : `id${group.id}`}</small></span><IconButton aria-label={`Удалить «${group.name}» из анализа`} icon={X} onClick={() => removeGroup(group)} disabled={isAnalyzing} size={32} view="transparent" /></div>)}</div> : <div className="posts-empty-selection">Добавьте хотя бы один источник из поиска или сохранённого списка.</div>}
-
-        {selectedGroups.length > 0 && <div className="posts-run"><div><strong>Период публикаций</strong><div className="period-tabs">{periods.map((item) => <Button className={period === item.key ? 'brand-primary-button' : ''} view={period === item.key ? 'primary' : 'secondary'} key={item.key} type="button" size={40} onClick={() => { setPeriod(item.key); setAnalysis(null); }} disabled={isAnalyzing}>{item.label}</Button>)}</div></div><Button className="posts-submit brand-primary-button" type="button" view="primary" size={48} leftAddons={<FileText size={18} />} onClick={runAnalysis} loading={isAnalyzing}>{isAnalyzing ? 'Собираем публикации…' : `Проанализировать ${selectedGroups.length}`}</Button></div>}
-      </div>
-
-      <aside className="panel compare-collections-panel posts-collections-panel">
-        <div className="compare-collections-heading"><span><FolderOpen size={17} />Мои подборки</span><Button type="button" view="secondary" size={40} leftAddons={<BookmarkPlus size={16} />} onClick={() => void saveCollection()} disabled={selectedGroups.length < 2 || isAnalyzing}>Сохранить текущую</Button></div>
-        {isCollectionsLoading ? <small>Загружаем подборки…</small> : postsCollections.length > 0 ? <div className="compare-collections-list">{postsCollections.map((collection) => <div className="compare-collection" key={collection.id}><Button className="compare-collection-open" type="button" view="secondary" size={40} onClick={() => applyCollection(collection)} disabled={isAnalyzing}><strong>{collection.name}</strong><small>{collection.sources.length} {sourceWord(collection.sources.length)} · {periods.find((item) => item.key === collection.period)?.label}</small></Button><IconButton aria-label={`Переименовать подборку «${collection.name}»`} className="compare-collection-edit" icon={Pencil} size={32} view="transparent" onClick={() => void renameCollection(collection)} /><IconButton aria-label={`Удалить подборку «${collection.name}»`} className="compare-collection-delete" icon={Trash2} size={32} view="transparent" onClick={() => void deleteCollection(collection)} /></div>)}</div> : <small>Сохраните набор источников, чтобы возвращаться к нему позже.</small>}
-        {collectionsError && <div className="form-message" role="alert">{collectionsError}</div>}
-      </aside>
+      <SourceSetup
+        title="Лучшие публикации"
+        description="Соберите до 10 групп и каналов своей ниши и отсортируйте их публикации по вовлечённости — готовые идеи для контент-плана."
+        summaryTitle="Что анализируем"
+        minSources={1}
+        query={query}
+        platform={platform}
+        isSearching={isSearching}
+        searchResults={searchResults}
+        searchMessage={<>
+          {message && <div className="form-message" role="alert">{message}</div>}
+          {!isSearching && !message && hasSearched && searchResults.length === 0 && <div className="posts-feedback">Ничего не найдено. Попробуйте другое название или ссылку.</div>}
+          {collectionsError && <div className="form-message" role="alert">{collectionsError}</div>}
+        </>}
+        selected={selectedGroups}
+        savedGroups={savedGroups}
+        collections={isCollectionsLoading ? [] : postsCollections}
+        example={postsExample}
+        disabled={isAnalyzing}
+        onQueryChange={setQuery}
+        onPlatformChange={changePlatform}
+        onSearch={search}
+        onAdd={addGroup}
+        onRemove={removeGroup}
+        onClear={clearGroups}
+        onExample={() => void openExample()}
+        onApplyCollection={applyCollection}
+        onRenameCollection={(collection) => void renameCollection(collection)}
+        onDeleteCollection={(collection) => void deleteCollection(collection)}
+      >
+        {selectedGroups.length > 0 && <div className="source-summary-footer">
+          <span className="source-row-title">Период публикаций</span>
+          <div className="period-tabs">{periods.map((item) => <Button className={period === item.key ? 'brand-primary-button' : ''} view={period === item.key ? 'primary' : 'secondary'} key={item.key} type="button" size={32} onClick={() => { setPeriod(item.key); setAnalysis(null); }} disabled={isAnalyzing}>{item.label}</Button>)}</div>
+          <Button block className="brand-primary-button" type="button" view="primary" size={48} leftAddons={<FileText size={18} />} onClick={() => void runAnalysis()} loading={isAnalyzing}>{`Показать публикации · ${selectedGroups.length} ${sourceWord(selectedGroups.length)}`}</Button>
+          {selectedGroups.length >= 2 && <button className="source-summary-link" disabled={isAnalyzing} type="button" onClick={() => void saveCollection()}><BookmarkPlus size={16} />Сохранить как подборку</button>}
+        </div>}
+      </SourceSetup>
 
       {analysis && (
         <div className="panel span-2 posts-results">

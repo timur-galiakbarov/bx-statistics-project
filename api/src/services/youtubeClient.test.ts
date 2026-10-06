@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { env } from '../config/env.js';
-import { getYoutubeVideos, normalizeYoutubeChannelInput, resolveYoutubeChannel, YoutubeApiError } from './youtubeClient.js';
+import { bestThumbnail, getYoutubeVideos, normalizeYoutubeChannelInput, resolveYoutubeChannel, YoutubeApiError } from './youtubeClient.js';
 
 test('normalizeYoutubeChannelInput supports channel URLs, handles and ids', () => {
   assert.deepEqual(normalizeYoutubeChannelInput('https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv'), { kind: 'channelId', value: 'UCabcdefghijklmnopqrstuv' });
@@ -69,4 +69,14 @@ test('missing API key returns a clear configuration error', async () => {
   } finally {
     env.youtubeApiKey = previousKey;
   }
+});
+
+test('bestThumbnail skips non-standard fhd/qhd thumbnails that YouTube does not serve', () => {
+  assert.equal(bestThumbnail({
+    default: { url: 'https://i.ytimg.com/vi/id/default.jpg', width: 120 },
+    maxres: { url: 'https://i.ytimg.com/vi/id/maxresdefault.jpg', width: 1280 },
+    fhd: { url: 'https://i.ytimg.com/vi/id/fhddefault.jpg', width: 1920 }
+  }), 'https://i.ytimg.com/vi/id/maxresdefault.jpg');
+  assert.equal(bestThumbnail({ high: { url: 'high.jpg', width: 480 }, qhd: { url: 'qhd.jpg', width: 2560 } }), 'high.jpg');
+  assert.equal(bestThumbnail(undefined), undefined);
 });

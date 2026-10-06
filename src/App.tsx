@@ -303,7 +303,7 @@ export function App() {
           <Route path="/account" element={<AccountPage user={user} groups={groups} onAccountChanged={loadAccount} />} />
           <Route
             path="/analytics"
-            element={<AnalyticsPage groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} activeTo={user?.activeTo} />}
+            element={<AnalyticsPage groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} />}
           />
           <Route path="/compare" element={paidRoute(<ComparePage groups={groups} user={user} />)} />
           <Route path="/posts" element={paidRoute(<PostsPage groups={groups} />)} />

@@ -101,8 +101,12 @@ function numberOrNull(value?: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function bestThumbnail(thumbnails?: Record<string, Thumbnail>) {
-  return Object.values(thumbnails ?? {}).sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0]?.url;
+// API иногда отдаёт fhd/qhd-превью, которых нет на i.ytimg.com (вместо картинки приходит заглушка 120×90),
+// поэтому берём только стандартные размеры.
+const THUMBNAIL_PRIORITY = ['maxres', 'standard', 'high', 'medium', 'default'];
+
+export function bestThumbnail(thumbnails?: Record<string, Thumbnail>) {
+  return THUMBNAIL_PRIORITY.map((key) => thumbnails?.[key]?.url).find(Boolean);
 }
 
 function mapChannel(item: ChannelResource): YoutubeChannel {

@@ -23,7 +23,16 @@
     <script>
       fetch('/api/account/me', { credentials: 'include' })
         .then(function (response) {
-          if (response.ok) window.location.replace('/app/dashboard');
+          if (!response.ok) return;
+          function showCabinetLink() {
+            var link = document.getElementById('header-login');
+            if (!link) return;
+            link.href = '/app/dashboard';
+            link.textContent = 'Открыть кабинет';
+            link.setAttribute('data-goal', 'landing_open_cabinet');
+          }
+          if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showCabinetLink);
+          else showCabinetLink();
         })
         .catch(function () {});
     </script>
@@ -320,7 +329,7 @@
           <a href="#vk">ВКонтакте</a>
           <a href="#prices">Цены</a>
           <a href="#faq">Вопросы</a>
-          <a class="btn btn-primary" href="/app/login" data-goal="landing_login">Войти</a>
+          <a class="btn btn-primary" id="header-login" href="/app/login" data-goal="landing_login">Войти</a>
         </nav>
       </div>
     </header>

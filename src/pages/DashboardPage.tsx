@@ -15,7 +15,7 @@ import type { DashboardPeriod, DashboardSummary, DashboardSummaryItem, SavedGrou
 import { number } from './dashboardSelectors';
 import { MAX_CUSTOM_PERIOD_DAYS } from '../utils/date';
 
-type Props = { groups: SavedGroup[]; hasPaidAccess: boolean; isTrialActive: boolean; onGroupsChanged: () => Promise<void> };
+type Props = { groups: SavedGroup[]; hasPaidAccess: boolean; isTrialActive: boolean; freeGroupsDisabled: boolean; onGroupsChanged: () => Promise<void> };
 type AddMode = 'tracked' | 'free' | 'bonus';
 type Platform = SocialPlatform;
 type SearchResult = VkGroup | YoutubeChannel | TelegramChannel;
@@ -104,7 +104,7 @@ function failedDashboardItem(group: SavedGroup, error: unknown): DashboardSummar
   };
 }
 
-export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsChanged }: Props) {
+export function DashboardPage({ groups, hasPaidAccess, isTrialActive, freeGroupsDisabled, onGroupsChanged }: Props) {
   const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [period, setPeriod] = useState<DashboardPeriod>(getSavedDashboardPeriod);
@@ -232,7 +232,9 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, onGroupsCh
   const managementProps = { platform, setPlatform: (next: Platform) => { setPlatform(next); setResults([]); setSearchError(''); }, query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds };
   return <div className="page-grid dashboard-page">
     <CommunitiesTable groups={trackedGroups} summary={summary} period={period} customRange={customRange} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onCustomRangeApply={setCustomRange} onAdd={() => openAddModal('tracked')} onRefresh={() => isPeriodReady && void loadSummary(true)} onReorder={async (groupIds) => { await apiPost('/api/account/groups/order', { groupIds }); await onGroupsChanged(); }} onRemove={remove} onSelect={(group) => navigate(group.platform === 'telegram' ? `/analytics?platform=telegram&channel=${encodeURIComponent(group.handle ?? group.externalId)}` : `/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
-    <FreeCommunitiesPanel groups={freeGroups} isTrialActive={isTrialActive} onAdd={openAddModal} />
+    {freeGroupsDisabled
+      ? isTrialActive && <div className="trial-access-note span-2"><Check size={17} /><span><strong>Пробный период активен.</strong> В течение семи дней доступна аналитика без ограничений.</span></div>
+      : <FreeCommunitiesPanel groups={freeGroups} isTrialActive={isTrialActive} onAdd={openAddModal} />}
     {message && <div className="form-message span-2">{message}</div>}
     <AddCommunityModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} managementProps={managementProps} />
   </div>;
@@ -268,7 +270,7 @@ function FreeCommunitiesPanel({ groups, isTrialActive, onAdd }: { groups: SavedG
       <FreeCommunitySlot title="Первое сообщество" description="Доступно всем пользователям" isActive={hasBaseGroup} group={baseGroup} />
       <FreeCommunitySlot title="Бонусное сообщество" description="За вступление в сообщество Socstat во ВКонтакте" isActive={hasBonusGroup} group={bonusGroup} />
     </div>
-    {isTrialActive && <div className="trial-access-note"><Check size={17} /><span><strong>Пробный период активен.</strong> В течение трёх дней доступна аналитика без ограничений.</span></div>}
+    {isTrialActive && <div className="trial-access-note"><Check size={17} /><span><strong>Пробный период активен.</strong> В течение семи дней доступна аналитика без ограничений.</span></div>}
     {!hasBonusGroup && <div className="free-communities-action"><div>{hasBaseGroup && <><LockKeyhole size={17} /><span>Подпишитесь на <a href="https://vk.com/socstat" target="_blank" rel="noreferrer">сообщество Socstat</a> и добавьте ещё одно.</span></>}</div><div className="free-communities-add"><Button className="dashboard-action-button" type="button" view="primary" size={40} leftAddons={<Plus size={16} />} onClick={() => onAdd(hasBaseGroup ? 'bonus' : 'free')}>{hasBaseGroup ? 'Добавить бонусное сообщество' : 'Добавить сообщество'}</Button>{!hasBaseGroup && <span className="free-communities-platforms" aria-label="Поддерживаются ВКонтакте, YouTube и Telegram"><PlatformIcon platform="vk" /><PlatformIcon platform="youtube" /><PlatformIcon platform="telegram" /></span>}</div></div>}
     {hasBonusGroup && <div className="free-communities-limit"><Check size={17} />Доступны оба бесплатных сообщества для анализа.</div>}
   </section>;

@@ -16,6 +16,8 @@ const userSchema = new Schema(
     photo: { type: String },
     activeTo: { type: Date, required: true },
     trialEndsAt: { type: Date },
+    // Пользователи, зарегистрированные после отмены бесплатных сообществ, их не получают.
+    freeGroupsDisabled: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
     enforceAccessRestrictions: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

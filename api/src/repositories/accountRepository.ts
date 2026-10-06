@@ -23,6 +23,7 @@ type UserDocument = {
   photo?: string;
   activeTo: Date;
   trialEndsAt?: Date;
+  freeGroupsDisabled?: boolean;
   isAdmin: boolean;
   enforceAccessRestrictions?: boolean;
 };
@@ -50,6 +51,7 @@ export type AccountUser = {
   photo?: string;
   activeTo: string;
   trialEndsAt?: string;
+  freeGroupsDisabled: boolean;
   isAdmin: boolean;
   enforceAccessRestrictions: boolean;
 };
@@ -86,6 +88,7 @@ export function mapUser(user: UserDocument): AccountUser {
     photo: user.photo,
     activeTo: user.activeTo.toISOString().slice(0, 10),
     trialEndsAt: user.trialEndsAt?.toISOString() ?? undefined,
+    freeGroupsDisabled: Boolean(user.freeGroupsDisabled),
     isAdmin: user.isAdmin,
     enforceAccessRestrictions: Boolean(user.enforceAccessRestrictions)
   };
@@ -289,7 +292,7 @@ export async function upsertVkUser(profile: {
 }, acquisition?: Acquisition) {
   const isNew = !(await UserModel.exists({ vkId: profile.vkId }));
   const fallbackActiveTo = new Date();
-  fallbackActiveTo.setDate(fallbackActiveTo.getDate() + 3);
+  fallbackActiveTo.setDate(fallbackActiveTo.getDate() + 7);
   const trialEndsAt = new Date(fallbackActiveTo);
   const isAdmin = env.adminVkIds.includes(profile.vkId);
 
@@ -306,6 +309,7 @@ export async function upsertVkUser(profile: {
       $setOnInsert: {
         activeTo: fallbackActiveTo,
         trialEndsAt,
+        freeGroupsDisabled: true,
         ...(isAdmin ? {} : { isAdmin: false }),
         ...(acquisition ? { acquisition } : {}),
         pendingGoals: [{ goal: 'registration' }]
@@ -425,6 +429,14 @@ export async function addGroup(
   const isAlreadyTracked = source === 'free' || source === 'bonus'
     ? await SavedGroupModel.exists({ ...trackedIdentityQuery, isTracked: { $ne: false } } as any)
     : false;
+
+  if (!existingGroup && (source === 'free' || source === 'bonus')
+    && await UserModel.exists({ _id: userId, freeGroupsDisabled: true })) {
+    throw new DomainError('Бесплатные сообщества недоступны. Оформите тариф, чтобы добавить сообщество.', {
+      status: 403,
+      code: 'FREE_GROUPS_DISABLED'
+    });
+  }
 
   if (!existingGroup && source === 'free') {
     const groupsCount = await SavedGroupModel.countDocuments({ userId, source: 'free' });

@@ -7,6 +7,7 @@ export type User = {
   photo_200?: string;
   activeTo: string;
   trialEndsAt?: string;
+  freeGroupsDisabled?: boolean;
   isAdmin: boolean;
   enforceAccessRestrictions: boolean;
 };

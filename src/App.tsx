@@ -296,6 +296,7 @@ export function App() {
                 groups={groups}
                 hasPaidAccess={Boolean(hasPaidAccess)}
                 isTrialActive={isTrialActive}
+                freeGroupsDisabled={Boolean(user?.freeGroupsDisabled)}
                 onGroupsChanged={loadAccount}
               />
             }

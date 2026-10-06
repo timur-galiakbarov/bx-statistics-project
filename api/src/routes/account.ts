@@ -70,6 +70,7 @@ accountRouter.get('/me', requireUser, (req, res) => {
         photo_200: user.photo,
         activeTo: user.activeTo,
         trialEndsAt: user.trialEndsAt,
+        freeGroupsDisabled: user.freeGroupsDisabled,
         isAdmin: user.isAdmin,
         enforceAccessRestrictions: user.enforceAccessRestrictions
       }

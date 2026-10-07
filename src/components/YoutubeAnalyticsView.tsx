@@ -1,4 +1,4 @@
-import { Activity, ArrowDownUp, BarChart3, CircleHelp, Eye, Heart, MessageCircle, Play, TrendingUp } from 'lucide-react';
+import { ArrowDownUp, CircleHelp } from 'lucide-react';
 import { Button } from '@alfalab/core-components-button';
 import { Select } from '@alfalab/core-components-select';
 import { Tooltip } from '@alfalab/core-components-tooltip';
@@ -23,6 +23,14 @@ const sortOptions = [
 
 function number(value: number, digits = 0) {
   return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: digits }).format(value);
+}
+
+function plural(value: number, one: string, few: string, many: string) {
+  const mod10 = Math.abs(value) % 10;
+  const mod100 = Math.abs(value) % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
 }
 
 function percent(value: number) {
@@ -59,8 +67,8 @@ function sortValue(post: YoutubePost, sort: YoutubeSort) {
   return post[sort];
 }
 
-function YoutubeMetric({ icon: Icon, label, value, caption }: { icon: typeof Eye; label: string; value: string; caption: string }) {
-  return <article className="youtube-kpi"><div><Icon size={18} /><span>{label}</span></div><strong>{value}</strong><small>{caption}</small></article>;
+function YoutubeMetric({ label, value, caption }: { label: string; value: string; caption: string }) {
+  return <article className="analytics-kpi steady youtube-kpi"><div className="analytics-kpi-heading"><span>{label}</span></div><strong>{value}</strong><em>{caption}</em></article>;
 }
 
 function YoutubePerformance({ posts }: { posts: YoutubePost[] }) {
@@ -90,6 +98,9 @@ export function YoutubeAnalyticsView({ analytics, section }: { analytics: Commun
   const viewsPerDay = median(posts.map(viewVelocity));
   const sortedPosts = useMemo(() => [...posts].sort((left, right) => sortValue(right, sort) - sortValue(left, sort)), [posts, sort]);
   const visiblePosts = sortedPosts.slice(0, visibleCount);
+  const headline = posts.length
+    ? `Вышло ${number(posts.length)} видео — ${number(posts.length / periodDays * 7, 1)} в неделю. Типичное видео набирает ${number(viewsPerDay)} ${plural(Math.round(viewsPerDay), 'просмотр', 'просмотра', 'просмотров')} в день${views ? `, вовлечённость ${percent((likes + comments) / views * 100)} от просмотров` : ''}.`
+    : null;
 
   const leaderCandidates: Array<{ post?: YoutubePost; badge: string; reason: (post: YoutubePost) => string }> = [
     { post: [...posts].sort((left, right) => right.views - left.views)[0], badge: 'Больше всего просмотров', reason: (post) => `${number(post.views)} просмотров` },
@@ -112,26 +123,27 @@ export function YoutubeAnalyticsView({ analytics, section }: { analytics: Commun
   }
 
   return <>
+    <div className="panel span-2 analytics-section">
+      <div className="section-title"><div><h2>Главное за период</h2><p>Видео, опубликованные с {new Date(`${analytics.period.dateFrom}T00:00:00`).toLocaleDateString('ru-RU')} по {new Date(`${analytics.period.dateTo}T00:00:00`).toLocaleDateString('ru-RU')}.</p></div><Tooltip content="Период отбирает видео по дате публикации. Метрики показывают их значения на момент обновления." position="left" targetTag="span" view="hint"><button className="youtube-data-info" type="button"><CircleHelp size={18} /> О данных</button></Tooltip></div>
+      {headline && <p className="analytics-headline">{headline}</p>}
+      <div className="youtube-period-kpis">
+        <YoutubeMetric label="Опубликовано" value={number(posts.length)} caption={`${number(posts.length / periodDays * 7, 1)} видео в неделю`} />
+        <YoutubeMetric label="Просмотры" value={number(views)} caption={`Медиана — ${number(analytics.wall.medianViewsPerPost ?? 0)}`} />
+        <YoutubeMetric label="Медиана просмотров в день" value={number(viewsPerDay, 1)} caption="С учётом возраста каждого видео" />
+        <YoutubeMetric label="Лайки на 1 000 просмотров" value={views ? number(likes / views * 1000, 1) : '—'} caption={`${number(likes)} лайков всего`} />
+        <YoutubeMetric label="Комментарии на 1 000 просмотров" value={views ? number(comments / views * 1000, 1) : '—'} caption={`${number(comments)} комментариев всего`} />
+        <YoutubeMetric label="Вовлечённость по просмотрам" value={views ? percent((likes + comments) / views * 100) : '—'} caption="Лайки и комментарии / просмотры" />
+      </div>
+    </div>
     <div className="panel span-2 analytics-section youtube-channel-summary">
       <div className="section-title"><div><h2>Канал сейчас</h2><p>Основные публичные показатели канала.</p></div></div>
       <div className="youtube-channel-kpis">
-        <YoutubeMetric icon={Eye} label="Просмотры канала" value={number(analytics.group.channelViewCount ?? 0)} caption="За всё время" />
-        <YoutubeMetric icon={Play} label="Публичные видео" value={number(analytics.group.publicVideoCount ?? 0)} caption="Всего на канале" />
+        <YoutubeMetric label="Просмотры канала" value={number(analytics.group.channelViewCount ?? 0)} caption="За всё время" />
+        <YoutubeMetric label="Публичные видео" value={number(analytics.group.publicVideoCount ?? 0)} caption="Всего на канале" />
       </div>
     </div>
     <SubscriberHistoryPanel platform="youtube" sourceId={analytics.group.id} period={analytics.period} currentSubscribers={analytics.group.membersCount} />
     <PostViewsCurvePanel platform="youtube" sourceId={String(analytics.group.id)} subscribers={analytics.group.membersCount} knownPosts={analytics.wall.topPosts} />
-    <div className="panel span-2 analytics-section">
-      <div className="section-title"><div><h2>Результаты видео за выбранный период</h2><p>Видео, опубликованные с {new Date(`${analytics.period.dateFrom}T00:00:00`).toLocaleDateString('ru-RU')} по {new Date(`${analytics.period.dateTo}T00:00:00`).toLocaleDateString('ru-RU')}.</p></div><Tooltip content="Период отбирает видео по дате публикации. Метрики показывают их значения на момент обновления." position="left" targetTag="span" view="hint"><button className="youtube-data-info" type="button"><CircleHelp size={18} /> О данных</button></Tooltip></div>
-      <div className="youtube-period-kpis">
-        <YoutubeMetric icon={Play} label="Опубликовано" value={number(posts.length)} caption={`${number(posts.length / periodDays * 7, 1)} видео в неделю`} />
-        <YoutubeMetric icon={Eye} label="Просмотры" value={number(views)} caption={`Медиана — ${number(analytics.wall.medianViewsPerPost ?? 0)}`} />
-        <YoutubeMetric icon={TrendingUp} label="Медиана просмотров в день" value={number(viewsPerDay, 1)} caption="С учётом возраста каждого видео" />
-        <YoutubeMetric icon={Heart} label="Лайки на 1 000 просмотров" value={views ? number(likes / views * 1000, 1) : '—'} caption={`${number(likes)} лайков всего`} />
-        <YoutubeMetric icon={MessageCircle} label="Комментарии на 1 000 просмотров" value={views ? number(comments / views * 1000, 1) : '—'} caption={`${number(comments)} комментариев всего`} />
-        <YoutubeMetric icon={Activity} label="Вовлечённость по просмотрам" value={views ? percent((likes + comments) / views * 100) : '—'} caption="Лайки и комментарии / просмотры" />
-      </div>
-    </div>
     <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Результативность видео</h2><p>Лидеры по просмотрам с поправкой на возраст видео и долей реакций.</p></div></div><YoutubePerformance posts={posts} /></div>
     <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Лучшие видео</h2><p>Лидеры периода по разным критериям.</p></div></div>{leaders.length ? <div className="posts-list">{leaders.map((post) => <PostCard key={post.id} post={{ ...post, group: analytics.group }} />)}</div> : <div className="empty-state">За выбранный период видео не найдено.</div>}</div>
   </>;

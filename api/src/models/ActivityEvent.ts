@@ -10,6 +10,9 @@ export const activityEventTypes = [
   'posts_analyze',
   'collection_saved',
   'payment_started',
+  // Клик по виджету конкурентов на главной; label — что именно нажали.
+  'competitors_widget',
+  'competitors_saved',
   // Уже зарегистрированный пользователь пришёл с рекламными метками.
   'ad_return'
 ] as const;

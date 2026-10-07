@@ -4,7 +4,7 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
 import type { AnalyticsPeriod, CommunityAnalytics, ComparisonCollection, CompareItem, CompareResult, SavedGroup, User } from '../api/types';
 import { TelegramLogo } from '../components/TelegramLogo';
 import { Button } from '@alfalab/core-components-button';
-import { SourceSetup, pickUnambiguousSource, searchSources, sourceKey, type SourceChannel, type SourceExample } from '../components/SourceSetup';
+import { CollectionSaveActions, SourceSetup, matchingCollection, pickUnambiguousSource, searchSources, sourceKey, type SourceChannel, type SourceExample } from '../components/SourceSetup';
 import { detectPlatform } from '../utils/sourceQuery';
 
 const CompareChart = lazy(() => import('../components/CompareChart'));
@@ -93,6 +93,10 @@ export function ComparePage({ groups, user }: Props) {
   const [hasSearched, setHasSearched] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
   const [collections, setCollections] = useState<ComparisonCollection[]>([]);
+  const [openedCollectionId, setOpenedCollectionId] = useState<string | null>(null);
+  // Открытая подборка: та, что выбрали из списка, или та, с которой совпадает текущий выбор.
+  const openedCollection = selectedGroups.length ? collections.find((item) => item.id === openedCollectionId) ?? matchingCollection(collections, selectedGroups) : undefined;
+  const collectionChanged = Boolean(openedCollection && (!matchingCollection([openedCollection], selectedGroups) || openedCollection.period !== period));
   const [collectionsError, setCollectionsError] = useState<string | null>(null);
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(true);
   const searchRequest = useRef(0);
@@ -178,6 +182,7 @@ export function ComparePage({ groups, user }: Props) {
       if (requestId !== searchRequest.current) return;
       const exampleGroups = results.filter((group): group is CompareChannel => Boolean(group));
       setSelectedGroups(exampleGroups);
+      setOpenedCollectionId(null);
       setCompare(null);
       void runCompare(exampleGroups);
     } catch (error) {
@@ -216,6 +221,7 @@ export function ComparePage({ groups, user }: Props) {
 
   const clearGroups = () => {
     setSelectedGroups([]);
+    setOpenedCollectionId(null);
     setCompare(null);
     setSelectionError(null);
     setCompareError(null);
@@ -225,6 +231,7 @@ export function ComparePage({ groups, user }: Props) {
   const applyCollection = (collection: ComparisonCollection) => {
     setSelectedGroups(collection.sources.map((source) => ({ id: source.externalId, name: source.name, platform: source.platform, screen_name: source.handle, photo_100: source.photo, members_count: source.membersCount })).slice(0, 10));
     setPeriod(collection.period);
+    setOpenedCollectionId(collection.id);
     setPlatform(collection.sources[0]?.platform ?? 'vk');
     setCompare(null);
     setCompareError(null);
@@ -246,8 +253,23 @@ export function ComparePage({ groups, user }: Props) {
         sources: selectedGroups.map((group) => ({ platform: group.platform, externalId: String(group.id), name: group.name, handle: group.screen_name, photo: group.photo_100 ?? group.photo_50, membersCount: group.members_count }))
       });
       setCollections((current) => [collection, ...current]);
+      setOpenedCollectionId(collection.id);
       setCollectionsError(null);
     } catch (error) { setCollectionsError(error instanceof Error ? error.message : 'Не удалось сохранить подборку.'); }
+  };
+
+  const updateCollection = async () => {
+    if (!openedCollection) return;
+    if (selectedGroups.length < 2) {
+      setSelectionError('Добавьте минимум два аккаунта, чтобы сохранить подборку.');
+      return;
+    }
+    try {
+      const updated = await apiPatch<ComparisonCollection>(`/api/account/comparison-collections/${openedCollection.id}`, { name: openedCollection.name, period, sources: selectedGroups.map((group) => ({ platform: group.platform, externalId: String(group.id), name: group.name, handle: group.screen_name, photo: group.photo_100 ?? group.photo_50, membersCount: group.members_count })) });
+      setCollections((current) => [updated, ...current.filter((item) => item.id !== updated.id)]);
+      setOpenedCollectionId(updated.id);
+      setCollectionsError(null);
+    } catch (error) { setCollectionsError(error instanceof Error ? error.message : 'Не удалось обновить подборку.'); }
   };
 
   const deleteCollection = async (collection: ComparisonCollection) => {
@@ -351,13 +373,14 @@ export function ComparePage({ groups, user }: Props) {
         onApplyCollection={applyCollection}
         onRenameCollection={(collection) => void renameCollection(collection)}
         onDeleteCollection={(collection) => void deleteCollection(collection)}
+        activeCollection={openedCollection && { name: openedCollection.name, changed: collectionChanged }}
       >
         {selectedGroups.length >= 2 && <div className="source-summary-footer">
           <span className="source-row-title">Период</span>
           <div className="period-tabs">{periods.map((item) => <Button className={`compare-period-button ${period === item.key ? 'compare-action-button' : ''}`} view={period === item.key ? 'primary' : 'secondary'} key={item.key} type="button" size={32} onClick={() => changePeriod(item.key)} disabled={isComparing}>{item.label}</Button>)}</div>
           <Button block className="compare-action-button" type="button" view="primary" size={48} leftAddons={<BarChart3 size={18} />} onClick={() => void runCompare()} disabled={isComparing}>{isComparing ? 'Сравниваем…' : `Сравнить ${selectedGroups.length} ${accountWord(selectedGroups.length)}`}</Button>
           {compareError && <div className="form-message" role="alert">{compareError} <Button type="button" view="secondary" size={32} onClick={() => void runCompare()}>Повторить</Button></div>}
-          <button className="source-summary-link" disabled={isComparing} type="button" onClick={() => void saveCollection()}><BookmarkPlus size={16} />Сохранить как подборку</button>
+          <CollectionSaveActions collection={openedCollection} changed={collectionChanged} disabled={isComparing} onSave={() => void saveCollection()} onUpdate={() => void updateCollection()} />
         </div>}
       </SourceSetup>
 

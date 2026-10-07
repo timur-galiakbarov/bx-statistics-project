@@ -115,6 +115,19 @@ accountRouter.post('/activity', requireUser, async (req, res, next) => {
   }
 });
 
+// Клики по элементам интерфейса, которые не порождают серверного запроса. Метки — из закрытого списка.
+const uiEventLabels: Record<string, string[]> = { competitors_widget: ['open', 'add', 'other', 'expand', 'teaser'] };
+accountRouter.post('/ui-event', requireUser, (req, res) => {
+  const event = req.body?.event;
+  const label = req.body?.label;
+  if (event !== 'competitors_widget' || !uiEventLabels[event].includes(label)) {
+    res.status(400).json({ success: false, error: 'INVALID_UI_EVENT' });
+    return;
+  }
+  trackActivity(req, event, { label });
+  res.json({ success: true });
+});
+
 accountRouter.get('/events', requireUser, (req, res) => {
   subscribeToAccountEvents(req.user!.id, res);
 });
@@ -292,6 +305,7 @@ accountRouter.post('/comparison-collections', requireUser, async (req, res, next
   } catch (error) { next(error); }
 });
 
+// Тело только с name — переименование; с sources — обновление состава и периода (назначение подборки не меняется).
 accountRouter.patch('/comparison-collections/:collectionId', requireUser, async (req, res, next) => {
   const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
   if (!name || name.length > 80) {
@@ -299,7 +313,8 @@ accountRouter.patch('/comparison-collections/:collectionId', requireUser, async 
     return;
   }
   try {
-    const collection = await ComparisonCollectionModel.findOneAndUpdate({ _id: req.params.collectionId, ...comparisonCollectionFilter(req.user!.id, req.query.purpose) }, { $set: { name } }, { new: true });
+    const update = req.body?.sources === undefined ? { name } : (({ name: nextName, period, sources }) => ({ name: nextName, period, sources }))(comparisonCollectionFromBody(req.body));
+    const collection = await ComparisonCollectionModel.findOneAndUpdate({ _id: req.params.collectionId, ...comparisonCollectionFilter(req.user!.id, req.query.purpose) }, { $set: update }, { new: true });
     if (!collection) { res.status(404).json({ success: false, error: 'COMPARISON_COLLECTION_NOT_FOUND' }); return; }
     res.json({ success: true, data: comparisonCollectionData(collection) });
   } catch (error) { next(error); }

@@ -1,3 +1,4 @@
+import { competitorsRouter } from './routes/competitors.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -40,6 +41,7 @@ export function createApp() {
   app.use('/api/account', accountRouter);
   app.use('/api/analytics', analyticsRouter);
   app.use('/api/compare', compareRouter);
+  app.use('/api/competitors', competitorsRouter);
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/payments', paymentsRouter);
   app.use('/api/posts', postsRouter);

@@ -207,6 +207,15 @@ function mediaType(message: Api.Message): TelegramPost['mediaType'] {
   return message.media ? 'other' : null;
 }
 
+// Самая крупная обычная миниатюра видео, кружка или GIF. Stripped/path-миниатюры — это заглушки, а не картинки.
+function videoThumb(message: Api.Message) {
+  const document = message.video ?? message.videoNote ?? message.gif;
+  const sizes = document instanceof Api.Document ? document.thumbs ?? [] : [];
+  return sizes
+    .filter((size): size is Api.PhotoSize | Api.PhotoSizeProgressive | Api.PhotoCachedSize => size instanceof Api.PhotoSize || size instanceof Api.PhotoSizeProgressive || size instanceof Api.PhotoCachedSize)
+    .sort((a, b) => b.w * b.h - a.w * a.h)[0];
+}
+
 /** Reads channel posts between two unix timestamps, merging album parts into one post. */
 async function collectChannelPosts(client: TelegramClient, entity: Api.Channel, channel: TelegramChannel, unixFrom: number, unixTo: number) {
   const postsByKey = new Map<string, TelegramPost>();
@@ -230,7 +239,7 @@ async function collectChannelPosts(client: TelegramClient, entity: Api.Channel, 
       comments,
       engagement: reactions + comments + forwards,
       mediaType: postMediaType,
-      mediaUrl: postMediaType === 'photo' ? `/api/telegram/channels/${encodeURIComponent(channel.username)}/posts/${message.id}/media` : undefined
+      mediaUrl: message.photo || videoThumb(message) ? `/api/telegram/channels/${encodeURIComponent(channel.username)}/posts/${message.id}/media` : undefined
     };
     const groupKey = message.groupedId ? `album:${message.groupedId.toString()}` : `message:${message.id}`;
     const existing = postsByKey.get(groupKey);
@@ -245,7 +254,8 @@ async function collectChannelPosts(client: TelegramClient, entity: Api.Channel, 
         forwards: Math.max(existing.forwards, post.forwards),
         reactions: Math.max(existing.reactions, post.reactions),
         comments: Math.max(existing.comments, post.comments),
-        mediaType: existing.mediaType ?? post.mediaType
+        mediaType: existing.mediaType ?? post.mediaType,
+        mediaUrl: existing.mediaUrl ?? post.mediaUrl
       };
       postsByKey.set(groupKey, { ...merged, url: `https://t.me/${channel.username}/${merged.id}`, engagement: merged.reactions + merged.comments + merged.forwards });
     }
@@ -371,13 +381,14 @@ export async function getTelegramPostMedia(input: string, postIdValue: string, f
       const { client, entity } = await getChannelEntity(username);
       return client.getMessages(entity, { ids: postId });
     });
-    if (!(message instanceof Api.Message) || !message.photo) {
+    const thumb = message instanceof Api.Message && !message.photo ? videoThumb(message) : undefined;
+    if (!(message instanceof Api.Message) || (!message.photo && !thumb)) {
       postMediaCache.set(key, null);
       return null;
     }
     const downloaded = await telegramQueue.run(async () => {
       const client = await getClient();
-      return client.downloadMedia(message, {});
+      return client.downloadMedia(message, thumb ? { thumb } : {});
     });
     if (!Buffer.isBuffer(downloaded) || !downloaded.length) {
       postMediaCache.set(key, null);

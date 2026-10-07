@@ -10,6 +10,12 @@ function sendActivity(type: 'page_view' | 'heartbeat', path?: string) {
   apiPost('/api/account/activity', { visitId: getVisitId(), type, path }).catch(() => undefined);
 }
 
+export type CompetitorsWidgetAction = 'open' | 'add' | 'other' | 'expand' | 'teaser';
+
+export function trackCompetitorsWidget(label: CompetitorsWidgetAction) {
+  apiPost('/api/account/ui-event', { event: 'competitors_widget', label }).catch(() => undefined);
+}
+
 export function trackPageView(path: string) {
   sendActivity('page_view', path);
 }

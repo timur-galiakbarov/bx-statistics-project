@@ -9,6 +9,7 @@ import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-co
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiDelete, apiGet, apiPost } from '../api/client';
+import { CompetitorsWidget } from '../components/CompetitorsWidget';
 import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
 import { TelegramAvatar, TelegramLogo } from '../components/TelegramLogo';
 import type { DashboardPeriod, DashboardSummary, DashboardSummaryItem, SavedGroup, SocialPlatform, TelegramAnalytics, TelegramChannel, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
@@ -231,7 +232,10 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, freeGroups
     .map((group) => `${group.platform}:${group.externalId}`);
   const managementProps = { platform, setPlatform: (next: Platform) => { setPlatform(next); setResults([]); setSearchError(''); }, query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds };
   return <div className="page-grid dashboard-page">
-    <CommunitiesTable groups={trackedGroups} summary={summary} period={period} customRange={customRange} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onCustomRangeApply={setCustomRange} onAdd={() => openAddModal('tracked')} onRefresh={() => isPeriodReady && void loadSummary(true)} onReorder={async (groupIds) => { await apiPost('/api/account/groups/order', { groupIds }); await onGroupsChanged(); }} onRemove={remove} onSelect={(group) => navigate(group.platform === 'telegram' ? `/analytics?platform=telegram&channel=${encodeURIComponent(group.handle ?? group.externalId)}` : `/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
+    <div className="span-2 dashboard-top-row">
+      <CommunitiesTable groups={trackedGroups} summary={summary} period={period} customRange={customRange} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onCustomRangeApply={setCustomRange} onAdd={() => openAddModal('tracked')} onRefresh={() => isPeriodReady && void loadSummary(true)} onReorder={async (groupIds) => { await apiPost('/api/account/groups/order', { groupIds }); await onGroupsChanged(); }} onRemove={remove} onSelect={(group) => navigate(group.platform === 'telegram' ? `/analytics?platform=telegram&channel=${encodeURIComponent(group.handle ?? group.externalId)}` : `/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
+      <CompetitorsWidget groups={groups} locked={!hasPaidAccess} />
+    </div>
     {freeGroupsDisabled
       ? isTrialActive && <div className="trial-access-note span-2"><Check size={17} /><span><strong>Пробный период активен.</strong> В течение семи дней доступна аналитика без ограничений.</span></div>
       : <FreeCommunitiesPanel groups={freeGroups} isTrialActive={isTrialActive} onAdd={openAddModal} />}
@@ -381,7 +385,7 @@ function CommunitiesTable({ groups, summary, period, customRange, hasPaidAccess,
     <p className="communities-reorder-hint"><GripVertical size={16} />Перетащите источник за значок слева, чтобы изменить порядок.</p>
     {reorderError && <div className="form-message">{reorderError}</div>}
     <div className="communities-table">
-      <div className="communities-table-head"><span aria-label="Перемещение" /><span>Сеть</span><span>Сообщество</span><span>Участники</span><span className="communities-table-head-help">Прирост<GrowthHelp /></span><span>Посещения<br />Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span>Реакции<br />Репосты / пересылки<br />Комментарии</span><span aria-label="Действия" /></div>
+      <div className="communities-table-head"><span aria-label="Перемещение" /><span>Сеть</span><span>Сообщество</span><span>Участники</span><span className="communities-table-head-help">Прирост<GrowthHelp /></span><span>Посещения<br />Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span title="Реакции, репосты или пересылки и комментарии к публикациям периода">Активность</span><span aria-label="Действия" /></div>
       {visibleRows.length ? visibleRows.map(({ group, summaryItem, isManaged }) => {
         const membersCount = summaryItem?.membersCount ?? group.membersCount;
         const selectGroup = () => onSelect(group);
@@ -464,7 +468,7 @@ function PairValue({ first, second, firstIcon: FirstIcon, secondIcon: SecondIcon
 function TripleValue({ item, loading, platform = 'vk' }: { item?: DashboardSummaryItem; loading: boolean; platform?: Platform }) {
   if (loading) return <MetricValue loading />;
   if (item?.error) return <MetricValue />;
-  return <span className="communities-table-triple"><span className="communities-reaction-values"><small><Heart size={13} />{number(item?.activity.likes ?? 0)}</small><small><Share2 size={13} />{platform === 'youtube' ? 'Недоступно' : number(item?.activity.reposts ?? 0)}</small><small><MessageCircle size={13} />{number(item?.activity.comments ?? 0)}</small></span></span>;
+  return <span className="communities-table-triple"><span className="communities-reaction-values"><small title="Реакции"><Heart size={13} aria-label="Реакции" />{number(item?.activity.likes ?? 0)}</small><small title={platform === 'telegram' ? 'Пересылки' : 'Репосты'}><Share2 size={13} aria-label={platform === 'telegram' ? 'Пересылки' : 'Репосты'} />{platform === 'youtube' ? 'Недоступно' : number(item?.activity.reposts ?? 0)}</small><small title="Комментарии"><MessageCircle size={13} aria-label="Комментарии" />{number(item?.activity.comments ?? 0)}</small></span></span>;
 }
 
 function Management({ platform, setPlatform, query, setQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds }: ManagementProps) {

@@ -5,6 +5,13 @@ export type ApiResult<T> = {
   data: T;
 };
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 const apiBase = import.meta.env.VITE_API_BASE ?? '';
 
 // Сервер привязывает действия пользователя к текущему визиту для статистики в админке.
@@ -26,7 +33,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response, path));
+    throw new ApiError(await getErrorMessage(response, path), response.status);
   }
 
   const result = (await response.json()) as ApiResult<T>;
@@ -45,7 +52,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response, path));
+    throw new ApiError(await getErrorMessage(response, path), response.status);
   }
 
   const result = (await response.json()) as ApiResult<T>;
@@ -54,7 +61,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 
 export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`${apiBase}${path}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json', ...visitHeaders() }, body: JSON.stringify(body) });
-  if (!response.ok) throw new Error(await getErrorMessage(response, path));
+  if (!response.ok) throw new ApiError(await getErrorMessage(response, path), response.status);
   return ((await response.json()) as ApiResult<T>).data;
 }
 
@@ -66,7 +73,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response, path));
+    throw new ApiError(await getErrorMessage(response, path), response.status);
   }
 
   const result = (await response.json()) as ApiResult<T>;

@@ -1,3 +1,4 @@
+import { CompetitorSetModel } from '../models/CompetitorSet.js';
 import { randomUUID } from 'node:crypto';
 import { env } from '../config/env.js';
 import { ChannelSnapshotModel } from '../models/ChannelSnapshot.js';
@@ -80,6 +81,12 @@ export async function collectSnapshotSources() {
   for (const source of saved) add(source.platform, source);
   const seeded = await SnapshotSourceModel.find({}, { platform: 1, externalId: 1 }).lean();
   for (const source of seeded) add(source.platform, source);
+
+  const competitors = await CompetitorSetModel.find({}).lean();
+  for (const set of competitors) {
+    add(set.platform, set);
+    for (const source of set.competitors) add(source.platform ?? set.platform, source);
+  }
 
   return sources;
 }

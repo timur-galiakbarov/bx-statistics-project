@@ -1,4 +1,4 @@
-import { Check, FolderOpen, Pencil, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
+import { BookmarkPlus, Check, FolderOpen, Pencil, Plus, RefreshCw, Search, Sparkles, Trash2, X } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { IconButton } from '@alfalab/core-components-icon-button';
 import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
@@ -49,6 +49,27 @@ const searchPlaceholders: Record<SourcePlatform, string> = {
   telegram: 'Ссылка t.me или @username канала'
 };
 
+// Подборка, с которой сейчас совпадает выбор: тот же набор каналов без учёта порядка.
+// В Telegram источник выбирают по username, поэтому сверяем и handle, и externalId.
+export function matchingCollection(collections: ComparisonCollection[], selected: SourceChannel[]) {
+  if (!selected.length) return undefined;
+  const matches = (group: SourceChannel, source: ComparisonCollection['sources'][number]) => {
+    const id = String(group.id).toLowerCase();
+    return group.platform === source.platform && (id === source.externalId.toLowerCase() || id === source.handle?.replace(/^@/, '').toLowerCase());
+  };
+  return collections.find((collection) => collection.sources.length === selected.length && selected.every((group) => collection.sources.some((source) => matches(group, source))));
+}
+
+/** Кнопки сохранения в блоке выбора: новая подборка, или обновление открытой, если её изменили. */
+export function CollectionSaveActions({ collection, changed, disabled, onSave, onUpdate }: { collection?: ComparisonCollection; changed: boolean; disabled: boolean; onSave: () => void; onUpdate: () => void }) {
+  if (!collection) return <button className="source-summary-link" disabled={disabled} type="button" onClick={onSave}><BookmarkPlus size={16} />Сохранить как подборку</button>;
+  if (!changed) return null;
+  return <div className="source-summary-collection-actions">
+    <button className="source-summary-link" disabled={disabled} type="button" onClick={onUpdate}><RefreshCw size={16} />Обновить подборку «{collection.name}»</button>
+    <button className="source-summary-link subtle" disabled={disabled} type="button" onClick={onSave}>Сохранить как новую</button>
+  </div>;
+}
+
 export const sourceKey = (group: Pick<SourceChannel, 'platform' | 'id'>) => `${group.platform}:${group.id}`;
 
 function formatMembers(value?: number | null) {
@@ -97,7 +118,8 @@ export function SourceSetup({
   onExample,
   onApplyCollection,
   onRenameCollection,
-  onDeleteCollection
+  onDeleteCollection,
+  activeCollection
 }: {
   title: string;
   description: string;
@@ -125,6 +147,7 @@ export function SourceSetup({
   onApplyCollection: (collection: ComparisonCollection) => void;
   onRenameCollection: (collection: ComparisonCollection) => void;
   onDeleteCollection: (collection: ComparisonCollection) => void;
+  activeCollection?: { name: string; changed: boolean };
 }) {
   const selectedKeys = new Set(selected.map(sourceKey));
   const isFull = selected.length >= maxSources;
@@ -245,6 +268,7 @@ export function SourceSetup({
             {selected.length > 0 && <button disabled={disabled} type="button" onClick={onClear}>очистить</button>}
           </span>
         </div>
+        {activeCollection && <p className="source-summary-collection"><FolderOpen size={15} aria-hidden="true" />Подборка «{activeCollection.name}»{activeCollection.changed && <span>· изменена</span>}</p>}
         <div className="source-summary-list">
           {selected.map((group) => (
             <div className="source-summary-item" key={sourceKey(group)}>

@@ -6,7 +6,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
 import type { AnalyticsPeriod, ComparisonCollection, PostsAnalysisPost, PostsAnalysisResult, SavedGroup } from '../api/types';
 import { PostCard } from '../components/PostCard';
-import { SourceSetup, pickUnambiguousSource, searchSources, sourceKey, type SourceChannel, type SourceExample } from '../components/SourceSetup';
+import { CollectionSaveActions, SourceSetup, matchingCollection, pickUnambiguousSource, searchSources, sourceKey, type SourceChannel, type SourceExample } from '../components/SourceSetup';
 import { detectPlatform } from '../utils/sourceQuery';
 
 const periods: Array<{ key: AnalyticsPeriod; label: string }> = [
@@ -126,6 +126,10 @@ export function PostsPage({ groups }: Props) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [collections, setCollections] = useState<ComparisonCollection[]>([]);
+  const [openedCollectionId, setOpenedCollectionId] = useState<string | null>(null);
+  // Открытая подборка: та, что выбрали из списка, или та, с которой совпадает текущий выбор.
+  const openedCollection = selectedGroups.length ? collections.find((item) => item.id === openedCollectionId) ?? matchingCollection(collections, selectedGroups) : undefined;
+  const collectionChanged = Boolean(openedCollection && (!matchingCollection([openedCollection], selectedGroups) || openedCollection.period !== period));
   const [collectionsError, setCollectionsError] = useState<string | null>(null);
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(true);
   const searchRequest = useRef(0);
@@ -222,6 +226,7 @@ export function PostsPage({ groups }: Props) {
       if (requestId !== searchRequest.current) return;
       const exampleGroups = results.filter((group): group is PostsChannel => Boolean(group));
       setSelectedGroups(exampleGroups);
+      setOpenedCollectionId(null);
       void runAnalysis(exampleGroups);
     } catch (error) {
       if (requestId === searchRequest.current) setMessage(error instanceof Error ? error.message : 'Не удалось загрузить пример.');
@@ -255,6 +260,7 @@ export function PostsPage({ groups }: Props) {
 
   const clearGroups = () => {
     setSelectedGroups([]);
+    setOpenedCollectionId(null);
     setAnalysis(null);
     setMessage(null);
   };
@@ -277,6 +283,7 @@ export function PostsPage({ groups }: Props) {
     }
     setPlatform(nextPlatform);
     setPeriod(collection.period);
+    setOpenedCollectionId(collection.id);
     setSelectedGroups(collection.sources.map((source) => ({
       id: source.platform === 'telegram' ? source.handle ?? source.externalId : source.externalId,
       name: source.name,
@@ -308,6 +315,7 @@ export function PostsPage({ groups }: Props) {
         sources: selectedGroups.map((group) => ({ platform: group.platform, externalId: String(group.id), name: group.name, handle: group.screen_name, photo: group.photo_100 ?? group.photo_50, membersCount: group.members_count }))
       });
       setCollections((current) => [collection, ...current]);
+      setOpenedCollectionId(collection.id);
       setCollectionsError(null);
     } catch (error) {
       setCollectionsError(error instanceof Error ? error.message : 'Не удалось сохранить подборку.');
@@ -323,6 +331,22 @@ export function PostsPage({ groups }: Props) {
       setCollectionsError(null);
     } catch (error) {
       setCollectionsError(error instanceof Error ? error.message : 'Не удалось переименовать подборку.');
+    }
+  };
+
+  const updateCollection = async () => {
+    if (!openedCollection) return;
+    if (selectedGroups.length < 2) {
+      setCollectionsError('Добавьте минимум два источника, чтобы сохранить подборку.');
+      return;
+    }
+    try {
+      const updated = await apiPatch<ComparisonCollection>(`/api/account/comparison-collections/${openedCollection.id}?purpose=posts`, { name: openedCollection.name, period, sources: selectedGroups.map((group) => ({ platform: group.platform, externalId: String(group.id), name: group.name, handle: group.screen_name, photo: group.photo_100 ?? group.photo_50, membersCount: group.members_count })) });
+      setCollections((current) => [updated, ...current.filter((item) => item.id !== updated.id)]);
+      setOpenedCollectionId(updated.id);
+      setCollectionsError(null);
+    } catch (error) {
+      setCollectionsError(error instanceof Error ? error.message : 'Не удалось обновить подборку.');
     }
   };
 
@@ -392,12 +416,13 @@ export function PostsPage({ groups }: Props) {
         onApplyCollection={applyCollection}
         onRenameCollection={(collection) => void renameCollection(collection)}
         onDeleteCollection={(collection) => void deleteCollection(collection)}
+        activeCollection={openedCollection && { name: openedCollection.name, changed: collectionChanged }}
       >
         {selectedGroups.length > 0 && <div className="source-summary-footer">
           <span className="source-row-title">Период публикаций</span>
           <div className="period-tabs">{periods.map((item) => <Button className={period === item.key ? 'brand-primary-button' : ''} view={period === item.key ? 'primary' : 'secondary'} key={item.key} type="button" size={32} onClick={() => { setPeriod(item.key); setAnalysis(null); }} disabled={isAnalyzing}>{item.label}</Button>)}</div>
           <Button block className="brand-primary-button" type="button" view="primary" size={48} leftAddons={<FileText size={18} />} onClick={() => void runAnalysis()} loading={isAnalyzing}>{`Показать публикации · ${selectedGroups.length} ${sourceWord(selectedGroups.length)}`}</Button>
-          {selectedGroups.length >= 2 && <button className="source-summary-link" disabled={isAnalyzing} type="button" onClick={() => void saveCollection()}><BookmarkPlus size={16} />Сохранить как подборку</button>}
+          {selectedGroups.length >= 2 && <CollectionSaveActions collection={openedCollection} changed={collectionChanged} disabled={isAnalyzing} onSave={() => void saveCollection()} onUpdate={() => void updateCollection()} />}
         </div>}
       </SourceSetup>
 

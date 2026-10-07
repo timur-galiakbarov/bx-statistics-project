@@ -39,6 +39,8 @@ const actionLabels: Record<string, string> = {
   posts_analyze: 'Анализ публикаций',
   collection_saved: 'Сохранил подборку',
   payment_started: 'Перешёл к оплате',
+  competitors_widget: 'Виджет конкурентов',
+  competitors_saved: 'Сохранил конкурентов',
   ad_return: 'Вернулся по рекламе',
   payment: 'Оплатил'
 };

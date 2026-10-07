@@ -16,6 +16,18 @@ function parseGroupIds(value: unknown) {
     .slice(0, 10);
 }
 
+async function mapWithConcurrency<T, R>(items: T[], limit: number, map: (item: T) => Promise<R>) {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await map(items[index]);
+    }
+  }));
+  return results;
+}
+
 export async function getCommunitiesCompare(userId: string, groupIdsValue: unknown, period: unknown, platformValue: unknown = 'vk') {
   const groupIds = parseGroupIds(groupIdsValue);
 
@@ -26,28 +38,27 @@ export async function getCommunitiesCompare(userId: string, groupIdsValue: unkno
     });
   }
 
-  const items = [];
-
-  for (const groupId of groupIds) {
+  // VK ограничивает частоту запросов, поэтому источники грузятся параллельно, но не все сразу.
+  const items = await mapWithConcurrency(groupIds, 3, async (groupId) => {
     const separator = groupId.indexOf(':');
     const explicitPlatform = separator > 0 ? groupId.slice(0, separator) : String(platformValue);
     const externalId = separator > 0 ? groupId.slice(separator + 1) : groupId;
-    const platform = explicitPlatform === 'youtube' || explicitPlatform === 'telegram' ? explicitPlatform : 'vk';
+    const platform: 'vk' | 'youtube' | 'telegram' = explicitPlatform === 'youtube' || explicitPlatform === 'telegram' ? explicitPlatform : 'vk';
     try {
       const analytics = platform === 'youtube'
         ? await getYoutubeChannelAnalytics(externalId, period)
         : platform === 'telegram'
           ? toComparableTelegramAnalytics(await getTelegramChannelAnalytics(externalId, period))
           : await getCommunityAnalytics(userId, externalId, period);
-      items.push({
+      return {
         groupId: externalId,
         platform,
         analytics,
         error: null
-      });
+      };
     } catch (error) {
       if (error instanceof VkApiError || error instanceof DomainError) {
-        items.push({
+        return {
           groupId: externalId,
           platform,
           analytics: null,
@@ -56,11 +67,10 @@ export async function getCommunitiesCompare(userId: string, groupIdsValue: unkno
             message: error.message,
             ...(error instanceof VkApiError ? { vkCode: error.vkCode } : {})
           }
-        });
-        continue;
+        };
       }
 
-      items.push({
+      return {
         groupId: externalId,
         platform,
         analytics: null,
@@ -68,9 +78,9 @@ export async function getCommunitiesCompare(userId: string, groupIdsValue: unkno
           code: 'COMPARE_GROUP_FAILED',
           message: 'Не удалось получить данные сообщества.'
         }
-      });
+      };
     }
-  }
+  });
 
   return { items };
 }

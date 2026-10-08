@@ -2,7 +2,7 @@ import { RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiGet } from '../api/client';
-import type { AdminActivityDay, AdminActivityStats, AdminActivitySummary } from '../api/types';
+import type { AdminActivityDay, AdminActivityStats, AdminActivitySummary, AdminPushStats } from '../api/types';
 
 const periodOptions = [7, 30, 90] as const;
 
@@ -94,6 +94,83 @@ function formatPercent(value: number | null) {
 
 function formatShare(part: number, total: number) {
   return total > 0 ? formatPercent(part / total) : '—';
+}
+
+const reminderLabels: Record<string, string> = {
+  expiry_before: 'За 3 дня',
+  expiry_today: 'В день',
+  expiry_after: 'Спустя 3–7 дн.'
+};
+
+function PushStatsPanel({ days }: { days: number }) {
+  const [stats, setStats] = useState<AdminPushStats | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setError(null);
+    apiGet<AdminPushStats>(`/api/push/admin/stats?days=${days}`)
+      .then(setStats)
+      .catch((reason) => setError(reason instanceof Error ? reason.message : 'Не удалось загрузить статистику уведомлений.'));
+  }, [days]);
+
+  const prompt = stats?.prompt;
+  const sentTotal = stats?.reminders.reduce((sum, row) => sum + row.sent, 0) ?? 0;
+
+  return (
+    <div className="panel activity-panel span-2">
+      <div className="panel-header compact">
+        <div>
+          <h2>Уведомления в браузере</h2>
+          <p className="activity-note">
+            {stats
+              ? `Подписаны сейчас: ${formatNumber(stats.subscribedUsers)} польз. (${formatNumber(stats.subscribedBrowsers)} браузеров). Запрос и напоминания — за ${days} дней, без админов`
+              : 'Загрузка…'}
+          </p>
+        </div>
+      </div>
+      {error && <div className="form-message">{error}</div>}
+      {stats && prompt && (
+        <div className="push-stats-grid">
+          <div>
+            <h3>Запрос разрешения</h3>
+            {prompt.shown === 0 && prompt.accepted === 0 ? <div className="empty-state">Баннер за период не показывался.</div> : (
+              <ul className="activity-funnel">
+                {[
+                  { label: 'Увидели баннер', value: prompt.shown },
+                  { label: 'Нажали «Да» или включили в профиле', value: prompt.accepted },
+                  { label: 'Подписались', value: prompt.subscribed },
+                  { label: 'Нажали «Не сейчас»', value: prompt.dismissed },
+                  { label: 'Запретили в браузере', value: prompt.denied }
+                ].map((step) => (
+                  <li key={step.label}>
+                    <span>{step.label}</span>
+                    <strong>{formatNumber(step.value)} <small>{formatShare(step.value, prompt.shown)}</small></strong>
+                    <i style={{ width: `${prompt.shown ? Math.min(1, step.value / prompt.shown) * 100 : 0}%` }} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <h3>Напоминания об окончании доступа</h3>
+            {sentTotal === 0 ? <div className="empty-state">Напоминаний за период не отправлялось.</div> : (
+              <div className="activity-mini-table four push-reminders-table">
+                <div className="head"><span>Когда</span><span>Ушло</span><span>Клики</span><span title="Оплата в течение 7 дней после напоминания">Продлили</span></div>
+                {stats.reminders.map((row) => (
+                  <div key={row.kind}>
+                    <span>{reminderLabels[row.kind] ?? row.kind}</span>
+                    <span>{formatNumber(row.sent)}</span>
+                    <span>{formatNumber(row.clicked)} <small>{formatShare(row.clicked, row.sent)}</small></span>
+                    <span>{formatNumber(row.renewed)} <small>{row.revenue ? `${formatNumber(row.revenue)} ₽` : formatShare(row.renewed, row.sent)}</small></span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function formatDuration(seconds: number | null) {
@@ -447,6 +524,8 @@ export function AdminActivityStats() {
             </div>
           )}
         </div>
+
+        <PushStatsPanel days={stats.days} />
 
         <div className="panel activity-panel span-2">
           <div className="panel-header compact"><div><h2>Лента событий</h2><p className="activity-note">Последние действия, регистрации и оплаты</p></div></div>

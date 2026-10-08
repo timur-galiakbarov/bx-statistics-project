@@ -7,6 +7,7 @@ import { PushSubscriptionModel } from '../models/PushSubscription.js';
 import { VisitModel } from '../models/Visit.js';
 import { parseVisitId, trackActivity } from '../services/activityTracking.js';
 import { isPushConfigured, sendPushToUser } from '../services/pushReminders.js';
+import { getAdminPushStats } from '../services/pushStatsService.js';
 
 export const pushRouter = Router();
 
@@ -116,6 +117,18 @@ pushRouter.post('/test', requireUser, async (req, res, next) => {
       url: '/app/account'
     });
     res.json({ success: true, data: { delivered } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+pushRouter.get('/admin/stats', requireUser, async (req, res, next) => {
+  if (!req.user!.isAdmin) {
+    res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    return;
+  }
+  try {
+    res.json({ success: true, data: await getAdminPushStats(req.query.days) });
   } catch (error) {
     next(error);
   }

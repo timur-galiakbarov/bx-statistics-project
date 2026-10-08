@@ -4242,3 +4242,11 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
   .push-prompt-actions button { flex: 1; justify-content: center; }
   .push-settings { align-items: stretch; flex-direction: column; }
 }
+
+.push-stats-grid { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
+.push-reminders-table.four > div { grid-template-columns: minmax(0, 1.4fr) minmax(40px, 0.6fr) repeat(2, minmax(72px, 1fr)); }
+.push-stats-grid h3 { color: #3c4858; font-size: 15px; font-weight: 500; margin: 0 0 8px; }
+
+@media (max-width: 840px) {
+  .push-stats-grid { grid-template-columns: 1fr; }
+}

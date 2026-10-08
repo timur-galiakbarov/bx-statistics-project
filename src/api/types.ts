@@ -656,3 +656,11 @@ export type PostViewCurves = {
     milestones: Record<string, number | null>;
   }>;
 };
+
+export type AdminPushStats = {
+  days: number;
+  subscribedUsers: number;
+  subscribedBrowsers: number;
+  prompt: { shown: number; accepted: number; subscribed: number; dismissed: number; denied: number };
+  reminders: Array<{ kind: string; sent: number; clicked: number; renewed: number; revenue: number }>;
+};

@@ -225,6 +225,7 @@ accountRouter.post('/admin/users', requireUser, async (req, res, next) => {
           vkId: user.vkId,
           name: `${user.firstName} ${user.lastName}`,
           hasActiveAccess: activeTo.getTime() >= Date.now(),
+          hasLegacyPricing: false,
           lastLoginAt: createdAt.toISOString(),
           activeTo: activeTo.toISOString().slice(0, 10)
         }

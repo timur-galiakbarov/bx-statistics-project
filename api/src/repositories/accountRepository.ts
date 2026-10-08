@@ -2,13 +2,13 @@ import type { Types } from 'mongoose';
 import { randomBytes } from 'node:crypto';
 import { ActivityEventModel } from '../models/ActivityEvent.js';
 import { NewsModel } from '../models/News.js';
-import { PaymentModel } from '../models/Payment.js';
 import { SavedGroupModel } from '../models/SavedGroup.js';
 import { SessionModel } from '../models/Session.js';
 import { UserModel } from '../models/User.js';
 import { VkTokenModel } from '../models/VkToken.js';
 import type { SavedGroup } from '../store/types.js';
 import { DomainError } from '../errors/domainError.js';
+import { getLegacyPricingUserIds } from '../services/legacyPricing.js';
 import { env } from '../config/env.js';
 
 export const FREE_GROUP_LIMIT = 1;
@@ -62,6 +62,8 @@ export type RecentAdminUser = {
   vkId?: string;
   name: string;
   hasActiveAccess: boolean;
+  /** Платил раньше — на странице оплаты видит старые цены. */
+  hasLegacyPricing: boolean;
   registeredAt: string;
   lastLoginAt: string;
   lastActivityAt: string;
@@ -553,6 +555,7 @@ export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[
     >();
 
   const now = new Date();
+  const legacyPricingUserIds = await getLegacyPricingUserIds(users.map((user) => user._id));
 
   return users.map((user) => ({
     id: user._id.toString(),
@@ -560,6 +563,7 @@ export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[
     vkId: user.vkId,
     name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени',
     hasActiveAccess: user.activeTo > now,
+    hasLegacyPricing: legacyPricingUserIds.has(user._id.toString()),
     registeredAt: user.createdAt.toISOString(),
     lastLoginAt: (user.lastLoginAt ?? user.lastActivityAt ?? user.createdAt).toISOString(),
     lastActivityAt: (user.lastActivityAt ?? user.lastLoginAt ?? user.createdAt).toISOString(),
@@ -595,23 +599,19 @@ export async function getActiveAdminUsers(limit = 300): Promise<AdminActiveUsers
     UserModel.find(activeAccessQuery).select({ _id: 1 }).lean<Array<{ _id: Types.ObjectId }>>()
   ]);
   const activeUserIds = activeUserRecords.map((user) => user._id);
-  const paidUserIds = await PaymentModel.distinct('userId', {
-    status: 'paid',
-    amount: { $gt: 0 },
-    userId: { $in: activeUserIds }
-  });
-  const paidUserIdSet = new Set(paidUserIds.map((userId) => userId.toString()));
+  const paidUserIdSet = await getLegacyPricingUserIds(activeUserIds);
 
   return {
     total: activeUserIds.length,
-    paid: paidUserIds.length,
-    withoutPayment: activeUserIds.length - paidUserIds.length,
+    paid: paidUserIdSet.size,
+    withoutPayment: activeUserIds.length - paidUserIdSet.size,
     users: users.map((user) => ({
       id: user._id.toString(),
       bitrixId: user.legacy?.bitrixId,
       vkId: user.vkId,
       name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени',
       hasActiveAccess: true,
+      hasLegacyPricing: paidUserIdSet.has(user._id.toString()),
       hasPaidPayment: paidUserIdSet.has(user._id.toString()),
       registeredAt: user.createdAt.toISOString(),
       lastLoginAt: (user.lastLoginAt ?? user.lastActivityAt ?? user.createdAt).toISOString(),

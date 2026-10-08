@@ -630,7 +630,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             </div>
             {displayedActiveUsers.map((activeUser) => (
               <div className="table-row admin-active-users-row" key={activeUser.id}>
-                <span data-label="Пользователь"><strong>{activeUser.name}</strong></span>
+                <span className="admin-user-name" data-label="Пользователь"><strong>{activeUser.name}</strong>{activeUser.hasLegacyPricing && <span className="admin-pricing-badge" title="Платил раньше: на странице оплаты видит 499 / 899 / 1 999 ₽">Старые цены</span>}</span>
                 <span data-label="VK ID">{activeUser.vkId ?? '—'}</span>
                 <span data-label="Последняя активность">{formatAdminDateTime(activeUser.lastActivityAt)}</span>
                 <span data-label="Доступ до">{formatAdminDate(activeUser.activeTo)}</span>
@@ -680,8 +680,9 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             </div>
             {recentUsers.map((user) => (
               <div className="table-row admin-recent-users-row" key={user.id}>
-                <span data-label="Пользователь">
+                <span className="admin-user-name" data-label="Пользователь">
                   <strong>{user.name}</strong>
+                  {user.hasLegacyPricing && <span className="admin-pricing-badge" title="Платил раньше: на странице оплаты видит 499 / 899 / 1 999 ₽">Старые цены</span>}
                 </span>
                 <span data-label="Последняя активность">{formatAdminDateTime(user.lastActivityAt)}</span>
                 <span className="admin-user-dates" data-label="Регистрация / вход">

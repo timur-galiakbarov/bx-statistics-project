@@ -149,7 +149,7 @@ export function AnalyticsLanding({
           <Clock3 size={20} />
           <div>
             <strong>{hasPaidAccess ? `Пробный доступ: ${daysLeft ? `осталось ${daysLeft} ${pluralizeDays(daysLeft)}` : 'последний день'}` : 'Доступ к аналитике закончился'}</strong>
-            <span>{hasPaidAccess && activeTo ? `До ${formatDate(activeTo)}. ` : ''}Дальше — от 167 ₽ в месяц, без автосписаний.</span>
+            <span>{hasPaidAccess && activeTo ? `До ${formatDate(activeTo)}. ` : ''}Дальше — от 333 ₽ в месяц, без автосписаний.</span>
           </div>
           <Link className="analytics-landing-access-button" to="/account">Выбрать тариф</Link>
         </section>

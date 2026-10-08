@@ -6,6 +6,7 @@ import { requireUser } from '../middleware/auth.js';
 import { PaymentModel } from '../models/Payment.js';
 import { UserModel } from '../models/User.js';
 import { publishAccountUpdated } from '../services/accountEvents.js';
+import { hasLegacyPricing } from '../services/legacyPricing.js';
 import { trackActivity } from '../services/activityTracking.js';
 
 export const paymentsRouter = Router();
@@ -21,6 +22,12 @@ type PaymentPlan = {
 };
 
 const plans: PaymentPlan[] = [
+  { id: 'month', title: '1 месяц', months: 1, priceRub: 699, monthlyPriceRub: 699 },
+  { id: 'quarter', title: '3 месяца', months: 3, priceRub: 1490, monthlyPriceRub: 497 },
+  { id: 'year', title: '1 год', months: 12, priceRub: 3990, monthlyPriceRub: 333 }
+];
+// Старые цены сохраняются за теми, кто уже хотя бы раз платил.
+const returningCustomerPlans: PaymentPlan[] = [
   { id: 'month', title: '1 месяц', months: 1, priceRub: 499, monthlyPriceRub: 499 },
   { id: 'quarter', title: '3 месяца', months: 3, priceRub: 899, monthlyPriceRub: 300 },
   { id: 'year', title: '1 год', months: 12, priceRub: 1999, monthlyPriceRub: 167 }
@@ -34,8 +41,9 @@ const adminTestPlan: PaymentPlan = {
   durationLabel: '15 дней'
 };
 
-function plansForUser(user: Express.Request['user']) {
-  return user?.isAdmin && user.enforceAccessRestrictions ? [...plans, adminTestPlan] : plans;
+async function plansForUser(user: Express.Request['user']) {
+  const basePlans = user && (await hasLegacyPricing(user.id)) ? returningCustomerPlans : plans;
+  return user?.isAdmin && user.enforceAccessRestrictions ? [...basePlans, adminTestPlan] : basePlans;
 }
 
 function allPlans() {
@@ -67,10 +75,6 @@ type AdminPaymentsMonthlySummary = {
   current: { count: number; amount: number };
   previous: { count: number; amount: number };
 };
-
-function findPlanByAmount(amount: number) {
-  return allPlans().find((plan) => plan.priceRub === amount);
-}
 
 function findPlanByPeriod(period: string) {
   return allPlans().find((plan) => plan.title === period);
@@ -328,9 +332,10 @@ async function confirmPayment(paymentId: string, options: { operationId?: string
     return { status: 'already_paid' };
   }
 
+  // Сумма платежа фиксируется при создании, поэтому после смены цен незавершённые платежи по старой цене остаются валидными.
   const plan = findPlanByPeriod(payment.period);
 
-  if (!plan || payment.amount !== plan.priceRub) {
+  if (!plan) {
     payment.status = 'failed';
     payment.rawCallbackPayload = options.rawPayload ?? {
       source: 'admin',
@@ -393,11 +398,15 @@ async function cancelPayment(paymentId: string, reason?: string): Promise<Paymen
   return { status: 'failed' };
 }
 
-paymentsRouter.get('/plans', requireUser, (req, res) => {
-  res.json({
-    success: true,
-    data: plansForUser(req.user)
-  });
+paymentsRouter.get('/plans', requireUser, async (req, res, next) => {
+  try {
+    res.json({
+      success: true,
+      data: await plansForUser(req.user)
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 paymentsRouter.get('/history', requireUser, async (req, res, next) => {
@@ -601,7 +610,7 @@ paymentsRouter.post('/admin/:paymentId/cancel', requireUser, async (req, res, ne
 
 paymentsRouter.post('/create', requireUser, async (req, res, next) => {
   try {
-    const plan = plansForUser(req.user).find((item) => item.id === req.body?.planId);
+    const plan = (await plansForUser(req.user)).find((item) => item.id === req.body?.planId);
     const paymentType = req.body?.paymentType === 'PC' ? 'PC' : 'AC';
 
     if (!plan) {
@@ -692,9 +701,8 @@ paymentsRouter.post('/callback', async (req, res, next) => {
     }
 
     const paidAmount = Number(payload.withdraw_amount ?? payload.amount);
-    const plan = findPlanByAmount(paidAmount);
 
-    if (!plan || payment.amount !== plan.priceRub) {
+    if (paidAmount !== payment.amount) {
       payment.status = 'failed';
       payment.rawCallbackPayload = payload;
       payment.providerTransactionId = payload.operation_id;

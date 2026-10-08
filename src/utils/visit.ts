@@ -16,6 +16,12 @@ export function trackCompetitorsWidget(label: CompetitorsWidgetAction) {
   apiPost('/api/account/ui-event', { event: 'competitors_widget', label }).catch(() => undefined);
 }
 
+export type PreviewUnlockTarget = 'banner' | 'kpi' | 'chart' | 'insights' | 'posts' | 'section' | 'period' | 'refresh' | 'compare' | 'posts_page';
+
+export function trackPreviewUnlock(label: PreviewUnlockTarget) {
+  apiPost('/api/account/ui-event', { event: 'preview_unlock', label }).catch(() => undefined);
+}
+
 export function trackPageView(path: string) {
   sendActivity('page_view', path);
 }

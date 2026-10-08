@@ -116,11 +116,14 @@ accountRouter.post('/activity', requireUser, async (req, res, next) => {
 });
 
 // Клики по элементам интерфейса, которые не порождают серверного запроса. Метки — из закрытого списка.
-const uiEventLabels: Record<string, string[]> = { competitors_widget: ['open', 'add', 'other', 'expand', 'teaser'] };
+const uiEventLabels: Record<string, string[]> = {
+  competitors_widget: ['open', 'add', 'other', 'expand', 'teaser'],
+  preview_unlock: ['banner', 'kpi', 'chart', 'insights', 'posts', 'section', 'period', 'refresh', 'compare', 'posts_page']
+};
 accountRouter.post('/ui-event', requireUser, (req, res) => {
   const event = req.body?.event;
   const label = req.body?.label;
-  if (event !== 'competitors_widget' || !uiEventLabels[event].includes(label)) {
+  if ((event !== 'competitors_widget' && event !== 'preview_unlock') || !uiEventLabels[event].includes(label)) {
     res.status(400).json({ success: false, error: 'INVALID_UI_EVENT' });
     return;
   }

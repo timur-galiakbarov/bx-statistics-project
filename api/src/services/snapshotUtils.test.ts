@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildSubscriberHistory, chainedMedians, hoursSince, median, snapshotGrowthForPeriod, viewsAtHour, snapshotDateKey, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
+import { buildSubscriberHistory, chainedMedians, hoursSince, lockSnapshotGrowth, median, snapshotGrowthForPeriod, viewsAtHour, snapshotDateKey, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
 
 test('дата и час среза считаются по Москве', () => {
   assert.equal(snapshotDateKey(new Date('2026-10-02T21:30:00Z')), '2026-10-03');
@@ -99,4 +99,9 @@ test('типичная кривая не падает, когда до позд�
   assert.deepEqual(result.map((item) => item.median), [120, 180, 213]);
   assert.deepEqual(result.map((item) => item.posts), [5, 3, 2]);
   assert.equal(chainedMedians(series, 3)[2].median, null);
+});
+
+test('lockSnapshotGrowth hides the number and keeps the direction', () => {
+  assert.deepEqual(lockSnapshotGrowth({ total: -3, since: null, historySince: '2026-09-01' }), { total: null, since: null, historySince: '2026-09-01', locked: true, direction: 'down' });
+  assert.equal(lockSnapshotGrowth({ total: null, since: null, historySince: null }).direction, null);
 });

@@ -193,6 +193,9 @@ export type SnapshotGrowth = {
   total: number | null;
   since: string | null;
   historySince: string | null;
+  /** Without access the server hides the number and sends only the direction. */
+  locked?: boolean;
+  direction?: 'up' | 'down' | 'steady' | null;
 };
 
 export type SubscriberHistory = {
@@ -401,6 +404,12 @@ export type CommunityAnalytics = {
   };
   warnings: string[];
   unavailableMetrics?: Record<string, boolean>;
+  /** Present when the user has no access: closed metrics are zeroed by the server. */
+  preview?: {
+    insights: Array<{ tone: 'good' | 'warn' | 'neutral'; title: string }>;
+    hiddenPosts: number;
+    snapshotGrowth: SnapshotGrowth | null;
+  };
 };
 
 export type CompareItem = {
@@ -655,6 +664,16 @@ export type PostViewCurves = {
     latestHours: number;
     milestones: Record<string, number | null>;
   }>;
+};
+
+export type AdminPreviewStats = {
+  days: number;
+  viewers: number;
+  views: number;
+  unlockUsers: number;
+  unlockTargets: Array<{ label: string; users: number }>;
+  paidUsers: number;
+  revenue: number;
 };
 
 export type AdminPushStats = {

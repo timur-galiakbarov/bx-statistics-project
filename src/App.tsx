@@ -15,7 +15,8 @@ import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiGet, apiPost } from './api/client';
 import type { SavedGroup, User } from './api/types';
-import { AccessLock, isAccessActive } from './components/AccessLock';
+import { isAccessActive } from './components/AccessLock';
+import { CompareShowcase, PostsShowcase } from './components/FeatureShowcase';
 import { PushPrompt } from './components/PushPrompt';
 import { DashboardPage } from './pages/DashboardPage';
 import { AccountPage } from './pages/AccountPage';
@@ -203,7 +204,6 @@ export function App() {
   const visibleNavItems = user?.isAdmin ? [...navItems, adminNavItem] : navItems;
   const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions) || isAccessActive(user?.activeTo);
   const isTrialActive = Boolean(user?.trialEndsAt && new Date(user.trialEndsAt).getTime() >= Date.now());
-  const paidRoute = (element: JSX.Element) => (hasPaidAccess ? element : <AccessLock activeTo={user?.activeTo} />);
 
   if (location.pathname === '/auth/vk/implicit-callback') {
     return <VkImplicitCallbackPage />;
@@ -309,8 +309,8 @@ export function App() {
             path="/analytics"
             element={<AnalyticsPage groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} />}
           />
-          <Route path="/compare" element={paidRoute(<ComparePage groups={groups} user={user} />)} />
-          <Route path="/posts" element={paidRoute(<PostsPage groups={groups} />)} />
+          <Route path="/compare" element={hasPaidAccess ? <ComparePage groups={groups} user={user} /> : <CompareShowcase />} />
+          <Route path="/posts" element={hasPaidAccess ? <PostsPage groups={groups} /> : <PostsShowcase />} />
           <Route path="/telegram" element={<TelegramAnalyticsRedirect />} />
           <Route
             path="/admin"

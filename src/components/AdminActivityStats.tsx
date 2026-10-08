@@ -2,7 +2,7 @@ import { RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiGet } from '../api/client';
-import type { AdminActivityDay, AdminActivityStats, AdminActivitySummary, AdminPushStats } from '../api/types';
+import type { AdminActivityDay, AdminActivityStats, AdminActivitySummary, AdminPreviewStats, AdminPushStats } from '../api/types';
 
 const periodOptions = [7, 30, 90] as const;
 
@@ -44,6 +44,8 @@ const actionLabels: Record<string, string> = {
   ad_return: 'Вернулся по рекламе',
   push_prompt: 'Запрос уведомлений',
   push_click: 'Кликнул по уведомлению',
+  analytics_preview: 'Открыл краткий отчёт',
+  preview_unlock: 'Клик по закрытому блоку',
   payment: 'Оплатил'
 };
 
@@ -101,6 +103,74 @@ const reminderLabels: Record<string, string> = {
   expiry_today: 'В день',
   expiry_after: 'Спустя 3–7 дн.'
 };
+
+const previewTargetLabels: Record<string, string> = {
+  banner: 'Баннер',
+  kpi: 'Показатели',
+  chart: 'График',
+  insights: 'Инсайты',
+  posts: 'Ещё публикации',
+  section: 'Вкладки',
+  period: 'Период',
+  refresh: 'Обновить',
+  compare: 'Витрина «Сравнение»',
+  posts_page: 'Витрина «Публикации»'
+};
+
+function PreviewStatsPanel({ days }: { days: number }) {
+  const [stats, setStats] = useState<AdminPreviewStats | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setError(null);
+    apiGet<AdminPreviewStats>(`/api/analytics/admin/preview-stats?days=${days}`)
+      .then(setStats)
+      .catch((reason) => setError(reason instanceof Error ? reason.message : 'Не удалось загрузить статистику краткого отчёта.'));
+  }, [days]);
+
+  return (
+    <div className="panel activity-panel span-2">
+      <div className="panel-header compact">
+        <div>
+          <h2>Краткий отчёт без доступа</h2>
+          <p className="activity-note">{stats ? `За ${days} дней, без админов. Оплата засчитывается, если пришла после первого просмотра` : 'Загрузка…'}</p>
+        </div>
+      </div>
+      {error && <div className="form-message">{error}</div>}
+      {stats && (stats.viewers === 0 ? <div className="empty-state">Краткий отчёт за период никто не открывал.</div> : (
+        <div className="push-stats-grid">
+          <div>
+            <h3>Воронка</h3>
+            <ul className="activity-funnel">
+              {[
+                { label: `Открыли краткий отчёт (${formatNumber(stats.views)} просм.)`, value: stats.viewers },
+                { label: 'Кликнули по закрытому блоку', value: stats.unlockUsers },
+                { label: `Оплатили после просмотра${stats.revenue ? ` · ${formatNumber(stats.revenue)} ₽` : ''}`, value: stats.paidUsers }
+              ].map((step) => (
+                <li key={step.label}>
+                  <span>{step.label}</span>
+                  <strong>{formatNumber(step.value)} <small>{formatShare(step.value, stats.viewers)}</small></strong>
+                  <i style={{ width: `${Math.min(1, step.value / stats.viewers) * 100}%` }} />
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3>Что хотели открыть</h3>
+            {stats.unlockTargets.length === 0 ? <div className="empty-state">Кликов по закрытым блокам не было.</div> : (
+              <div className="activity-mini-table two">
+                <div className="head"><span>Блок</span><span>Польз.</span></div>
+                {stats.unlockTargets.map((row) => (
+                  <div key={row.label}><span>{previewTargetLabels[row.label] ?? row.label}</span><span>{formatNumber(row.users)}</span></div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function PushStatsPanel({ days }: { days: number }) {
   const [stats, setStats] = useState<AdminPushStats | null>(null);
@@ -526,6 +596,7 @@ export function AdminActivityStats() {
         </div>
 
         <PushStatsPanel days={stats.days} />
+        <PreviewStatsPanel days={stats.days} />
 
         <div className="panel activity-panel span-2">
           <div className="panel-header compact"><div><h2>Лента событий</h2><p className="activity-note">Последние действия, регистрации и оплаты</p></div></div>

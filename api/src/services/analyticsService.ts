@@ -570,7 +570,7 @@ async function loadCommunityAnalytics(
   };
 }
 
-type CommunityAnalyticsResult = Awaited<ReturnType<typeof loadCommunityAnalytics>>;
+export type CommunityAnalyticsResult = Awaited<ReturnType<typeof loadCommunityAnalytics>>;
 
 const COMMUNITY_ANALYTICS_CACHE_TTL_MS = 60 * 60 * 1_000;
 const communityAnalyticsCache = new TtlCache<CommunityAnalyticsResult>(COMMUNITY_ANALYTICS_CACHE_TTL_MS);

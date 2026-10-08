@@ -9,8 +9,9 @@ import {
 } from 'lucide-react';
 import { lazy, FormEvent, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { apiGet } from '../api/client';
+import { ApiError, apiGet } from '../api/client';
 import type { AnalyticsPeriod, TelegramAnalytics } from '../api/types';
+import { PlatformAccessLock } from '../components/AccessLock';
 import { TelegramAvatar, TelegramLogo } from '../components/TelegramLogo';
 import { SubscriberHistoryPanel } from '../components/SubscriberHistoryPanel';
 import { PostViewsCurvePanel } from '../components/PostViewsCurvePanel';
@@ -103,7 +104,7 @@ function TelegramPostCard({ channel, post }: { channel: TelegramAnalytics['chann
   </article>;
 }
 
-export function TelegramPage() {
+export function TelegramPage({ hasPaidAccess, activeTo }: { hasPaidAccess: boolean; activeTo?: string }) {
   const [searchParams] = useSearchParams();
   const requestedChannel = searchParams.get('channel')?.trim() ?? '';
   const lastRequestedChannel = useRef('');
@@ -118,6 +119,8 @@ export function TelegramPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
+  // Сервер мог ответить 402, даже если клиент ещё считает доступ активным (истёк в эту минуту).
+  const [isAccessExpired, setIsAccessExpired] = useState(false);
 
   const load = async (channel: string, nextPeriod = period, refresh = false) => {
     const normalized = channel.trim();
@@ -150,6 +153,11 @@ export function TelegramPage() {
         // Недавние источники не влияют на доступность отчёта.
       }
     } catch (error) {
+      if (error instanceof ApiError && error.status === 402) {
+        setAnalytics(null);
+        setIsAccessExpired(true);
+        return;
+      }
       setMessage(error instanceof Error ? error.message : 'Не удалось получить аналитику Telegram.');
     } finally {
       window.clearInterval(timer);
@@ -161,7 +169,7 @@ export function TelegramPage() {
   const changePeriod = (nextPeriod: AnalyticsPeriod) => { setPeriod(nextPeriod); if (analytics) void load(analytics.channel.username, nextPeriod); };
 
   useEffect(() => {
-    if (!requestedChannel || lastRequestedChannel.current === requestedChannel) return;
+    if (!hasPaidAccess || !requestedChannel || lastRequestedChannel.current === requestedChannel) return;
     lastRequestedChannel.current = requestedChannel;
     void load(requestedChannel);
   }, [requestedChannel]);
@@ -198,6 +206,10 @@ export function TelegramPage() {
   const averageForwards = analytics?.summary.posts ? analytics.summary.forwards / analytics.summary.posts : 0;
   const visiblePosts = posts.slice(0, visibleCount);
   const hiddenPosts = Math.max(0, posts.length - visiblePosts.length);
+
+  if (!hasPaidAccess || isAccessExpired) {
+    return <section className="page-grid analytics-page telegram-page telegram-analytics-page"><PlatformAccessLock platform="telegram" activeTo={activeTo} /></section>;
+  }
 
   return <section className="page-grid analytics-page telegram-page telegram-analytics-page">
     {analytics ? <>

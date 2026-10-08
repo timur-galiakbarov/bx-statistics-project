@@ -79,15 +79,15 @@ export function PostCard({ post }: Props) {
       <div className="post-card-body">
         <div className="post-card-header">
           <span className="post-group-mini">
-            {post.group.photo && <img src={post.group.photo} alt="" />}
+            {post.group.photo ? <img src={post.group.photo} alt="" /> : <span className="community-avatar-placeholder post-group-mini-placeholder" />}
             <span>
               <strong>{post.group.name}</strong>
               <small>{new Date(post.date).toLocaleString('ru-RU')}</small>
             </span>
           </span>
-          <a className="icon-button" href={post.url} rel="noreferrer" target="_blank" aria-label="Открыть публикацию">
+          {post.url && <a className="icon-button" href={post.url} rel="noreferrer" target="_blank" aria-label="Открыть публикацию">
             <ExternalLink size={17} />
-          </a>
+          </a>}
         </div>
 
         <div className="post-card-tags">

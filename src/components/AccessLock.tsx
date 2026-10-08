@@ -1,11 +1,8 @@
-import { CreditCard, LockKeyhole } from 'lucide-react';
+import { CalendarClock, CreditCard, LockKeyhole } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { formatDate } from '../utils/date';
-
-type Props = {
-  activeTo?: string;
-};
+import { TelegramLogo } from './TelegramLogo';
 
 export function isAccessActive(activeTo?: string) {
   if (!activeTo) {
@@ -17,24 +14,34 @@ export function isAccessActive(activeTo?: string) {
   return !Number.isNaN(accessEnd.getTime()) && accessEnd.getTime() >= Date.now();
 }
 
-export function AccessLock({ activeTo }: Props) {
+/** Full-width lock for a YouTube or Telegram report: these platforms have no free short report. */
+export function PlatformAccessLock({ platform, activeTo }: { platform: 'youtube' | 'telegram'; activeTo?: string }) {
+  const platformName = platform === 'youtube' ? 'YouTube' : 'Telegram';
   return (
-    <section className="page-grid">
-      <div className="panel span-2 access-lock">
-        <div className="access-lock-icon">
-          <LockKeyhole size={26} />
+    <section className="panel span-2 platform-access-lock">
+      <div className="platform-access-lock-card">
+        <span className="platform-access-lock-icon">
+          <LockKeyhole size={28} />
+          {platform === 'telegram'
+            ? <TelegramLogo className="platform-access-lock-badge" size={22} />
+            : <img className="platform-access-lock-badge" src="/youtube-logo.png" alt="" />}
+        </span>
+        <h2>Доступ к аналитике истёк</h2>
+        <p>Продлите доступ в разделе оплаты, чтобы смотреть аналитику {platformName}.</p>
+        {activeTo && <span className="platform-access-lock-date"><CalendarClock size={14} />Доступ действовал до {formatDate(activeTo)}</span>}
+        <div className="platform-access-lock-actions">
+          <Link className="primary-button" to="/account">
+            <CreditCard size={18} />
+            Перейти к оплате
+          </Link>
+          <Link className="secondary-button" to="/analytics?platform=vk">
+            Открыть сообщество ВКонтакте
+          </Link>
         </div>
-        <div>
-          <h2>Доступ к аналитике истёк</h2>
-          <p>
-            Аналитика, сравнение, публикации, каналы и сводная статистика доступны после продления.
-            Текущий доступ до {formatDate(activeTo, 'не указан')}.
-          </p>
+        <div className="platform-access-lock-hint">
+          <img src="/vk-network-logo.png" alt="" />
+          <span><strong>ВКонтакте — бесплатно.</strong> Краткий отчёт по любому сообществу за последнюю неделю.</span>
         </div>
-        <Link className="primary-button" to="/account">
-          <CreditCard size={18} />
-          Перейти к оплате
-        </Link>
       </div>
     </section>
   );

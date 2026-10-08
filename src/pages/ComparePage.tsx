@@ -342,7 +342,7 @@ export function ComparePage({ groups, user }: Props) {
   );
 
   return (
-    <section className="page-grid">
+    <section className="page-grid compare-page">
       <SourceSetup
         title="Сравнение каналов"
         description="Добавьте от 2 до 10 групп или каналов — своих и конкурентов — и посмотрите, у кого выше реакции, охват и вовлечённость."

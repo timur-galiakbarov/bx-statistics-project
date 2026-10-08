@@ -51,7 +51,16 @@ export type SnapshotGrowth = {
   since: string | null;
   /** First known snapshot of the source. */
   historySince: string | null;
+  /** Without access the exact change is hidden: only whether subscribers grew. */
+  locked?: boolean;
+  direction?: 'up' | 'down' | 'steady' | null;
 };
+
+/** Socstat's own snapshots are a paid feature: a user without access sees only the direction. */
+export function lockSnapshotGrowth(growth: SnapshotGrowth): SnapshotGrowth {
+  const direction = growth.total === null ? null : growth.total > 0 ? 'up' : growth.total < 0 ? 'down' : 'steady';
+  return { total: null, since: growth.since, historySince: growth.historySince, locked: true, direction };
+}
 
 /**
  * Subscriber change for a period of snapshot days. A snapshot is taken early in the morning,

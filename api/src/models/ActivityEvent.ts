@@ -18,7 +18,11 @@ export const activityEventTypes = [
   // Мягкий запрос на уведомления в браузере; label — shown / accepted / dismissed / denied.
   'push_prompt',
   // Клик по push-уведомлению; label — вид напоминания.
-  'push_click'
+  'push_click',
+  // Урезанный отчёт VK для пользователя без доступа.
+  'analytics_preview',
+  // Клик по закрытому блоку урезанного отчёта; label — какой блок.
+  'preview_unlock'
 ] as const;
 
 export type ActivityEventType = (typeof activityEventTypes)[number];

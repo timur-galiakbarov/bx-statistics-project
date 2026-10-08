@@ -453,6 +453,11 @@ function SnapshotGrowthValue({ item, periodFrom }: { item?: DashboardSummaryItem
   const growth = item.snapshotGrowth;
   if (item.error || !growth) return <MetricValue />;
   const title = 'Прирост по ежедневным срезам Socstat: каждый день мы сохраняем число подписчиков, поэтому видна динамика даже там, где платформа её не отдаёт.';
+  if (growth.locked && growth.direction) {
+    const label = growth.direction === 'up' ? 'Растёт' : growth.direction === 'down' ? 'Падает' : 'Без изменений';
+    const DirectionIcon = growth.direction === 'up' ? ArrowUp : growth.direction === 'down' ? ArrowDown : null;
+    return <span className={`communities-table-pair snapshot-growth snapshot-growth-locked ${growth.direction}`} title="Точный прирост по ежедневным срезам Socstat доступен на тарифе."><strong>{DirectionIcon && <DirectionIcon size={13} />}{label}</strong><small><LockKeyhole size={12} />Цифры на тарифе</small></span>;
+  }
   if (growth.total === null) {
     return <span className="communities-table-pair snapshot-growth" title={title}><strong>—</strong><small><CalendarClock size={12} />{growth.historySince ? `История с ${shortDate(growth.historySince)}` : 'Первый срез — ночью'}</small></span>;
   }

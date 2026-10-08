@@ -108,7 +108,7 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
   };
 
   return (
-    <div className="page-grid">
+    <div className="page-grid account-page">
       <section className="panel">
         <div className="panel-header">
           <div>

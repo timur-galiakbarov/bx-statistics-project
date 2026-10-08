@@ -7,7 +7,7 @@ import { RedisJsonCache } from './redisJsonCache.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
 import { getTelegramChannelAnalytics } from './telegramClient.js';
 import { getSnapshotGrowth } from './snapshotService.js';
-import { telegramUsernameFromSource, type SnapshotGrowth } from './snapshotUtils.js';
+import { lockSnapshotGrowth, telegramUsernameFromSource, type SnapshotGrowth } from './snapshotUtils.js';
 import { CUSTOM_PERIOD_TOO_LONG_MESSAGE, getAnalyticsPeriod } from './analyticsUtils.js';
 
 type DashboardPeriod = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'last90days' | 'currentMonth' | 'custom';
@@ -255,9 +255,10 @@ function emptySummaryItem(savedGroupId: string, source: string, platform: Social
   };
 }
 
-function loadSnapshotGrowth(platform: SocialPlatform, externalId: string | null, period: ReturnType<typeof getPeriod>, currentSubscribers: number | null) {
-  if (!externalId) return Promise.resolve(null);
-  return getSnapshotGrowth(platform, externalId, formatDate(period.dateFrom), formatDate(period.dateTo), currentSubscribers).catch(() => null);
+async function loadSnapshotGrowth(platform: SocialPlatform, externalId: string | null, period: ReturnType<typeof getPeriod>, currentSubscribers: number | null, includePremiumMetrics: boolean) {
+  if (!externalId) return null;
+  const growth = await getSnapshotGrowth(platform, externalId, formatDate(period.dateFrom), formatDate(period.dateTo), currentSubscribers).catch(() => null);
+  return growth && !includePremiumMetrics ? lockSnapshotGrowth(growth) : growth;
 }
 
 function formatPeriod(period: ReturnType<typeof getPeriod>) {
@@ -274,7 +275,7 @@ function getPeriodCacheKey(period: ReturnType<typeof getPeriod>) {
 }
 
 function getSummaryItemCacheKey(userId: string, savedGroup: SavedGroup, period: ReturnType<typeof getPeriod>, includePremiumMetrics: boolean) {
-  return [userId, getPeriodCacheKey(period), savedGroup.id, savedGroup.platform, savedGroup.externalId, savedGroup.source, includePremiumMetrics ? 'full' : 'basic'].join(':');
+  return [userId, getPeriodCacheKey(period), savedGroup.id, savedGroup.platform, savedGroup.externalId, savedGroup.source, includePremiumMetrics ? 'full' : 'basic-v2'].join(':');
 }
 
 async function getManagedGroupIds(userId: string, accessToken: string, forceRefresh: boolean) {
@@ -318,7 +319,7 @@ async function buildDashboardSummaryItem(
     try {
       const channel = await resolveYoutubeChannel(groupId, forceRefresh);
       const videos = await getYoutubeVideos(channel, period.dateFrom, period.dateTo, forceRefresh);
-      const snapshotGrowth = await loadSnapshotGrowth('youtube', channel.id, period, channel.followersCount);
+      const snapshotGrowth = await loadSnapshotGrowth('youtube', channel.id, period, channel.followersCount, includePremiumMetrics);
       const likes = videos.reduce((sum, video) => sum + (video.likes ?? 0), 0);
       const comments = videos.reduce((sum, video) => sum + (video.comments ?? 0), 0);
       return {
@@ -346,7 +347,7 @@ async function buildDashboardSummaryItem(
         formatDate(period.dateTo),
         forceRefresh
       );
-      const snapshotGrowth = await loadSnapshotGrowth('telegram', telegramUsernameFromSource(savedGroup), period, analytics.channel.subscribers);
+      const snapshotGrowth = await loadSnapshotGrowth('telegram', telegramUsernameFromSource(savedGroup), period, analytics.channel.subscribers, includePremiumMetrics);
       return {
         ...fallback,
         group: {
@@ -414,7 +415,7 @@ async function buildDashboardSummaryItem(
       : null;
     const stat = sumStats(stats);
     const membersCount = groupInfo.members_count ?? savedGroup.membersCount ?? 0;
-    const snapshotGrowth = statsUnavailable ? await loadSnapshotGrowth('vk', String(groupInfo.id), period, membersCount) : null;
+    const snapshotGrowth = statsUnavailable ? await loadSnapshotGrowth('vk', String(groupInfo.id), period, membersCount, includePremiumMetrics) : null;
     const activity = wall ? sumWallActivity(wall, period.unixFrom, period.unixTo) : fallback.activity;
 
     if (includePremiumMetrics) await delay(350);
@@ -503,7 +504,7 @@ export async function getDashboardSummaryItem(userId: string, savedGroupId: stri
 export async function getDashboardSummary(userId: string, periodValue: unknown, forceRefresh = false, includePremiumMetrics = true, dateFrom?: unknown, dateTo?: unknown): Promise<DashboardSummaryResult> {
   const period = getPeriod(periodValue, dateFrom, dateTo);
   const groups = (await getGroups(userId)).filter((group) => group.isTracked);
-  const cacheKey = [userId, getPeriodCacheKey(period), includePremiumMetrics ? 'full' : 'basic', groups.map((group) => `${group.id}:${group.platform}:${group.externalId}:${group.source}`).join(',')].join(':');
+  const cacheKey = [userId, getPeriodCacheKey(period), includePremiumMetrics ? 'full' : 'basic-v2', groups.map((group) => `${group.id}:${group.platform}:${group.externalId}:${group.source}`).join(',')].join(':');
 
   if (!forceRefresh) {
     const cached = await dashboardSummaryCache.get(cacheKey);

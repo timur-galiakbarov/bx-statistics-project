@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, LockKeyhole, Plus, Search } from 'lucide-react';
+import { ArrowRight, ChevronRight, LockKeyhole, Plus, Search } from 'lucide-react';
 import { apiGet } from '../api/client';
 import type { SavedGroup, SocialPlatform } from '../api/types';
 import { trackCompetitorsWidget } from '../utils/visit';
@@ -49,7 +49,7 @@ function CompetitorsTeaser() {
         <span className="competitors-widget-body"><strong>{row.name}</strong><small>{row.count} {plural(row.count)} · пример</small><Places summary={row.summary} /></span>
       </div>
     </li>)}</ul>
-    <Link className="primary-button competitors-widget-cta" to="/account" onClick={() => trackCompetitorsWidget('teaser')}>Подключить тариф</Link>
+    <Link className="competitors-widget-cta" to="/account" onClick={() => trackCompetitorsWidget('teaser')}>Подключить тариф<ArrowRight size={16} /></Link>
   </section>;
 }
 

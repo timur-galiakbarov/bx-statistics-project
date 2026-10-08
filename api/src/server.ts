@@ -3,6 +3,7 @@ import { env } from './config/env.js';
 import { connectDatabase } from './db/database.js';
 import { seedDevelopmentData } from './db/seed.js';
 import { connectRedis } from './services/redis.js';
+import { startPushReminderScheduler } from './services/pushReminders.js';
 import { startSnapshotScheduler } from './services/snapshotService.js';
 
 async function bootstrap() {
@@ -23,6 +24,7 @@ async function bootstrap() {
   });
 
   startSnapshotScheduler();
+  startPushReminderScheduler();
 }
 
 bootstrap().catch((error) => {

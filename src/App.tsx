@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiGet, apiPost } from './api/client';
 import type { SavedGroup, User } from './api/types';
 import { AccessLock, isAccessActive } from './components/AccessLock';
+import { PushPrompt } from './components/PushPrompt';
 import { DashboardPage } from './pages/DashboardPage';
 import { AccountPage } from './pages/AccountPage';
 import { AdminPage } from './pages/AdminPage';
@@ -286,6 +287,8 @@ export function App() {
             </div>
           )}
         </header>
+
+        {hasPaidAccess && location.pathname === '/dashboard' && <PushPrompt activeTo={user?.activeTo} />}
 
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

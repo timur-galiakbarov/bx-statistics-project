@@ -56,6 +56,12 @@ export const env = {
   yoomoneyNotificationUrl: process.env.YOOMONEY_NOTIFICATION_URL ?? 'http://localhost:4000/api/payments/callback',
   yoomoneySuccessUrl: process.env.YOOMONEY_SUCCESS_URL ?? 'http://localhost:5173/app/account?payment=success',
   yoomoneyNotificationSecret: process.env.YOOMONEY_NOTIFICATION_SECRET ?? '',
+  // Web Push: ключи VAPID генерируются один раз (npx web-push generate-vapid-keys).
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? '',
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? '',
+  vapidSubject: process.env.VAPID_SUBJECT ?? 'mailto:support@socstat.ru',
+  // Напоминания об окончании доступа. По умолчанию включены только в production.
+  pushRemindersEnabled: (process.env.PUSH_REMINDERS_ENABLED ?? (process.env.NODE_ENV === 'production' ? '1' : '0')) === '1',
   adminVkIds: (process.env.ADMIN_VK_IDS ?? '30647716')
     .split(',')
     .map((item) => item.trim())

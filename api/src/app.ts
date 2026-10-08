@@ -14,6 +14,7 @@ import { dashboardRouter } from './routes/dashboard.js';
 import { legacyRouter } from './routes/legacy.js';
 import { paymentsRouter } from './routes/payments.js';
 import { postsRouter } from './routes/posts.js';
+import { pushRouter } from './routes/push.js';
 import { vkRouter } from './routes/vk.js';
 import { youtubeRouter } from './routes/youtube.js';
 import { telegramRouter } from './routes/telegram.js';
@@ -45,6 +46,7 @@ export function createApp() {
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/payments', paymentsRouter);
   app.use('/api/posts', postsRouter);
+  app.use('/api/push', pushRouter);
   app.use('/api/vk', vkRouter);
   app.use('/api/youtube', youtubeRouter);
   app.use('/api/telegram', telegramRouter);

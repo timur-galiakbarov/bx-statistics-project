@@ -14,7 +14,11 @@ export const activityEventTypes = [
   'competitors_widget',
   'competitors_saved',
   // Уже зарегистрированный пользователь пришёл с рекламными метками.
-  'ad_return'
+  'ad_return',
+  // Мягкий запрос на уведомления в браузере; label — shown / accepted / dismissed / denied.
+  'push_prompt',
+  // Клик по push-уведомлению; label — вид напоминания.
+  'push_click'
 ] as const;
 
 export type ActivityEventType = (typeof activityEventTypes)[number];

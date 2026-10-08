@@ -42,6 +42,8 @@ const actionLabels: Record<string, string> = {
   competitors_widget: 'Виджет конкурентов',
   competitors_saved: 'Сохранил конкурентов',
   ad_return: 'Вернулся по рекламе',
+  push_prompt: 'Запрос уведомлений',
+  push_click: 'Кликнул по уведомлению',
   payment: 'Оплатил'
 };
 

@@ -2,6 +2,7 @@ import { CreditCard, LogOut, RefreshCw, WalletCards } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiGet, apiPost } from '../api/client';
+import { PushSettings } from '../components/PushPrompt';
 import type { PaymentHistoryItem, PaymentIntent, PaymentPlan, SavedGroup, User } from '../api/types';
 import { formatDate } from '../utils/date';
 
@@ -199,6 +200,7 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
             <span>{groups.length} сохраненных групп</span>
           </div>
         </div>
+        <PushSettings />
         <button className="secondary-button">
           <LogOut size={17} />
           Выйти

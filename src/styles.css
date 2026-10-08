@@ -4192,3 +4192,53 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 }
 .analytics-page .telegram-summary-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 1100px) { .analytics-page .telegram-summary-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.push-prompt {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #c8e6c9;
+  border-left: 4px solid #4caf50;
+  border-radius: 3px;
+  display: grid;
+  gap: 12px 14px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  margin: 15px 30px 0;
+  padding: 14px 16px;
+}
+
+.push-prompt-icon { color: #4caf50; }
+.push-prompt-text { display: grid; gap: 4px; }
+.push-prompt-text strong { color: #3c4858; font-weight: 500; }
+.push-prompt-text span { color: #687684; font-size: 14px; line-height: 1.45; }
+.push-prompt-actions { display: flex; gap: 8px; }
+.push-prompt-actions button { white-space: nowrap; }
+
+.push-prompt-close {
+  align-self: start;
+  background: none;
+  border: 0;
+  color: #9aa5ad;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.push-settings {
+  align-items: center;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin: 14px 0;
+  padding-top: 14px;
+}
+
+.push-settings > div { display: grid; gap: 3px; }
+.push-settings span { color: #687684; font-size: 14px; }
+
+@media (max-width: 840px) {
+  .push-prompt { grid-template-columns: auto minmax(0, 1fr) auto; margin: 12px 16px 0; }
+  .push-prompt-actions { grid-column: 1 / -1; }
+  .push-prompt-close { grid-column: 3; grid-row: 1; }
+  .push-prompt-actions button { flex: 1; justify-content: center; }
+  .push-settings { align-items: stretch; flex-direction: column; }
+}

@@ -164,6 +164,7 @@ export async function getAdminExport(requestedDays: unknown, now = new Date()) {
         'activity.periods: today/yesterday/week/previousWeek/month — сводки по активным пользователям (users), визитам и деньгам.',
         'activity.funnel — когорта зарегистрировавшихся за periodDays: сколько добавили канал, открыли аналитику, вернулись на другой день и оплатили.',
         'activity.acquisition — та же когорта по источнику первого касания (utm_source, vk_ads по rb_clickid, yandex_direct по yclid или referrer).',
+        'Источники регистраций записываются с вечера 2026-10-05; у более ранних регистраций источник — «без меток».',
         'activity.adReturns — уже зарегистрированные, вернувшиеся по рекламной ссылке; оплаты в 30 дней после возврата.',
         'activity.engagement.stickiness — средний DAU за 7 дней / MAU; returnRate — доля когорты, вернувшейся на другой день.',
         'preview — краткий отчёт VK для пользователей без доступа: просмотры, клики по закрытым блокам, оплаты после первого просмотра.',

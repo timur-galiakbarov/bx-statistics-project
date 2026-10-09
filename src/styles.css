@@ -3707,6 +3707,7 @@ a {
 .activity-kpis > div[title] { cursor: help; }
 .activity-kpis strong { color: #24342a; display: block; font-size: 22px; font-variant-numeric: tabular-nums; font-weight: 400; margin-top: 6px; }
 .activity-funnel, .activity-share-list, .activity-top-list, .activity-feed { list-style: none; margin: 0; padding: 0; }
+.activity-subheading { color: #24342a; font-size: 14px; font-weight: 600; margin: 18px 0 4px; }
 .activity-funnel li, .activity-share-list li { display: flex; gap: 10px; justify-content: space-between; padding: 8px 0 12px; position: relative; }
 .activity-funnel li + li, .activity-share-list li + li { border-top: 1px solid #f1f3f2; }
 .activity-funnel i, .activity-share-list i { background: #4caf50; border-radius: 2px; bottom: 4px; height: 4px; left: 0; min-width: 2px; position: absolute; }

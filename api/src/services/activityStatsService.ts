@@ -71,6 +71,14 @@ export type AdminActivityStats = {
     returnCohort: number;
   };
   funnel: { registered: number; addedGroup: number; usedAnalytics: number; returned: number; paid: number };
+  /** Все оплаты периода, а не только когорта воронки: кто платит — новые, давние или продлевающие. */
+  periodPayments: {
+    payments: number;
+    revenue: number;
+    fromCohort: AdminPaymentGroup;
+    firstTime: AdminPaymentGroup;
+    renewals: AdminPaymentGroup;
+  };
   acquisition: Array<{ source: string; campaign: string; registrations: number; addedGroup: number; paid: number }>;
   adReturns: Array<{ label: string; users: number; paid: number; revenue: number }>;
   groups: {
@@ -84,6 +92,8 @@ export type AdminActivityStats = {
   hours: number[];
   feed: AdminActivityFeedItem[];
 };
+
+export type AdminPaymentGroup = { payments: number; revenue: number };
 
 type VisitRow = {
   userId: Types.ObjectId;
@@ -276,6 +286,28 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
     PaymentModel.distinct('userId', { status: 'paid', amount: { $gt: 0 }, userId: { $in: cohortIds } })
   ]);
   const withGroupsSet = new Set(cohortWithGroups.map((id) => id.toString()));
+
+  // Оплаты периода: зарегистрировавшиеся за период (они же в воронке), первая оплата
+  // зарегистрированных раньше (в основном пользователи старого сайта) и продления.
+  const rangePayments = payments.filter((payment) => payment.paidAt >= rangeStart);
+  const cohortIdSet = new Set(cohortIds.map((id) => id.toString()));
+  const earlierPaidUserIds = new Set((await PaymentModel.distinct('userId', {
+    status: 'paid',
+    amount: { $gt: 0 },
+    userId: { $in: [...new Set(rangePayments.map((payment) => payment.userId.toString()))] },
+    paidAt: { $lt: rangeStart }
+  })).map((id) => id.toString()));
+  const paymentGroups = { fromCohort: { payments: 0, revenue: 0 }, firstTime: { payments: 0, revenue: 0 }, renewals: { payments: 0, revenue: 0 } };
+  const seenPayers = new Set<string>();
+  for (const payment of [...rangePayments].sort((a, b) => a.paidAt.getTime() - b.paidAt.getTime())) {
+    const id = payment.userId.toString();
+    const group = cohortIdSet.has(id)
+      ? paymentGroups.fromCohort
+      : earlierPaidUserIds.has(id) || seenPayers.has(id) ? paymentGroups.renewals : paymentGroups.firstTime;
+    group.payments += 1;
+    group.revenue += payment.amount;
+    seenPayers.add(id);
+  }
   const paidSet = new Set(cohortPaid.map((id) => id.toString()));
   const analyticsUsers = new Set(events.filter((event) => event.type === 'analytics_view').map((event) => event.userId.toString()));
   const hasReturned = (user: (typeof cohort)[number]) => {
@@ -419,6 +451,11 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
       usedAnalytics: cohort.filter((user) => analyticsUsers.has(user._id.toString())).length,
       returned: cohort.filter(hasReturned).length,
       paid: cohort.filter((user) => paidSet.has(user._id.toString())).length
+    },
+    periodPayments: {
+      payments: rangePayments.length,
+      revenue: rangePayments.reduce((total, payment) => total + payment.amount, 0),
+      ...paymentGroups
     },
     acquisition: [...acquisitionRows.values()].sort((a, b) => b.registrations - a.registrations).slice(0, 15),
     adReturns: [...adReturnRows.values()].sort((a, b) => b.users - a.users).slice(0, 15),

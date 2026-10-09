@@ -493,7 +493,7 @@ export function AdminActivityStats() {
         </div>
 
         <div className="panel activity-panel">
-          <div className="panel-header compact"><div><h2>Воронка новых пользователей</h2><p className="activity-note">Зарегистрировались за {stats.days} дней</p></div></div>
+          <div className="panel-header compact"><div><h2>Воронка новых пользователей</h2><p className="activity-note">Только зарегистрировавшиеся за {stats.days} дней — что они успели сделать</p></div></div>
           {funnel.registered === 0 ? <div className="empty-state">За период регистраций не было.</div> : (
             <ul className="activity-funnel">
               {[
@@ -501,12 +501,31 @@ export function AdminActivityStats() {
                 { label: 'Добавили канал', value: funnel.addedGroup },
                 { label: 'Открыли аналитику', value: funnel.usedAnalytics },
                 { label: 'Вернулись в другой день', value: funnel.returned },
-                { label: 'Оплатили', value: funnel.paid }
+                { label: 'Из них оплатили', value: funnel.paid }
               ].map((step) => (
                 <li key={step.label}>
                   <span>{step.label}</span>
                   <strong>{formatNumber(step.value)} <small>{formatShare(step.value, funnel.registered)}</small></strong>
                   <i style={{ width: `${(step.value / funnel.registered) * 100}%` }} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <h3 className="activity-subheading">
+            Все оплаты за {stats.days} дней: {formatNumber(stats.periodPayments.payments)}
+            {stats.periodPayments.revenue > 0 && ` · ${formatNumber(stats.periodPayments.revenue)} ₽`}
+          </h3>
+          {stats.periodPayments.payments === 0 ? <div className="empty-state">Оплат за период не было.</div> : (
+            <ul className="activity-funnel">
+              {[
+                { label: 'Новые пользователи из воронки', group: stats.periodPayments.fromCohort },
+                { label: 'Первая оплата давних пользователей', group: stats.periodPayments.firstTime },
+                { label: 'Продления', group: stats.periodPayments.renewals }
+              ].map(({ label, group }) => (
+                <li key={label}>
+                  <span>{label}</span>
+                  <strong>{formatNumber(group.payments)} <small>{group.revenue > 0 ? `${formatNumber(group.revenue)} ₽` : formatShare(group.payments, stats.periodPayments.payments)}</small></strong>
+                  <i style={{ width: `${(group.payments / stats.periodPayments.payments) * 100}%` }} />
                 </li>
               ))}
             </ul>

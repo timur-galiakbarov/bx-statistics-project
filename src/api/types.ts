@@ -607,6 +607,13 @@ export type AdminActivityStats = {
     returnCohort: number;
   };
   funnel: { registered: number; addedGroup: number; usedAnalytics: number; returned: number; paid: number };
+  periodPayments: {
+    payments: number;
+    revenue: number;
+    fromCohort: { payments: number; revenue: number };
+    firstTime: { payments: number; revenue: number };
+    renewals: { payments: number; revenue: number };
+  };
   acquisition: Array<{ source: string; campaign: string; registrations: number; addedGroup: number; paid: number }>;
   adReturns: Array<{ label: string; users: number; paid: number; revenue: number }>;
   groups: {

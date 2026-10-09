@@ -1,5 +1,6 @@
 import type { Request } from 'express';
 import { ActivityEventModel, type ActivityEventType } from '../models/ActivityEvent.js';
+import { UserModel } from '../models/User.js';
 import { VisitModel } from '../models/Visit.js';
 
 const VISIT_ID_PATTERN = /^[a-z0-9-]{8,64}$/i;
@@ -15,6 +16,16 @@ function normalizePath(value: unknown) {
 
   // Только pathname: query-параметры содержат id сообществ и не нужны для статистики страниц.
   return value.split(/[?#]/)[0].slice(0, 120) || '/';
+}
+
+/**
+ * Moves the user's "last activity" forward. Called only for what the user does
+ * (page views, heartbeats of a visible tab in use, tracked actions), not for every
+ * authenticated request: background requests such as EventSource reconnects of a
+ * forgotten tab would otherwise make an idle user look active.
+ */
+function markUserActive(userId: string, at: Date) {
+  return UserModel.updateOne({ _id: userId }, { $max: { lastActivityAt: at } });
 }
 
 function detectDevice(userAgent?: string) {
@@ -33,7 +44,10 @@ export async function recordVisitHit(options: {
   const filter = { visitId: options.visitId, userId: options.userId };
 
   if (options.type === 'heartbeat') {
-    await VisitModel.updateOne(filter, { $set: { lastSeenAt: now } });
+    await Promise.all([
+      VisitModel.updateOne(filter, { $set: { lastSeenAt: now } }),
+      markUserActive(options.userId, now)
+    ]);
     return;
   }
 
@@ -56,6 +70,8 @@ export async function recordVisitHit(options: {
       throw error;
     }
   }
+
+  await markUserActive(options.userId, now);
 }
 
 /**
@@ -77,10 +93,12 @@ export function trackActivity(
   const platform = typeof details.platform === 'string' ? details.platform.slice(0, 20) : undefined;
   const label = typeof details.label === 'string' ? details.label.slice(0, 120) : undefined;
 
+  const now = new Date();
   void Promise.all([
-    ActivityEventModel.create({ userId, visitId, type, platform, label }),
+    ActivityEventModel.create({ userId, visitId, type, platform, label, createdAt: now }),
+    markUserActive(userId, now),
     visitId
-      ? VisitModel.updateOne({ visitId, userId }, { $inc: { actions: 1 }, $set: { lastSeenAt: new Date() } })
+      ? VisitModel.updateOne({ visitId, userId }, { $inc: { actions: 1 }, $set: { lastSeenAt: now } })
       : undefined
   ]).catch((error) => console.error('Failed to track activity', error));
 }

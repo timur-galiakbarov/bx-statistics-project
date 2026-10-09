@@ -12,8 +12,6 @@ import { getLegacyPricingUserIds } from '../services/legacyPricing.js';
 import { env } from '../config/env.js';
 
 export const FREE_GROUP_LIMIT = 1;
-const LAST_ACTIVITY_WRITE_INTERVAL_MS = 5 * 60 * 1_000;
-const lastActivityWriteAt = new Map<string, number>();
 
 type UserDocument = {
   _id: Types.ObjectId;
@@ -135,26 +133,6 @@ export async function getUserBySession(sessionId?: string) {
   }
 
   return mapUser(session.userId);
-}
-
-/** Records authenticated activity at most once per five minutes per process and user. */
-export async function touchUserActivity(userId: string) {
-  const now = Date.now();
-  const lastWrite = lastActivityWriteAt.get(userId);
-
-  if (lastWrite !== undefined && now - lastWrite < LAST_ACTIVITY_WRITE_INTERVAL_MS) {
-    return;
-  }
-
-  // Set before the write so parallel browser requests do not generate duplicate updates.
-  lastActivityWriteAt.set(userId, now);
-
-  try {
-    await UserModel.updateOne({ _id: userId }, { $set: { lastActivityAt: new Date(now) } });
-  } catch (error) {
-    lastActivityWriteAt.delete(userId);
-    throw error;
-  }
 }
 
 export async function getDemoUser() {
@@ -531,8 +509,8 @@ export async function getAdminStat(userId: string) {
 }
 
 /**
- * Sorts by the same date the admin table shows: lastActivityAt is written only
- * since 2026-09-13, so older accounts fall back to their last login.
+ * Sorts by the same date the admin table shows: lastActivityAt (see markUserActive)
+ * is written only since 2026-09-13, so older accounts fall back to their last login.
  */
 export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[]> {
   const users = await UserModel.aggregate<{

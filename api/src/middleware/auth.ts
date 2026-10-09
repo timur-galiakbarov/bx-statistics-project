@@ -6,7 +6,6 @@ import {
   hasAdMarks,
   parseAcquisitionCookie,
   recordAdReturn,
-  touchUserActivity,
   type AccountUser
 } from '../repositories/accountRepository.js';
 
@@ -46,12 +45,7 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  try {
-    await touchUserActivity(req.user.id);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  next();
 }
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {

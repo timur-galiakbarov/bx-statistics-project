@@ -530,29 +530,36 @@ export async function getAdminStat(userId: string) {
   return { users, paidUsers, savedGroups };
 }
 
+/**
+ * Sorts by the same date the admin table shows: lastActivityAt is written only
+ * since 2026-09-13, so older accounts fall back to their last login.
+ */
 export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[]> {
-  const users = await UserModel.find({
-    $or: [
-      { lastActivityAt: { $exists: true, $ne: null } },
-      { lastLoginAt: { $exists: true, $ne: null } }
-    ]
-  })
-    .sort({ lastActivityAt: -1, lastLoginAt: -1 })
-    .limit(Math.min(limit, 300))
-    .select({ legacy: 1, vkId: 1, firstName: 1, lastName: 1, createdAt: 1, lastLoginAt: 1, lastActivityAt: 1, activeTo: 1 })
-    .lean<
-      Array<{
-        _id: Types.ObjectId;
-        legacy?: { bitrixId?: number };
-        vkId?: string;
-        firstName?: string;
-        lastName?: string;
-        createdAt: Date;
-        lastLoginAt?: Date;
-        lastActivityAt?: Date;
-        activeTo: Date;
-      }>
-    >();
+  const users = await UserModel.aggregate<{
+    _id: Types.ObjectId;
+    legacy?: { bitrixId?: number };
+    vkId?: string;
+    firstName?: string;
+    lastName?: string;
+    createdAt: Date;
+    lastLoginAt?: Date;
+    lastActivityAt?: Date;
+    activeTo: Date;
+  }>([
+    {
+      $match: {
+        isAdmin: { $ne: true },
+        $or: [
+          { lastActivityAt: { $exists: true, $ne: null } },
+          { lastLoginAt: { $exists: true, $ne: null } }
+        ]
+      }
+    },
+    { $addFields: { seenAt: { $ifNull: ['$lastActivityAt', '$lastLoginAt'] } } },
+    { $sort: { seenAt: -1, _id: -1 } },
+    { $limit: Math.min(limit, 300) },
+    { $project: { legacy: 1, vkId: 1, firstName: 1, lastName: 1, createdAt: 1, lastLoginAt: 1, lastActivityAt: 1, activeTo: 1 } }
+  ]);
 
   const now = new Date();
   const legacyPricingUserIds = await getLegacyPricingUserIds(users.map((user) => user._id));

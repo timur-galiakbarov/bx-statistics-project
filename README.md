@@ -94,6 +94,8 @@ npm run build
 
 Команда собирает API и фронтенд.
 
+На прод выкатывается автоматически при пуше в `master` — см. [docs/features/deploy.md](docs/features/deploy.md).
+
 ## Переменные окружения
 
 Для API можно скопировать пример:

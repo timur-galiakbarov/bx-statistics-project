@@ -1,4 +1,5 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import {
   ackPendingGoals,
   addGroup,
@@ -24,6 +25,7 @@ import { DomainError } from '../errors/domainError.js';
 import { ComparisonCollectionModel } from '../models/ComparisonCollection.js';
 import { parseVisitId, recordVisitHit, trackActivity } from '../services/activityTracking.js';
 import { getAdminActivityStats } from '../services/activityStatsService.js';
+import { getAdminExport } from '../services/adminExportService.js';
 
 export const accountRouter = Router();
 
@@ -458,6 +460,32 @@ accountRouter.get('/admin/activity/stats', requireUser, async (req, res, next) =
 
   try {
     res.json({ success: true, data: await getAdminActivityStats(req.query.days) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Сравниваем хеши, чтобы длина и содержимое токена не утекали по времени ответа.
+function hasAdminExportToken(req: Request) {
+  const token = req.header('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+  if (!env.adminExportToken || !token) return false;
+  const digest = (value: string) => createHash('sha256').update(value).digest();
+  return timingSafeEqual(digest(token), digest(env.adminExportToken));
+}
+
+accountRouter.get('/admin/export', async (req, res, next) => {
+  // С заголовком Authorization пускаем только по верному токену, без него — администратора по сессии.
+  if (req.header('authorization') ? !hasAdminExportToken(req) : !req.user) {
+    res.status(401).json({ success: false, error: 'UNAUTHORIZED' });
+    return;
+  }
+  if (!req.header('authorization') && !req.user!.isAdmin) {
+    res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    return;
+  }
+
+  try {
+    res.json({ success: true, data: await getAdminExport(req.query.days) });
   } catch (error) {
     next(error);
   }

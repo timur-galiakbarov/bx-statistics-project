@@ -1,4 +1,4 @@
-import { RefreshCw } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiGet } from '../api/client';
@@ -310,6 +310,7 @@ export function AdminActivityStats() {
   const [stats, setStats] = useState<AdminActivityStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const load = async (nextDays = days) => {
     setIsLoading(true);
@@ -326,6 +327,25 @@ export function AdminActivityStats() {
   useEffect(() => {
     void load(days);
   }, [days]);
+
+  // Полная сводка в JSON, чтобы обсуждать состояние сервиса с агентом.
+  const exportForAgent = async () => {
+    setIsExporting(true);
+    setError(null);
+    try {
+      const data = await apiGet<unknown>(`/api/account/admin/export?days=${days}`);
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `socstat-${new Date().toISOString().slice(0, 10)}-${days}d.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Не удалось выгрузить данные');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const periods = stats?.periods;
   const funnel = stats?.funnel;
@@ -357,6 +377,10 @@ export function AdminActivityStats() {
             <button className="secondary-button inline" type="button" onClick={() => load()} disabled={isLoading}>
               <RefreshCw className={isLoading ? 'spin' : undefined} size={18} />
               Обновить
+            </button>
+            <button className="secondary-button inline" title="Сводка аналитики в JSON для разговора с агентом" type="button" onClick={exportForAgent} disabled={isExporting}>
+              <Download size={18} />
+              {isExporting ? 'Выгрузка…' : 'Выгрузить'}
             </button>
           </div>
         </div>

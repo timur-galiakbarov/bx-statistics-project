@@ -73,5 +73,7 @@ export const env = {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean),
+  // Токен для выгрузки аналитики агентом без входа через VK (GET /api/account/admin/export). Пустой — доступ только из админки.
+  adminExportToken: process.env.ADMIN_EXPORT_TOKEN?.trim() ?? '',
   nodeEnv: process.env.NODE_ENV ?? 'development'
 };

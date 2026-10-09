@@ -81,8 +81,8 @@ const feedTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
   day: '2-digit',
   month: '2-digit',
   hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'Europe/Moscow'
+  minute: '2-digit'
+  // Без timeZone: в часовом поясе браузера, как и время в списках пользователей.
 });
 const sinceFormatter = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });
 

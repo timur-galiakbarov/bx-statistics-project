@@ -48,8 +48,8 @@ const dateTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
   month: '2-digit',
   year: 'numeric',
   hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'UTC'
+  minute: '2-digit'
+  // Без timeZone: моменты времени показываются в часовом поясе браузера администратора.
 });
 
 const snapshotPlatforms = [

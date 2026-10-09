@@ -11,6 +11,8 @@ export const env = {
   mongoServerSelectionTimeoutMs: Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS ?? 5000),
   vkClientId: process.env.VK_CLIENT_ID ?? '5358505',
   vkClientSecret: process.env.VK_CLIENT_SECRET ?? '',
+  // Сервисный ключ приложения: основной ключ ночных срезов VK, запросы идут от имени приложения.
+  vkServiceKey: process.env.VK_SERVICE_KEY?.trim() ?? '',
   vkAuthScope: process.env.VK_AUTH_SCOPE ?? 'stats,groups,photos,video,offline',
   socstatVkGroupId: process.env.SOCSTAT_VK_GROUP_ID ?? '125792332',
   socstatVkGroupUrl: process.env.SOCSTAT_VK_GROUP_URL ?? 'https://vk.com/socstat',
@@ -50,6 +52,11 @@ export const env = {
   snapshotPostWindowDays: Number(process.env.SNAPSHOT_POST_WINDOW_DAYS ?? 7),
   snapshotPostMaxAttempts: Number(process.env.SNAPSHOT_POST_MAX_ATTEMPTS ?? 5),
   snapshotTelegramDelayMs: Number(process.env.SNAPSHOT_TELEGRAM_DELAY_MS ?? 3_000),
+  // Служебные VK-аккаунты (через запятую), чьи токены подхватывают срезы после сервисного ключа и админов.
+  snapshotVkIds: (process.env.SNAPSHOT_VK_IDS ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean),
   snapshotTelegramMaxPerRun: Number(process.env.SNAPSHOT_TELEGRAM_MAX_PER_RUN ?? 200),
   authSuccessRedirectUrl: process.env.AUTH_SUCCESS_REDIRECT_URL ?? 'http://localhost:5173/app/dashboard',
   yoomoneyReceiver: process.env.YOOMONEY_RECEIVER ?? '',

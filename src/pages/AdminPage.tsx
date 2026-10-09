@@ -60,6 +60,7 @@ const snapshotPlatforms = [
 
 const snapshotStopReasons: Record<string, string> = {
   VK_TOKEN_REQUIRED: 'нет VK-токена',
+  VK_KEYS_EXHAUSTED: 'лимит всех VK-ключей',
   YOUTUBE_API_KEY_REQUIRED: 'нет ключа YouTube API',
   TELEGRAM_RATE_LIMITED: 'лимит Telegram',
   TELEGRAM_NOT_CONFIGURED: 'Telegram не настроен',

@@ -14,7 +14,8 @@
     "telegram:login": "tsx src/scripts/createTelegramSession.ts",
     "telegram:smoke": "tsx src/scripts/testTelegramConnection.ts",
     "snapshots:run": "tsx src/scripts/runSnapshots.ts",
-    "snapshots:seed": "tsx src/scripts/seedSnapshotSources.ts"
+    "snapshots:seed": "tsx src/scripts/seedSnapshotSources.ts",
+    "snapshots:check-vk-key": "tsx src/scripts/checkVkServiceKey.ts"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",

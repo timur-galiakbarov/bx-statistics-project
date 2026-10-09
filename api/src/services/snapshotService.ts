@@ -1,3 +1,4 @@
+import { ComparisonCollectionModel } from '../models/ComparisonCollection.js';
 import { CompetitorSetModel } from '../models/CompetitorSet.js';
 import { randomUUID } from 'node:crypto';
 import { env } from '../config/env.js';
@@ -16,7 +17,7 @@ import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
 
 export type SnapshotPlatform = 'vk' | 'youtube' | 'telegram';
 
-type PlatformResult = { pending: number; saved: number; failed: number; postsFailed?: number; stoppedReason?: string };
+type PlatformResult = { pending: number; saved: number; failed: number; postsFailed?: number; stoppedReason?: string; keys?: string[] };
 
 export type SnapshotPassResult = {
   date: string;
@@ -37,8 +38,12 @@ type PostSnapshotInput = {
 const VK_GROUPS_PER_REQUEST = 400;
 // Fresh posts are on the first page of a wall even for busy communities.
 const VK_WALL_PAGE_SIZE = 100;
-// VK allows 3 requests per second per user token.
-const VK_REQUEST_DELAY_MS = 350;
+// VK allows 3 requests per second per user token and 5 per service key of an app with under 10k users.
+const VK_USER_KEY_DELAY_MS = 350;
+const VK_SERVICE_KEY_DELAY_MS = 210;
+// Errors after which a key is useless for the rest of the pass: invalid token, too many requests
+// even after retries, captcha, method quota reached.
+const VK_KEY_EXHAUSTED_CODES = new Set([5, 6, 14, 29]);
 // Wall errors that will not go away today: access denied, deleted or banned community, private wall.
 const VK_WALL_PERMANENT_CODES = new Set([7, 15, 18, 30]);
 
@@ -77,7 +82,11 @@ export async function collectSnapshotSources() {
     if ((platform === 'vk' || !platform) && /^\d+$/.test(id.replace(/^-/, ''))) sources.vk.add(id.replace(/^-/, ''));
   };
 
-  const saved = await SavedGroupModel.find({ isTracked: { $ne: false } }, { platform: 1, externalId: 1, vkGroupId: 1, handle: 1 }).lean();
+  // VK communities removed from a dashboard keep their history going.
+  const saved = await SavedGroupModel.find(
+    { $or: [{ isTracked: { $ne: false } }, { platform: 'vk' }] },
+    { platform: 1, externalId: 1, vkGroupId: 1, handle: 1 }
+  ).lean();
   for (const source of saved) add(source.platform, source);
   const seeded = await SnapshotSourceModel.find({}, { platform: 1, externalId: 1 }).lean();
   for (const source of seeded) add(source.platform, source);
@@ -88,7 +97,29 @@ export async function collectSnapshotSources() {
     for (const source of set.competitors) add(source.platform ?? set.platform, source);
   }
 
+  // Only VK from saved comparisons: Telegram goes through a single personal MTProto session.
+  const collections = await ComparisonCollectionModel.find({ 'sources.platform': 'vk' }, { sources: 1 }).lean();
+  for (const collection of collections) {
+    for (const source of collection.sources) if (source.platform === 'vk') add('vk', source);
+  }
+
   return sources;
+}
+
+const rememberedVkSources = new Set<string>();
+
+/** Adds a VK community opened in analytics to the daily snapshots for good. Never throws. */
+export function rememberViewedVkSource(groupId: string | number) {
+  const externalId = String(groupId).replace(/^-/, '');
+  if (!/^\d+$/.test(externalId) || rememberedVkSources.has(externalId)) return;
+  rememberedVkSources.add(externalId);
+  SnapshotSourceModel.updateOne({ platform: 'vk', externalId }, { $setOnInsert: { note: 'viewed' } }, { upsert: true })
+    .catch((error) => {
+      // A parallel upsert of the same community hits the unique index: the source is there anyway.
+      if ((error as { code?: number }).code === 11000) return;
+      rememberedVkSources.delete(externalId);
+      console.error(`Failed to remember VK source ${externalId}`, error);
+    });
 }
 
 async function pendingIds(platform: SnapshotPlatform, ids: Set<string>, date: string) {
@@ -125,13 +156,57 @@ async function savePostSnapshots(platform: SnapshotPlatform, externalId: string,
   })), { ordered: false });
 }
 
-/** Any working VK user token: groups.getById needs no special rights. Admin tokens go first. */
-async function findVkAccessToken() {
-  const admins = await UserModel.find({ vkId: { $in: env.adminVkIds } }, { _id: 1 }).lean();
-  const adminToken = await VkTokenModel.findOne({ userId: { $in: admins.map((admin) => admin._id) } }).sort({ updatedAt: -1 }).lean();
-  if (adminToken) return adminToken.accessToken;
-  const anyToken = await VkTokenModel.findOne({}).sort({ updatedAt: -1 }).lean();
-  return anyToken?.accessToken;
+type VkSnapshotKey = { kind: 'service' | 'admin' | 'extra'; token: string; delayMs: number };
+
+class VkKeysExhaustedError extends Error {}
+
+/**
+ * Keys for VK snapshots in order of use: the app service key (requests on behalf of the app, with
+ * its own quota), then tokens of admins and of the service accounts from SNAPSHOT_VK_IDS.
+ * Tokens of regular users are never used.
+ */
+async function vkSnapshotKeys() {
+  const keys: VkSnapshotKey[] = [];
+  if (env.vkServiceKey) keys.push({ kind: 'service', token: env.vkServiceKey, delayMs: VK_SERVICE_KEY_DELAY_MS });
+  const addUserKeys = async (kind: VkSnapshotKey['kind'], vkIds: string[]) => {
+    if (!vkIds.length) return;
+    const users = await UserModel.find({ vkId: { $in: vkIds } }, { _id: 1 }).lean();
+    const tokens = await VkTokenModel.find({
+      userId: { $in: users.map((user) => user._id) },
+      $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }, { expiresAt: { $gt: new Date() } }]
+    }).sort({ updatedAt: -1 }).lean();
+    for (const token of tokens) keys.push({ kind, token: token.accessToken, delayMs: VK_USER_KEY_DELAY_MS });
+  };
+  await addUserKeys('admin', env.adminVkIds);
+  await addUserKeys('extra', env.snapshotVkIds.filter((id) => !env.adminVkIds.includes(id)));
+  return keys;
+}
+
+/** Sends each request with the current key and moves to the next one when VK stops serving it. */
+class VkKeyPool {
+  private index = 0;
+  readonly used = new Set<string>();
+
+  constructor(private readonly keys: VkSnapshotKey[]) {}
+
+  get delayMs() {
+    return this.keys[this.index]?.delayMs ?? VK_USER_KEY_DELAY_MS;
+  }
+
+  async request<T>(method: string, params: Record<string, string | number>) {
+    for (let key = this.keys[this.index]; key; key = this.keys[this.index]) {
+      try {
+        const response = await vkApiRequest<T>(method, key.token, params);
+        this.used.add(key.kind);
+        return response;
+      } catch (error) {
+        if (!(error instanceof VkApiError && VK_KEY_EXHAUSTED_CODES.has(error.vkCode ?? -1))) throw error;
+        console.warn(`VK snapshot key #${this.index} (${key.kind}) dropped on ${method}: code ${error.vkCode}`);
+        this.index += 1;
+      }
+    }
+    throw new VkKeysExhaustedError();
+  }
 }
 
 /** VK sources of the day whose subscribers are saved but posts are not yet, with attempts left. */
@@ -149,13 +224,15 @@ async function snapshotVk(ids: string[], sourceIds: Set<string>, date: string, n
   const result: PlatformResult = { ...emptyResult(), pending: ids.length, postsFailed: 0 };
   const postsPending = await vkPostsPending(sourceIds, date);
   if (!ids.length && !postsPending.length) return result;
-  const accessToken = await findVkAccessToken();
-  if (!accessToken) return { ...result, stoppedReason: 'VK_TOKEN_REQUIRED' };
+  const keys = await vkSnapshotKeys();
+  if (!keys.length) return { ...result, stoppedReason: 'VK_TOKEN_REQUIRED' };
+  const pool = new VkKeyPool(keys);
+  const finish = (stoppedReason?: string) => ({ ...result, keys: [...pool.used], ...(stoppedReason ? { stoppedReason } : {}) });
 
   for (let offset = 0; offset < ids.length; offset += VK_GROUPS_PER_REQUEST) {
     const batch = ids.slice(offset, offset + VK_GROUPS_PER_REQUEST);
     try {
-      const groups = await vkApiRequest<Array<{ id: number; name?: string; members_count?: number }>>('groups.getById', accessToken, {
+      const groups = await pool.request<Array<{ id: number; name?: string; members_count?: number }>>('groups.getById', {
         group_ids: batch.join(','),
         fields: 'members_count'
       });
@@ -170,6 +247,7 @@ async function snapshotVk(ids: string[], sourceIds: Set<string>, date: string, n
       }
       result.failed += batch.length - groups.length;
     } catch (error) {
+      if (error instanceof VkKeysExhaustedError) return finish('VK_KEYS_EXHAUSTED');
       console.error('VK snapshot batch failed', error);
       result.failed += batch.length;
     }
@@ -179,9 +257,9 @@ async function snapshotVk(ids: string[], sourceIds: Set<string>, date: string, n
   // passes of the day without taking the subscriber snapshot again.
   const unixFrom = Math.floor(now.getTime() / 1000) - env.snapshotPostWindowDays * 86_400;
   for (const id of await vkPostsPending(sourceIds, date)) {
-    await sleep(VK_REQUEST_DELAY_MS);
+    await sleep(pool.delayMs);
     try {
-      const wall = await vkApiRequest<VkWallSnapshotResponse>('wall.get', accessToken, { owner_id: -Number(id), count: VK_WALL_PAGE_SIZE });
+      const wall = await pool.request<VkWallSnapshotResponse>('wall.get', { owner_id: -Number(id), count: VK_WALL_PAGE_SIZE });
       await savePostSnapshots('vk', id, date, wall.items
         .filter((post) => post.date >= unixFrom)
         .map((post) => ({
@@ -194,6 +272,8 @@ async function snapshotVk(ids: string[], sourceIds: Set<string>, date: string, n
         })), now);
       await ChannelSnapshotModel.updateOne({ platform: 'vk', externalId: id, date }, { $set: { postsCollected: true }, $inc: { postsAttempts: 1 } });
     } catch (error) {
+      // Later passes of the day retry the rest without spending its attempts.
+      if (error instanceof VkKeysExhaustedError) return finish('VK_KEYS_EXHAUSTED');
       // A closed or deleted wall has no posts to collect: retrying it all day is pointless.
       const permanent = error instanceof VkApiError && VK_WALL_PERMANENT_CODES.has(error.vkCode ?? -1);
       if (!permanent) {
@@ -206,7 +286,7 @@ async function snapshotVk(ids: string[], sourceIds: Set<string>, date: string, n
       );
     }
   }
-  return result;
+  return finish();
 }
 
 async function snapshotYoutube(ids: string[], date: string, now: Date): Promise<PlatformResult> {

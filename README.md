@@ -6,6 +6,8 @@
 - `api/` — Node.js + Express API;
 - `legacy/` — прежнее PHP/Bitrix-приложение.
 
+Как устроен функционал — в [docs/features](docs/features/README.md).
+
 ## Установка зависимостей
 
 Из корня проекта:
@@ -110,6 +112,7 @@ cp api/.env.example api/.env
 - `MONGO_SERVER_SELECTION_TIMEOUT_MS` - таймаут подключения к MongoDB, по умолчанию `5000`
 - `VK_CLIENT_ID` - ID VK-приложения
 - `VK_CLIENT_SECRET` - секрет VK-приложения для обмена code на token
+- `VK_SERVICE_KEY` - сервисный ключ VK-приложения, основной ключ ночных срезов VK
 - `VK_AUTH_SCOPE` - права VK, по умолчанию `stats,groups,photos,video,offline`
 - `VK_FORCE_REVOKE` - `1`, чтобы VK заново показал экран согласия и выдал token с обновлёнными правами
 - `VK_REDIRECT_URL` - callback URL для VK OAuth
@@ -136,6 +139,7 @@ cp api/.env.example api/.env
 - `SNAPSHOT_POST_WINDOW_DAYS` - за сколько последних дней сохранять счётчики публикаций, по умолчанию `7`
 - `SNAPSHOT_TELEGRAM_DELAY_MS` - пауза между Telegram-каналами в срезе, по умолчанию `3000`
 - `SNAPSHOT_TELEGRAM_MAX_PER_RUN` - максимум Telegram-каналов за один проход планировщика, по умолчанию `200`
+- `SNAPSHOT_VK_IDS` - VK id служебных аккаунтов через запятую, чьи токены подхватывают срезы VK после сервисного ключа и админов
 - `AUTH_SUCCESS_REDIRECT_URL` - куда вернуть пользователя после успешного входа
 - `YOOMONEY_RECEIVER` - номер кошелька ЮMoney, который принимает платежи
 - `YOOMONEY_NOTIFICATION_URL` - URL HTTP-уведомлений, который нужно указать в кабинете ЮMoney
@@ -229,27 +233,7 @@ npm run telegram:login --workspace @socstat/api
 
 ## Ежедневные срезы
 
-Публичные API не отдают историю подписчиков, поэтому API раз в день сохраняет срезы:
-
-- `ChannelSnapshot` — подписчики канала/сообщества на дату (по Москве), для YouTube ещё общее число просмотров и видео;
-- `PostSnapshot` — просмотры, реакции, комментарии и пересылки публикаций за последние `SNAPSHOT_POST_WINDOW_DAYS` дней (из них строится кривая набора просмотров).
-
-Источники — все сохранённые пользователями группы и каналы плюс коллекция `SnapshotSource` (например, популярные каналы). Планировщик проверяет каждые 15 минут после `SNAPSHOT_START_HOUR` и снимает только те источники, у которых ещё нет среза за сегодня, поэтому прерванный проход (лимит Telegram, перезапуск) продолжится сам. Между репликами проход защищён блокировкой в Redis. Для ВК используется любой сохранённый VK-токен (сначала администратора): `groups.getById` пачками по 400 групп для подписчиков и один `wall.get` на группу для публикаций, с паузой 350 мс между запросами.
-
-Кривая набора просмотров (`GET /api/snapshots/posts?platform=&id=&days=`) оценивает просмотры каждой публикации через 24, 48 и 72 часа линейной интерполяцией между ночными срезами и считает медиану по источнику (не меньше 3 публикаций).
-
-Ручной запуск и добавление источников:
-
-```bash
-npm run snapshots:run --workspace @socstat/api
-npm run snapshots:seed --workspace @socstat/api -- telegram channels.txt
-```
-
-В файле для `snapshots:seed` — по одному источнику на строку: `@username` или ссылка `t.me` для Telegram, channel ID `UC…` для YouTube, числовой ID группы для ВК.
-
-История подписчиков:
-
-- `GET /api/snapshots/history?platform=telegram&id=durov&days=90` — точки `{ date, subscribers, change }`.
+Раз в день API сохраняет подписчиков и счётчики свежих публикаций всех отслеживаемых источников — из них строятся история, прирост и кривая просмотров. Как это работает, откуда берутся источники и какими ключами идут запросы — в [docs/features/snapshots.md](docs/features/snapshots.md).
 
 ## Legacy VK implicit flow
 

@@ -1,6 +1,7 @@
 import { VkApiError } from './vkClient.js';
 import { getCommunityAnalytics } from './analyticsService.js';
 import { getYoutubeChannelAnalytics } from './youtubeAnalyticsService.js';
+import { rememberViewedSource } from './snapshotService.js';
 import { getTelegramChannelAnalytics } from './telegramClient.js';
 import { DomainError } from '../errors/domainError.js';
 
@@ -50,6 +51,7 @@ export async function getCommunitiesCompare(userId: string, groupIdsValue: unkno
         : platform === 'telegram'
           ? toComparableTelegramAnalytics(await getTelegramChannelAnalytics(externalId, period))
           : await getCommunityAnalytics(userId, externalId, period);
+      rememberViewedSource(platform, platform === 'telegram' ? externalId : String(analytics.group.id), 'compare');
       return {
         groupId: externalId,
         platform,

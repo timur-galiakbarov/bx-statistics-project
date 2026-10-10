@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildSubscriberHistory, chainedMedians, hoursSince, lockSnapshotGrowth, median, snapshotGrowthForPeriod, viewsAtHour, snapshotDateKey, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
+import { buildSubscriberHistory, chainedMedians, hoursSince, lockSnapshotGrowth, median, snapshotGrowthForPeriod, viewsAtHour, snapshotDateKey, snapshotHour, secondsUntilNextSnapshotDate, telegramUsernameFromSource } from './snapshotUtils.js';
 
 test('дата и час среза считаются по Москве', () => {
   assert.equal(snapshotDateKey(new Date('2026-10-02T21:30:00Z')), '2026-10-03');
@@ -104,4 +104,10 @@ test('типичная кривая не падает, когда до позд�
 test('lockSnapshotGrowth hides the number and keeps the direction', () => {
   assert.deepEqual(lockSnapshotGrowth({ total: -3, since: null, historySince: '2026-09-01' }), { total: null, since: null, historySince: '2026-09-01', locked: true, direction: 'down' });
   assert.equal(lockSnapshotGrowth({ total: null, since: null, historySince: null }).direction, null);
+});
+
+test('пауза Telegram длится до полуночи по Москве', () => {
+  assert.equal(secondsUntilNextSnapshotDate(new Date('2026-10-10T20:00:00Z')), 3600);
+  assert.equal(secondsUntilNextSnapshotDate(new Date('2026-10-10T21:00:00Z')), 86_400);
+  assert.equal(secondsUntilNextSnapshotDate(new Date('2026-10-11T00:30:00Z')), 73_800);
 });

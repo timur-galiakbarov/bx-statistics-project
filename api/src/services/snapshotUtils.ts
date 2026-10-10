@@ -88,6 +88,11 @@ export function snapshotGrowthForPeriod(
   return { total: end.subscribers - baseline.subscribers, since: baseline.date, historySince };
 }
 
+/** Seconds until the next snapshot date starts: Moscow midnight, UTC+3 without DST. */
+export function secondsUntilNextSnapshotDate(now = new Date()) {
+  return 86_400 - Math.floor((now.getTime() / 1000 + 3 * 3600) % 86_400);
+}
+
 /** Saved Telegram sources keep the username in `handle` or `externalId`; numeric IDs cannot be resolved. */
 export function telegramUsernameFromSource(source: { handle?: string | null; externalId?: string | null }) {
   for (const value of [source.handle, source.externalId]) {

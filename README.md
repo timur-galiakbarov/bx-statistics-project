@@ -141,6 +141,7 @@ cp api/.env.example api/.env
 - `SNAPSHOT_POST_WINDOW_DAYS` - за сколько последних дней сохранять счётчики публикаций, по умолчанию `7`
 - `SNAPSHOT_TELEGRAM_DELAY_MS` - пауза между Telegram-каналами в срезе, по умолчанию `3000`
 - `SNAPSHOT_TELEGRAM_MAX_PER_RUN` - максимум Telegram-каналов за один проход планировщика, по умолчанию `200`
+- `SNAPSHOT_TELEGRAM_MAX_PER_DAY` - максимум попыток снять Telegram-канал за сутки, по умолчанию `400`
 - `SNAPSHOT_VK_IDS` - VK id служебных аккаунтов через запятую, чьи токены подхватывают срезы VK после сервисного ключа и админов
 - `AUTH_SUCCESS_REDIRECT_URL` - куда вернуть пользователя после успешного входа
 - `YOOMONEY_RECEIVER` - номер кошелька ЮMoney, который принимает платежи

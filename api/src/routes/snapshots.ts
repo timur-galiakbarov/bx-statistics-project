@@ -2,7 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { hasActiveAccess, hasBonusCommunityAccess } from '../middleware/access.js';
 import { requireAdmin, requireUser } from '../middleware/auth.js';
-import { getPostViewCurves, getSnapshotCoverage, getSubscriberHistory, type SnapshotPlatform } from '../services/snapshotService.js';
+import { getPostViewCurves, getSnapshotBase, getSnapshotCoverage, getSubscriberHistory, type SnapshotPlatform } from '../services/snapshotService.js';
 import { snapshotDateKey, snapshotGrowthForPeriod, telegramUsernameFromSource } from '../services/snapshotUtils.js';
 
 export const snapshotsRouter = Router();
@@ -74,6 +74,15 @@ snapshotsRouter.get('/coverage', requireUser, requireAdmin, async (req, res, nex
   try {
     const days = Math.min(MAX_COVERAGE_DAYS, Math.max(1, Number(req.query.days) || 14));
     res.json({ success: true, data: await getSnapshotCoverage(days) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Размер базы ночных срезов: сколько источников в списке, откуда они и у скольких уже есть история.
+snapshotsRouter.get('/base', requireUser, requireAdmin, async (_req, res, next) => {
+  try {
+    res.json({ success: true, data: await getSnapshotBase() });
   } catch (error) {
     next(error);
   }

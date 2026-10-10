@@ -10,7 +10,7 @@ import { SnapshotSourceModel } from '../models/SnapshotSource.js';
 import { UserModel } from '../models/User.js';
 import { VkTokenModel } from '../models/VkToken.js';
 import { redis } from './redis.js';
-import { buildSubscriberHistory, chainedMedians, hoursSince, snapshotDateKey, snapshotGrowthForPeriod, VIEW_MILESTONE_HOURS, viewsAtHour, snapshotHour, telegramUsernameFromSource } from './snapshotUtils.js';
+import { buildSubscriberHistory, chainedMedians, hoursSince, snapshotDateKey, snapshotGrowthForPeriod, VIEW_MILESTONE_HOURS, viewsAtHour, snapshotHour, secondsUntilNextSnapshotDate, telegramUsernameFromSource } from './snapshotUtils.js';
 import { getTelegramChannelSnapshot, TelegramApiError } from './telegramClient.js';
 import { VkApiError, vkApiRequest } from './vkClient.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
@@ -68,58 +68,107 @@ function emptyResult(): PlatformResult {
   return { pending: 0, saved: 0, failed: 0 };
 }
 
-/** Normalized IDs of every source that should get a daily snapshot. */
-export async function collectSnapshotSources() {
+/** Where a source in the daily snapshots came from; `SnapshotSource.note` values come after the first three. */
+export type SnapshotSourceOrigin = 'dashboard' | 'competitors' | 'collections' | SnapshotSourceNote;
+export type SnapshotSourceNote = 'viewed' | 'compare' | 'posts' | 'seed' | 'telegram-peer';
+
+/** Normalized IDs of every source that should get a daily snapshot, with the origin each was first found in. */
+async function collectSourcesWithOrigins() {
   const sources: Record<SnapshotPlatform, Set<string>> = { vk: new Set(), youtube: new Set(), telegram: new Set() };
-  const add = (platform: string | undefined | null, source: { externalId?: string | null; vkGroupId?: string | null; handle?: string | null }) => {
-    if (platform === 'telegram') {
-      const username = telegramUsernameFromSource(source);
-      if (username) sources.telegram.add(username);
-      return;
-    }
-    const id = (source.externalId ?? source.vkGroupId ?? '').trim();
-    if (platform === 'youtube' && /^UC[\w-]{20,}$/.test(id)) sources.youtube.add(id);
-    if ((platform === 'vk' || !platform) && /^\d+$/.test(id.replace(/^-/, ''))) sources.vk.add(id.replace(/^-/, ''));
+  const origins = new Map<string, SnapshotSourceOrigin>();
+  const add = (platform: string | undefined | null, source: { externalId?: string | null; vkGroupId?: string | null; handle?: string | null }, origin: SnapshotSourceOrigin) => {
+    const id = normalizeSourceId(platform || 'vk', source);
+    if (!id) return;
+    const key = `${id.platform}:${id.externalId}`;
+    if (!origins.has(key)) origins.set(key, origin);
+    sources[id.platform].add(id.externalId);
   };
 
+  // Sources are added in priority order: when Telegram hits its daily limit, dashboards go first.
   // VK communities removed from a dashboard keep their history going.
   const saved = await SavedGroupModel.find(
     { $or: [{ isTracked: { $ne: false } }, { platform: 'vk' }] },
     { platform: 1, externalId: 1, vkGroupId: 1, handle: 1 }
   ).lean();
-  for (const source of saved) add(source.platform, source);
-  const seeded = await SnapshotSourceModel.find({}, { platform: 1, externalId: 1 }).lean();
-  for (const source of seeded) add(source.platform, source);
+  for (const source of saved) add(source.platform, source, 'dashboard');
 
   const competitors = await CompetitorSetModel.find({}).lean();
   for (const set of competitors) {
-    add(set.platform, set);
-    for (const source of set.competitors) add(source.platform ?? set.platform, source);
+    add(set.platform, set, 'competitors');
+    for (const source of set.competitors) add(source.platform ?? set.platform, source, 'competitors');
   }
 
-  // Only VK from saved comparisons: Telegram goes through a single personal MTProto session.
-  const collections = await ComparisonCollectionModel.find({ 'sources.platform': 'vk' }, { sources: 1 }).lean();
+  const collections = await ComparisonCollectionModel.find({}, { sources: 1 }).lean();
   for (const collection of collections) {
-    for (const source of collection.sources) if (source.platform === 'vk') add('vk', source);
+    for (const source of collection.sources) add(source.platform, source, 'collections');
   }
 
-  return sources;
+  const seeded = await SnapshotSourceModel.find({}, { platform: 1, externalId: 1, note: 1 }).sort({ createdAt: 1 }).lean();
+  for (const source of seeded) add(source.platform, source, isSourceNote(source.note) ? source.note : 'seed');
+
+  return { sources, origins };
 }
 
-const rememberedVkSources = new Set<string>();
+export async function collectSnapshotSources() {
+  return (await collectSourcesWithOrigins()).sources;
+}
 
-/** Adds a VK community opened in analytics to the daily snapshots for good. Never throws. */
-export function rememberViewedVkSource(groupId: string | number) {
-  const externalId = String(groupId).replace(/^-/, '');
-  if (!/^\d+$/.test(externalId) || rememberedVkSources.has(externalId)) return;
-  rememberedVkSources.add(externalId);
-  SnapshotSourceModel.updateOne({ platform: 'vk', externalId }, { $setOnInsert: { note: 'viewed' } }, { upsert: true })
+function isSourceNote(note: unknown): note is SnapshotSourceNote {
+  return note === 'viewed' || note === 'compare' || note === 'posts' || note === 'seed' || note === 'telegram-peer';
+}
+
+function normalizeSourceId(platform: string, source: { externalId?: string | null; vkGroupId?: string | null; handle?: string | null }): { platform: SnapshotPlatform; externalId: string } | null {
+  if (platform === 'telegram') {
+    const username = telegramUsernameFromSource(source);
+    return username ? { platform, externalId: username } : null;
+  }
+  const id = (source.externalId ?? source.vkGroupId ?? '').trim();
+  if (platform === 'youtube') return /^UC[\w-]{20,}$/.test(id) ? { platform, externalId: id } : null;
+  const vkId = id.replace(/^-/, '');
+  return platform === 'vk' && /^\d+$/.test(vkId) ? { platform, externalId: vkId } : null;
+}
+
+const rememberedSources = new Set<string>();
+
+/**
+ * Adds a source seen in analytics, comparison or post analysis to the daily snapshots for good.
+ * The first origin wins. Never throws.
+ */
+export function rememberViewedSource(platform: SnapshotPlatform, sourceId: string | number, note: 'viewed' | 'compare' | 'posts' = 'viewed') {
+  const id = normalizeSourceId(platform, { externalId: String(sourceId) });
+  if (!id) return;
+  const key = `${id.platform}:${id.externalId}`;
+  if (rememberedSources.has(key)) return;
+  rememberedSources.add(key);
+  SnapshotSourceModel.updateOne({ platform: id.platform, externalId: id.externalId }, { $setOnInsert: { note } }, { upsert: true })
     .catch((error) => {
-      // A parallel upsert of the same community hits the unique index: the source is there anyway.
+      // A parallel upsert of the same source hits the unique index: the source is there anyway.
       if ((error as { code?: number }).code === 11000) return;
-      rememberedVkSources.delete(externalId);
-      console.error(`Failed to remember VK source ${externalId}`, error);
+      rememberedSources.delete(key);
+      console.error(`Failed to remember ${platform} source ${id.externalId}`, error);
     });
+}
+
+/** Size of the snapshot base per platform: sources in the daily list, by origin, and how many have any history. */
+export async function getSnapshotBase() {
+  const { sources, origins } = await collectSourcesWithOrigins();
+  const withHistory = await ChannelSnapshotModel.aggregate<{ _id: SnapshotPlatform; count: number }>([
+    { $group: { _id: { platform: '$platform', externalId: '$externalId' } } },
+    { $group: { _id: '$_id.platform', count: { $sum: 1 } } }
+  ]);
+  const platforms = (['vk', 'youtube', 'telegram'] as const).map((platform) => {
+    const byOrigin: Partial<Record<SnapshotSourceOrigin, number>> = {};
+    for (const [key, origin] of origins) {
+      if (key.startsWith(`${platform}:`)) byOrigin[origin] = (byOrigin[origin] ?? 0) + 1;
+    }
+    return {
+      platform,
+      sources: sources[platform].size,
+      withHistory: withHistory.find((item) => item._id === platform)?.count ?? 0,
+      byOrigin
+    };
+  });
+  return { platforms };
 }
 
 async function pendingIds(platform: SnapshotPlatform, ids: Set<string>, date: string) {
@@ -321,13 +370,32 @@ async function snapshotYoutube(ids: string[], date: string, now: Date): Promise<
   return result;
 }
 
-async function snapshotTelegram(usernames: string[], date: string, now: Date): Promise<PlatformResult> {
-  const result: PlatformResult = { ...emptyResult(), pending: usernames.length };
+const TELEGRAM_PAUSE_KEY = 'socstat:snapshots:telegram-paused';
+const telegramAttemptsKey = (date: string) => `socstat:snapshots:telegram-attempts:${date}`;
+const telegramFailedKey = (date: string) => `socstat:snapshots:telegram-failed:${date}`;
+const TELEGRAM_DAY_KEYS_TTL_S = 2 * 86_400;
+
+/**
+ * The session is the owner's personal Telegram account, so the snapshot spends a bounded number of requests:
+ * at most `snapshotTelegramMaxPerDay` attempts a day, a channel that failed is retried only the next day,
+ * and a FLOOD_WAIT pauses the snapshot until the next day.
+ */
+async function snapshotTelegram(pending: string[], date: string, now: Date): Promise<PlatformResult> {
+  const result: PlatformResult = { ...emptyResult(), pending: pending.length };
+  if (!pending.length) return result;
+  if (!redis.isOpen) return { ...result, stoppedReason: 'TELEGRAM_REDIS_UNAVAILABLE' };
+  if (await redis.exists(TELEGRAM_PAUSE_KEY)) return { ...result, stoppedReason: 'TELEGRAM_PAUSED' };
+  const failedToday = new Set(await redis.sMembers(telegramFailedKey(date)));
+  const usernames = pending.filter((username) => !failedToday.has(username));
+  const attempts = Number(await redis.get(telegramAttemptsKey(date))) || 0;
+  const budget = Math.max(0, Math.min(env.snapshotTelegramMaxPerRun, env.snapshotTelegramMaxPerDay - attempts));
+  if (usernames.length && !budget) return { ...result, stoppedReason: 'TELEGRAM_DAILY_LIMIT' };
   const unixFrom = Math.floor(now.getTime() / 1000) - env.snapshotPostWindowDays * 86_400;
 
-  for (const [index, username] of usernames.slice(0, env.snapshotTelegramMaxPerRun).entries()) {
+  for (const [index, username] of usernames.slice(0, budget).entries()) {
     // Пауза между каналами оставляет общую MTProto-сессию свободной для запросов пользователей.
     if (index > 0) await sleep(env.snapshotTelegramDelayMs);
+    await redis.multi().incr(telegramAttemptsKey(date)).expire(telegramAttemptsKey(date), TELEGRAM_DAY_KEYS_TTL_S).exec();
     try {
       const { channel, posts } = await getTelegramChannelSnapshot(username, unixFrom);
       await saveChannelSnapshot('telegram', username, date, { title: channel.title, subscribers: channel.subscribers });
@@ -342,12 +410,19 @@ async function snapshotTelegram(usernames: string[], date: string, now: Date): P
       result.saved += 1;
     } catch (error) {
       if (error instanceof TelegramApiError && TELEGRAM_STOP_CODES.has(error.code)) {
+        if (error.code === 'TELEGRAM_RATE_LIMITED') {
+          await redis.set(TELEGRAM_PAUSE_KEY, date, { EX: secondsUntilNextSnapshotDate(now) });
+        }
         result.stoppedReason = error.code;
         break;
       }
       console.error(`Telegram snapshot failed for @${username}`, error);
+      await redis.multi().sAdd(telegramFailedKey(date), username).expire(telegramFailedKey(date), TELEGRAM_DAY_KEYS_TTL_S).exec();
       result.failed += 1;
     }
+  }
+  if (!result.stoppedReason && usernames.length > budget && attempts + budget >= env.snapshotTelegramMaxPerDay) {
+    result.stoppedReason = 'TELEGRAM_DAILY_LIMIT';
   }
   return result;
 }

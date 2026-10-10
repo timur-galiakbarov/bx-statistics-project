@@ -8,8 +8,10 @@ import type {
   AdminPaymentsMonthlySummary,
   AdminUserAccessResult,
   RecentAdminUser,
+  SnapshotBase,
   SnapshotDayCoverage,
   SnapshotPlatformCoverage,
+  SnapshotSourceOrigin,
   User,
   VkAppInfo,
   VkManualStatsResult,
@@ -64,7 +66,21 @@ const snapshotStopReasons: Record<string, string> = {
   YOUTUBE_API_KEY_REQUIRED: 'нет ключа YouTube API',
   TELEGRAM_RATE_LIMITED: 'лимит Telegram',
   TELEGRAM_NOT_CONFIGURED: 'Telegram не настроен',
-  TELEGRAM_SESSION_INVALID: 'сессия Telegram недействительна'
+  TELEGRAM_SESSION_INVALID: 'сессия Telegram недействительна',
+  TELEGRAM_DAILY_LIMIT: 'суточный лимит Telegram',
+  TELEGRAM_PAUSED: 'Telegram на паузе до завтра после лимита',
+  TELEGRAM_REDIS_UNAVAILABLE: 'Redis недоступен'
+};
+
+const snapshotOriginLabels: Record<SnapshotSourceOrigin, string> = {
+  dashboard: 'дашборды',
+  competitors: 'конкуренты',
+  collections: 'подборки',
+  viewed: 'аналитика',
+  compare: 'сравнение',
+  posts: 'публикации',
+  seed: 'вручную',
+  'telegram-peer': 'Telegram до 11.10'
 };
 
 const snapshotDayFormatter = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', weekday: 'short', timeZone: 'UTC' });
@@ -100,6 +116,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [snapshotCoverage, setSnapshotCoverage] = useState<SnapshotDayCoverage[]>([]);
   const [snapshotCoverageError, setSnapshotCoverageError] = useState<string | null>(null);
   const [isSnapshotCoverageLoading, setIsSnapshotCoverageLoading] = useState(false);
+  const [snapshotBase, setSnapshotBase] = useState<SnapshotBase | null>(null);
   const [activeUsers, setActiveUsers] = useState<AdminActiveUsers | null>(null);
   const [activeUsersFilter, setActiveUsersFilter] = useState<ActiveUsersFilter>('all');
   const [isActiveUsersListOpen, setIsActiveUsersListOpen] = useState(false);
@@ -334,9 +351,15 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     setSnapshotCoverageError(null);
 
     try {
-      setSnapshotCoverage(await apiGet<SnapshotDayCoverage[]>('/api/snapshots/coverage?days=14'));
+      const [coverage, base] = await Promise.all([
+        apiGet<SnapshotDayCoverage[]>('/api/snapshots/coverage?days=14'),
+        apiGet<SnapshotBase>('/api/snapshots/base')
+      ]);
+      setSnapshotCoverage(coverage);
+      setSnapshotBase(base);
     } catch (nextError) {
       setSnapshotCoverage([]);
+      setSnapshotBase(null);
       setSnapshotCoverageError(nextError instanceof Error ? nextError.message : 'Не удалось загрузить сбор данных');
     } finally {
       setIsSnapshotCoverageLoading(false);
@@ -525,7 +548,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
         <div className="panel-header compact">
           <div>
             <h2>Ночной сбор данных</h2>
-            <p>Снято источников из ожидаемых за последние 14 дней. Пропущенный день потом не восстановить: недостающее можно дособрать только до полуночи по Москве.</p>
+            <p>Размер базы и снятые источники из ожидаемых за последние 14 дней. Пропущенный день потом не восстановить: недостающее можно дособрать только до полуночи по Москве.</p>
           </div>
           <button className="secondary-button inline" type="button" onClick={loadSnapshotCoverage} disabled={isSnapshotCoverageLoading}>
             <RefreshCw className={isSnapshotCoverageLoading ? 'spin' : undefined} size={18} />
@@ -533,6 +556,30 @@ export function AdminPage({ user, onAccountChanged }: Props) {
           </button>
         </div>
         {snapshotCoverageError && <div className="debug-error">{snapshotCoverageError}</div>}
+        {snapshotBase && (
+          <div className="table analytics-posts admin-snapshot-base">
+            <div className="table-row table-head admin-snapshot-base-row">
+              <span>База</span>
+              <span>В ежедневном списке</span>
+              <span>С историей</span>
+              <span>Откуда</span>
+            </div>
+            {snapshotBase.platforms.map((item) => {
+              const label = snapshotPlatforms.find((platform) => platform.key === item.platform)?.label ?? item.platform;
+              const origins = (Object.entries(item.byOrigin) as Array<[SnapshotSourceOrigin, number]>).sort((a, b) => b[1] - a[1]);
+              return (
+                <div className="table-row admin-snapshot-base-row" key={item.platform}>
+                  <span data-label="База">{label}</span>
+                  <span data-label="В ежедневном списке">{item.sources}</span>
+                  <span data-label="С историей">{item.withHistory}</span>
+                  <span data-label="Откуда">
+                    {origins.length ? origins.map(([origin, count]) => `${snapshotOriginLabels[origin] ?? origin} ${count}`).join(' · ') : '—'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {snapshotCoverage.length > 0 && (
           <div className="table analytics-posts">
             <div className="table-row table-head admin-snapshot-row">
@@ -548,12 +595,15 @@ export function AdminPage({ user, onAccountChanged }: Props) {
                   // Today's pass may simply not have started yet.
                   if (!coverage && index === 0) return <span data-label={platform.label} key={platform.key}><small>ещё не запускался</small></span>;
                   const status = getSnapshotCoverageStatus(coverage);
+                  const previousSources = snapshotCoverage[index + 1]?.[platform.key]?.sources;
+                  const added = coverage?.sources && previousSources ? coverage.sources - previousSources : 0;
                   return (
                     <span data-label={platform.label} key={platform.key}>
                       {!coverage && <span className="payment-status failed">не собрано</span>}
                       {coverage?.sources === 0 && <small>нет источников</small>}
                       {coverage?.sources === null && <>{coverage.collected}<small>сколько ожидалось, неизвестно</small></>}
                       {status && coverage?.sources ? <span className={`payment-status ${status}`}>{coverage.collected} из {coverage.sources}</span> : null}
+                      {added > 0 && <small>+{added} в списке</small>}
                       {coverage && coverage.postsPending > 0 && <small>без постов: {coverage.postsPending}</small>}
                       {coverage?.stoppedReason && <small>{snapshotStopReasons[coverage.stoppedReason] ?? coverage.stoppedReason}</small>}
                     </span>

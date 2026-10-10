@@ -58,6 +58,7 @@ export const env = {
     .map((item) => item.trim())
     .filter(Boolean),
   snapshotTelegramMaxPerRun: Number(process.env.SNAPSHOT_TELEGRAM_MAX_PER_RUN ?? 200),
+  snapshotTelegramMaxPerDay: Number(process.env.SNAPSHOT_TELEGRAM_MAX_PER_DAY ?? 400),
   authSuccessRedirectUrl: process.env.AUTH_SUCCESS_REDIRECT_URL ?? 'http://localhost:5173/app/dashboard',
   yoomoneyReceiver: process.env.YOOMONEY_RECEIVER ?? '',
   yoomoneyNotificationUrl: process.env.YOOMONEY_NOTIFICATION_URL ?? 'http://localhost:4000/api/payments/callback',

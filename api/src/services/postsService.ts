@@ -3,6 +3,7 @@ import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { vkApiRequest, VkApiError } from './vkClient.js';
 import { getYoutubeChannelAnalytics } from './youtubeAnalyticsService.js';
 import { getTelegramChannelAnalytics } from './telegramClient.js';
+import { rememberViewedSource } from './snapshotService.js';
 
 type PostsPeriod = 'week' | 'twoWeek' | 'month';
 
@@ -263,6 +264,7 @@ export async function getPostsAnalysis(userId: string, groupIdsValue: unknown, p
     for (const groupId of groupIds) {
       try {
         const analytics = await getTelegramChannelAnalytics(groupId, periodValue);
+        rememberViewedSource('telegram', analytics.channel.username, 'posts');
         const group = {
           id: analytics.channel.id,
           platform: 'telegram',
@@ -361,6 +363,7 @@ export async function getPostsAnalysis(userId: string, groupIdsValue: unknown, p
     for (const groupId of groupIds) {
       try {
         const analytics = await getYoutubeChannelAnalytics(groupId, periodValue);
+        rememberViewedSource('youtube', analytics.group.id, 'posts');
         groups.push({ groupId, platform: 'youtube', group: analytics.group, summary: analytics.wall, error: null });
         posts.push(...analytics.wall.topPosts.map((post) => ({
           ...post,
@@ -410,6 +413,7 @@ export async function getPostsAnalysis(userId: string, groupIdsValue: unknown, p
         continue;
       }
 
+      rememberViewedSource('vk', groupInfo.id, 'posts');
       const wall = await vkApiRequest<VkWallResponse>('wall.get', accessToken, {
         owner_id: -groupInfo.id,
         count: 100,

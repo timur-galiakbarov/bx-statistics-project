@@ -546,6 +546,19 @@ export type SnapshotPlatformCoverage = {
   stoppedReason: string | null;
 };
 
+export type SnapshotSourceOrigin = 'dashboard' | 'competitors' | 'collections' | 'viewed' | 'compare' | 'posts' | 'seed' | 'telegram-peer';
+
+export type SnapshotBase = {
+  platforms: Array<{
+    platform: 'vk' | 'youtube' | 'telegram';
+    /** Sources in today's snapshot list. */
+    sources: number;
+    /** Sources with at least one snapshot ever. */
+    withHistory: number;
+    byOrigin: Partial<Record<SnapshotSourceOrigin, number>>;
+  }>;
+};
+
 export type SnapshotDayCoverage = {
   date: string;
   lastPassAt: string | null;

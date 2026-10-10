@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireUser } from '../middleware/auth.js';
 import { requireActiveAccess } from '../middleware/access.js';
 import { trackActivity } from '../services/activityTracking.js';
+import { rememberViewedSource } from '../services/snapshotService.js';
 import { getTelegramChannelAnalytics, getTelegramChannelPhoto, getTelegramPostMedia, resolveTelegramChannel } from '../services/telegramClient.js';
 import { limitTelegramMediaRequests, limitTelegramRefresh, limitTelegramRequests, requireTelegramProtectionStorage } from '../middleware/telegramProtection.js';
 
@@ -51,6 +52,7 @@ telegramRouter.get('/channels/:username/posts/:postId/media', requireActiveAcces
 telegramRouter.get('/channels/:username/analytics', requireActiveAccess, limitTelegramRefresh, async (req, res, next) => {
   try {
     const data = await getTelegramChannelAnalytics(req.params.username, req.query.period, req.query.dateFrom, req.query.dateTo, req.query.refresh === '1');
+    rememberViewedSource('telegram', data.channel.username || req.params.username);
     if (req.query.refresh !== '1') trackActivity(req, 'analytics_view', { platform: 'telegram' });
     res.json({ success: true, data });
   } catch (error) { next(error); }

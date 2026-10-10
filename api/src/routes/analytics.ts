@@ -4,7 +4,7 @@ import { requireUser } from '../middleware/auth.js';
 import { toAnalyticsPreview } from '../services/analyticsPreview.js';
 import { getCommunityAnalytics } from '../services/analyticsService.js';
 import { getAdminPreviewStats } from '../services/previewStatsService.js';
-import { getSnapshotGrowth, rememberViewedVkSource } from '../services/snapshotService.js';
+import { getSnapshotGrowth, rememberViewedSource } from '../services/snapshotService.js';
 import { getYoutubeChannelAnalytics } from '../services/youtubeAnalyticsService.js';
 import { trackActivity } from '../services/activityTracking.js';
 
@@ -28,7 +28,7 @@ analyticsRouter.get('/community/:groupId', requireUser, async (req, res, next) =
       const snapshotGrowth = data.stats.unavailable
         ? await getSnapshotGrowth('vk', String(data.group.id), data.period.dateFrom, data.period.dateTo, data.group.membersCount).catch(() => null)
         : null;
-      rememberViewedVkSource(data.group.id);
+      rememberViewedSource('vk', data.group.id);
       trackActivity(req, 'analytics_preview', { platform: 'vk' });
       res.json({ success: true, data: toAnalyticsPreview(data, snapshotGrowth) });
       return;
@@ -37,9 +37,10 @@ analyticsRouter.get('/community/:groupId', requireUser, async (req, res, next) =
     let data;
     if (isYoutube) {
       data = await getYoutubeChannelAnalytics(req.params.groupId, req.query.period, req.query.dateFrom, req.query.dateTo, req.query.refresh === '1');
+      rememberViewedSource('youtube', data.group.id);
     } else {
       const community = await getCommunityAnalytics(req.user!.id, req.params.groupId, req.query.period, req.query.dateFrom, req.query.dateTo, req.query.refresh === '1');
-      rememberViewedVkSource(community.group.id);
+      rememberViewedSource('vk', community.group.id);
       data = community;
     }
     if (req.query.refresh !== '1') trackActivity(req, 'analytics_view', { platform: isYoutube ? 'youtube' : 'vk' });

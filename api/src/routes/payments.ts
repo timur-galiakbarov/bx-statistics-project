@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import type { Types } from 'mongoose';
+import { isValidObjectId, type Types } from 'mongoose';
 import { env } from '../config/env.js';
 import { requireUser } from '../middleware/auth.js';
 import { PaymentModel } from '../models/Payment.js';
@@ -474,6 +474,31 @@ paymentsRouter.get('/admin/history', requireUser, async (req, res, next) => {
     res.json({
       success: true,
       data: filteredPayments.map(mapAdminPayment)
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+paymentsRouter.get('/admin/users/:userId/payments', requireUser, async (req, res, next) => {
+  if (!ensureAdmin(req, res)) {
+    return;
+  }
+
+  try {
+    if (!isValidObjectId(req.params.userId)) {
+      res.status(404).json({ success: false, error: 'USER_NOT_FOUND' });
+      return;
+    }
+
+    const payments = await PaymentModel.find({ userId: req.params.userId }).sort({ createdAt: -1 }).lean();
+
+    res.json({
+      success: true,
+      data: payments.map((payment) => ({
+        ...mapAdminPayment({ ...payment, userId: null }),
+        paidAt: payment.paidAt ? payment.paidAt.toISOString() : null
+      }))
     });
   } catch (error) {
     next(error);

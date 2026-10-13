@@ -7,6 +7,7 @@ import type {
   AdminPaymentHistoryItem,
   AdminPaymentsMonthlySummary,
   AdminUserAccessResult,
+  AdminUserPaymentItem,
   RecentAdminUser,
   SnapshotBase,
   SnapshotDayCoverage,
@@ -137,6 +138,10 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [groupsResetUserId, setGroupsResetUserId] = useState<string | null>(null);
   const [accessDates, setAccessDates] = useState<Record<string, string>>({});
   const [accessModalUser, setAccessModalUser] = useState<RecentAdminUser | null>(null);
+  const [paymentsModalUser, setPaymentsModalUser] = useState<RecentAdminUser | null>(null);
+  const [userPayments, setUserPayments] = useState<AdminUserPaymentItem[]>([]);
+  const [userPaymentsError, setUserPaymentsError] = useState<string | null>(null);
+  const [isUserPaymentsLoading, setIsUserPaymentsLoading] = useState(false);
   const [openActionMenuUserId, setOpenActionMenuUserId] = useState<string | null>(null);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [isCreatingUser, setIsCreatingUser] = useState(false);
@@ -453,6 +458,21 @@ export function AdminPage({ user, onAccountChanged }: Props) {
     setAccessModalUser(user);
   };
 
+  const openPaymentsModal = async (user: RecentAdminUser) => {
+    setPaymentsModalUser(user);
+    setUserPayments([]);
+    setUserPaymentsError(null);
+    setIsUserPaymentsLoading(true);
+    try {
+      const data = await apiGet<AdminUserPaymentItem[]>(`/api/payments/admin/users/${user.id}/payments`);
+      setUserPayments(data);
+    } catch (error) {
+      setUserPaymentsError(error instanceof Error ? error.message : 'Не удалось загрузить оплаты.');
+    } finally {
+      setIsUserPaymentsLoading(false);
+    }
+  };
+
   const openCreateUserModal = () => {
     setCreateUserError(null);
     setNewUser({ vkId: '', firstName: '', lastName: '', activeTo: new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10) });
@@ -767,6 +787,9 @@ export function AdminPage({ user, onAccountChanged }: Props) {
                         <button type="button" role="menuitem" onClick={() => { setOpenActionMenuUserId(null); openAccessModal(user); }}>
                           Изменить доступ
                         </button>
+                        <button type="button" role="menuitem" onClick={() => { setOpenActionMenuUserId(null); void openPaymentsModal(user); }}>
+                          Оплаты
+                        </button>
                         <button
                           className="danger"
                           type="button"
@@ -989,6 +1012,53 @@ export function AdminPage({ user, onAccountChanged }: Props) {
                 Задать дату
               </button>
             </div>
+          </section>
+        </div>
+      )}
+
+      {paymentsModalUser && (
+        <div className="admin-access-modal-backdrop" role="presentation" onMouseDown={() => setPaymentsModalUser(null)}>
+          <section
+            aria-labelledby="admin-user-payments-modal-title"
+            aria-modal="true"
+            className="admin-access-modal admin-user-payments-modal"
+            onMouseDown={(event) => event.stopPropagation()}
+            role="dialog"
+          >
+            <button aria-label="Закрыть" className="icon-button" type="button" onClick={() => setPaymentsModalUser(null)}>
+              <XCircle size={18} />
+            </button>
+            <h2 id="admin-user-payments-modal-title">Оплаты</h2>
+            <p>
+              <strong>{paymentsModalUser.name}</strong>
+              {paymentsModalUser.vkId ? ` · VK ID ${paymentsModalUser.vkId}` : ''}
+            </p>
+            {isUserPaymentsLoading && <div className="admin-user-payments-loading"><RefreshCw className="spin" size={18} /> Загружаем</div>}
+            {userPaymentsError && <div className="debug-error">{userPaymentsError}</div>}
+            {!isUserPaymentsLoading && !userPaymentsError && userPayments.length === 0 && (
+              <div className="empty-state">Оплат нет.</div>
+            )}
+            {userPayments.length > 0 && (
+              <>
+                <ul className="admin-user-payments-list">
+                  {userPayments.map((payment) => (
+                    <li key={payment.id}>
+                      <span className="admin-user-dates">
+                        <strong>{payment.amount} ₽ · {payment.period}</strong>
+                        <small>Создан: {formatAdminDateTime(payment.createdAt)}</small>
+                        {payment.paidAt && <small>Оплачен: {formatAdminDateTime(payment.paidAt)}</small>}
+                        {payment.providerTransactionId && <small>ЮMoney: {payment.providerTransactionId}</small>}
+                      </span>
+                      <span className={`payment-status ${payment.status}`}>{getPaymentStatusLabel(payment.status)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="admin-user-payments-total">
+                  Успешных: {userPayments.filter((payment) => payment.status === 'paid').length} на{' '}
+                  {userPayments.filter((payment) => payment.status === 'paid').reduce((total, payment) => total + payment.amount, 0).toLocaleString('ru-RU')} ₽
+                </p>
+              </>
+            )}
           </section>
         </div>
       )}

@@ -527,6 +527,10 @@ export type AdminPaymentHistoryItem = PaymentHistoryItem & {
   };
 };
 
+export type AdminUserPaymentItem = AdminPaymentHistoryItem & {
+  paidAt: string | null;
+};
+
 export type AdminPaymentActionResult = {
   status: string;
   activeTo?: string;

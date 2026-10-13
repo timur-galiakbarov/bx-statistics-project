@@ -486,7 +486,7 @@ export function AdminActivityStats() {
             </div>
             <div><span>Активных дней на пользователя</span><strong>{stats.engagement.avgActiveDays30 === null ? '—' : formatNumber(stats.engagement.avgActiveDays30)}</strong></div>
             <div><span>Визитов на пользователя</span><strong>{stats.engagement.visitsPerUser30 === null ? '—' : formatNumber(stats.engagement.visitsPerUser30)}</strong></div>
-            <div title={`Из ${stats.engagement.returnCohort} зарегистрировавшихся за ${stats.days} дней (кроме сегодняшних)`}>
+            <div title={`Из ${stats.engagement.returnCohort} зарегистрировавшихся за ${stats.days} дней после начала сбора визитов (кроме сегодняшних)`}>
               <span>Вернулись после регистрации</span><strong>{formatPercent(stats.engagement.returnRate)}</strong>
             </div>
           </div>
@@ -497,19 +497,25 @@ export function AdminActivityStats() {
           {funnel.registered === 0 ? <div className="empty-state">За период регистраций не было.</div> : (
             <ul className="activity-funnel">
               {[
-                { label: 'Зарегистрировались', value: funnel.registered },
-                { label: 'Добавили канал', value: funnel.addedGroup },
-                { label: 'Открыли аналитику', value: funnel.usedAnalytics },
-                { label: 'Вернулись в другой день', value: funnel.returned },
-                { label: 'Из них оплатили', value: funnel.paid }
+                { label: 'Зарегистрировались', value: funnel.registered, base: funnel.registered },
+                { label: 'Добавили канал', value: funnel.addedGroup, base: funnel.registered },
+                { label: 'Открыли аналитику', value: funnel.usedAnalytics, base: funnel.tracked, tracked: true },
+                { label: 'Вернулись в другой день', value: funnel.returned, base: funnel.tracked, tracked: true },
+                { label: 'Из них оплатили', value: funnel.paid, base: funnel.registered }
               ].map((step) => (
                 <li key={step.label}>
-                  <span>{step.label}</span>
-                  <strong>{formatNumber(step.value)} <small>{formatShare(step.value, funnel.registered)}</small></strong>
-                  <i style={{ width: `${(step.value / funnel.registered) * 100}%` }} />
+                  <span>{step.label}{step.tracked && funnel.tracked < funnel.registered && <sup>*</sup>}</span>
+                  <strong>{formatNumber(step.value)} <small>{formatShare(step.value, step.base)}</small></strong>
+                  <i style={{ width: `${step.base ? (step.value / step.base) * 100 : 0}%` }} />
                 </li>
               ))}
             </ul>
+          )}
+          {funnel.registered > 0 && funnel.tracked < funnel.registered && (
+            <p className="activity-note">
+              * Из {formatNumber(funnel.tracked)} зарегистрировавшихся
+              {stats.trackingSince ? ` с ${sinceFormatter.format(new Date(stats.trackingSince))}` : ''}: у более ранних открытия аналитики и визиты не записаны.
+            </p>
           )}
           <h3 className="activity-subheading">
             Все оплаты за {stats.days} дней: {formatNumber(stats.periodPayments.payments)}

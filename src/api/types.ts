@@ -623,7 +623,7 @@ export type AdminActivityStats = {
     returnRate: number | null;
     returnCohort: number;
   };
-  funnel: { registered: number; addedGroup: number; usedAnalytics: number; returned: number; paid: number };
+  funnel: { registered: number; addedGroup: number; usedAnalytics: number; returned: number; paid: number; tracked: number };
   periodPayments: {
     payments: number;
     revenue: number;

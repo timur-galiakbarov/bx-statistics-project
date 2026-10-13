@@ -70,7 +70,11 @@ export type AdminActivityStats = {
     returnRate: number | null;
     returnCohort: number;
   };
-  funnel: { registered: number; addedGroup: number; usedAnalytics: number; returned: number; paid: number };
+  /**
+   * usedAnalytics и returned считаются только по `tracked` — зарегистрировавшимся после начала трекинга:
+   * у более ранних открытия аналитики и визиты не записаны, и они занижали бы эти шаги.
+   */
+  funnel: { registered: number; addedGroup: number; usedAnalytics: number; returned: number; paid: number; tracked: number };
   /** Все оплаты периода, а не только когорта воронки: кто платит — новые, давние или продлевающие. */
   periodPayments: {
     payments: number;
@@ -314,8 +318,11 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
     const registrationKey = mskDayKey(user.createdAt);
     return [...(daysByUser.get(user._id.toString()) ?? [])].some((key) => key > registrationKey);
   };
+  // Действия и визиты есть только с начала трекинга: шаги на них считаем по зарегистрировавшимся после него.
+  const trackingStart = firstVisit?.startedAt;
+  const trackedCohort = trackingStart ? cohort.filter((user) => user.createdAt >= trackingStart) : [];
   // Зарегистрированные сегодня ещё не могли вернуться на следующий день.
-  const returnCohort = cohort.filter((user) => user.createdAt < todayStart);
+  const returnCohort = trackedCohort.filter((user) => user.createdAt < todayStart);
 
   const acquisitionRows = new Map<string, { source: string; campaign: string; registrations: number; addedGroup: number; paid: number }>();
   for (const user of cohort) {
@@ -448,9 +455,10 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
     funnel: {
       registered: cohort.length,
       addedGroup: cohort.filter((user) => withGroupsSet.has(user._id.toString())).length,
-      usedAnalytics: cohort.filter((user) => analyticsUsers.has(user._id.toString())).length,
-      returned: cohort.filter(hasReturned).length,
-      paid: cohort.filter((user) => paidSet.has(user._id.toString())).length
+      usedAnalytics: trackedCohort.filter((user) => analyticsUsers.has(user._id.toString())).length,
+      returned: trackedCohort.filter(hasReturned).length,
+      paid: cohort.filter((user) => paidSet.has(user._id.toString())).length,
+      tracked: trackedCohort.length
     },
     periodPayments: {
       payments: rangePayments.length,

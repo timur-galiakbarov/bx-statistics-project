@@ -1,3 +1,5 @@
+import { communityAdPosts } from '../utils/adCheck';
+import { AdCheckPanel } from '../components/AdCheckPanel';
 import { CompetitorsPanel } from '../components/CompetitorsPanel';
 import {
   ArrowDownUp,
@@ -37,7 +39,7 @@ import { detectPlatform, normalizeVkQuery } from '../utils/sourceQuery';
 import { trackPreviewUnlock, type PreviewUnlockTarget } from '../utils/visit';
 
 type ChartMetric = 'views' | 'activity' | 'comments' | 'engagement';
-type AnalyticsSection = 'summary' | 'audience' | 'posts' | 'competitors';
+type AnalyticsSection = 'summary' | 'audience' | 'posts' | 'competitors' | 'advertising';
 type AnalyticsPostSort = 'likes' | 'reposts' | 'comments' | 'actions' | 'views' | 'er' | 'date';
 type AnalyticsPostListFilter = 'all' | 'media' | 'photo' | 'video' | 'gif' | 'text';
 type AnalyticsPost = CommunityAnalytics['wall']['topPosts'][number];
@@ -255,7 +257,7 @@ function CommunityAnalyticsPage({
   isTrialActive: boolean;
   activeTo?: string;
 }) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const groupIdParam = searchParams.get('groupId');
   const platformParam = searchParams.get('platform');
@@ -270,7 +272,7 @@ function CommunityAnalyticsPage({
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
   const [analytics, setAnalytics] = useState<CommunityAnalytics | null>(null);
-  const [analyticsSection, setAnalyticsSection] = useState<AnalyticsSection>(searchParams.get('section') === 'competitors' ? 'competitors' : 'summary');
+  const [analyticsSection, setAnalyticsSection] = useState<AnalyticsSection>(searchParams.get('section') === 'advertising' ? 'advertising' : searchParams.get('section') === 'competitors' ? 'competitors' : 'summary');
   const [analyticsPostSort, setAnalyticsPostSort] = useState<AnalyticsPostSort>('likes');
   const [analyticsPostListFilter, setAnalyticsPostListFilter] = useState<AnalyticsPostListFilter>('all');
   const [visibleAnalyticsPostsCount, setVisibleAnalyticsPostsCount] = useState(ANALYTICS_POSTS_PAGE_SIZE);
@@ -303,7 +305,7 @@ function CommunityAnalyticsPage({
   const loadAnalytics = async (group: AnalyticsChannel = selectedGroup!, nextPeriod: AnalyticsPeriod = period, forceRefresh = false) => {
     if (!group) return setMessage('Выберите сообщество для анализа.');
     if (group.platform === 'telegram') {
-      navigate(`/analytics?platform=telegram&channel=${encodeURIComponent(group.screen_name ?? String(group.id))}`);
+      navigate(`/analytics?platform=telegram&channel=${encodeURIComponent(group.screen_name ?? String(group.id))}&section=${analyticsSection}`);
       return;
     }
     const hasBonusAccess = groups.some((savedGroup) =>
@@ -319,7 +321,7 @@ function CommunityAnalyticsPage({
     if (!hasPaidAccess && !hasBonusAccess && group.platform === 'youtube') {
       showPlatformLock();
       if (groupIdParam !== String(group.id) || analyticsPlatform !== group.platform) {
-        navigate(`/analytics?groupId=${encodeURIComponent(String(group.id))}&platform=${group.platform}`);
+        navigate(`/analytics?groupId=${encodeURIComponent(String(group.id))}&platform=${group.platform}&section=${analyticsSection}`);
       }
       return;
     }
@@ -335,7 +337,7 @@ function CommunityAnalyticsPage({
     setIsPlatformLocked(false);
     setSearchResults([]);
     if (groupIdParam !== String(group.id) || analyticsPlatform !== group.platform) {
-      navigate(`/analytics?groupId=${encodeURIComponent(String(group.id))}&platform=${group.platform}`);
+      navigate(`/analytics?groupId=${encodeURIComponent(String(group.id))}&platform=${group.platform}&section=${analyticsSection}`);
     }
     setIsLoadingAnalytics(true);
     setAnalyticsLoadingStep(0);
@@ -427,6 +429,13 @@ function CommunityAnalyticsPage({
   const unlockPreview = (target: PreviewUnlockTarget) => {
     trackPreviewUnlock(target);
     navigate('/account');
+  };
+
+  const changeSection = (id: string | number) => {
+    setAnalyticsSection(id as AnalyticsSection);
+    const next = new URLSearchParams(searchParams);
+    next.set('section', String(id));
+    setSearchParams(next, { replace: true });
   };
 
   const changePeriod = (nextPeriod: AnalyticsPeriod) => {
@@ -641,8 +650,8 @@ function CommunityAnalyticsPage({
       {!isPlatformLocked && <div className="span-2 analytics-toolbar">
         {analytics && !isLoadingAnalytics && <div className="analytics-section-switcher">
           {analytics.platform === 'youtube'
-          ? <SegmentedControl selectedId={analyticsSection} size={40} onChange={(id) => setAnalyticsSection(id as AnalyticsSection)}><Segment id="summary" title="Обзор" /><Segment id="posts" title="Видео" /><Segment id="competitors" title="Конкуренты" /></SegmentedControl>
-          : <SegmentedControl selectedId={analyticsSection} size={40} onChange={(id) => setAnalyticsSection(id as AnalyticsSection)}><Segment id="summary" title="Сводная" /><Segment id="audience" title="Аудитория" /><Segment id="posts" title="Посты" /><Segment id="competitors" title="Конкуренты" /></SegmentedControl>}
+          ? <SegmentedControl selectedId={analyticsSection} size={40} onChange={changeSection}><Segment id="summary" title="Обзор" /><Segment id="posts" title="Видео" /><Segment id="competitors" title="Конкуренты" /><Segment id="advertising" title="Перед рекламой" ref={(node) => { if (node && analyticsSection === 'advertising') { const tabs = node.closest<HTMLElement>('.analytics-section-switcher'); if (tabs) tabs.scrollLeft = tabs.scrollWidth; } }} /></SegmentedControl>
+          : <SegmentedControl selectedId={analyticsSection} size={40} onChange={changeSection}><Segment id="summary" title="Сводная" /><Segment id="audience" title="Аудитория" /><Segment id="posts" title="Посты" /><Segment id="competitors" title="Конкуренты" /><Segment id="advertising" title="Перед рекламой" ref={(node) => { if (node && analyticsSection === 'advertising') { const tabs = node.closest<HTMLElement>('.analytics-section-switcher'); if (tabs) tabs.scrollLeft = tabs.scrollWidth; } }} /></SegmentedControl>}
         </div>}
         {analyticsSection !== 'competitors' && <div className="period-tabs">{periods.filter((item) => quickPeriodKeys.includes(item.key)).map((item) => <Button className={`period-tab-button ${period === item.key ? 'period-tab-button-active' : ''}`} client="desktop" disabled={isLoadingAnalytics} key={item.key} size={40} type="button" view="secondary" leftAddons={isPreview && item.key !== 'week' ? <LockKeyhole size={14} /> : undefined} onClick={() => changePeriod(item.key)}>{quickPeriodLabels[item.key]}</Button>)}<Select className="analytics-period-select" client="desktop" disabled={isLoadingAnalytics} options={otherPeriodOptions} optionsListWidth="content" placeholder="Другой период" selected={quickPeriodKeys.includes(period) ? null : period} size={40} onChange={({ selected }) => selected && changePeriod(selected.key as AnalyticsPeriod)} /></div>}
       </div>}
@@ -651,8 +660,9 @@ function CommunityAnalyticsPage({
     {isLoadingAnalytics && <div className="panel span-2 analytics-loading" aria-live="polite" role="status"><div><strong>Готовим аналитику</strong><span>{activeLoadingSteps[analyticsLoadingStep].label}</span></div><div aria-label={activeLoadingSteps[analyticsLoadingStep].label} className="analytics-loading-progress" role="progressbar"><span /></div></div>}
     {analytics && !isLoadingAnalytics && isPreview && <AnalyticsPreviewView analytics={analytics} section={analyticsSection} />}
     {analytics && !isLoadingAnalytics && !isPreview && <>
+      {analyticsSection === 'advertising' && <AdCheckPanel key={`${analytics.platform}:${analytics.group.id}:${analytics.period.dateFrom}:${analytics.period.dateTo}`} platform={analytics.platform ?? 'vk'} sourceId={String(analytics.group.externalId ?? analytics.group.id)} subscribers={analytics.group.membersCount} period={analytics.period} isComplete={analytics.wall.isComplete} warnings={analytics.warnings} posts={communityAdPosts(analytics)} />}
       {analyticsSection === 'competitors' && <CompetitorsPanel platform={analytics.platform ?? 'vk'} sourceId={analytics.group.externalId ?? analytics.group.id} sourceName={analytics.group.name} />}
-      {analytics.platform === 'youtube' && analyticsSection !== 'competitors' && <YoutubeAnalyticsView analytics={analytics} section={analyticsSection === 'posts' ? 'posts' : 'summary'} />}
+      {analytics.platform === 'youtube' && (analyticsSection === 'summary' || analyticsSection === 'posts') && <YoutubeAnalyticsView analytics={analytics} section={analyticsSection === 'posts' ? 'posts' : 'summary'} />}
       {analytics.platform !== 'youtube' && analyticsSection === 'summary' && <>
       <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Главное за период</h2><p>{currentPeriodLabel}. Сравниваем с предыдущим периодом: {previousPeriodLabel}.</p></div>{isStatsUnavailable && <Tooltip content={<div className="growth-help-content"><p>VK не даёт Socstat доступ к статистике этого сообщества: она открыта только его администраторам.</p><p>Поэтому охват и посещения недоступны. Прирост подписчиков считается по ежедневным срезам Socstat — смотрите блок «Динамика подписчиков».</p></div>} position="left" targetTag="span" view="hint"><button className="youtube-data-info" type="button"><CircleHelp size={18} /> Почему нет охвата</button></Tooltip>}</div>{analytics.warnings.map((warning) => <div className="debug-error" key={warning}>{warning}</div>)}{summaryHeadline && <p className="analytics-headline">{summaryHeadline}</p>}<div className={`analytics-kpi-grid ${isStatsUnavailable ? '' : 'summary-kpi-grid'}`}>{!isStatsUnavailable && <><KpiCard label="Охват сообщества" value={isStatsUnavailable ? 'Недоступно' : formatNumber(analytics.stats.reach)} change={getChange(analytics.stats.reach, analytics.previous.stats?.reach ?? null)} tooltip="Сколько уникальных людей видели записи сообщества за период — по статистике VK. Доступно только администраторам сообщества." unavailable={isStatsUnavailable} /><KpiCard label="Посещения" value={isStatsUnavailable ? 'Недоступно' : formatNumber(analytics.stats.visitors)} change={getChange(analytics.stats.visitors, analytics.previous.stats?.visitors ?? null)} tooltip="Сколько раз открывали страницу сообщества за период — по статистике VK. Доступно только администраторам сообщества." unavailable={isStatsUnavailable} /></>}<KpiCard label="Реакции" value={formatNumber(analytics.wall.actions)} change={getChange(analytics.wall.actions, analytics.previous.wall.available ? analytics.previous.wall.actions : null)} tooltip="Лайки, репосты и комментарии публикаций, вышедших в выбранный период, на момент загрузки." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard label="ER" value={formatPercent(analytics.wall.erAverage)} change={getChange(analytics.wall.erAverage, analytics.previous.wall.available ? analytics.previous.wall.erAverage : null)} tooltip="Средняя вовлечённость поста: лайки, репосты и комментарии, делённые на текущее число подписчиков." comparisonUnavailable={!analytics.previous.wall.available} isEr /><KpiCard label="Средние просмотры поста" value={formatNumber(analytics.wall.averageViewsPerPost)} change={getChange(analytics.wall.averageViewsPerPost, analytics.previous.wall.available ? analytics.previous.wall.averageViewsPerPost : null)} tooltip="Сколько просмотров в среднем набрала публикация периода на момент загрузки. Свежие посты ещё набирают просмотры." comparisonUnavailable={!analytics.previous.wall.available} /><KpiCard label="Публикации" value={formatNumber(analytics.wall.periodPosts)} change={getChange(analytics.wall.periodPosts, analytics.previous.wall.available ? analytics.previous.wall.periodPosts : null)} tooltip="Количество публикаций, попавших в выбранный период." comparisonUnavailable={!analytics.previous.wall.available} /></div></div>
       <SubscriberHistoryPanel platform="vk" sourceId={analytics.group.id} period={analytics.period} currentSubscribers={analytics.group.membersCount} officialGrowth={isStatsUnavailable ? null : { total: analytics.stats.growth, subscribed: analytics.stats.subscribed, unsubscribed: analytics.stats.unsubscribed }} />

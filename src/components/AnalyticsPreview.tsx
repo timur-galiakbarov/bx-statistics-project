@@ -6,9 +6,10 @@ import type { CommunityAnalytics, PaymentPlan } from '../api/types';
 import { trackPreviewUnlock, type PreviewUnlockTarget } from '../utils/visit';
 import { PostCard } from './PostCard';
 
-type Section = 'summary' | 'audience' | 'posts' | 'competitors';
+type Section = 'summary' | 'audience' | 'posts' | 'competitors' | 'advertising';
 
 const sectionContents: Record<Exclude<Section, 'summary'>, { title: string; items: string[] }> = {
+  advertising: { title: 'Проверка перед покупкой рекламы', items: ['Просмотры публикаций за 24, 48 и 72 часа', 'Медиана, разброс просмотров и калькулятор CPM', 'Динамика аудитории и публикации для проверки'] },
   audience: { title: 'Аудитория', items: ['ER по дням и максимальный ER поста', 'Просмотры, реакции и комментарии на пост', 'Сравнение с прошлым периодом'] },
   posts: { title: 'Публикации', items: ['Все посты периода с охватом и ER', 'Сортировка по лайкам, репостам, просмотрам', 'Фильтры по формату: фото, видео, текст'] },
   competitors: { title: 'Конкуренты', items: ['Сравнение с похожими сообществами', 'Кто растёт быстрее и за счёт чего', 'Подписчики и ER конкурентов по дням'] }

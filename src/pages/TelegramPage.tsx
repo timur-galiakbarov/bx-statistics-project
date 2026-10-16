@@ -3,12 +3,12 @@ import { Button } from '@alfalab/core-components-button';
 import { Select } from '@alfalab/core-components-select';
 import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
 import {
-  Activity, ArrowDownUp, ArrowLeftRight, BarChart3, Eye, ExternalLink, FileText,
+  Activity, ArrowDownUp, ArrowLeftRight, BarChart3, ClipboardCheck, Eye, ExternalLink, FileText,
   Forward, Image, MessageCircle, RefreshCw, Search, Send, SmilePlus, TrendingUp,
   Video
 } from 'lucide-react';
 import { lazy, FormEvent, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ApiError, apiGet } from '../api/client';
 import type { AnalyticsPeriod, TelegramAnalytics } from '../api/types';
 import { PlatformAccessLock } from '../components/AccessLock';
@@ -104,8 +104,9 @@ function TelegramPostCard({ channel, post }: { channel: TelegramAnalytics['chann
   </article>;
 }
 
-export function TelegramPage({ hasPaidAccess, activeTo }: { hasPaidAccess: boolean; activeTo?: string }) {
-  const [searchParams] = useSearchParams();
+export function TelegramPage({ hasPaidAccess, activeTo, isAdmin = false }: { hasPaidAccess: boolean; activeTo?: string; isAdmin?: boolean }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const requestedChannel = searchParams.get('channel')?.trim() ?? '';
   const lastRequestedChannel = useRef('');
   const [query, setQuery] = useState('');
@@ -220,12 +221,12 @@ export function TelegramPage({ hasPaidAccess, activeTo }: { hasPaidAccess: boole
           <h2>{analytics.channel.title}</h2>
           <p>{analytics.channel.subscribers !== null && `${number(analytics.channel.subscribers)} ${plural(analytics.channel.subscribers, 'подписчик', 'подписчика', 'подписчиков')}`}{analytics.channel.subscribers !== null && section !== 'competitors' && ' · '}{section !== 'competitors' && `За период ${selectedPeriodLabel}`}</p>
         </div>
-        <div className="analytics-actions"><Button className="analytics-action-button" client="desktop" leftAddons={<ArrowLeftRight size={16} />} size={40} type="button" view="secondary" onClick={() => setIsPickerOpen((value) => !value)}>Сменить</Button>{section !== 'competitors' && <Button className="analytics-action-button" client="desktop" disabled={isLoading} leftAddons={<RefreshCw size={16} />} size={40} type="button" view="secondary" onClick={() => void load(analytics.channel.username, period, true)}>Обновить</Button>}<Button className="analytics-action-button" client="desktop" href={analytics.channel.url} leftAddons={<ExternalLink size={16} />} rel="noreferrer" size={40} target="_blank" view="secondary">Открыть Telegram</Button></div>
+        <div className="analytics-actions"><Button className="analytics-action-button" client="desktop" leftAddons={<ArrowLeftRight size={16} />} size={40} type="button" view="secondary" onClick={() => setIsPickerOpen((value) => !value)}>Сменить</Button>{section !== 'competitors' && <Button className="analytics-action-button" client="desktop" disabled={isLoading} leftAddons={<RefreshCw size={16} />} size={40} type="button" view="secondary" onClick={() => void load(analytics.channel.username, period, true)}>Обновить</Button>}<Button className="analytics-action-button" client="desktop" href={analytics.channel.url} leftAddons={<ExternalLink size={16} />} rel="noreferrer" size={40} target="_blank" view="secondary">Открыть Telegram</Button>{isAdmin && <Button className="analytics-action-button" client="desktop" leftAddons={<ClipboardCheck size={16} />} size={40} type="button" view="secondary" onClick={() => navigate(`/ad-check?platform=telegram&q=${encodeURIComponent(analytics.channel.username)}`)}>Проверить перед рекламой</Button>}</div>
       </header>
       {isPickerOpen && <div className="panel span-2"><div className="community-picker telegram-picker"><div className="community-picker-intro"><h3>{analytics ? 'Сменить канал' : 'Выберите канал'}</h3><p>Введите публичный @username или ссылку вида t.me/channel.</p></div><form className="search-form" onSubmit={submit}><input autoFocus={!analytics} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="@channel или t.me/channel" /><button type="submit" disabled={isLoading}><Search size={18} />{isLoading ? 'Загружаем' : 'Анализировать'}</button></form></div></div>}
       {message && <div className="span-2 form-message telegram-message-error">{message}</div>}
       <div className="span-2 analytics-toolbar">
-        {!isLoading && <div className="analytics-section-switcher"><SegmentedControl selectedId={section} size={40} onChange={(id) => setSection(id as TelegramSection)}><Segment id="summary" title="Сводная" /><Segment id="audience" title="Аудитория" /><Segment id="posts" title="Посты" /><Segment id="competitors" title="Конкуренты" /></SegmentedControl></div>}
+        {!isLoading && <div className="analytics-section-switcher"><SegmentedControl selectedId={section} size={40} onChange={(id) => { setSection(id as TelegramSection); const next = new URLSearchParams(searchParams); next.set('section', String(id)); setSearchParams(next, { replace: true }); }}><Segment id="summary" title="Сводная" /><Segment id="audience" title="Аудитория" /><Segment id="posts" title="Посты" /><Segment id="competitors" title="Конкуренты" /></SegmentedControl></div>}
         {section !== 'competitors' && <div className="period-tabs">{quickPeriods.map((item) => <Button className={`period-tab-button ${period === item.key ? 'period-tab-button-active' : ''}`} client="desktop" disabled={isLoading} key={item.key} size={40} type="button" view="secondary" onClick={() => changePeriod(item.key)}>{item.shortLabel}</Button>)}<Select className="analytics-period-select" client="desktop" disabled={isLoading} options={otherPeriods} optionsListWidth="content" placeholder="Другой период" selected={quickPeriods.some((item) => item.key === period) ? null : period} size={40} onChange={({ selected }) => selected && changePeriod(selected.key as AnalyticsPeriod)} /></div>}
       </div>
     </> : <div className="panel span-2 analytics-workbench telegram-workbench">

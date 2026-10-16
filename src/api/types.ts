@@ -550,7 +550,7 @@ export type SnapshotPlatformCoverage = {
   stoppedReason: string | null;
 };
 
-export type SnapshotSourceOrigin = 'dashboard' | 'competitors' | 'collections' | 'viewed' | 'compare' | 'posts' | 'seed' | 'telegram-peer';
+export type SnapshotSourceOrigin = 'dashboard' | 'competitors' | 'collections' | 'viewed' | 'compare' | 'posts' | 'adcheck' | 'seed' | 'telegram-peer';
 
 export type SnapshotBase = {
   platforms: Array<{
@@ -612,6 +612,7 @@ export type AdminActivityFeedItem = {
 export type AdminActivityStats = {
   days: number;
   trackingSince: string | null;
+  vkManagement: { total: number; managers: number; nonManagers: number; unknown: number; managerShare: number | null };
   periods: Record<'today' | 'yesterday' | 'week' | 'previousWeek' | 'month', AdminActivitySummary>;
   daily: AdminActivityDay[];
   engagement: {
@@ -665,6 +666,10 @@ export type RecentAdminUser = {
   registeredAt: string;
   lastLoginAt: string;
   lastActivityAt: string;
+  vkManagement?: {
+    managesCommunity: boolean | null;
+    checkedAt: string | null;
+  };
   activeTo: string;
 };
 
@@ -706,4 +711,55 @@ export type AdminPushStats = {
   subscribedBrowsers: number;
   prompt: { shown: number; accepted: number; subscribed: number; dismissed: number; denied: number };
   reminders: Array<{ kind: string; sent: number; clicked: number; renewed: number; revenue: number }>;
+};
+
+/** Как пост распознан как реклама: отметка VK, токен erid или строка маркировки. */
+export type AdMarker = 'platform' | 'erid' | 'label';
+
+export type AdCheckUsage = { used: number; limit: number; paid: boolean };
+
+/** Проверка канала перед рекламой: GET /api/ad-check. */
+export type AdCheckResult = {
+  platform: 'vk' | 'telegram';
+  source: { id: string; name: string; url: string; photo: string | null; subscribers: number | null };
+  loadedAt: string;
+  windowDays: number;
+  /** Загружены все публикации окна; VK отдаёт не больше 100 последних. */
+  complete: boolean;
+  coverageDays: number;
+  postsPerDay: number;
+  estimate: {
+    source: 'snapshots' | 'current';
+    hours: number | null;
+    views: number;
+    lower: number;
+    upper: number;
+    posts: number;
+  } | null;
+  viewsToSubscribers: number | null;
+  engagement: number | null;
+  ads: {
+    posts: number;
+    perWeek: number;
+    share: number | null;
+    medianViews: number | null;
+    organicMedianViews: number | null;
+    markers: Record<AdMarker, number>;
+  };
+  milestones: Array<{ hours: number; median: number | null; posts: number }> | null;
+  trackingSince: string | null;
+  vkManagement: { total: number; managers: number; nonManagers: number; unknown: number; managerShare: number | null };
+  history: Array<{ date: string; subscribers: number | null; change: number | null }>;
+  posts: Array<{
+    id: string;
+    date: string;
+    text: string;
+    url: string;
+    views: number | null;
+    reactions: number | null;
+    comments: number | null;
+    forwards: number | null;
+    ad: AdMarker | null;
+  }>;
+  usage: AdCheckUsage;
 };

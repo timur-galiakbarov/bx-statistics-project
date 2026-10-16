@@ -55,6 +55,17 @@ const dateTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
   // Без timeZone: моменты времени показываются в часовом поясе браузера администратора.
 });
 
+function VkManagementCell({ user }: { user: RecentAdminUser }) {
+  const management = user.vkManagement;
+  const label = management?.managesCommunity === true ? 'Да' : management?.managesCommunity === false ? 'Нет' : 'Не проверен';
+  return (
+    <span className="admin-user-dates" data-label="Управляет ВК" title="Администратор, редактор или модератор хотя бы одного сообщества ВК">
+      <span>{label}</span>
+      {management?.checkedAt && <small>Проверка: {formatAdminDateTime(management.checkedAt)}</small>}
+    </span>
+  );
+}
+
 const snapshotPlatforms = [
   { key: 'vk', label: 'ВКонтакте' },
   { key: 'youtube', label: 'YouTube' },
@@ -80,6 +91,7 @@ const snapshotOriginLabels: Record<SnapshotSourceOrigin, string> = {
   viewed: 'аналитика',
   compare: 'сравнение',
   posts: 'публикации',
+  adcheck: 'проверка перед рекламой',
   seed: 'вручную',
   'telegram-peer': 'Telegram до 11.10'
 };
@@ -695,6 +707,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             <div className="table-row table-head admin-active-users-row">
               <span>Пользователь</span>
               <span>VK ID</span>
+              <span>Управляет ВК</span>
               <span>Последняя активность</span>
               <span>Доступ до</span>
               <span>Основание доступа</span>
@@ -703,6 +716,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
               <div className="table-row admin-active-users-row" key={activeUser.id}>
                 <span className="admin-user-name" data-label="Пользователь"><strong>{activeUser.name}</strong>{activeUser.hasLegacyPricing && <span className="admin-pricing-badge" title="Платил раньше: на странице оплаты видит 499 / 899 / 1 999 ₽">Старые цены</span>}</span>
                 <span data-label="VK ID">{activeUser.vkId ?? '—'}</span>
+                <VkManagementCell user={activeUser} />
                 <span data-label="Последняя активность">{formatAdminDateTime(activeUser.lastActivityAt)}</span>
                 <span data-label="Доступ до">{formatAdminDate(activeUser.activeTo)}</span>
                 <span data-label="Основание доступа"><span className={`admin-payment-origin ${activeUser.hasPaidPayment ? 'paid' : 'granted'}`}>{activeUser.hasPaidPayment ? 'Оплачивал' : 'Без оплаты'}</span></span>
@@ -743,6 +757,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
           <div className="table analytics-posts recent-users-table">
             <div className="table-row table-head admin-recent-users-row">
               <span>Пользователь</span>
+              <span>Управляет ВК</span>
               <span>Последняя активность</span>
               <span>Регистрация / вход</span>
               <span>Системная информация</span>
@@ -755,6 +770,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
                   <strong>{user.name}</strong>
                   {user.hasLegacyPricing && <span className="admin-pricing-badge" title="Платил раньше: на странице оплаты видит 499 / 899 / 1 999 ₽">Старые цены</span>}
                 </span>
+                <VkManagementCell user={user} />
                 <span data-label="Последняя активность">{formatAdminDateTime(user.lastActivityAt)}</span>
                 <span className="admin-user-dates" data-label="Регистрация / вход">
                   <small>Рег.: {formatAdminDateTime(user.registeredAt)}</small>

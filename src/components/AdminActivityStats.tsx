@@ -46,6 +46,8 @@ const actionLabels: Record<string, string> = {
   push_click: 'Кликнул по уведомлению',
   analytics_preview: 'Открыл краткий отчёт',
   preview_unlock: 'Клик по закрытому блоку',
+  ad_check_run: 'Проверил канал перед рекламой',
+  ad_check_limit: 'Упёрся в лимит проверок',
   payment: 'Оплатил'
 };
 
@@ -475,6 +477,17 @@ export function AdminActivityStats() {
             ))}
           </div>
         </div>
+
+        {stats.vkManagement && <div className="panel activity-panel">
+          <div className="panel-header compact"><div><h2>Управляющие сообществами ВК</h2><p className="activity-note">Среди {formatNumber(stats.vkManagement.total)} активных пользователей за {stats.days} дней. Администраторы, редакторы и модераторы хотя бы одного сообщества.</p></div></div>
+          <div className="activity-kpis">
+            <div><span>Управляют</span><strong>{formatNumber(stats.vkManagement.managers)}</strong></div>
+            <div><span>Доля среди проверенных</span><strong>{formatPercent(stats.vkManagement.managerShare)}</strong></div>
+            <div><span>Не управляют</span><strong>{formatNumber(stats.vkManagement.nonManagers)}</strong></div>
+            <div><span>Не проверены / недоступны</span><strong>{formatNumber(stats.vkManagement.unknown)}</strong></div>
+          </div>
+          <p className="activity-note">Последний результат проверки ВК; обновляется при активности не чаще раза в сутки. Неизвестные статусы исключены из расчёта доли. Права относятся к моменту проверки, а не к прошлому периоду.</p>
+        </div>}
 
         <div className="panel activity-panel">
           <div className="panel-header compact"><div><h2>Вовлечённость</h2><p className="activity-note">За последние 30 дней</p></div></div>

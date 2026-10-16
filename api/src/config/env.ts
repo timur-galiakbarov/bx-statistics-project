@@ -46,6 +46,14 @@ export const env = {
   telegramIpRequestsPerMinute: Number(process.env.TELEGRAM_IP_REQUESTS_PER_MINUTE ?? 60),
   telegramMediaRequestsPerMinute: Number(process.env.TELEGRAM_MEDIA_REQUESTS_PER_MINUTE ?? 30),
   telegramRefreshCooldownMs: Number(process.env.TELEGRAM_REFRESH_COOLDOWN_MS ?? 60_000),
+  // Отдельная сессия для проверки каналов перед рекламой; пусто — проверки идут через TELEGRAM_SESSION.
+  telegramAdCheckSession: process.env.TELEGRAM_ADCHECK_SESSION?.trim() ?? '',
+  // Проверка канала перед рекламой: разных источников в сутки на пользователя, кэш результата
+  // и суточный бюджет новых загрузок Telegram на весь сервис.
+  adCheckDailyLimitFree: Number(process.env.AD_CHECK_DAILY_LIMIT_FREE ?? 5),
+  adCheckDailyLimitPaid: Number(process.env.AD_CHECK_DAILY_LIMIT_PAID ?? 50),
+  adCheckCacheTtlMs: Number(process.env.AD_CHECK_CACHE_TTL_MS ?? 12 * 3_600_000),
+  adCheckTelegramMaxPerDay: Number(process.env.AD_CHECK_TELEGRAM_MAX_PER_DAY ?? 150),
   // Ежедневные срезы подписчиков и публикаций. По умолчанию включены только в production.
   snapshotsEnabled: (process.env.SNAPSHOTS_ENABLED ?? (process.env.NODE_ENV === 'production' ? '1' : '0')) === '1',
   snapshotStartHour: Number(process.env.SNAPSHOT_START_HOUR ?? 3),

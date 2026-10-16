@@ -25,6 +25,7 @@
 | `SnapshotSource` с `note: 'viewed'`: открывали в аналитике (VK — и в полной, и в урезанной) | все |
 | `SnapshotSource` с `note: 'compare'`: запускали в сравнении (в том числе без сохранения подборки) или в отчёте по конкурентам | все |
 | `SnapshotSource` с `note: 'posts'`: смотрели в анализе публикаций | все |
+| `SnapshotSource` с `note: 'adcheck'`: проверяли перед рекламой (см. [ad-check.md](ad-check.md)) | VK, Telegram |
 | `SnapshotSource` с `note: 'seed'`: добавлены вручную скриптом `snapshots:seed` | все |
 | `SnapshotSource` с `note: 'telegram-peer'`: Telegram-каналы, запрошенные через сессию до 11.10.2026, перенесены разово при старте API (`backfillTelegramSnapshotSources` в `api/src/db/migrations.ts`) | Telegram |
 
@@ -69,7 +70,7 @@ npm run snapshots:check-vk-key --workspace @socstat/api -- 125792332
 - не больше `SNAPSHOT_TELEGRAM_MAX_PER_DAY` попыток за дату среза (по умолчанию 400, счётчик в Redis). Каналы сверх лимита в этот день не снимаются — «суточный лимит Telegram» в админке;
 - канал, запрос которого упал, в этот день больше не запрашивается, повтор — на следующий день;
 - `FLOOD_WAIT` ставит Telegram-срез на паузу до полуночи по Москве — «Telegram на паузе до завтра» в админке;
-- `id` и `access_hash` каналов хранятся (`TelegramPeer`), поэтому жёстко лимитированный `contacts.resolveUsername` нужен только для новых каналов.
+- `id` и `access_hash` каналов хранятся (`TelegramPeer`, отдельно для каждой сессии — поле `account`), поэтому жёстко лимитированный `contacts.resolveUsername` нужен только для новых каналов. Срезы всегда идут через основную сессию, в том числе для каналов, добавленных проверкой перед рекламой.
 
 Отсутствие настроек, недействительная сессия или недоступный Redis останавливают Telegram до следующего тика.
 

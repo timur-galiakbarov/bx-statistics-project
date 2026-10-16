@@ -22,7 +22,10 @@ export const activityEventTypes = [
   // Урезанный отчёт VK для пользователя без доступа.
   'analytics_preview',
   // Клик по закрытому блоку урезанного отчёта; label — какой блок.
-  'preview_unlock'
+  'preview_unlock',
+  // Проверка канала перед рекламой; label — источник. ad_check_limit — упёрлись в лимит проверок.
+  'ad_check_run',
+  'ad_check_limit'
 ] as const;
 
 export type ActivityEventType = (typeof activityEventTypes)[number];

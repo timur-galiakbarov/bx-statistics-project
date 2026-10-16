@@ -65,6 +65,10 @@ export type RecentAdminUser = {
   registeredAt: string;
   lastLoginAt: string;
   lastActivityAt: string;
+  vkManagement?: {
+    managesCommunity: boolean | null;
+    checkedAt: string | null;
+  };
   activeTo: string;
 };
 
@@ -522,6 +526,7 @@ export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[
     createdAt: Date;
     lastLoginAt?: Date;
     lastActivityAt?: Date;
+    vkManagement?: { status?: string; managesCommunity?: boolean; checkedAt?: Date };
     activeTo: Date;
   }>([
     {
@@ -536,7 +541,7 @@ export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[
     { $addFields: { seenAt: { $ifNull: ['$lastActivityAt', '$lastLoginAt'] } } },
     { $sort: { seenAt: -1, _id: -1 } },
     { $limit: Math.min(limit, 300) },
-    { $project: { legacy: 1, vkId: 1, firstName: 1, lastName: 1, createdAt: 1, lastLoginAt: 1, lastActivityAt: 1, activeTo: 1 } }
+    { $project: { legacy: 1, vkId: 1, firstName: 1, lastName: 1, createdAt: 1, lastLoginAt: 1, lastActivityAt: 1, vkManagement: 1, activeTo: 1 } }
   ]);
 
   const now = new Date();
@@ -552,6 +557,10 @@ export async function getRecentAdminUsers(limit = 300): Promise<RecentAdminUser[
     registeredAt: user.createdAt.toISOString(),
     lastLoginAt: (user.lastLoginAt ?? user.lastActivityAt ?? user.createdAt).toISOString(),
     lastActivityAt: (user.lastActivityAt ?? user.lastLoginAt ?? user.createdAt).toISOString(),
+    vkManagement: {
+      managesCommunity: user.vkManagement?.status === 'checked' ? user.vkManagement.managesCommunity ?? null : null,
+      checkedAt: user.vkManagement?.checkedAt?.toISOString() ?? null
+    },
     activeTo: user.activeTo.toISOString().slice(0, 10)
   }));
 }
@@ -567,7 +576,7 @@ export async function getActiveAdminUsers(limit = 300): Promise<AdminActiveUsers
     UserModel.find(activeAccessQuery)
       .sort({ activeTo: 1, lastActivityAt: -1, lastLoginAt: -1 })
       .limit(Math.min(limit, 300))
-      .select({ legacy: 1, vkId: 1, firstName: 1, lastName: 1, createdAt: 1, lastLoginAt: 1, lastActivityAt: 1, activeTo: 1 })
+      .select({ legacy: 1, vkId: 1, firstName: 1, lastName: 1, createdAt: 1, lastLoginAt: 1, lastActivityAt: 1, vkManagement: 1, activeTo: 1 })
       .lean<
         Array<{
           _id: Types.ObjectId;
@@ -578,6 +587,7 @@ export async function getActiveAdminUsers(limit = 300): Promise<AdminActiveUsers
           createdAt: Date;
           lastLoginAt?: Date;
           lastActivityAt?: Date;
+          vkManagement?: { status?: string; managesCommunity?: boolean; checkedAt?: Date };
           activeTo: Date;
         }>
       >(),
@@ -601,6 +611,10 @@ export async function getActiveAdminUsers(limit = 300): Promise<AdminActiveUsers
       registeredAt: user.createdAt.toISOString(),
       lastLoginAt: (user.lastLoginAt ?? user.lastActivityAt ?? user.createdAt).toISOString(),
       lastActivityAt: (user.lastActivityAt ?? user.lastLoginAt ?? user.createdAt).toISOString(),
+      vkManagement: {
+        managesCommunity: user.vkManagement?.status === 'checked' ? user.vkManagement.managesCommunity ?? null : null,
+        checkedAt: user.vkManagement?.checkedAt?.toISOString() ?? null
+      },
       activeTo: user.activeTo.toISOString().slice(0, 10)
     }))
   };

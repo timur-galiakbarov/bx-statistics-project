@@ -8,7 +8,7 @@ import { TelegramPeerModel } from '../models/TelegramPeer.js';
 import { CUSTOM_PERIOD_TOO_LONG_MESSAGE, getAnalyticsPeriod, getPreviousAnalyticsPeriod, type AnalyticsPeriodRange } from './analyticsUtils.js';
 import { TtlCache } from './ttlCache.js';
 import { getTelegramProxy } from './telegramProxy.js';
-import { getTelegramAnalyticsCached, telegramQueue } from './telegramProtection.js';
+import { getTelegramAnalyticsCached, peekTelegramAnalyticsCache, telegramQueue, telegramQueueFor, type TelegramAccount } from './telegramProtection.js';
 
 export type TelegramChannel = {
   id: string;
@@ -35,6 +35,8 @@ export type TelegramPost = {
   engagement: number;
   mediaType: 'photo' | 'video' | 'document' | 'poll' | 'other' | null;
   mediaUrl?: string;
+  /** Скрытые ссылки текста и кнопок: в них обычно стоит erid рекламы. */
+  links?: string[];
 };
 
 export class TelegramApiError extends DomainError {
@@ -44,7 +46,7 @@ export class TelegramApiError extends DomainError {
   }
 }
 
-let clientPromise: Promise<TelegramClient> | null = null;
+const clientPromises = new Map<TelegramAccount, Promise<TelegramClient>>();
 const cache = new TtlCache<unknown>(env.telegramCacheTtlMs);
 const photoCache = new TtlCache<Buffer | null>(env.telegramCacheTtlMs);
 const postMediaCache = new TtlCache<{ data: Buffer; contentType: string } | null>(env.telegramCacheTtlMs);
@@ -68,13 +70,24 @@ export function normalizeTelegramChannelInput(input: string) {
   return value;
 }
 
-async function getClient() {
-  if (!env.telegramApiId || !env.telegramApiHash || !env.telegramSession) {
+/** Pre-ad checks use their own account when TELEGRAM_ADCHECK_SESSION is set, otherwise the main one. */
+export function adCheckTelegramAccount(): TelegramAccount {
+  return env.telegramAdCheckSession ? 'adcheck' : 'main';
+}
+
+function sessionFor(account: TelegramAccount) {
+  return account === 'adcheck' ? env.telegramAdCheckSession : env.telegramSession;
+}
+
+async function getClient(account: TelegramAccount = 'main') {
+  const session = sessionFor(account);
+  if (!env.telegramApiId || !env.telegramApiHash || !session) {
     throw new TelegramApiError('Telegram MTProto не настроен. Заполните TELEGRAM_API_ID, TELEGRAM_API_HASH и TELEGRAM_SESSION.', { status: 503, code: 'TELEGRAM_NOT_CONFIGURED' });
   }
+  let clientPromise = clientPromises.get(account);
   if (!clientPromise) {
     clientPromise = (async () => {
-      const client = new TelegramClient(new StringSession(env.telegramSession), env.telegramApiId, env.telegramApiHash, {
+      const client = new TelegramClient(new StringSession(session), env.telegramApiId, env.telegramApiHash, {
         connectionRetries: 5,
         requestRetries: 3,
         autoReconnect: true,
@@ -84,13 +97,15 @@ async function getClient() {
       await client.connect();
       if (!await client.isUserAuthorized()) {
         await client.disconnect();
-        throw new TelegramApiError('Telegram-сессия недействительна. Создайте новую командой npm run telegram:login --workspace @socstat/api.', { status: 503, code: 'TELEGRAM_SESSION_INVALID' });
+        const variable = account === 'adcheck' ? 'TELEGRAM_ADCHECK_SESSION' : 'TELEGRAM_SESSION';
+        throw new TelegramApiError(`Telegram-сессия ${variable} недействительна. Создайте новую командой npm run telegram:login --workspace @socstat/api.`, { status: 503, code: 'TELEGRAM_SESSION_INVALID' });
       }
       return client;
     })().catch((error) => {
-      clientPromise = null;
+      clientPromises.delete(account);
       throw error;
     });
+    clientPromises.set(account, clientPromise);
   }
   return clientPromise;
 }
@@ -108,24 +123,24 @@ function peerStoreAvailable() {
   return mongoose.connection.readyState === 1;
 }
 
-async function rememberPeer(username: string, entity: Api.Channel) {
+async function rememberPeer(account: TelegramAccount, username: string, entity: Api.Channel) {
   if (!entity.accessHash || !peerStoreAvailable()) return;
   await TelegramPeerModel.updateOne(
-    { username: username.toLowerCase() },
+    { account, username: username.toLowerCase() },
     { $set: { channelId: entity.id.toString(), accessHash: entity.accessHash.toString() } },
     { upsert: true }
   ).catch((error) => console.error(`Failed to store Telegram peer @${username}`, error));
 }
 
-async function forgetPeer(username: string) {
+async function forgetPeer(account: TelegramAccount, username: string) {
   if (!peerStoreAvailable()) return;
-  await TelegramPeerModel.deleteOne({ username: username.toLowerCase() }).catch(() => undefined);
+  await TelegramPeerModel.deleteOne({ account, username: username.toLowerCase() }).catch(() => undefined);
 }
 
 /** Opens a channel by the stored id and access_hash; null when there is no usable record. */
-async function loadStoredChannel(client: TelegramClient, username: string) {
+async function loadStoredChannel(client: TelegramClient, account: TelegramAccount, username: string) {
   if (!peerStoreAvailable()) return null;
-  const peer = await TelegramPeerModel.findOne({ username: username.toLowerCase() }).lean().catch(() => null);
+  const peer = await TelegramPeerModel.findOne({ account, username: username.toLowerCase() }).lean().catch(() => null);
   if (!peer) return null;
   try {
     const full = await client.invoke(new Api.channels.GetFullChannel({
@@ -138,11 +153,11 @@ async function loadStoredChannel(client: TelegramClient, username: string) {
     const message = error instanceof Error ? error.message : '';
     if (!/CHANNEL_INVALID|CHANNEL_PRIVATE|CHANNEL_PUBLIC_GROUP_NA/i.test(message)) throw error;
   }
-  await forgetPeer(username);
+  await forgetPeer(account, username);
   return null;
 }
 
-async function resolveByUsername(client: TelegramClient, username: string) {
+async function resolveByUsername(client: TelegramClient, account: TelegramAccount, username: string) {
   const resolved = await client.invoke(new Api.contacts.ResolveUsername({ username }));
   const entity = resolved.chats.find((chat): chat is Api.Channel =>
     chat instanceof Api.Channel &&
@@ -152,16 +167,16 @@ async function resolveByUsername(client: TelegramClient, username: string) {
     throw new TelegramApiError('Указанный адрес не является публичным Telegram-каналом.', { status: 400, code: 'TELEGRAM_NOT_A_CHANNEL' });
   }
   const full = await client.invoke(new Api.channels.GetFullChannel({ channel: entity }));
-  await rememberPeer(username, entity);
+  await rememberPeer(account, username, entity);
   return { entity, full };
 }
 
-async function resolveChannelEntity(input: string) {
+async function resolveChannelEntity(input: string, account: TelegramAccount = 'main') {
   const username = normalizeTelegramChannelInput(input);
   try {
-    const client = await getClient();
-    const { entity, full } = await loadStoredChannel(client, username) ?? await resolveByUsername(client, username);
-    channelEntityCache.set(username.toLowerCase(), entity);
+    const client = await getClient(account);
+    const { entity, full } = await loadStoredChannel(client, account, username) ?? await resolveByUsername(client, account, username);
+    if (account === 'main') channelEntityCache.set(username.toLowerCase(), entity);
     if (!(full.fullChat instanceof Api.ChannelFull)) {
       throw new TelegramApiError('Не удалось получить сведения о Telegram-канале.', { status: 502, code: 'TELEGRAM_API_ERROR' });
     }
@@ -216,6 +231,22 @@ function videoThumb(message: Api.Message) {
     .sort((a, b) => b.w * b.h - a.w * a.h)[0];
 }
 
+/** URLs hidden behind text and inline buttons; plain URLs are already in the text. */
+function messageLinks(message: Api.Message) {
+  const links = new Set<string>();
+  for (const entity of message.entities ?? []) {
+    if (entity instanceof Api.MessageEntityTextUrl) links.add(entity.url);
+  }
+  if (message.replyMarkup instanceof Api.ReplyInlineMarkup) {
+    for (const row of message.replyMarkup.rows) {
+      for (const button of row.buttons) {
+        if (button instanceof Api.KeyboardButtonUrl) links.add(button.url);
+      }
+    }
+  }
+  return [...links].slice(0, 20);
+}
+
 /** Reads channel posts between two unix timestamps, merging album parts into one post. */
 async function collectChannelPosts(client: TelegramClient, entity: Api.Channel, channel: TelegramChannel, unixFrom: number, unixTo: number) {
   const postsByKey = new Map<string, TelegramPost>();
@@ -227,6 +258,7 @@ async function collectChannelPosts(client: TelegramClient, entity: Api.Channel, 
     const comments = message.replies?.replies ?? 0;
     const forwards = message.forwards ?? 0;
     const postMediaType = mediaType(message);
+    const links = messageLinks(message);
     const post: TelegramPost = {
       id: message.id,
       date: new Date(message.date * 1000).toISOString(),
@@ -239,7 +271,8 @@ async function collectChannelPosts(client: TelegramClient, entity: Api.Channel, 
       comments,
       engagement: reactions + comments + forwards,
       mediaType: postMediaType,
-      mediaUrl: message.photo || videoThumb(message) ? `/api/telegram/channels/${encodeURIComponent(channel.username)}/posts/${message.id}/media` : undefined
+      mediaUrl: message.photo || videoThumb(message) ? `/api/telegram/channels/${encodeURIComponent(channel.username)}/posts/${message.id}/media` : undefined,
+      ...(links.length ? { links } : {})
     };
     const groupKey = message.groupedId ? `album:${message.groupedId.toString()}` : `message:${message.id}`;
     const existing = postsByKey.get(groupKey);
@@ -255,7 +288,8 @@ async function collectChannelPosts(client: TelegramClient, entity: Api.Channel, 
         reactions: Math.max(existing.reactions, post.reactions),
         comments: Math.max(existing.comments, post.comments),
         mediaType: existing.mediaType ?? post.mediaType,
-        mediaUrl: existing.mediaUrl ?? post.mediaUrl
+        mediaUrl: existing.mediaUrl ?? post.mediaUrl,
+        ...(existing.links || post.links ? { links: [...new Set([...(existing.links ?? []), ...(post.links ?? [])])] } : {})
       };
       postsByKey.set(groupKey, { ...merged, url: `https://t.me/${channel.username}/${merged.id}`, engagement: merged.reactions + merged.comments + merged.forwards });
     }
@@ -455,4 +489,35 @@ export async function getTelegramChannelAnalytics(input: string, periodValue: un
     if (/FLOOD_WAIT/i.test(message)) throw new TelegramApiError('Telegram временно ограничил частоту запросов. Повторите позже.', { status: 429, code: 'TELEGRAM_RATE_LIMITED' });
     throw new TelegramApiError('Не удалось загрузить публикации канала.', { status: 502, code: 'TELEGRAM_POSTS_UNAVAILABLE' });
   }
+}
+
+/**
+ * Channel info and posts of the last `days` days for the pre-ad check. Runs on the ad-check
+ * account when it is configured, so web checks do not spend the main session. Results are
+ * shared across replicas for AD_CHECK_CACHE_TTL_MS.
+ */
+export async function getTelegramAdCheckChannel(input: string, days: number) {
+  const username = normalizeTelegramChannelInput(input);
+  const account = adCheckTelegramAccount();
+  const key = `adcheck:v1:${username.toLowerCase()}:${days}`;
+  try {
+    return await getTelegramAnalyticsCached(key, false, async () => {
+      const { client, entity, channel } = await resolveChannelEntity(username, account);
+      const now = Math.floor(Date.now() / 1000);
+      const posts = await collectChannelPosts(client, entity, channel, now - days * 86_400, now);
+      return { channel, posts: posts.sort((left, right) => right.timestamp - left.timestamp), loadedAt: new Date().toISOString() };
+    }, { queue: telegramQueueFor(account), ttlMs: env.adCheckCacheTtlMs });
+  } catch (error) {
+    if (error instanceof TelegramApiError) throw error;
+    const message = error instanceof Error ? error.message : '';
+    if (message === 'TELEGRAM_ANALYTICS_IN_PROGRESS') throw new TelegramApiError('Канал уже проверяется. Повторите через пару минут.', { status: 503, code: 'TELEGRAM_ANALYTICS_IN_PROGRESS' });
+    if (/FLOOD_WAIT/i.test(message)) throw new TelegramApiError('Telegram временно ограничил частоту запросов. Повторите позже.', { status: 429, code: 'TELEGRAM_RATE_LIMITED' });
+    throw new TelegramApiError('Не удалось загрузить публикации канала.', { status: 502, code: 'TELEGRAM_POSTS_UNAVAILABLE' });
+  }
+}
+
+/** Whether the pre-ad check of the channel would be served from cache without Telegram requests. */
+export async function isTelegramAdCheckCached(input: string, days: number) {
+  const username = normalizeTelegramChannelInput(input);
+  return (await peekTelegramAnalyticsCache(`adcheck:v1:${username.toLowerCase()}:${days}`)) !== undefined;
 }

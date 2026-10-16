@@ -1,3 +1,4 @@
+import { refreshVkManagement } from '../services/vkManagementService.js';
 import type { NextFunction, Request, Response } from 'express';
 import { env } from '../config/env.js';
 import {
@@ -21,6 +22,10 @@ export async function attachUser(req: Request, res: Response, next: NextFunction
   try {
     const sessionId = req.cookies?.[env.sessionCookie] ?? req.header('x-socstat-session');
     req.user = await getUserBySession(sessionId);
+
+    if (req.user) {
+      void refreshVkManagement(req.user.id).catch(() => console.error('Failed to refresh VK management status'));
+    }
 
     // Залогиненный пользователь пришёл на сайт по ссылке с метками: лендинг
     // положил их в cookie, фиксируем возврат по рекламе и забираем cookie.

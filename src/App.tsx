@@ -1,6 +1,7 @@
 import {
   BarChart3,
   ChevronRight,
+  ClipboardCheck,
   CreditCard,
   GitCompare,
   Home,
@@ -8,6 +9,7 @@ import {
   Menu,
   Newspaper,
   Shield,
+  ShieldCheck,
   Users
 } from 'lucide-react';
 import { IconButton } from '@alfalab/core-components-icon-button';
@@ -20,6 +22,7 @@ import { CompareShowcase, PostsShowcase } from './components/FeatureShowcase';
 import { PushPrompt } from './components/PushPrompt';
 import { DashboardPage } from './pages/DashboardPage';
 import { AccountPage } from './pages/AccountPage';
+import { AdCheckPage } from './pages/AdCheckPage';
 import { AdminPage } from './pages/AdminPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { ComparePage } from './pages/ComparePage';
@@ -30,15 +33,16 @@ import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
 import { formatDate } from './utils/date';
 import { startVisitHeartbeat, trackPageView } from './utils/visit';
 
-const navItems = [
+const navItems: Array<{ to: string; label: string; icon: typeof Home; adminOnly?: boolean }> = [
   { to: '/dashboard', label: 'Главная', icon: Home },
   { to: '/analytics', label: 'Аналитика', icon: BarChart3 },
+  { to: '/ad-check', label: 'Проверка канала', icon: ClipboardCheck, adminOnly: true },
   { to: '/compare', label: 'Сравнение', icon: GitCompare },
   { to: '/posts', label: 'Публикации', icon: Newspaper },
   { to: '/account', label: 'Профиль и оплата', icon: CreditCard }
 ];
 
-const adminNavItem = { to: '/admin', label: 'Админка', icon: Shield };
+const adminNavItem = { to: '/admin', label: 'Админка', icon: Shield, adminOnly: true };
 function TelegramAnalyticsRedirect() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -201,7 +205,7 @@ export function App() {
   const title = useMemo(() => {
     return [...navItems, adminNavItem].find((item) => location.pathname.startsWith(item.to))?.label ?? 'Socstat';
   }, [location.pathname]);
-  const visibleNavItems = user?.isAdmin ? [...navItems, adminNavItem] : navItems;
+  const visibleNavItems = [...navItems, adminNavItem].filter((item) => !item.adminOnly || user?.isAdmin);
   const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions) || isAccessActive(user?.activeTo);
   const isTrialActive = Boolean(user?.trialEndsAt && new Date(user.trialEndsAt).getTime() >= Date.now());
 
@@ -234,6 +238,7 @@ export function App() {
             <NavLink key={item.to} to={item.to} onClick={closeMobileMenu}>
               <item.icon size={18} />
               <span>{item.label}</span>
+              {item.adminOnly && <span className="nav-admin-badge" title="Только для администратора" aria-label="Только для администратора"><ShieldCheck size={15} aria-hidden="true" /></span>}
             </NavLink>
           ))}
         </nav>
@@ -307,8 +312,9 @@ export function App() {
           <Route path="/account" element={<AccountPage user={user} groups={groups} onAccountChanged={loadAccount} />} />
           <Route
             path="/analytics"
-            element={<AnalyticsPage groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} />}
+            element={<AnalyticsPage isAdmin={Boolean(user?.isAdmin)} groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} />}
           />
+          <Route path="/ad-check" element={user?.isAdmin ? <AdCheckPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/compare" element={hasPaidAccess ? <ComparePage groups={groups} user={user} /> : <CompareShowcase />} />
           <Route path="/posts" element={hasPaidAccess ? <PostsPage groups={groups} /> : <PostsShowcase />} />
           <Route path="/telegram" element={<TelegramAnalyticsRedirect />} />

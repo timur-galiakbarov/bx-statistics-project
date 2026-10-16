@@ -1,11 +1,10 @@
-import { communityAdPosts } from '../utils/adCheck';
-import { AdCheckPanel } from '../components/AdCheckPanel';
 import { CompetitorsPanel } from '../components/CompetitorsPanel';
 import {
   ArrowDownUp,
   ArrowLeftRight,
   BarChart3,
   ChevronRight,
+  ClipboardCheck,
   Clock3,
   ExternalLink,
   RefreshCw,
@@ -39,7 +38,7 @@ import { detectPlatform, normalizeVkQuery } from '../utils/sourceQuery';
 import { trackPreviewUnlock, type PreviewUnlockTarget } from '../utils/visit';
 
 type ChartMetric = 'views' | 'activity' | 'comments' | 'engagement';
-type AnalyticsSection = 'summary' | 'audience' | 'posts' | 'competitors' | 'advertising';
+type AnalyticsSection = 'summary' | 'audience' | 'posts' | 'competitors';
 type AnalyticsPostSort = 'likes' | 'reposts' | 'comments' | 'actions' | 'views' | 'er' | 'date';
 type AnalyticsPostListFilter = 'all' | 'media' | 'photo' | 'video' | 'gif' | 'text';
 type AnalyticsPost = CommunityAnalytics['wall']['topPosts'][number];
@@ -230,31 +229,35 @@ export function AnalyticsPage({
   groups,
   hasPaidAccess,
   isTrialActive,
+  isAdmin = false,
   activeTo
 }: {
   groups: SavedGroup[];
   hasPaidAccess: boolean;
   isTrialActive: boolean;
+  isAdmin?: boolean;
   activeTo?: string;
 }) {
   const [searchParams] = useSearchParams();
 
   if (searchParams.get('platform') === 'telegram' && searchParams.get('channel')) {
-    return <TelegramPage hasPaidAccess={hasPaidAccess} activeTo={activeTo} />;
+    return <TelegramPage isAdmin={isAdmin} hasPaidAccess={hasPaidAccess} activeTo={activeTo} />;
   }
 
-  return <CommunityAnalyticsPage groups={groups} hasPaidAccess={hasPaidAccess} isTrialActive={isTrialActive} activeTo={activeTo} />;
+  return <CommunityAnalyticsPage isAdmin={isAdmin} groups={groups} hasPaidAccess={hasPaidAccess} isTrialActive={isTrialActive} activeTo={activeTo} />;
 }
 
 function CommunityAnalyticsPage({
   groups,
   hasPaidAccess,
   isTrialActive,
+  isAdmin = false,
   activeTo
 }: {
   groups: SavedGroup[];
   hasPaidAccess: boolean;
   isTrialActive: boolean;
+  isAdmin?: boolean;
   activeTo?: string;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -272,7 +275,7 @@ function CommunityAnalyticsPage({
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
   const [analytics, setAnalytics] = useState<CommunityAnalytics | null>(null);
-  const [analyticsSection, setAnalyticsSection] = useState<AnalyticsSection>(searchParams.get('section') === 'advertising' ? 'advertising' : searchParams.get('section') === 'competitors' ? 'competitors' : 'summary');
+  const [analyticsSection, setAnalyticsSection] = useState<AnalyticsSection>(searchParams.get('section') === 'competitors' ? 'competitors' : 'summary');
   const [analyticsPostSort, setAnalyticsPostSort] = useState<AnalyticsPostSort>('likes');
   const [analyticsPostListFilter, setAnalyticsPostListFilter] = useState<AnalyticsPostListFilter>('all');
   const [visibleAnalyticsPostsCount, setVisibleAnalyticsPostsCount] = useState(ANALYTICS_POSTS_PAGE_SIZE);
@@ -642,7 +645,7 @@ function CommunityAnalyticsPage({
           <h2>{selectedGroup.name}</h2>
           {analytics && <p>{analytics.group.membersCount !== null && `${formatNumber(analytics.group.membersCount)} ${plural(analytics.group.membersCount, 'подписчик', 'подписчика', 'подписчиков')}`}{analytics.group.membersCount !== null && analyticsSection !== 'competitors' && ' · '}{analyticsSection !== 'competitors' && analyticsCommunityPeriodLabel}</p>}
         </div>
-        <div className="analytics-actions"><Button className="analytics-action-button" client="desktop" leftAddons={<ArrowLeftRight size={16} />} size={40} type="button" view="secondary" onClick={() => setIsCommunityPickerOpen((value) => !value)}>Сменить</Button>{analyticsSection !== 'competitors' && !isPlatformLocked && <Button className="analytics-action-button" client="desktop" disabled={isLoadingAnalytics} leftAddons={<RefreshCw size={16} />} size={40} type="button" view="secondary" onClick={() => isPreview ? unlockPreview('refresh') : loadAnalytics(selectedGroup, period, true)}>Обновить</Button>}<Button className="analytics-action-button" client="desktop" href={analytics?.group.url ?? selectedGroup.url ?? `https://vk.com/${analytics?.group.screenName ?? selectedGroup.screen_name ?? `club${selectedGroup.id}`}`} leftAddons={<ExternalLink size={16} />} rel="noreferrer" size={40} target="_blank" view="secondary">Открыть {selectedGroup.platform === 'youtube' ? 'YouTube' : 'VK'}</Button></div>
+        <div className="analytics-actions"><Button className="analytics-action-button" client="desktop" leftAddons={<ArrowLeftRight size={16} />} size={40} type="button" view="secondary" onClick={() => setIsCommunityPickerOpen((value) => !value)}>Сменить</Button>{analyticsSection !== 'competitors' && !isPlatformLocked && <Button className="analytics-action-button" client="desktop" disabled={isLoadingAnalytics} leftAddons={<RefreshCw size={16} />} size={40} type="button" view="secondary" onClick={() => isPreview ? unlockPreview('refresh') : loadAnalytics(selectedGroup, period, true)}>Обновить</Button>}<Button className="analytics-action-button" client="desktop" href={analytics?.group.url ?? selectedGroup.url ?? `https://vk.com/${analytics?.group.screenName ?? selectedGroup.screen_name ?? `club${selectedGroup.id}`}`} leftAddons={<ExternalLink size={16} />} rel="noreferrer" size={40} target="_blank" view="secondary">Открыть {selectedGroup.platform === 'youtube' ? 'YouTube' : 'VK'}</Button>{isAdmin && selectedGroup.platform !== 'youtube' && <Button className="analytics-action-button" client="desktop" leftAddons={<ClipboardCheck size={16} />} size={40} type="button" view="secondary" onClick={() => navigate(`/ad-check?platform=vk&q=${encodeURIComponent(String(analytics?.group.id ?? selectedGroup.id))}`)}>Проверить перед рекламой</Button>}</div>
       </header>
       {isCommunityPickerOpen && <div className="panel span-2 community-picker">{recentGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Clock3 size={17} /><strong>Недавно анализировали</strong></div><div className="community-options">{recentGroups.map((group) => renderCommunityOption(group, 'недавний анализ'))}</div></div>}{bonusGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Бонусные источники</strong></div><div className="community-options">{bonusGroups.map((group) => renderCommunityOption(group, 'доступно без тарифа'))}</div></div>}{trackedGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Отслеживаемые источники</strong></div><div className="community-options">{trackedGroups.map((group) => renderCommunityOption(group))}</div></div>}<SegmentedControl className="social-platform-switcher" onChange={(id) => { setSearchPlatform(id as AnalyticsPlatform); setSearchResults([]); setMessage(null); }} selectedId={searchPlatform} size={40}><Segment id="vk" title={<PlatformSegmentTitle platform="vk" />} /><Segment id="youtube" title={<PlatformSegmentTitle platform="youtube" />} /><Segment id="telegram" title={<PlatformSegmentTitle platform="telegram" />} /></SegmentedControl><form className="search-form" onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={searchPlatform === 'youtube' ? 'URL, @handle, channel ID или название' : searchPlatform === 'telegram' ? '@username или ссылка t.me' : 'Название, screen name или ссылка VK'} /><button type="submit" disabled={isSearching}><Search size={18} />{isSearching ? 'Ищем' : 'Найти'}</button></form>{searchResults.length > 0 && <div className="search-results">{searchResults.map((group) => <button className="analytics-result" key={`${group.platform}:${group.id}`} type="button" onClick={() => loadAnalytics(group)}>{group.photo_100 ?? group.photo_50 ? <img src={group.photo_100 ?? group.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><strong>{group.name}</strong><small>{group.screen_name ?? group.id}{group.members_count === null ? ' · Подписчики: Недоступно' : group.members_count ? ` · ${formatNumber(group.members_count)} подписчиков` : ''}</small></span></button>)}</div>}</div>}
       {message && <div className="span-2 form-message">{message}</div>}
@@ -650,8 +653,8 @@ function CommunityAnalyticsPage({
       {!isPlatformLocked && <div className="span-2 analytics-toolbar">
         {analytics && !isLoadingAnalytics && <div className="analytics-section-switcher">
           {analytics.platform === 'youtube'
-          ? <SegmentedControl selectedId={analyticsSection} size={40} onChange={changeSection}><Segment id="summary" title="Обзор" /><Segment id="posts" title="Видео" /><Segment id="competitors" title="Конкуренты" /><Segment id="advertising" title="Перед рекламой" ref={(node) => { if (node && analyticsSection === 'advertising') { const tabs = node.closest<HTMLElement>('.analytics-section-switcher'); if (tabs) tabs.scrollLeft = tabs.scrollWidth; } }} /></SegmentedControl>
-          : <SegmentedControl selectedId={analyticsSection} size={40} onChange={changeSection}><Segment id="summary" title="Сводная" /><Segment id="audience" title="Аудитория" /><Segment id="posts" title="Посты" /><Segment id="competitors" title="Конкуренты" /><Segment id="advertising" title="Перед рекламой" ref={(node) => { if (node && analyticsSection === 'advertising') { const tabs = node.closest<HTMLElement>('.analytics-section-switcher'); if (tabs) tabs.scrollLeft = tabs.scrollWidth; } }} /></SegmentedControl>}
+          ? <SegmentedControl selectedId={analyticsSection} size={40} onChange={changeSection}><Segment id="summary" title="Обзор" /><Segment id="posts" title="Видео" /><Segment id="competitors" title="Конкуренты" /></SegmentedControl>
+          : <SegmentedControl selectedId={analyticsSection} size={40} onChange={changeSection}><Segment id="summary" title="Сводная" /><Segment id="audience" title="Аудитория" /><Segment id="posts" title="Посты" /><Segment id="competitors" title="Конкуренты" /></SegmentedControl>}
         </div>}
         {analyticsSection !== 'competitors' && <div className="period-tabs">{periods.filter((item) => quickPeriodKeys.includes(item.key)).map((item) => <Button className={`period-tab-button ${period === item.key ? 'period-tab-button-active' : ''}`} client="desktop" disabled={isLoadingAnalytics} key={item.key} size={40} type="button" view="secondary" leftAddons={isPreview && item.key !== 'week' ? <LockKeyhole size={14} /> : undefined} onClick={() => changePeriod(item.key)}>{quickPeriodLabels[item.key]}</Button>)}<Select className="analytics-period-select" client="desktop" disabled={isLoadingAnalytics} options={otherPeriodOptions} optionsListWidth="content" placeholder="Другой период" selected={quickPeriodKeys.includes(period) ? null : period} size={40} onChange={({ selected }) => selected && changePeriod(selected.key as AnalyticsPeriod)} /></div>}
       </div>}
@@ -660,7 +663,6 @@ function CommunityAnalyticsPage({
     {isLoadingAnalytics && <div className="panel span-2 analytics-loading" aria-live="polite" role="status"><div><strong>Готовим аналитику</strong><span>{activeLoadingSteps[analyticsLoadingStep].label}</span></div><div aria-label={activeLoadingSteps[analyticsLoadingStep].label} className="analytics-loading-progress" role="progressbar"><span /></div></div>}
     {analytics && !isLoadingAnalytics && isPreview && <AnalyticsPreviewView analytics={analytics} section={analyticsSection} />}
     {analytics && !isLoadingAnalytics && !isPreview && <>
-      {analyticsSection === 'advertising' && <AdCheckPanel key={`${analytics.platform}:${analytics.group.id}:${analytics.period.dateFrom}:${analytics.period.dateTo}`} platform={analytics.platform ?? 'vk'} sourceId={String(analytics.group.externalId ?? analytics.group.id)} subscribers={analytics.group.membersCount} period={analytics.period} isComplete={analytics.wall.isComplete} warnings={analytics.warnings} posts={communityAdPosts(analytics)} />}
       {analyticsSection === 'competitors' && <CompetitorsPanel platform={analytics.platform ?? 'vk'} sourceId={analytics.group.externalId ?? analytics.group.id} sourceName={analytics.group.name} />}
       {analytics.platform === 'youtube' && (analyticsSection === 'summary' || analyticsSection === 'posts') && <YoutubeAnalyticsView analytics={analytics} section={analyticsSection === 'posts' ? 'posts' : 'summary'} />}
       {analytics.platform !== 'youtube' && analyticsSection === 'summary' && <>

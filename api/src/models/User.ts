@@ -21,6 +21,12 @@ const userSchema = new Schema(
     isAdmin: { type: Boolean, default: false },
     enforceAccessRestrictions: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
+    vkManagement: {
+      attemptedAt: { type: Date },
+      checkedAt: { type: Date },
+      status: { type: String, enum: ['checked', 'unavailable'] },
+      managesCommunity: { type: Boolean }
+    },
     lastLoginAt: { type: Date, index: true },
     lastActivityAt: { type: Date, index: true },
     // Первое касание до регистрации: UTM-метки, rb_clickid VK Ads, yclid Директа

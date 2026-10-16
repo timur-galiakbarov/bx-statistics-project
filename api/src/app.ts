@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import { env } from './config/env.js';
 import { attachUser } from './middleware/auth.js';
 import { accountRouter } from './routes/account.js';
+import { adCheckRouter } from './routes/adCheck.js';
 import { analyticsRouter } from './routes/analytics.js';
 import { authRouter } from './routes/auth.js';
 import { compareRouter } from './routes/compare.js';
@@ -40,6 +41,7 @@ export function createApp() {
 
   app.use('/api/auth', authRouter);
   app.use('/api/account', accountRouter);
+  app.use('/api/ad-check', adCheckRouter);
   app.use('/api/analytics', analyticsRouter);
   app.use('/api/compare', compareRouter);
   app.use('/api/competitors', competitorsRouter);

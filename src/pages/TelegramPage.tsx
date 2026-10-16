@@ -1,15 +1,14 @@
-import { AdCheckPanel } from '../components/AdCheckPanel';
 import { CompetitorsPanel } from '../components/CompetitorsPanel';
 import { Button } from '@alfalab/core-components-button';
 import { Select } from '@alfalab/core-components-select';
 import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
 import {
-  Activity, ArrowDownUp, ArrowLeftRight, BarChart3, Eye, ExternalLink, FileText,
+  Activity, ArrowDownUp, ArrowLeftRight, BarChart3, ClipboardCheck, Eye, ExternalLink, FileText,
   Forward, Image, MessageCircle, RefreshCw, Search, Send, SmilePlus, TrendingUp,
   Video
 } from 'lucide-react';
 import { lazy, FormEvent, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ApiError, apiGet } from '../api/client';
 import type { AnalyticsPeriod, TelegramAnalytics } from '../api/types';
 import { PlatformAccessLock } from '../components/AccessLock';
@@ -18,7 +17,7 @@ import { SubscriberHistoryPanel } from '../components/SubscriberHistoryPanel';
 import { PostViewsCurvePanel } from '../components/PostViewsCurvePanel';
 import { formatDate } from '../utils/date';
 
-type TelegramSection = 'summary' | 'audience' | 'posts' | 'competitors' | 'advertising';
+type TelegramSection = 'summary' | 'audience' | 'posts' | 'competitors';
 type TelegramSort = 'date' | 'views' | 'engagement' | 'reactions' | 'comments' | 'forwards';
 type TelegramPostFilter = 'all' | 'media' | 'photo' | 'video' | 'text';
 type TelegramPost = TelegramAnalytics['posts'][number];
@@ -105,14 +104,15 @@ function TelegramPostCard({ channel, post }: { channel: TelegramAnalytics['chann
   </article>;
 }
 
-export function TelegramPage({ hasPaidAccess, activeTo }: { hasPaidAccess: boolean; activeTo?: string }) {
+export function TelegramPage({ hasPaidAccess, activeTo, isAdmin = false }: { hasPaidAccess: boolean; activeTo?: string; isAdmin?: boolean }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const requestedChannel = searchParams.get('channel')?.trim() ?? '';
   const lastRequestedChannel = useRef('');
   const [query, setQuery] = useState('');
   const [period, setPeriod] = useState<AnalyticsPeriod>('month');
   const [analytics, setAnalytics] = useState<TelegramAnalytics | null>(null);
-  const [section, setSection] = useState<TelegramSection>(searchParams.get('section') === 'advertising' ? 'advertising' : searchParams.get('section') === 'competitors' ? 'competitors' : 'summary');
+  const [section, setSection] = useState<TelegramSection>(searchParams.get('section') === 'competitors' ? 'competitors' : 'summary');
   const [sort, setSort] = useState<TelegramSort>('views');
   const [filter, setFilter] = useState<TelegramPostFilter>('all');
   const [visibleCount, setVisibleCount] = useState(POSTS_PAGE_SIZE);
@@ -221,12 +221,12 @@ export function TelegramPage({ hasPaidAccess, activeTo }: { hasPaidAccess: boole
           <h2>{analytics.channel.title}</h2>
           <p>{analytics.channel.subscribers !== null && `${number(analytics.channel.subscribers)} ${plural(analytics.channel.subscribers, 'подписчик', 'подписчика', 'подписчиков')}`}{analytics.channel.subscribers !== null && section !== 'competitors' && ' · '}{section !== 'competitors' && `За период ${selectedPeriodLabel}`}</p>
         </div>
-        <div className="analytics-actions"><Button className="analytics-action-button" client="desktop" leftAddons={<ArrowLeftRight size={16} />} size={40} type="button" view="secondary" onClick={() => setIsPickerOpen((value) => !value)}>Сменить</Button>{section !== 'competitors' && <Button className="analytics-action-button" client="desktop" disabled={isLoading} leftAddons={<RefreshCw size={16} />} size={40} type="button" view="secondary" onClick={() => void load(analytics.channel.username, period, true)}>Обновить</Button>}<Button className="analytics-action-button" client="desktop" href={analytics.channel.url} leftAddons={<ExternalLink size={16} />} rel="noreferrer" size={40} target="_blank" view="secondary">Открыть Telegram</Button></div>
+        <div className="analytics-actions"><Button className="analytics-action-button" client="desktop" leftAddons={<ArrowLeftRight size={16} />} size={40} type="button" view="secondary" onClick={() => setIsPickerOpen((value) => !value)}>Сменить</Button>{section !== 'competitors' && <Button className="analytics-action-button" client="desktop" disabled={isLoading} leftAddons={<RefreshCw size={16} />} size={40} type="button" view="secondary" onClick={() => void load(analytics.channel.username, period, true)}>Обновить</Button>}<Button className="analytics-action-button" client="desktop" href={analytics.channel.url} leftAddons={<ExternalLink size={16} />} rel="noreferrer" size={40} target="_blank" view="secondary">Открыть Telegram</Button>{isAdmin && <Button className="analytics-action-button" client="desktop" leftAddons={<ClipboardCheck size={16} />} size={40} type="button" view="secondary" onClick={() => navigate(`/ad-check?platform=telegram&q=${encodeURIComponent(analytics.channel.username)}`)}>Проверить перед рекламой</Button>}</div>
       </header>
       {isPickerOpen && <div className="panel span-2"><div className="community-picker telegram-picker"><div className="community-picker-intro"><h3>{analytics ? 'Сменить канал' : 'Выберите канал'}</h3><p>Введите публичный @username или ссылку вида t.me/channel.</p></div><form className="search-form" onSubmit={submit}><input autoFocus={!analytics} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="@channel или t.me/channel" /><button type="submit" disabled={isLoading}><Search size={18} />{isLoading ? 'Загружаем' : 'Анализировать'}</button></form></div></div>}
       {message && <div className="span-2 form-message telegram-message-error">{message}</div>}
       <div className="span-2 analytics-toolbar">
-        {!isLoading && <div className="analytics-section-switcher"><SegmentedControl selectedId={section} size={40} onChange={(id) => { setSection(id as TelegramSection); const next = new URLSearchParams(searchParams); next.set('section', String(id)); setSearchParams(next, { replace: true }); }}><Segment id="summary" title="Сводная" /><Segment id="audience" title="Аудитория" /><Segment id="posts" title="Посты" /><Segment id="competitors" title="Конкуренты" /><Segment id="advertising" title="Перед рекламой" ref={(node) => { if (node && section === 'advertising') { const tabs = node.closest<HTMLElement>('.analytics-section-switcher'); if (tabs) tabs.scrollLeft = tabs.scrollWidth; } }} /></SegmentedControl></div>}
+        {!isLoading && <div className="analytics-section-switcher"><SegmentedControl selectedId={section} size={40} onChange={(id) => { setSection(id as TelegramSection); const next = new URLSearchParams(searchParams); next.set('section', String(id)); setSearchParams(next, { replace: true }); }}><Segment id="summary" title="Сводная" /><Segment id="audience" title="Аудитория" /><Segment id="posts" title="Посты" /><Segment id="competitors" title="Конкуренты" /></SegmentedControl></div>}
         {section !== 'competitors' && <div className="period-tabs">{quickPeriods.map((item) => <Button className={`period-tab-button ${period === item.key ? 'period-tab-button-active' : ''}`} client="desktop" disabled={isLoading} key={item.key} size={40} type="button" view="secondary" onClick={() => changePeriod(item.key)}>{item.shortLabel}</Button>)}<Select className="analytics-period-select" client="desktop" disabled={isLoading} options={otherPeriods} optionsListWidth="content" placeholder="Другой период" selected={quickPeriods.some((item) => item.key === period) ? null : period} size={40} onChange={({ selected }) => selected && changePeriod(selected.key as AnalyticsPeriod)} /></div>}
       </div>
     </> : <div className="panel span-2 analytics-workbench telegram-workbench">
@@ -238,7 +238,6 @@ export function TelegramPage({ hasPaidAccess, activeTo }: { hasPaidAccess: boole
     {!analytics && !isLoading && <div className="panel span-2 telegram-start-state"><TelegramLogo size={36} /><h3>Введите публичный канал</h3><p>Socstat загрузит публикации и представит их в том же формате, что и аналитику сообществ ВКонтакте.</p></div>}
 
     {analytics && !isLoading && <>
-      {section === 'advertising' && <AdCheckPanel key={`telegram:${analytics.channel.username}:${analytics.period.dateFrom}:${analytics.period.dateTo}`} platform="telegram" sourceId={analytics.channel.username} subscribers={analytics.channel.subscribers} period={analytics.period} isComplete={null} posts={analytics.posts.map((post) => ({ ...post, actions: post.reactions + post.comments + post.forwards }))} />}
       {section === 'competitors' && <CompetitorsPanel platform="telegram" sourceId={analytics.channel.username} sourceName={analytics.channel.title} />}
       {section === 'summary' && <>
         <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Главное за период</h2><p>{selectedPeriodLabel}. Telegram показывает текущие публичные счётчики без сравнения с предыдущим периодом.</p></div></div>{summaryHeadline && <p className="analytics-headline">{summaryHeadline}</p>}<div className="analytics-kpi-grid telegram-summary-kpis"><TelegramKpi label="Публикации" value={number(analytics.summary.posts)} caption={`${number(analytics.summary.postsPerWeek, 1)} в неделю`} /><TelegramKpi label="Просмотры" value={number(analytics.summary.views)} caption="Сумма просмотров публикаций" /><TelegramKpi label="Средние просмотры поста" value={number(analytics.summary.averageViews)} caption="На момент обновления" /><TelegramKpi label="Действия" value={number(analytics.summary.actions)} caption="Реакции, комментарии и пересылки" /><TelegramKpi label="ER по просмотрам" value={percent(analytics.summary.engagementRate)} caption="Доля действий от просмотров" /><TelegramKpi label="Реакции" value={number(analytics.summary.reactions)} caption="На публикациях периода" /><TelegramKpi label="Пересылки" value={number(analytics.summary.forwards)} caption="Публичный счётчик Telegram" /></div></div>

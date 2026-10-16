@@ -1,3 +1,4 @@
+import { refreshVkManagement } from '../services/vkManagementService.js';
 import { randomBytes } from 'node:crypto';
 import { Router } from 'express';
 import { env } from '../config/env.js';
@@ -184,6 +185,7 @@ async function createVkSession(options: {
     expiresIn: options.expiresIn
   });
 
+  void refreshVkManagement(user.id).catch(() => console.error('Failed to refresh VK management status'));
   trackActivity({ userId: user.id }, 'login');
   return createSession(user.id);
 }

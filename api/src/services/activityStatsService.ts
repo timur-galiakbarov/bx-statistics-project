@@ -53,6 +53,7 @@ export type AdminActivityFeedItem = {
 export type AdminActivityStats = {
   days: number;
   trackingSince: string | null;
+  vkManagement: { total: number; managers: number; nonManagers: number; unknown: number; managerShare: number | null };
   periods: {
     today: AdminActivitySummary;
     yesterday: AdminActivitySummary;
@@ -436,8 +437,18 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
     }))
   ].sort((a, b) => b.at.localeCompare(a.at)).slice(0, FEED_LIMIT);
 
+  const audienceIds = new Set<string>();
+  for (const key of dayKeysBetween(rangeStart, tomorrowStart)) {
+    activeByDay.get(key)?.forEach((id) => audienceIds.add(id));
+  }
+  const managementUsers = await UserModel.find({ _id: { $in: [...audienceIds] } })
+    .select({ vkManagement: 1 })
+    .lean<Array<{ vkManagement?: { status?: string; managesCommunity?: boolean } }>>();
+  const vkManagement = summarizeVkManagement(managementUsers.map((user) => user.vkManagement));
+
   return {
     days,
+    vkManagement,
     trackingSince: firstVisit?.startedAt.toISOString() ?? null,
     periods,
     daily,
@@ -485,5 +496,15 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
     devices: countBy(rangeVisits, (visit) => visit.device ?? 'desktop').map(({ key, count }) => ({ key, visits: count })),
     hours,
     feed
+  };
+}
+
+export function summarizeVkManagement(users: Array<{ status?: string; managesCommunity?: boolean } | undefined>) {
+  const managers = users.filter((user) => user?.status === 'checked' && user.managesCommunity === true).length;
+  const nonManagers = users.filter((user) => user?.status === 'checked' && user.managesCommunity === false).length;
+  return {
+    total: users.length, managers, nonManagers,
+    unknown: users.length - managers - nonManagers,
+    managerShare: ratio(managers, managers + nonManagers)
   };
 }

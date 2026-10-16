@@ -70,7 +70,7 @@ function emptyResult(): PlatformResult {
 
 /** Where a source in the daily snapshots came from; `SnapshotSource.note` values come after the first three. */
 export type SnapshotSourceOrigin = 'dashboard' | 'competitors' | 'collections' | SnapshotSourceNote;
-export type SnapshotSourceNote = 'viewed' | 'compare' | 'posts' | 'seed' | 'telegram-peer';
+export type SnapshotSourceNote = 'viewed' | 'compare' | 'posts' | 'adcheck' | 'seed' | 'telegram-peer';
 
 /** Normalized IDs of every source that should get a daily snapshot, with the origin each was first found in. */
 async function collectSourcesWithOrigins() {
@@ -114,7 +114,7 @@ export async function collectSnapshotSources() {
 }
 
 function isSourceNote(note: unknown): note is SnapshotSourceNote {
-  return note === 'viewed' || note === 'compare' || note === 'posts' || note === 'seed' || note === 'telegram-peer';
+  return note === 'viewed' || note === 'compare' || note === 'posts' || note === 'adcheck' || note === 'seed' || note === 'telegram-peer';
 }
 
 function normalizeSourceId(platform: string, source: { externalId?: string | null; vkGroupId?: string | null; handle?: string | null }): { platform: SnapshotPlatform; externalId: string } | null {
@@ -131,10 +131,10 @@ function normalizeSourceId(platform: string, source: { externalId?: string | nul
 const rememberedSources = new Set<string>();
 
 /**
- * Adds a source seen in analytics, comparison or post analysis to the daily snapshots for good.
+ * Adds a source seen in analytics, comparison, post analysis or a pre-ad check to the daily snapshots for good.
  * The first origin wins. Never throws.
  */
-export function rememberViewedSource(platform: SnapshotPlatform, sourceId: string | number, note: 'viewed' | 'compare' | 'posts' = 'viewed') {
+export function rememberViewedSource(platform: SnapshotPlatform, sourceId: string | number, note: 'viewed' | 'compare' | 'posts' | 'adcheck' = 'viewed') {
   const id = normalizeSourceId(platform, { externalId: String(sourceId) });
   if (!id) return;
   const key = `${id.platform}:${id.externalId}`;

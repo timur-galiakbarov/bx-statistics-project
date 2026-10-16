@@ -8,10 +8,12 @@ function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
-/** Serializes all MTProto work so one shared account cannot be flooded by web traffic. */
+/** Serializes all MTProto work of one account so it cannot be flooded by web traffic. */
 class TelegramQueue {
   private tail: Promise<void> = Promise.resolve();
   private nextStartAt = 0;
+
+  constructor(private readonly slotKey: string) {}
 
   run<T>(task: () => Promise<T>) {
     const run = async () => {
@@ -26,7 +28,7 @@ class TelegramQueue {
   }
 
   private async runWithDistributedSlot<T>(task: () => Promise<T>) {
-    const key = `${prefix}:mtproto:slot`;
+    const key = this.slotKey;
     const token = randomUUID();
     while (await redis.set(key, token, { NX: true, PX: env.telegramTaskLockTtlMs }) !== 'OK') {
       await sleep(250);
@@ -48,7 +50,15 @@ class TelegramQueue {
   }
 }
 
-export const telegramQueue = new TelegramQueue();
+/** Accounts the API can talk to: the main session and an optional one for pre-ad channel checks. */
+export type TelegramAccount = 'main' | 'adcheck';
+
+export const telegramQueue = new TelegramQueue(`${prefix}:mtproto:slot`);
+const adCheckQueue = new TelegramQueue(`${prefix}:mtproto:adcheck:slot`);
+
+export function telegramQueueFor(account: TelegramAccount) {
+  return account === 'adcheck' ? adCheckQueue : telegramQueue;
+}
 
 async function readJson<T>(key: string): Promise<T | undefined> {
   const value = await redis.get(key);
@@ -67,7 +77,12 @@ async function releaseLock(key: string, token: string) {
  * Shares the result across API replicas and lets only one replica fetch one channel/period.
  * A refresh starts one new fetch; concurrent refreshes receive that same fresh result.
  */
-export async function getTelegramAnalyticsCached<T>(key: string, forceRefresh: boolean, load: () => Promise<T>) {
+export async function getTelegramAnalyticsCached<T>(
+  key: string,
+  forceRefresh: boolean,
+  load: () => Promise<T>,
+  options: { queue?: TelegramQueue; ttlMs?: number } = {}
+): Promise<T> {
   const cacheKey = `${prefix}:analytics:${key}`;
   const lockKey = `${cacheKey}:lock`;
 
@@ -85,8 +100,8 @@ export async function getTelegramAnalyticsCached<T>(key: string, forceRefresh: b
         const cached = await readJson<T>(cacheKey);
         if (cached !== undefined) return cached;
       }
-      const result = await telegramQueue.run(load);
-      await redis.set(cacheKey, JSON.stringify(result), { PX: env.telegramCacheTtlMs });
+      const result = await (options.queue ?? telegramQueue).run(load);
+      await redis.set(cacheKey, JSON.stringify(result), { PX: options.ttlMs ?? env.telegramCacheTtlMs });
       return result;
     } finally {
       await releaseLock(lockKey, token);
@@ -99,11 +114,16 @@ export async function getTelegramAnalyticsCached<T>(key: string, forceRefresh: b
     const cached = await readJson<T>(cacheKey);
     if (cached !== undefined) return cached;
     if (!await redis.exists(lockKey)) {
-      return getTelegramAnalyticsCached(key, forceRefresh, load);
+      return getTelegramAnalyticsCached(key, forceRefresh, load, options);
     }
   }
 
   throw new Error('TELEGRAM_ANALYTICS_IN_PROGRESS');
+}
+
+/** A result stored by getTelegramAnalyticsCached, without loading anything. */
+export function peekTelegramAnalyticsCache<T>(key: string) {
+  return readJson<T>(`${prefix}:analytics:${key}`);
 }
 
 export async function consumeTelegramRateLimit(scope: string, identifier: string, limit: number, windowMs: number) {

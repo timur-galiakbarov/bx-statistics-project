@@ -12,6 +12,18 @@ export async function backfillPaymentPaidAt() {
 }
 
 /**
+ * До 2026-10-14 пиры Telegram хранились для одной сессии с уникальным индексом по username.
+ * Теперь у каждой сессии свои записи: старым проставляем account: 'main' и меняем индекс.
+ * Повторный запуск ничего не меняет.
+ */
+export async function migrateTelegramPeerAccounts() {
+  await TelegramPeerModel.updateMany({ account: { $exists: false } }, { $set: { account: 'main' } }, { timestamps: false });
+  const indexes = await TelegramPeerModel.collection.indexes().catch(() => []);
+  if (indexes.some((index) => index.name === 'username_1')) await TelegramPeerModel.collection.dropIndex('username_1');
+  await TelegramPeerModel.createIndexes();
+}
+
+/**
  * До 2026-10-11 Telegram-каналы, которые открывали в аналитике, сравнении и публикациях, не попадали в ночные срезы.
  * Все такие каналы есть среди запомненных пиров сессии, поэтому разово переносим пиры, созданные до этой даты:
  * дальше каналы запоминаются при просмотре. Повторный запуск ничего не меняет.

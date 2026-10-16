@@ -1,7 +1,7 @@
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { connectDatabase } from './db/database.js';
-import { backfillPaymentPaidAt, backfillTelegramSnapshotSources } from './db/migrations.js';
+import { backfillPaymentPaidAt, backfillTelegramSnapshotSources, migrateTelegramPeerAccounts } from './db/migrations.js';
 import { seedDevelopmentData } from './db/seed.js';
 import { connectRedis } from './services/redis.js';
 import { startPushReminderScheduler } from './services/pushReminders.js';
@@ -10,6 +10,7 @@ import { startSnapshotScheduler } from './services/snapshotService.js';
 async function bootstrap() {
   await connectDatabase();
   await backfillPaymentPaidAt();
+  await migrateTelegramPeerAccounts();
   await backfillTelegramSnapshotSources();
   // Redis protects the shared Telegram session, but an outage must not take down
   // unrelated API routes and turn the whole site into a 502.

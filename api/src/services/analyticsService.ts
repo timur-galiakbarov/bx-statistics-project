@@ -1,5 +1,5 @@
 import { getVkAccessToken } from '../repositories/accountRepository.js';
-import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.js';
+import { isVkStatsUnavailableError, VkApiError, vkApiRequest } from './vkClient.js';
 import { TtlCache } from './ttlCache.js';
 import {
   CUSTOM_PERIOD_TOO_LONG_MESSAGE,
@@ -394,7 +394,7 @@ async function getStatsForPeriod(
     interval: 'day',
     stats_groups: 'visitors,reach,activity'
   }).catch((error) => {
-    if (isVkPermissionDeniedError(error)) {
+    if (isVkStatsUnavailableError(error)) {
       onUnavailable();
       return [] as VkStatsDay[];
     }

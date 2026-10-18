@@ -1,7 +1,7 @@
 import { getGroups, getVkAccessToken } from '../repositories/accountRepository.js';
 import { DomainError } from '../errors/domainError.js';
 import type { SavedGroup, SocialPlatform } from '../store/types.js';
-import { isVkPermissionDeniedError, VkApiError, vkApiRequest } from './vkClient.js';
+import { isVkStatsUnavailableError, VkApiError, vkApiRequest } from './vkClient.js';
 import { TtlCache } from './ttlCache.js';
 import { RedisJsonCache } from './redisJsonCache.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
@@ -397,7 +397,7 @@ async function buildDashboardSummaryItem(
       timestamp_to: period.unixTo,
       stats_groups: includePremiumMetrics ? 'visitors,reach,activity' : 'visitors,activity'
     }).catch((error) => {
-      if (isVkPermissionDeniedError(error)) {
+      if (isVkStatsUnavailableError(error)) {
         statsUnavailable = true;
         return [] as VkStatsDay[];
       }
@@ -474,7 +474,8 @@ async function loadDashboardSummaryItem(
 
   const request = buildDashboardSummaryItem(savedGroup, period, accessToken, managedGroupIds, forceRefresh, includePremiumMetrics)
     .then(async (item) => {
-      await dashboardSummaryItemCache.set(cacheKey, item);
+      // A failed row is retried on the next load instead of staying empty for the cache lifetime.
+      if (!item.error) await dashboardSummaryItemCache.set(cacheKey, item);
       return item;
     })
     .finally(() => pendingSummaryItems.delete(pendingKey));
@@ -532,7 +533,7 @@ export async function getDashboardSummary(userId: string, periodValue: unknown, 
     period: formatPeriod(period),
     groups: summaryGroups
   };
-  await dashboardSummaryCache.set(cacheKey, summary);
+  if (summaryGroups.every((item) => !item.error)) await dashboardSummaryCache.set(cacheKey, summary);
 
   return summary;
 }

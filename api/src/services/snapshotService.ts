@@ -57,8 +57,9 @@ type VkWallSnapshotResponse = {
     comments?: { count?: number };
   }>;
 };
-// Telegram errors that make further requests in this pass pointless.
-const TELEGRAM_STOP_CODES = new Set(['TELEGRAM_RATE_LIMITED', 'TELEGRAM_NOT_CONFIGURED', 'TELEGRAM_SESSION_INVALID']);
+// Telegram errors that make further requests in this pass pointless. After TELEGRAM_TIMEOUT the client
+// reconnects and the next tick goes on; the channel is not marked as failed for the day.
+const TELEGRAM_STOP_CODES = new Set(['TELEGRAM_RATE_LIMITED', 'TELEGRAM_NOT_CONFIGURED', 'TELEGRAM_SESSION_INVALID', 'TELEGRAM_TIMEOUT']);
 
 function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));

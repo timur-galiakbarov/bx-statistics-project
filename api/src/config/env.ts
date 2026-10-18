@@ -39,7 +39,11 @@ export const env = {
   telegramCacheTtlMs: Number(process.env.TELEGRAM_CACHE_TTL_MS ?? 300_000),
   telegramMaxPosts: Number(process.env.TELEGRAM_MAX_POSTS ?? 2_000),
   telegramRequestIntervalMs: Number(process.env.TELEGRAM_REQUEST_INTERVAL_MS ?? 350),
-  telegramTaskLockTtlMs: Number(process.env.TELEGRAM_TASK_LOCK_TTL_MS ?? 900_000),
+  // Аренда слота MTProto в Redis продлевается, пока задача жива, поэтому короткая: после перезапуска API
+  // слот убитого процесса освобождается быстро.
+  telegramTaskLockTtlMs: Number(process.env.TELEGRAM_TASK_LOCK_TTL_MS ?? 120_000),
+  // Задача MTProto дольше этого считается зависшей: очередь идёт дальше, клиент сессии переподключается.
+  telegramTaskTimeoutMs: Number(process.env.TELEGRAM_TASK_TIMEOUT_MS ?? 300_000),
   telegramAnalyticsLockTtlMs: Number(process.env.TELEGRAM_ANALYTICS_LOCK_TTL_MS ?? 900_000),
   telegramAnalyticsWaitMs: Number(process.env.TELEGRAM_ANALYTICS_WAIT_MS ?? 120_000),
   telegramUserRequestsPerMinute: Number(process.env.TELEGRAM_USER_REQUESTS_PER_MINUTE ?? 20),

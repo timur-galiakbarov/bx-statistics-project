@@ -8,7 +8,7 @@ import { TelegramPeerModel } from '../models/TelegramPeer.js';
 import { CUSTOM_PERIOD_TOO_LONG_MESSAGE, getAnalyticsPeriod, getPreviousAnalyticsPeriod, type AnalyticsPeriodRange } from './analyticsUtils.js';
 import { TtlCache } from './ttlCache.js';
 import { getTelegramProxy } from './telegramProxy.js';
-import { getTelegramAnalyticsCached, peekTelegramAnalyticsCache, telegramQueue, telegramQueueFor, type TelegramAccount } from './telegramProtection.js';
+import { getTelegramAnalyticsCached, onTelegramTaskTimeout, peekTelegramAnalyticsCache, TelegramTaskTimeoutError, telegramQueue, telegramQueueFor, type TelegramAccount } from './telegramProtection.js';
 
 export type TelegramChannel = {
   id: string;
@@ -108,6 +108,24 @@ async function getClient(account: TelegramAccount = 'main') {
     clientPromises.set(account, clientPromise);
   }
   return clientPromise;
+}
+
+/** Drops the account's client after a timed-out task so the next request opens a fresh connection. */
+function resetClient(account: TelegramAccount) {
+  const clientPromise = clientPromises.get(account);
+  if (!clientPromise) return;
+  clientPromises.delete(account);
+  void clientPromise
+    .then((client) => client.destroy())
+    .catch((error) => console.error(`Failed to close Telegram ${account} client`, error));
+}
+
+onTelegramTaskTimeout(resetClient);
+
+const TELEGRAM_TIMEOUT_MESSAGE = 'Telegram не ответил вовремя. Повторите через пару минут.';
+
+function telegramTimeoutError() {
+  return new TelegramApiError(TELEGRAM_TIMEOUT_MESSAGE, { status: 503, code: 'TELEGRAM_TIMEOUT' });
 }
 
 /** Whether the channel still owns the username: it may have been renamed and the username taken by another chat. */
@@ -368,7 +386,13 @@ export async function resolveTelegramChannel(input: string, forceRefresh = false
     const cached = cache.get(key) as TelegramChannel | undefined;
     if (cached) return cached;
   }
-  const { channel } = await telegramQueue.run(() => resolveChannelEntity(username));
+  let channel: TelegramChannel;
+  try {
+    ({ channel } = await telegramQueue.run(() => resolveChannelEntity(username)));
+  } catch (error) {
+    if (error instanceof TelegramTaskTimeoutError) throw telegramTimeoutError();
+    throw error;
+  }
   cache.set(key, channel);
   return channel;
 }
@@ -390,6 +414,7 @@ export async function getTelegramChannelPhoto(input: string, forceRefresh = fals
     photoCache.set(key, photo);
     return photo;
   } catch (error) {
+    if (error instanceof TelegramTaskTimeoutError) throw telegramTimeoutError();
     const message = error instanceof Error ? error.message : '';
     if (/FLOOD_WAIT/i.test(message)) {
       throw new TelegramApiError('Telegram временно ограничил загрузку аватарок. Повторите позже.', { status: 429, code: 'TELEGRAM_RATE_LIMITED' });
@@ -432,6 +457,7 @@ export async function getTelegramPostMedia(input: string, postIdValue: string, f
     postMediaCache.set(key, media);
     return media;
   } catch (error) {
+    if (error instanceof TelegramTaskTimeoutError) throw telegramTimeoutError();
     const message = error instanceof Error ? error.message : '';
     if (/FLOOD_WAIT/i.test(message)) {
       throw new TelegramApiError('Telegram временно ограничил загрузку изображений. Повторите позже.', { status: 429, code: 'TELEGRAM_RATE_LIMITED' });
@@ -454,6 +480,7 @@ export async function getTelegramChannelSnapshot(input: string, unixFrom: number
     });
   } catch (error) {
     if (error instanceof TelegramApiError) throw error;
+    if (error instanceof TelegramTaskTimeoutError) throw telegramTimeoutError();
     const message = error instanceof Error ? error.message : '';
     if (/FLOOD_WAIT/i.test(message)) throw new TelegramApiError('Telegram временно ограничил частоту запросов. Повторите позже.', { status: 429, code: 'TELEGRAM_RATE_LIMITED' });
     throw new TelegramApiError('Не удалось загрузить публикации канала.', { status: 502, code: 'TELEGRAM_POSTS_UNAVAILABLE' });
@@ -484,6 +511,7 @@ export async function getTelegramChannelAnalytics(input: string, periodValue: un
     cache.set(key, result);
     return result;
   } catch (error) {
+    if (error instanceof TelegramTaskTimeoutError) throw telegramTimeoutError();
     const message = error instanceof Error ? error.message : '';
     if (message === 'TELEGRAM_ANALYTICS_IN_PROGRESS') throw new TelegramApiError('Такой анализ уже выполняется. Повторите через пару минут.', { status: 503, code: 'TELEGRAM_ANALYTICS_IN_PROGRESS' });
     if (/FLOOD_WAIT/i.test(message)) throw new TelegramApiError('Telegram временно ограничил частоту запросов. Повторите позже.', { status: 429, code: 'TELEGRAM_RATE_LIMITED' });
@@ -509,6 +537,7 @@ export async function getTelegramAdCheckChannel(input: string, days: number) {
     }, { queue: telegramQueueFor(account), ttlMs: env.adCheckCacheTtlMs });
   } catch (error) {
     if (error instanceof TelegramApiError) throw error;
+    if (error instanceof TelegramTaskTimeoutError) throw telegramTimeoutError();
     const message = error instanceof Error ? error.message : '';
     if (message === 'TELEGRAM_ANALYTICS_IN_PROGRESS') throw new TelegramApiError('Канал уже проверяется. Повторите через пару минут.', { status: 503, code: 'TELEGRAM_ANALYTICS_IN_PROGRESS' });
     if (/FLOOD_WAIT/i.test(message)) throw new TelegramApiError('Telegram временно ограничил частоту запросов. Повторите позже.', { status: 429, code: 'TELEGRAM_RATE_LIMITED' });

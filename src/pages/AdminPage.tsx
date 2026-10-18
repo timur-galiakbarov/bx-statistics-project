@@ -79,6 +79,7 @@ const snapshotStopReasons: Record<string, string> = {
   TELEGRAM_RATE_LIMITED: 'лимит Telegram',
   TELEGRAM_NOT_CONFIGURED: 'Telegram не настроен',
   TELEGRAM_SESSION_INVALID: 'сессия Telegram недействительна',
+  TELEGRAM_TIMEOUT: 'Telegram не ответил, продолжит в следующий тик',
   TELEGRAM_DAILY_LIMIT: 'суточный лимит Telegram',
   TELEGRAM_PAUSED: 'Telegram на паузе до завтра после лимита',
   TELEGRAM_REDIS_UNAVAILABLE: 'Redis недоступен'

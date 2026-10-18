@@ -8,12 +8,49 @@ function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
+/** Accounts the API can talk to: the main session and an optional one for pre-ad channel checks. */
+export type TelegramAccount = 'main' | 'adcheck';
+
+/**
+ * A queued MTProto task ran longer than TELEGRAM_TASK_TIMEOUT_MS. gramjs can wait forever on a connection
+ * that died silently (e.g. the SOCKS tunnel restarted), and without the timeout the whole queue would stall.
+ */
+export class TelegramTaskTimeoutError extends Error {
+  constructor() {
+    super('TELEGRAM_TIMEOUT');
+    this.name = 'TelegramTaskTimeoutError';
+  }
+}
+
+let timeoutHandler: (account: TelegramAccount) => void = () => undefined;
+
+/** Called when a task of the account times out; the client uses it to drop the stuck connection. */
+export function onTelegramTaskTimeout(handler: (account: TelegramAccount) => void) {
+  timeoutHandler = handler;
+}
+
+/** Rejects after `ms` unless the task settles first. The task itself keeps running: gramjs calls cannot be cancelled. */
+export async function withTaskTimeout<T>(task: Promise<T>, ms: number, onTimeout: () => void = () => undefined) {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      onTimeout();
+      reject(new TelegramTaskTimeoutError());
+    }, ms);
+  });
+  try {
+    return await Promise.race([task, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Serializes all MTProto work of one account so it cannot be flooded by web traffic. */
 class TelegramQueue {
   private tail: Promise<void> = Promise.resolve();
   private nextStartAt = 0;
 
-  constructor(private readonly slotKey: string) {}
+  constructor(private readonly account: TelegramAccount, private readonly slotKey: string) {}
 
   run<T>(task: () => Promise<T>) {
     const run = async () => {
@@ -42,7 +79,10 @@ class TelegramQueue {
     }, Math.max(1_000, Math.floor(env.telegramTaskLockTtlMs / 3)));
 
     try {
-      return await task();
+      return await withTaskTimeout(task(), env.telegramTaskTimeoutMs, () => {
+        console.error(`Telegram ${this.account} task timed out after ${env.telegramTaskTimeoutMs} ms; reconnecting`);
+        timeoutHandler(this.account);
+      });
     } finally {
       clearInterval(refreshLease);
       await releaseLock(key, token);
@@ -50,11 +90,8 @@ class TelegramQueue {
   }
 }
 
-/** Accounts the API can talk to: the main session and an optional one for pre-ad channel checks. */
-export type TelegramAccount = 'main' | 'adcheck';
-
-export const telegramQueue = new TelegramQueue(`${prefix}:mtproto:slot`);
-const adCheckQueue = new TelegramQueue(`${prefix}:mtproto:adcheck:slot`);
+export const telegramQueue = new TelegramQueue('main', `${prefix}:mtproto:slot`);
+const adCheckQueue = new TelegramQueue('adcheck', `${prefix}:mtproto:adcheck:slot`);
 
 export function telegramQueueFor(account: TelegramAccount) {
   return account === 'adcheck' ? adCheckQueue : telegramQueue;

@@ -17,6 +17,10 @@ Workflow `.github/workflows/deploy.yml`, окружение `production`:
 
 `docker-compose.prod.yml`: `frontend` (nginx со сборкой фронта, порт 8080), `api` (порт 4000), `mongo` 7 и `redis` 7 с данными в томах `mongo-data` и `redis-data`. Порты открыты только на `127.0.0.1`, снаружи запросы принимает nginx сервера (пример конфига — `deploy/nginx/socstat.conf.example`). Миграции данных выполняются при старте API (`api/src/db/migrations.ts`).
 
+Сейчас проект лежит в `/home/socstat.ru` (`DEPLOY_PATH`), контейнеры называются `socstatru-*`.
+
+Напрямую Telegram с сервера недоступен, поэтому API ходит в него через SOCKS5 (`TELEGRAM_PROXY_HOST`/`TELEGRAM_PROXY_PORT` в `api/.env`). Это не контейнер, а systemd-сервис `socstat-socks.service` на хосте: SSH-туннель `ssh -N -D 172.18.0.1:1080` до внешнего сервера. При его перезапуске открытые соединения gramjs умирают молча, от зависания очереди защищает таймаут задач — см. [snapshots.md](snapshots.md#зависшие-запросы).
+
 ## Настройки
 
 - Секреты репозитория: `DEPLOY_HOST`, `DEPLOY_PORT` (по умолчанию 22), `DEPLOY_USER`, `DEPLOY_SSH_KEY`; переменная `DEPLOY_PATH`.

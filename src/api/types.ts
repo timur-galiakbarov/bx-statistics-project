@@ -22,7 +22,7 @@ export type VkReportSettings = {
 };
 
 export type FeatureMode = 'off' | 'admins' | 'all';
-export type FeatureFlag = { key: 'vkReports'; mode: FeatureMode; updatedAt: string | null };
+export type FeatureFlag = { key: 'vkReports' | 'placements'; mode: FeatureMode; updatedAt: string | null };
 
 export type SocialPlatform = 'vk' | 'youtube' | 'telegram';
 
@@ -562,7 +562,7 @@ export type SnapshotPlatformCoverage = {
   stoppedReason: string | null;
 };
 
-export type SnapshotSourceOrigin = 'dashboard' | 'competitors' | 'collections' | 'viewed' | 'compare' | 'posts' | 'adcheck' | 'seed' | 'telegram-peer';
+export type SnapshotSourceOrigin = 'dashboard' | 'competitors' | 'collections' | 'viewed' | 'compare' | 'posts' | 'adcheck' | 'placement' | 'seed' | 'telegram-peer';
 
 export type SnapshotBase = {
   platforms: Array<{

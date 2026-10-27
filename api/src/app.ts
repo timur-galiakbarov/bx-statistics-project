@@ -15,6 +15,7 @@ import { dashboardRouter } from './routes/dashboard.js';
 import { legacyRouter } from './routes/legacy.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { paymentsRouter } from './routes/payments.js';
+import { placementsRouter } from './routes/placements.js';
 import { postsRouter } from './routes/posts.js';
 import { pushRouter } from './routes/push.js';
 import { vkRouter } from './routes/vk.js';
@@ -48,6 +49,7 @@ export function createApp() {
   app.use('/api/competitors', competitorsRouter);
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/payments', paymentsRouter);
+  app.use('/api/placements', placementsRouter);
   app.use('/api/posts', postsRouter);
   app.use('/api/push', pushRouter);
   app.use('/api/notifications', notificationsRouter);

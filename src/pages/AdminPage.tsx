@@ -94,6 +94,7 @@ const snapshotOriginLabels: Record<SnapshotSourceOrigin, string> = {
   compare: 'сравнение',
   posts: 'публикации',
   adcheck: 'проверка перед рекламой',
+  placement: 'подбор площадок',
   seed: 'вручную',
   'telegram-peer': 'Telegram до 11.10'
 };

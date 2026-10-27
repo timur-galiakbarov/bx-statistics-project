@@ -15,11 +15,12 @@ import {
   removeSession
 } from '../repositories/accountRepository.js';
 import { requireAdmin, requireUser } from '../middleware/auth.js';
-import { getFeatureModes, isFeatureKey, isFeatureMode, setFeatureMode } from '../services/featureFlags.js';
+import { getFeatureModes, isFeatureEnabledFor, isFeatureKey, isFeatureMode, setFeatureMode } from '../services/featureFlags.js';
 import { getNotificationSettings } from './notifications.js';
 import { env } from '../config/env.js';
 import { subscribeToAccountEvents } from '../services/accountEvents.js';
 import { publishAccountUpdated } from '../services/accountEvents.js';
+import type { ActivityEventType } from '../models/ActivityEvent.js';
 import { UserModel } from '../models/User.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { VkApiError, vkApiRequest } from '../services/vkClient.js';
@@ -78,7 +79,8 @@ accountRouter.get('/me', requireUser, async (req, res, next) => {
           freeGroupsDisabled: user.freeGroupsDisabled,
           isAdmin: user.isAdmin,
           enforceAccessRestrictions: user.enforceAccessRestrictions,
-          vkReports: await getNotificationSettings(user)
+          vkReports: await getNotificationSettings(user),
+          placementsEnabled: await isFeatureEnabledFor('placements', user)
         }
       }
     });
@@ -147,19 +149,24 @@ accountRouter.post('/activity', requireUser, async (req, res, next) => {
 });
 
 // Клики по элементам интерфейса, которые не порождают серверного запроса. Метки — из закрытого списка.
-const uiEventLabels: Record<string, string[]> = {
+const uiEventLabels: Partial<Record<ActivityEventType, string[]>> = {
   competitors_widget: ['open', 'add', 'other', 'expand', 'teaser'],
   preview_unlock: ['banner', 'kpi', 'chart', 'insights', 'posts', 'section', 'period', 'refresh', 'compare', 'posts_page'],
-  vk_report_connect: ['banner', 'dashboard', 'competitors', 'profile']
+  vk_report_connect: ['banner', 'dashboard', 'competitors', 'profile'],
+  placement_open: ['vk', 'contact', 'message'],
+  placement_price: ['entered'],
+  placement_filter: ['news', 'overheard', 'classifieds', 'jobs', 'events', 'district', 'theme', 'business', 'official', 'other'],
+  placement_paywall_click: ['rows', 'limit']
 };
 accountRouter.post('/ui-event', requireUser, (req, res) => {
   const event = req.body?.event;
   const label = req.body?.label;
-  if ((event !== 'competitors_widget' && event !== 'preview_unlock' && event !== 'vk_report_connect') || !uiEventLabels[event].includes(label)) {
+  // Object.hasOwn: «constructor» и прочие ключи прототипа не должны проходить проверку.
+  if (typeof event !== 'string' || !Object.hasOwn(uiEventLabels, event) || !uiEventLabels[event as ActivityEventType]!.includes(label)) {
     res.status(400).json({ success: false, error: 'INVALID_UI_EVENT' });
     return;
   }
-  trackActivity(req, event, { label });
+  trackActivity(req, event as ActivityEventType, { label });
   res.json({ success: true });
 });
 

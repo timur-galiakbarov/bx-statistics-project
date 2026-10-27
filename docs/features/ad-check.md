@@ -76,6 +76,7 @@ YouTube пока не поддерживается: рекламные инте�
 
 - `api/src/routes/adCheck.ts` — маршруты `/api/ad-check` и `/api/ad-check/usage`.
 - `api/src/services/adCheckService.ts` — разбор ссылки, загрузка VK/Telegram, лимиты, сборка ответа.
+- `api/src/services/vkSourceLoader.ts` — запросы VK с запасным сервисным ключом и разбор стены в посты; общие с [подбором площадок](placements.md).
 - `api/src/services/adCheckUtils.ts`, `adDetection.ts` — расчёты и распознавание рекламы; тесты в `adCheck.test.ts`.
 - `api/src/services/telegramClient.ts` — `getTelegramAdCheckChannel`, выбор сессии (`adCheckTelegramAccount`).
 - `api/src/services/telegramProtection.ts` — отдельная очередь MTProto для второй сессии.

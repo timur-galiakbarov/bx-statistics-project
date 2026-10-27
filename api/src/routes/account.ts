@@ -155,7 +155,7 @@ const uiEventLabels: Partial<Record<ActivityEventType, string[]>> = {
   vk_report_connect: ['banner', 'dashboard', 'competitors', 'profile'],
   placement_open: ['vk', 'contact', 'message'],
   placement_price: ['entered'],
-  placement_filter: ['news', 'overheard', 'classifieds', 'jobs', 'events', 'district', 'theme', 'business', 'official', 'other'],
+  placement_filter: ['small', 'medium', 'large'],
   placement_paywall_click: ['rows', 'limit']
 };
 accountRouter.post('/ui-event', requireUser, (req, res) => {

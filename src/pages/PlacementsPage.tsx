@@ -1,26 +1,28 @@
-import { ExternalLink, Lock, MapPin, MessageCircle, Search, Sparkles } from 'lucide-react';
+import { ExternalLink, Lock, MapPin, Megaphone, MessageCircle, Search, Sparkles, X } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ApiError, apiGet, apiPost } from '../api/client';
-import type { PlacementCategory, PlacementCity, PlacementLockedRow, PlacementRow, PlacementSearchResult, PlacementUsage } from '../api/types';
+import type { PlacementCity, PlacementKind, PlacementLockedRow, PlacementRow, PlacementSearchResult, PlacementUsage } from '../api/types';
 import { costPerThousand, positiveAmount } from '../utils/adCheck';
 import { trackPlacementEvent } from '../utils/visit';
 
 type SortKey = 'fit' | 'members' | 'views' | 'ratio' | 'cpm';
+type SizeKey = 'all' | 'small' | 'medium' | 'large';
 
-const categoryLabels: Record<PlacementCategory, string> = {
-  news: 'Новости и ЧП',
-  overheard: 'Подслушано',
-  classifieds: 'Барахолки',
-  jobs: 'Работа',
-  events: 'Афиша',
-  district: 'Районные',
-  theme: 'Тематические',
-  business: 'Компании',
-  official: 'Официальные',
-  other: 'Другое'
-};
-const minMembersOptions = [1_000, 5_000, 20_000];
+const sizes: Array<{ key: Exclude<SizeKey, 'all'>; label: string; test: (members: number) => boolean }> = [
+  { key: 'small', label: 'до 50 тыс.', test: (members) => members < 50_000 },
+  { key: 'medium', label: '50–500 тыс.', test: (members) => members >= 50_000 && members < 500_000 },
+  { key: 'large', label: 'больше 500 тыс.', test: (members) => members >= 500_000 }
+];
+// The search takes about a minute; the steps follow its usual timing, the server does not report progress.
+const loadingSteps: Array<{ after: number; text: string }> = [
+  { after: 0, text: 'Понимаем задачу и аудиторию' },
+  { after: 4, text: 'Ищем сообщества во ВКонтакте' },
+  { after: 25, text: 'Отбираем подходящие площадки' },
+  { after: 32, text: 'Читаем посты и считаем просмотры' },
+  { after: 75, text: 'Почти готово' }
+];
+const examples = ['Шиномонтаж в Уфе, клиенты — автомобилисты', 'Группа про Nintendo Switch, хочу больше подписчиков', 'Онлайн-школа английского для взрослых'];
 
 const number = (value: number | null, digits = 0) => value === null ? '—' : new Intl.NumberFormat('ru-RU', { maximumFractionDigits: digits }).format(value);
 const rubles = (value: number | null) => value === null ? '—' : `${number(value, value < 10 ? 2 : 0)} ₽`;
@@ -38,21 +40,18 @@ const isOpen = (row: PlacementRow | PlacementLockedRow): row is PlacementRow => 
 export function PlacementsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requested = useMemo(() => ({
+    brief: searchParams.get('brief') ?? '',
     cityId: searchParams.get('cityId') ?? '',
-    city: searchParams.get('city') ?? '',
-    district: searchParams.get('district') ?? '',
-    topic: searchParams.get('topic') ?? '',
-    minMembers: searchParams.get('minMembers') ?? '1000'
+    city: searchParams.get('city') ?? ''
   }), [searchParams]);
+  const [brief, setBrief] = useState(requested.brief);
   const [cityQuery, setCityQuery] = useState(requested.city);
   const [city, setCity] = useState<{ id: string; title: string } | null>(requested.cityId ? { id: requested.cityId, title: requested.city } : null);
   const [suggestions, setSuggestions] = useState<PlacementCity[]>([]);
-  const [district, setDistrict] = useState(requested.district);
-  const [topic, setTopic] = useState(requested.topic);
-  const [minMembers, setMinMembers] = useState(requested.minMembers);
   const [result, setResult] = useState<PlacementSearchResult | null>(null);
   const [usage, setUsage] = useState<PlacementUsage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const [message, setMessage] = useState('');
   const [limitReached, setLimitReached] = useState(false);
   const suggestTimer = useRef<number>();
@@ -63,12 +62,15 @@ export function PlacementsPage() {
 
   // The search is driven by the URL, so a reload or a shared link opens the same selection.
   useEffect(() => {
-    if (!requested.cityId) return;
+    if (!requested.brief) return;
     let active = true;
     setIsLoading(true);
+    setElapsed(0);
     setMessage('');
     setLimitReached(false);
-    const params = new URLSearchParams({ cityId: requested.cityId, district: requested.district, topic: requested.topic, minMembers: requested.minMembers });
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => setElapsed(Math.round((Date.now() - startedAt) / 1000)), 1000);
+    const params = new URLSearchParams({ brief: requested.brief, ...(requested.cityId ? { cityId: requested.cityId } : {}) });
     apiGet<PlacementSearchResult>(`/api/placements/search?${params}`)
       .then((data) => { if (active) { setResult(data); setUsage(data.usage); } })
       .catch((error) => {
@@ -77,8 +79,8 @@ export function PlacementsPage() {
         setLimitReached(error instanceof ApiError && error.status === 429);
         setMessage(error instanceof ApiError ? error.message : 'Не удалось подобрать площадки. Повторите позже.');
       })
-      .finally(() => { if (active) setIsLoading(false); });
-    return () => { active = false; };
+      .finally(() => { if (active) setIsLoading(false); window.clearInterval(timer); });
+    return () => { active = false; window.clearInterval(timer); };
   }, [requested]);
 
   const changeCity = (value: string) => {
@@ -97,49 +99,61 @@ export function PlacementsPage() {
     setSuggestions([]);
   };
 
+  const clearCity = () => {
+    setCity(null);
+    setCityQuery('');
+    setSuggestions([]);
+  };
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!city) return setMessage('Выберите город из подсказок.');
-    setSearchParams({ cityId: city.id, city: city.title, district: district.trim(), topic: topic.trim(), minMembers });
+    const value = brief.trim();
+    if (value.length < 3) return setMessage('Опишите, что рекламируете.');
+    if (cityQuery.trim() && !city) return setMessage('Выберите город из подсказок или очистите поле.');
+    setSearchParams({ brief: value, ...(city ? { cityId: city.id, city: city.title } : {}) });
   };
+
+  const step = [...loadingSteps].reverse().find((item) => elapsed >= item.after)!;
 
   return <section className="page-grid analytics-page placements-page">
     <div className="panel span-2 analytics-section">
       <div className="section-title"><div>
         <h2><MapPin size={20} aria-hidden="true" /> Подбор площадок для рекламы во ВКонтакте</h2>
-        <p>Укажите город и, если нужно, тему бизнеса: найдём местные сообщества и покажем, сколько просмотров набирает пост, сколько там рекламы и во что обойдётся 1 000 просмотров.</p>
+        <p>Расскажите, что рекламируете: поймём, кто ваша аудитория, найдём сообщества, где она сидит, прочитаем их посты и покажем просмотры, рекламу и цену 1 000 просмотров.</p>
       </div></div>
       <form className="placements-form" onSubmit={submit}>
+        <label className="placements-brief">Что рекламируете?
+          <textarea value={brief} onChange={(event) => setBrief(event.target.value)} placeholder={examples[0]} rows={2} maxLength={300} />
+          <span className="placements-examples">Например: {examples.map((item) => <button type="button" key={item} onClick={() => setBrief(item)}>{item}</button>)}</span>
+        </label>
         <div className="placements-city">
-          <label htmlFor="placement-city">Город</label>
-          <input id="placement-city" value={cityQuery} onChange={(event) => changeCity(event.target.value)} placeholder="Например, Воронеж" autoComplete="off" role="combobox" aria-expanded={suggestions.length > 0} aria-controls="placement-city-list" aria-autocomplete="list" />
+          <label htmlFor="placement-city">Город <small>— если бизнес местный</small></label>
+          <div className="placements-city-input">
+            <input id="placement-city" value={cityQuery} onChange={(event) => changeCity(event.target.value)} placeholder="Определим по описанию" autoComplete="off" role="combobox" aria-expanded={suggestions.length > 0} aria-controls="placement-city-list" aria-autocomplete="list" />
+            {cityQuery && <button type="button" onClick={clearCity} aria-label="Очистить город"><X size={16} /></button>}
+          </div>
           {suggestions.length > 0 && <ul className="placements-suggestions" id="placement-city-list" role="listbox">
             {suggestions.map((item) => <li key={item.id} role="option" aria-selected={city?.id === String(item.id)}>
               <button type="button" onClick={() => chooseCity(item)}><b>{item.title}</b>{(item.area || item.region) && <small>{[item.area, item.region].filter(Boolean).join(', ')}</small>}</button>
             </li>)}
           </ul>}
         </div>
-        <label>Район или посёлок<input value={district} onChange={(event) => setDistrict(event.target.value)} placeholder="Необязательно" autoComplete="off" maxLength={60} /></label>
-        <label>Тема бизнеса<input value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="Например, пластиковые окна" autoComplete="off" maxLength={80} /></label>
-        <label>Подписчиков от<select value={minMembers} onChange={(event) => setMinMembers(event.target.value)}>
-          {minMembersOptions.map((value) => <option key={value} value={value}>{number(value)}</option>)}
-        </select></label>
         <button className="primary-button" type="submit" disabled={isLoading}><Search size={18} />{isLoading ? 'Подбираем' : 'Подобрать'}</button>
       </form>
-      {usage && <p className="ad-check-data-note">Сегодня {Math.min(usage.used, usage.limit)} из {usage.limit} {plural(usage.limit, 'подбора', 'подборов', 'подборов')}. Повторить тот же подбор можно бесплатно.{!usage.paid && ` Без тарифа метрики видны у первых ${usage.freeRows} площадок.`}</p>}
+      {usage && <p className="ad-check-data-note">Сегодня {Math.min(usage.used, usage.limit)} из {usage.limit} {plural(usage.limit, 'подбора', 'подборов', 'подборов')}. Повторить тот же подбор можно бесплатно.{!usage.paid && ` Без тарифа подробности видны у первых ${usage.freeRows} площадок.`}</p>}
       {message && <div className="form-message telegram-message-error" role="alert">{message}
         {limitReached && usage && !usage.paid && <> <Link to="/account" onClick={() => trackPlacementEvent('placement_paywall_click', 'limit')}>Посмотреть тарифы</Link></>}
       </div>}
     </div>
 
-    {isLoading && <div className="panel span-2 analytics-loading" aria-live="polite" role="status"><div><strong>Подбираем площадки</strong><span>Ищем сообщества, отбираем местные и считаем просмотры — обычно до минуты</span></div><div className="analytics-loading-progress" role="progressbar" aria-label="Загрузка"><span /></div></div>}
+    {isLoading && <div className="panel span-2 analytics-loading" aria-live="polite" role="status"><div><strong>{step.text}</strong><span>Обычно подбор занимает около минуты · {elapsed} сек.</span></div><div className="analytics-loading-progress" role="progressbar" aria-label="Загрузка"><span /></div></div>}
 
     {!isLoading && !result && <div className="panel span-2 ad-check-start">
       <h2>Что покажет подбор</h2>
       <ul className="ad-check-checklist">
-        <li><b>До 30 местных сообществ</b>: городские паблики, новости, барахолки, районные группы — федеральные и чужие отсеиваем.</li>
-        <li><b>Типичные просмотры поста</b> и их доля от подписчиков: низкая доля — признак мёртвой или накрученной аудитории.</li>
-        <li><b>Сколько рекламы выходит</b> и сколько стоит 1 000 просмотров по цене, которую назвал владелец.</li>
+        <li><b>Сообщества, где сидит ваша аудитория</b>: для местного бизнеса — тематические и общегородские паблики, для своей группы — похожие сообщества. Страницы компаний и конкурентов отсеиваем.</li>
+        <li><b>Почему площадка подходит</b> и <b>кто там уже рекламируется</b> — по содержанию её постов.</li>
+        <li><b>Типичные просмотры поста</b>, их доля от подписчиков и цена 1 000 просмотров по цене, которую назвал владелец. Сообщества с мёртвой аудиторией — внизу с пометкой.</li>
       </ul>
     </div>}
 
@@ -148,32 +162,29 @@ export function PlacementsPage() {
 }
 
 function PlacementsReport({ result }: { result: PlacementSearchResult }) {
-  const [category, setCategory] = useState<PlacementCategory | 'all'>('all');
+  const [size, setSize] = useState<SizeKey>('all');
   const [sort, setSort] = useState<SortKey>('fit');
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [prices, setPrices] = useState<Record<number, string>>({});
   const priceTracked = useRef(false);
 
   useEffect(() => {
-    setCategory('all');
+    setSize('all');
     setSelected(new Set());
     setPrices({});
   }, [result]);
 
-  const counts = useMemo(() => {
-    const map = new Map<PlacementCategory, number>();
-    result.rows.forEach((row) => map.set(row.category, (map.get(row.category) ?? 0) + 1));
-    return [...map.entries()].sort((left, right) => right[1] - left[1]);
-  }, [result.rows]);
-
   const cpmOf = (row: PlacementRow) => costPerThousand(positiveAmount(prices[row.id] ?? ''), row.views);
-  const rows = useMemo(() => {
-    const filtered = result.rows.filter((row) => category === 'all' || row.category === category);
+  const rowsOf = (kind: PlacementKind) => {
+    const sizeTest = sizes.find((item) => item.key === size)?.test;
+    const filtered = result.rows.filter((row) => row.kind === kind && (!sizeTest || sizeTest(row.members)));
     if (sort === 'fit') return filtered;
-    const value = (row: PlacementRow | PlacementLockedRow) => !isOpen(row) ? -1
+    const value = (row: PlacementRow | PlacementLockedRow) => !isOpen(row) ? -Infinity
       : sort === 'members' ? row.members : sort === 'views' ? row.views ?? -1 : sort === 'ratio' ? row.viewsToSubscribers ?? -1 : -(cpmOf(row) ?? Infinity);
     return [...filtered].sort((left, right) => sort === 'members' ? right.members - left.members : value(right) - value(left));
-  }, [result.rows, category, sort, prices]);
+  };
+  const topicRows = rowsOf('topic');
+  const cityRows = rowsOf('city');
 
   const lockedCount = result.rows.filter((row) => row.locked).length;
   const chosen = result.rows.filter((row): row is PlacementRow => isOpen(row) && selected.has(row.id));
@@ -201,99 +212,104 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
     }
   };
 
-  const chooseCategory = (value: PlacementCategory | 'all') => {
-    setCategory(value);
+  const chooseSize = (value: SizeKey) => {
+    setSize(value);
     if (value !== 'all') trackPlacementEvent('placement_filter', value);
   };
 
-  const sortButton = (key: SortKey, label: string) => <button type="button" className={sort === key ? 'active' : ''} aria-pressed={sort === key} onClick={() => setSort(sort === key ? 'fit' : key)}>{label}</button>;
+  const chip = (active: boolean, label: string, onClick: () => void, key?: string) => <button type="button" key={key} className={active ? 'active' : ''} aria-pressed={active} onClick={onClick}>{label}</button>;
+  const where = result.city ? result.city.title : 'по всей России';
+  const table = (rows: Array<PlacementRow | PlacementLockedRow>) => <div className="placements-table-wrap" tabIndex={0} aria-label="Таблица площадок">
+    <table className="placements-table">
+      <thead><tr>
+        <th scope="col"><span className="placements-sr-only">В подборку</span></th>
+        <th scope="col">Сообщество</th>
+        <th scope="col">Подписчики</th>
+        <th scope="col">Просмотры поста</th>
+        <th scope="col" title="Какая доля подписчиков видит типичный пост">Просм. / подп.</th>
+        <th scope="col" title="Только маркированная реклама; у частых пабликов — по последним 100 постам">Реклама в неделю</th>
+        <th scope="col">Цена, ₽</th>
+        <th scope="col">CPM</th>
+      </tr></thead>
+      <tbody>
+        {rows.map((row) => isOpen(row)
+          ? <tr key={row.id} className={[selected.has(row.id) ? 'selected' : '', row.dead ? 'placements-dead' : ''].join(' ')}>
+            <td><input type="checkbox" checked={selected.has(row.id)} onChange={() => toggle(row)} aria-label={`В подборку: ${row.name}`} /></td>
+            <td><PlacementName row={row} /></td>
+            <td>{number(row.members)}</td>
+            <td title={row.viewsLower !== null ? `Обычно от ${number(row.viewsLower)} до ${number(row.viewsUpper)}` : undefined}>{number(row.views)}</td>
+            <td className={row.dead ? 'placements-low' : ''}>{row.viewsToSubscribers === null ? '—' : `${number(row.viewsToSubscribers, 1)}%`}{row.dead && <small>мало просмотров</small>}</td>
+            <td title={row.complete ? undefined : 'По последним 100 постам: они покрывают меньше 30 дней'}>{number(row.adsPerWeek, 1)}</td>
+            <td>{selected.has(row.id)
+              ? <input className="placements-price" value={prices[row.id] ?? ''} onChange={(event) => changePrice(row.id, event.target.value)} inputMode="decimal" placeholder="5 000" maxLength={24} aria-label={`Цена размещения: ${row.name}`} aria-invalid={Boolean(prices[row.id] && positiveAmount(prices[row.id]) === null)} />
+              : <small>отметьте</small>}</td>
+            <td>{rubles(cpmOf(row))}</td>
+          </tr>
+          : <tr key={row.id} className="placements-locked">
+            <td><Lock size={14} aria-label="Доступно с тарифом" /></td>
+            <td><PlacementName row={row} /></td>
+            <td>{number(row.members)}</td>
+            <td colSpan={5}><span className="placements-blur" aria-hidden="true">00 000 · 0,0% · 0,0 · подходит потому что…</span></td>
+          </tr>)}
+      </tbody>
+    </table>
+  </div>;
 
-  return <>
-    <div className="panel span-2 analytics-section">
-      <div className="section-title"><div>
-        <h2>{result.city.title}{result.district && `, ${result.district}`}{result.topic && ` · ${result.topic}`}</h2>
-        <p>{result.rows.length} {plural(result.rows.length, 'площадка', 'площадки', 'площадок')} из {result.candidates} {plural(result.candidates, 'найденного сообщества', 'найденных сообществ', 'найденных сообществ')} от {number(result.minMembers)} подписчиков · данные на {new Date(result.loadedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
-      </div></div>
-      {!result.aiUsed && <div className="ad-check-notice">Подбор без умного фильтра: в списке могут оказаться лишние сообщества, а категории определены по названиям.</div>}
-      {result.aiQueries.length > 0 && <p className="ad-check-data-note"><Sparkles size={14} aria-hidden="true" /> Искали также, где сидит ваша аудитория: {result.aiQueries.join(', ')}.</p>}
+  return <div className="panel span-2 analytics-section">
+    <div className="section-title"><div>
+      <h2>{result.brief}</h2>
+      <p>{result.type === 'community' ? 'Сообщество' : 'Бизнес'} · {where} · {result.rows.length} {plural(result.rows.length, 'площадка', 'площадки', 'площадок')} из {result.candidates} {plural(result.candidates, 'найденного сообщества', 'найденных сообществ', 'найденных сообществ')} · данные на {new Date(result.loadedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
+    </div></div>
+    {result.audience && <p className="placements-audience"><Sparkles size={14} aria-hidden="true" /> <b>Аудитория:</b> {result.audience}</p>}
+    {result.cityMissing && <div className="ad-check-notice">Похоже, бизнес местный, но город не указан — искали по всей России. Укажите город, чтобы найти местные паблики.</div>}
+    {!result.aiUsed && <div className="ad-check-notice">DeepSeek был недоступен или ответил с ошибкой: часть площадок отобрана простыми правилами, у них нет причины и списка рекламодателей.</div>}
+    {result.queries.length > 0 && <p className="ad-check-data-note">Искали: {result.queries.join(', ')}.</p>}
 
-      {result.rows.length === 0
-        ? <div className="empty-state">Местных сообществ не нашлось. Уберите тему или район, уменьшите порог подписчиков.</div>
-        : <>
-          <div className="placements-toolbar">
-            <div className="placements-chips" role="group" aria-label="Категория">
-              <button type="button" className={category === 'all' ? 'active' : ''} aria-pressed={category === 'all'} onClick={() => chooseCategory('all')}>Все · {result.rows.length}</button>
-              {counts.map(([key, count]) => <button type="button" key={key} className={category === key ? 'active' : ''} aria-pressed={category === key} onClick={() => chooseCategory(key)}>{categoryLabels[key]} · {count}</button>)}
-            </div>
-            <div className="placements-chips" role="group" aria-label="Сортировка">
-              <span>Сортировать:</span>
-              {sortButton('members', 'подписчики')}
-              {sortButton('views', 'просмотры')}
-              {sortButton('ratio', 'просм./подп.')}
-              {sortButton('cpm', 'CPM')}
-            </div>
+    {result.rows.length === 0
+      ? <div className="empty-state">Подходящих площадок не нашлось. Опишите задачу подробнее или выберите другой город.</div>
+      : <>
+        <div className="placements-toolbar">
+          <div className="placements-chips" role="group" aria-label="Размер">
+            <span>Размер:</span>
+            {chip(size === 'all', 'любой', () => chooseSize('all'))}
+            {sizes.map((item) => chip(size === item.key, item.label, () => chooseSize(item.key), item.key))}
           </div>
-
-          <div className="placements-table-wrap" tabIndex={0} aria-label="Таблица площадок">
-            <table className="placements-table">
-              <thead><tr>
-                <th scope="col"><span className="placements-sr-only">В подборку</span></th>
-                <th scope="col">Сообщество</th>
-                <th scope="col">Подписчики</th>
-                <th scope="col">Просмотры поста</th>
-                <th scope="col" title="Какая доля подписчиков видит типичный пост">Просм. / подп.</th>
-                <th scope="col">Постов в день</th>
-                <th scope="col" title="Только маркированная реклама; у частых пабликов — по последним 100 постам">Реклама в неделю</th>
-                <th scope="col">Вовлечённость</th>
-                <th scope="col">Цена, ₽</th>
-                <th scope="col">CPM</th>
-              </tr></thead>
-              <tbody>
-                {rows.map((row) => isOpen(row)
-                  ? <tr key={row.id} className={selected.has(row.id) ? 'selected' : ''}>
-                    <td><input type="checkbox" checked={selected.has(row.id)} onChange={() => toggle(row)} aria-label={`В подборку: ${row.name}`} /></td>
-                    <td><PlacementName row={row} /></td>
-                    <td>{number(row.members)}</td>
-                    <td title={row.viewsLower !== null ? `Обычно от ${number(row.viewsLower)} до ${number(row.viewsUpper)}` : undefined}>{number(row.views)}</td>
-                    <td className={row.viewsToSubscribers !== null && row.viewsToSubscribers < 1 ? 'placements-low' : ''}>{row.viewsToSubscribers === null ? '—' : `${number(row.viewsToSubscribers, 1)}%`}</td>
-                    <td>{number(row.postsPerDay, 1)}</td>
-                    <td title={row.complete ? undefined : 'По последним 100 постам: они покрывают меньше 30 дней'}>{number(row.adsPerWeek, 1)}</td>
-                    <td>{row.engagement === null ? '—' : `${number(row.engagement, 2)}%`}</td>
-                    <td>{selected.has(row.id)
-                      ? <input className="placements-price" value={prices[row.id] ?? ''} onChange={(event) => changePrice(row.id, event.target.value)} inputMode="decimal" placeholder="5 000" maxLength={24} aria-label={`Цена размещения: ${row.name}`} aria-invalid={Boolean(prices[row.id] && positiveAmount(prices[row.id]) === null)} />
-                      : <small>отметьте</small>}</td>
-                    <td>{rubles(cpmOf(row))}</td>
-                  </tr>
-                  : <tr key={row.id} className="placements-locked">
-                    <td><Lock size={14} aria-label="Доступно с тарифом" /></td>
-                    <td><PlacementName row={row} /></td>
-                    <td>{number(row.members)}</td>
-                    <td colSpan={7}><span className="placements-blur" aria-hidden="true">00 000 · 0,0% · 0,0 · 0,0 · 0,00%</span></td>
-                  </tr>)}
-              </tbody>
-            </table>
+          <div className="placements-chips" role="group" aria-label="Сортировка">
+            <span>Сортировать:</span>
+            {(['members', 'views', 'ratio', 'cpm'] as const).map((key) => chip(sort === key, { members: 'подписчики', views: 'просмотры', ratio: 'просм./подп.', cpm: 'CPM' }[key], () => setSort(sort === key ? 'fit' : key), key))}
           </div>
+        </div>
 
-          {lockedCount > 0 && <div className="placements-paywall">
-            <span>Ещё {lockedCount} {plural(lockedCount, 'площадка', 'площадки', 'площадок')} с просмотрами, рекламой и CPM — с тарифом. С ним же до 20 подборов в день.</span>
-            <Link className="primary-button" to="/account" onClick={() => trackPlacementEvent('placement_paywall_click', 'rows')}>Открыть все площадки</Link>
-          </div>}
+        {topicRows.length > 0 && <section className="placements-block">
+          <h3>{result.type === 'community' ? 'Похожие и тематические сообщества' : 'Под вашу аудиторию'} · {topicRows.length}</h3>
+          {table(topicRows)}
+        </section>}
+        {cityRows.length > 0 && <section className="placements-block">
+          <h3>Общегородские паблики · {cityRows.length}</h3>
+          <p className="ad-check-data-note">Новости, подслушано, афиши — подходят любому местному бизнесу.</p>
+          {table(cityRows)}
+        </section>}
+        {!topicRows.length && !cityRows.length && <div className="empty-state">Площадок такого размера нет — выберите другой размер.</div>}
 
-          {chosen.length > 0 && <div className="placements-summary" aria-live="polite">
-            <strong>В подборке {chosen.length} {plural(chosen.length, 'площадка', 'площадки', 'площадок')}</strong>
-            <span>{priced.length
-              ? `С ценой ${priced.length}: ${rubles(totalPrice)} за ~${number(totalViews)} просмотров, средний CPM ${rubles(costPerThousand(totalPrice, totalViews))}`
-              : 'Введите цены, которые назвали владельцы, — посчитаем общий бюджет и CPM.'}</span>
-          </div>}
-        </>}
+        {lockedCount > 0 && <div className="placements-paywall">
+          <span>Ещё {lockedCount} {plural(lockedCount, 'площадка', 'площадки', 'площадок')} с просмотрами, рекламой, причинами и CPM — с тарифом. С ним же до 20 подборов в день.</span>
+          <Link className="primary-button" to="/account" onClick={() => trackPlacementEvent('placement_paywall_click', 'rows')}>Открыть все площадки</Link>
+        </div>}
 
-      <details className="ad-check-method">
-        <summary>Как считаем</summary>
-        <p>Сообщества ищем поиском VK по городу, району, теме и типичным словам городских пабликов. Местные отбирает DeepSeek по названию и описанию; если он недоступен — по упоминанию города и региона.</p>
-        <p>Просмотры поста — медиана текущих просмотров последних постов старше 3 дней, разброс в подсказке — от 25-го до 75-го процентиля. Рекламу видим только маркированную, поэтому это нижняя оценка. Отмеченные «в подборку» сообщества Socstat начинает отслеживать каждую ночь.</p>
-      </details>
-    </div>
-  </>;
+        {chosen.length > 0 && <div className="placements-summary" aria-live="polite">
+          <strong>В подборке {chosen.length} {plural(chosen.length, 'площадка', 'площадки', 'площадок')}</strong>
+          <span>{priced.length
+            ? `С ценой ${priced.length}: ${rubles(totalPrice)} за ~${number(totalViews)} просмотров, средний CPM ${rubles(costPerThousand(totalPrice, totalViews))}`
+            : 'Введите цены, которые назвали владельцы, — посчитаем общий бюджет и CPM.'}</span>
+        </div>}
+      </>}
+
+    <details className="ad-check-method">
+      <summary>Как подбираем</summary>
+      <p>DeepSeek читает описание: бизнес это или сообщество, нужен ли город, кто аудитория и какие сообщества искать. Ищем поиском VK, отсеиваем страницы компаний и конкурентов, затем модель читает последние посты лучших сообществ и объясняет, подходит ли площадка и кто там рекламируется.</p>
+      <p>Просмотры поста — медиана текущих просмотров последних постов старше 3 дней, разброс в подсказке — от 25-го до 75-го процентиля. «Мало просмотров» — меньше 100 или меньше 0,3% подписчиков. Рекламу видим только маркированную. Модель может ошибаться в оценке — сверяйтесь с постами. Отмеченные «в подборку» сообщества Socstat начинает отслеживать каждую ночь.</p>
+    </details>
+  </div>;
 }
 
 function PlacementName({ row }: { row: PlacementRow | PlacementLockedRow }) {
@@ -301,7 +317,8 @@ function PlacementName({ row }: { row: PlacementRow | PlacementLockedRow }) {
     {row.photo ? <img src={row.photo} alt="" width={36} height={36} loading="lazy" /> : <span className="placements-avatar">VK</span>}
     <span>
       <a href={row.url} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', 'vk')}>{row.name}<ExternalLink size={12} aria-hidden="true" /></a>
-      <small>{categoryLabels[row.category]}</small>
+      {isOpen(row) && row.reason && <small className="placements-reason">{row.reason}</small>}
+      {isOpen(row) && row.advertisers && <small className="placements-advertisers"><Megaphone size={12} aria-hidden="true" /> Рекламируются: {row.advertisers}</small>}
       {isOpen(row) && <span className="placements-contacts">
         {row.contacts.map((contact) => <a key={contact.url} href={contact.url} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', 'contact')}>{contact.label}</a>)}
         <a href={row.messageUrl} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', 'message')}><MessageCircle size={12} aria-hidden="true" /> Написать</a>

@@ -12,7 +12,8 @@ export type AdminPlacementStats = {
   users: number;
   searches: number;
   repeatUsers: number;
-  topicShare: number | null;
+  /** Доля подборов с городом (местный бизнес); остальные — по всей России. */
+  cityShare: number | null;
   thinResults: number;
   rulesSearches: number;
   topCities: Array<{ city: string; users: number; searches: number }>;
@@ -21,7 +22,7 @@ export type AdminPlacementStats = {
   selectedCommunities: number;
   priceUsers: number;
   filterUsers: number;
-  filters: Array<{ category: string; users: number }>;
+  sizeFilters: Array<{ size: string; users: number }>;
   limitUsers: number;
   paywallClicks: { rows: number; limit: number };
   paidAfterFirstSearch: { users: number; revenue: number };
@@ -31,11 +32,11 @@ export type AdminPlacementStats = {
 
 type EventRow = { userId: Types.ObjectId; type: string; label?: string; createdAt: Date };
 
-/** «Город|тема|ai или rules|строк»: тема может содержать «|», поэтому разбор с концов. */
+/** «Город|описание задачи|ai или rules|строк»: описание может содержать «|», поэтому разбор с концов. Город пуст, если подбор без города. */
 export function parseSearchLabel(label = '') {
   const parts = label.split('|');
   if (parts.length < 4) return null;
-  return { city: parts[0], topic: parts.slice(1, -2).join('|'), ai: parts.at(-2) === 'ai', rows: Number(parts.at(-1)) };
+  return { city: parts[0], brief: parts.slice(1, -2).join('|'), ai: parts.at(-2) === 'ai', rows: Number(parts.at(-1)) };
 }
 
 /** Счётчики DeepSeek из Redis по дням периода; админы в них не отделены. */
@@ -85,10 +86,11 @@ export async function getAdminPlacementStats(requestedDays: unknown, now = new D
   searches.forEach((event) => {
     const label = parseSearchLabel(event.label);
     if (!label) return;
-    const city = cities.get(label.city) ?? { users: new Set<string>(), searches: 0 };
+    const name = label.city || 'без города';
+    const city = cities.get(name) ?? { users: new Set<string>(), searches: 0 };
     city.users.add(event.userId.toString());
     city.searches += 1;
-    cities.set(label.city, city);
+    cities.set(name, city);
   });
 
   const filterUsers = new Map<string, Set<string>>();
@@ -113,7 +115,7 @@ export async function getAdminPlacementStats(requestedDays: unknown, now = new D
     users: firstSearch.size,
     searches: searches.length,
     repeatUsers: [...searchDays.values()].filter((set) => set.size >= 2).length,
-    topicShare: parsed.length ? Math.round(parsed.filter((item) => item.topic).length / parsed.length * 100) / 100 : null,
+    cityShare: parsed.length ? Math.round(parsed.filter((item) => item.city).length / parsed.length * 100) / 100 : null,
     thinResults: parsed.filter((item) => item.rows < 5).length,
     rulesSearches: parsed.filter((item) => !item.ai).length,
     topCities: [...cities.entries()].map(([city, value]) => ({ city, users: value.users.size, searches: value.searches }))
@@ -123,7 +125,7 @@ export async function getAdminPlacementStats(requestedDays: unknown, now = new D
     selectedCommunities: new Set(events.filter((event) => event.type === 'placement_select').map((event) => event.label)).size,
     priceUsers: usersOf('placement_price').size,
     filterUsers: usersOf('placement_filter').size,
-    filters: [...filterUsers.entries()].map(([category, users]) => ({ category, users: users.size })).sort((left, right) => right.users - left.users),
+    sizeFilters: [...filterUsers.entries()].map(([size, users]) => ({ size, users: users.size })).sort((left, right) => right.users - left.users),
     limitUsers: firstLimit.size,
     paywallClicks: { rows: usersOf('placement_paywall_click', 'rows').size, limit: usersOf('placement_paywall_click', 'limit').size },
     paidAfterFirstSearch: paidAfter(firstSearch),

@@ -43,12 +43,10 @@ placementsRouter.get('/search', async (req, res, next) => {
     const data = await runPlacementSearch({
       userId: req.user!.id,
       paid: hasActiveAccess(req.user),
-      cityId: req.query.cityId,
-      district: req.query.district,
-      topic: req.query.topic,
-      minMembers: req.query.minMembers
+      brief: req.query.brief,
+      cityId: req.query.cityId
     });
-    trackActivity(req, 'placement_search', { platform: 'vk', label: [data.city.title, data.topic, data.aiUsed ? 'ai' : 'rules', data.rows.length].join('|') });
+    trackActivity(req, 'placement_search', { platform: 'vk', label: [data.city?.title ?? '', data.brief, data.aiUsed ? 'ai' : 'rules', data.rows.length].join('|') });
     res.json({ success: true, data });
   } catch (error) {
     if (error instanceof DomainError && error.code === 'PLACEMENT_LIMIT') trackActivity(req, 'placement_limit', { label: error.code });

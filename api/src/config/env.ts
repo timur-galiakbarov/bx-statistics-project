@@ -62,13 +62,12 @@ export const env = {
   deepseekApiKey: process.env.DEEPSEEK_API_KEY?.trim() ?? '',
   deepseekModel: process.env.DEEPSEEK_MODEL?.trim() || 'deepseek-chat',
   deepseekTimeoutMs: Number(process.env.DEEPSEEK_TIMEOUT_MS ?? 25_000),
-  // Подбор площадок VK: подборов в сутки на пользователя, сколько строк видно без тарифа, кэш выдачи и меток,
+  // Подбор площадок VK: подборов в сутки на пользователя, сколько строк видно без тарифа, кэш выдачи,
   // суточный бюджет подборов с DeepSeek на весь сервис.
   placementDailyLimitFree: Number(process.env.PLACEMENT_DAILY_LIMIT_FREE ?? 1),
   placementDailyLimitPaid: Number(process.env.PLACEMENT_DAILY_LIMIT_PAID ?? 20),
   placementFreeRows: Number(process.env.PLACEMENT_FREE_ROWS ?? 5),
   placementSearchCacheTtlMs: Number(process.env.PLACEMENT_SEARCH_CACHE_TTL_MS ?? 24 * 3_600_000),
-  placementLabelCacheTtlMs: Number(process.env.PLACEMENT_LABEL_CACHE_TTL_MS ?? 7 * 86_400_000),
   placementAiEnabled: (process.env.PLACEMENT_AI_ENABLED ?? '1') === '1',
   placementAiMaxPerDay: Number(process.env.PLACEMENT_AI_MAX_PER_DAY ?? 500),
   // Ежедневные срезы подписчиков и публикаций. По умолчанию включены только в production.

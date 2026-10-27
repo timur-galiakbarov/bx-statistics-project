@@ -25,7 +25,7 @@ export function trackPreviewUnlock(label: PreviewUnlockTarget) {
 export type PlacementUiEvent =
   | ['placement_open', 'vk' | 'contact' | 'message']
   | ['placement_price', 'entered']
-  | ['placement_filter', string]
+  | ['placement_filter', 'small' | 'medium' | 'large']
   | ['placement_paywall_click', 'rows' | 'limit'];
 
 export function trackPlacementEvent(...[event, label]: PlacementUiEvent) {

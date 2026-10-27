@@ -4784,10 +4784,31 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 }
 
 /* Подбор площадок */
-.placements-form { display: grid; grid-template-columns: minmax(180px, 1.3fr) minmax(140px, 1fr) minmax(160px, 1.2fr) minmax(120px, .7fr) auto; gap: 12px; align-items: end; margin-top: 4px; }
+.placements-form { display: grid; grid-template-columns: minmax(260px, 2fr) minmax(200px, 1fr) auto; gap: 12px; align-items: start; margin-top: 4px; }
 .placements-form label, .placements-city { display: flex; flex-direction: column; gap: 6px; color: #253247; font-size: 13px; font-weight: 500; position: relative; }
-.placements-form input, .placements-form select { min-height: 44px; padding: 10px 12px; border: 1px solid #b7c6dc; border-radius: 8px; background: #fff; color: #253247; font: inherit; font-size: 15px; font-weight: 400; }
-.placements-form input:focus-visible, .placements-form select:focus-visible { outline: 2px solid #1d5fb8; outline-offset: 2px; }
+.placements-city label small { color: #5d6d84; font-weight: 400; }
+.placements-form input, .placements-form textarea { min-height: 44px; padding: 10px 12px; border: 1px solid #b7c6dc; border-radius: 8px; background: #fff; color: #253247; font: inherit; font-size: 15px; font-weight: 400; }
+.placements-form textarea { resize: vertical; min-height: 68px; line-height: 1.45; }
+.placements-form input:focus-visible, .placements-form textarea:focus-visible { outline: 2px solid #1d5fb8; outline-offset: 2px; }
+.placements-form > .primary-button { margin-top: 25px; }
+.placements-city-input { position: relative; display: flex; }
+.placements-city-input input { flex: 1; width: 100%; padding-right: 36px; }
+.placements-city-input button { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); display: inline-flex; padding: 6px; border: 0; border-radius: 6px; background: none; color: #5d6d84; cursor: pointer; }
+.placements-city-input button:hover { background: #f4f7fb; }
+.placements-examples { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: #5d6d84; font-size: 12px; font-weight: 400; }
+.placements-examples button { padding: 3px 10px; border: 1px solid #d5e2f4; border-radius: 999px; background: #fff; color: #1d5fb8; font: inherit; cursor: pointer; text-align: left; }
+.placements-examples button:hover { background: #f4f7fb; }
+.placements-audience { margin: 0 0 8px; color: #253247; font-size: 14px; line-height: 1.5; }
+.placements-audience svg { vertical-align: -2px; color: #2f6fd1; }
+.placements-page .analytics-section, .placements-block { min-width: 0; }
+.placements-block { margin-top: 18px; }
+.placements-block h3 { margin: 0 0 8px; color: #253247; font-size: 16px; }
+.placements-block > .ad-check-data-note { margin: -4px 0 8px; }
+.placements-reason { color: #253247; font-size: 12px; line-height: 1.4; white-space: normal; }
+.placements-advertisers { display: inline-flex; align-items: flex-start; gap: 4px; color: #8a4b08; font-size: 12px; line-height: 1.4; }
+.placements-advertisers svg { flex: 0 0 auto; margin-top: 2px; }
+.placements-dead td { opacity: .6; }
+.placements-dead td:nth-child(5) { opacity: 1; }
 .placements-form > .primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; }
 .placements-suggestions { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; margin: 4px 0 0; padding: 4px; list-style: none; background: #fff; border: 1px solid #d5e2f4; border-radius: 8px; box-shadow: 0 10px 24px rgba(37, 50, 71, .12); max-height: 280px; overflow-y: auto; }
 .placements-suggestions button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 8px 10px; border: 0; border-radius: 6px; background: none; color: #253247; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
@@ -4800,7 +4821,7 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 .placements-chips button.active { border-color: #2f6fd1; background: #eaf1fc; color: #1d5fb8; font-weight: 600; }
 .placements-table-wrap { overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid #e3e9f1; border-radius: 10px; }
 .placements-table-wrap:focus-visible { outline: 2px solid #1d5fb8; outline-offset: 2px; }
-.placements-table { width: 100%; min-width: 1080px; border-collapse: collapse; color: #253247; font-size: 13px; }
+.placements-table { width: 100%; min-width: 980px; border-collapse: collapse; color: #253247; font-size: 13px; }
 .placements-table th { position: sticky; top: 0; padding: 10px 12px; background: #f4f7fb; color: #5d6d84; font-size: 12px; font-weight: 600; text-align: right; white-space: nowrap; }
 .placements-table td { padding: 10px 12px; border-top: 1px solid #eef2f7; text-align: right; vertical-align: middle; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .placements-table td:nth-child(2) { white-space: normal; }
@@ -4811,7 +4832,7 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 .placements-low { color: #9f342a; font-weight: 600; }
 .placements-price { width: 96px; min-height: 34px; padding: 6px 8px; border: 1px solid #b7c6dc; border-radius: 6px; font: inherit; font-size: 13px; text-align: right; }
 .placements-price[aria-invalid="true"] { border-color: #9f342a; }
-.placements-name { display: flex; align-items: flex-start; gap: 10px; min-width: 240px; max-width: 340px; }
+.placements-name { display: flex; align-items: flex-start; gap: 10px; min-width: 300px; max-width: 420px; }
 .placements-name img, .placements-avatar { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%; }
 .placements-avatar { display: inline-flex; align-items: center; justify-content: center; background: #eef3fa; color: #2f6fd1; font-size: 11px; font-weight: 700; }
 .placements-name > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -4826,5 +4847,5 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 .placements-summary { flex-direction: column; align-items: flex-start; gap: 4px; }
 .placements-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .placements-page .ad-check-data-note svg { vertical-align: -2px; }
-@media (max-width: 1100px) { .placements-form { grid-template-columns: 1fr 1fr; } .placements-form > .primary-button { grid-column: 1 / -1; } }
+@media (max-width: 1100px) { .placements-form { grid-template-columns: 1fr 1fr; } .placements-form > .primary-button { grid-column: 1 / -1; margin-top: 0; } }
 @media (max-width: 720px) { .placements-form { grid-template-columns: 1fr; } .placements-paywall .primary-button { width: 100%; justify-content: center; } }

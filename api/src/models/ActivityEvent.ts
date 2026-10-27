@@ -26,7 +26,7 @@ export const activityEventTypes = [
   // Проверка канала перед рекламой; label — источник. ad_check_limit — упёрлись в лимит проверок.
   'ad_check_run',
   'ad_check_limit',
-  // Подбор площадок VK. placement_search — label «город|тема|ai или rules|строк»; placement_limit — упёрлись в лимит;
+  // Подбор площадок VK. placement_search — label «город|описание задачи|ai или rules|строк»; placement_limit — упёрлись в лимит;
   // placement_select — отметили «в подборку», label — id сообщества; остальные — клики, label из закрытого списка.
   'placement_search',
   'placement_limit',

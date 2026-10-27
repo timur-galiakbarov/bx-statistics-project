@@ -4802,7 +4802,8 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 .placements-table-wrap:focus-visible { outline: 2px solid #1d5fb8; outline-offset: 2px; }
 .placements-table { width: 100%; min-width: 1080px; border-collapse: collapse; color: #253247; font-size: 13px; }
 .placements-table th { position: sticky; top: 0; padding: 10px 12px; background: #f4f7fb; color: #5d6d84; font-size: 12px; font-weight: 600; text-align: right; white-space: nowrap; }
-.placements-table td { padding: 10px 12px; border-top: 1px solid #eef2f7; text-align: right; vertical-align: middle; font-variant-numeric: tabular-nums; }
+.placements-table td { padding: 10px 12px; border-top: 1px solid #eef2f7; text-align: right; vertical-align: middle; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.placements-table td:nth-child(2) { white-space: normal; }
 .placements-table th:nth-child(-n+2), .placements-table td:nth-child(-n+2) { text-align: left; }
 .placements-table td small { display: block; color: #5d6d84; font-size: 11px; }
 .placements-table tr.selected td { background: #f7faff; }

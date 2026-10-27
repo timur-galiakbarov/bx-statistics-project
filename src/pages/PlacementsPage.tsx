@@ -126,7 +126,7 @@ export function PlacementsPage() {
         </select></label>
         <button className="primary-button" type="submit" disabled={isLoading}><Search size={18} />{isLoading ? 'Подбираем' : 'Подобрать'}</button>
       </form>
-      {usage && <p className="ad-check-data-note">Сегодня {usage.used} из {usage.limit} {plural(usage.limit, 'подбора', 'подборов', 'подборов')}. Повторить тот же подбор можно бесплатно.{!usage.paid && ` Без тарифа метрики видны у первых ${usage.freeRows} площадок.`}</p>}
+      {usage && <p className="ad-check-data-note">Сегодня {Math.min(usage.used, usage.limit)} из {usage.limit} {plural(usage.limit, 'подбора', 'подборов', 'подборов')}. Повторить тот же подбор можно бесплатно.{!usage.paid && ` Без тарифа метрики видны у первых ${usage.freeRows} площадок.`}</p>}
       {message && <div className="form-message telegram-message-error" role="alert">{message}
         {limitReached && usage && !usage.paid && <> <Link to="/account" onClick={() => trackPlacementEvent('placement_paywall_click', 'limit')}>Посмотреть тарифы</Link></>}
       </div>}
@@ -182,13 +182,13 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
   const totalViews = priced.reduce((sum, row) => sum + row.views!, 0);
 
   const toggle = (row: PlacementRow) => {
+    const adding = !selected.has(row.id);
+    // The request stays outside the state updater: React may call updaters twice.
+    if (adding) apiPost('/api/placements/select', { groupId: row.id }).catch(() => undefined);
     setSelected((current) => {
       const next = new Set(current);
-      if (next.has(row.id)) next.delete(row.id);
-      else {
-        next.add(row.id);
-        apiPost('/api/placements/select', { groupId: row.id }).catch(() => undefined);
-      }
+      if (adding) next.add(row.id);
+      else next.delete(row.id);
       return next;
     });
   };
@@ -243,7 +243,7 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
                 <th scope="col">Просмотры поста</th>
                 <th scope="col" title="Какая доля подписчиков видит типичный пост">Просм. / подп.</th>
                 <th scope="col">Постов в день</th>
-                <th scope="col" title="Только маркированная реклама">Реклама в неделю</th>
+                <th scope="col" title="Только маркированная реклама; у частых пабликов — по последним 100 постам">Реклама в неделю</th>
                 <th scope="col">Вовлечённость</th>
                 <th scope="col">Цена, ₽</th>
                 <th scope="col">CPM</th>
@@ -257,7 +257,7 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
                     <td title={row.viewsLower !== null ? `Обычно от ${number(row.viewsLower)} до ${number(row.viewsUpper)}` : undefined}>{number(row.views)}</td>
                     <td className={row.viewsToSubscribers !== null && row.viewsToSubscribers < 1 ? 'placements-low' : ''}>{row.viewsToSubscribers === null ? '—' : `${number(row.viewsToSubscribers, 1)}%`}</td>
                     <td>{number(row.postsPerDay, 1)}</td>
-                    <td>{number(row.adsPerWeek, 1)}{!row.complete && <small>за неполный период</small>}</td>
+                    <td title={row.complete ? undefined : 'По последним 100 постам: они покрывают меньше 30 дней'}>{number(row.adsPerWeek, 1)}</td>
                     <td>{row.engagement === null ? '—' : `${number(row.engagement, 2)}%`}</td>
                     <td>{selected.has(row.id)
                       ? <input className="placements-price" value={prices[row.id] ?? ''} onChange={(event) => changePrice(row.id, event.target.value)} inputMode="decimal" placeholder="5 000" maxLength={24} aria-label={`Цена размещения: ${row.name}`} aria-invalid={Boolean(prices[row.id] && positiveAmount(prices[row.id]) === null)} />

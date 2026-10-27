@@ -1,4 +1,4 @@
-import { Bell, BellOff, X } from 'lucide-react';
+import { Bell, BellOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { formatDate } from '../utils/date';
 import {
@@ -63,28 +63,24 @@ export function PushPrompt({ activeTo, isTrial }: { activeTo?: string; isTrial: 
 
   return (
     <div className="push-prompt" role="region" aria-label="Напоминание об окончании доступа">
-      <Bell className="push-prompt-icon" size={22} />
+      <span className="push-prompt-icon">
+        <Bell size={18} />
+      </span>
       <div className="push-prompt-text">
-        <strong>
-          {isTrial ? 'Напомнить, когда пробный доступ будет заканчиваться?' : 'Напомнить, когда доступ будет заканчиваться?'}
-        </strong>
+        <strong>{isTrial ? 'Напомнить о конце пробного доступа?' : 'Напомнить о конце доступа?'}</strong>
         <span>
-          Пришлём уведомление в браузере за 3 дня до {activeTo ? formatDate(activeTo) : 'окончания доступа'}
-          {isTrial ? ', чтобы аналитика по вашим каналам не закрылась внезапно' : ''}. Не чаще раза в день и только по делу —
-          отключить можно в профиле.
+          Пришлём уведомление в браузере за 3 дня до {activeTo ? formatDate(activeTo) : 'окончания доступа'}. Отключить
+          можно в профиле.
         </span>
       </div>
       <div className="push-prompt-actions">
-        <button className="primary-button" type="button" onClick={accept} disabled={isBusy}>
-          Да, напомнить
+        <button className="primary-button push-prompt-accept" type="button" onClick={accept} disabled={isBusy}>
+          Напомнить
         </button>
-        <button className="secondary-button" type="button" onClick={dismiss} disabled={isBusy}>
+        <button className="push-prompt-dismiss" type="button" onClick={dismiss} disabled={isBusy}>
           Не сейчас
         </button>
       </div>
-      <button className="push-prompt-close" type="button" aria-label="Закрыть" onClick={dismiss}>
-        <X size={18} />
-      </button>
     </div>
   );
 }

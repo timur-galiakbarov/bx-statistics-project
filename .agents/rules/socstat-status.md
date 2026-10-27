@@ -4,7 +4,7 @@
 
 ```bash
 set -a; source .env.local; set +a
-curl -sf -H "Authorization: Bearer $SOCSTAT_EXPORT_TOKEN" "https://socstat-lab.ru/api/account/admin/export?days=30" -o exports/socstat-latest.json
+curl -sf -H "Authorization: Bearer $SOCSTAT_EXPORT_TOKEN" "https://socstat.ru/api/account/admin/export?days=30" -o exports/socstat-latest.json
 ```
 
 - Токен лежит в `.env.local` в корне (`SOCSTAT_EXPORT_TOKEN`, файл в `.gitignore`); на сервере тот же токен — `ADMIN_EXPORT_TOKEN` в `api/.env`. Токен не выводи в ответах и не коммить.

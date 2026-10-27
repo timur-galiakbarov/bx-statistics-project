@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { cleanRegion, parseLabels, placeStems, ruleLabel, sanitizeQueries, stem, type PlacementLabel, type PlacementPlace } from './placementClassifier.js';
 import { buildQueries, buildRow, lockRows, pickRows } from './placementSearchService.js';
+import { parseSearchLabel } from './placementStatsService.js';
 
 const voronezh: PlacementPlace = { cityId: 42, city: 'Воронеж', region: 'Воронежская область', district: '', topic: '' };
 const abakan: PlacementPlace = { cityId: 1, city: 'Абакан', region: 'Республика Хакасия', district: '', topic: '' };
@@ -108,4 +109,10 @@ test('без тарифа метрики видны только у первых
   assert.equal(rows[1].locked, false);
   assert.deepEqual(rows[2], { id: 3, name: 'A', url: row.url, photo: null, members: 10, category: 'news', locked: true });
   assert.ok(lockRows([row, { ...row, id: 2 }], true, 1).every((item) => !item.locked));
+});
+
+test('метка подбора разбирается с концов: тема может содержать «|»', () => {
+  assert.deepEqual(parseSearchLabel('Воронеж||ai|30'), { city: 'Воронеж', topic: '', ai: true, rows: 30 });
+  assert.deepEqual(parseSearchLabel('Курск|окна|двери|rules|4'), { city: 'Курск', topic: 'окна|двери', ai: false, rows: 4 });
+  assert.equal(parseSearchLabel('мусор'), null);
 });

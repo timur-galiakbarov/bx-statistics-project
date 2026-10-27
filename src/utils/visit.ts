@@ -22,6 +22,16 @@ export function trackPreviewUnlock(label: PreviewUnlockTarget) {
   apiPost('/api/account/ui-event', { event: 'preview_unlock', label }).catch(() => undefined);
 }
 
+export type PlacementUiEvent =
+  | ['placement_open', 'vk' | 'contact' | 'message']
+  | ['placement_price', 'entered']
+  | ['placement_filter', string]
+  | ['placement_paywall_click', 'rows' | 'limit'];
+
+export function trackPlacementEvent(...[event, label]: PlacementUiEvent) {
+  apiPost('/api/account/ui-event', { event, label }).catch(() => undefined);
+}
+
 export function trackPageView(path: string) {
   sendActivity('page_view', path);
 }

@@ -47,6 +47,13 @@ const actionLabels: Record<string, string> = {
   analytics_preview: 'Открыл краткий отчёт',
   preview_unlock: 'Клик по закрытому блоку',
   ad_check_run: 'Проверил канал перед рекламой',
+  placement_search: 'Подобрал площадки',
+  placement_limit: 'Упёрся в лимит подборов',
+  placement_select: 'Отметил площадку в подборку',
+  placement_open: 'Открыл площадку из подбора',
+  placement_price: 'Ввёл цену в подборе',
+  placement_filter: 'Включил категорию в подборе',
+  placement_paywall_click: 'Нажал на тариф в подборе',
   ad_check_limit: 'Упёрся в лимит проверок',
   vk_report_connect: 'Нажал «Подключить» отчёт во VK',
   payment: 'Оплатил'
@@ -57,6 +64,7 @@ const pageLabels: Record<string, string> = {
   '/analytics': 'Аналитика',
   '/compare': 'Сравнение',
   '/posts': 'Публикации',
+  '/placements': 'Подбор площадок',
   '/account': 'Профиль и оплата',
   '/admin': 'Админка'
 };

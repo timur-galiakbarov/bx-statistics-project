@@ -11,6 +11,8 @@ export type User = {
   isAdmin: boolean;
   enforceAccessRestrictions: boolean;
   vkReports?: VkReportSettings;
+  /** Подбор площадок включён этому пользователю переключателем фичи. */
+  placementsEnabled?: boolean;
 };
 
 /** Еженедельный отчёт сообщением от сообщества socstat во VK. enabled — фича включена этому пользователю. */
@@ -784,4 +786,50 @@ export type AdCheckResult = {
     ad: AdMarker | null;
   }>;
   usage: AdCheckUsage;
+};
+
+export type PlacementCategory = 'news' | 'overheard' | 'classifieds' | 'jobs' | 'events' | 'district' | 'theme' | 'business' | 'official' | 'other';
+export type PlacementCity = { id: number; title: string; region: string; area: string };
+export type PlacementUsage = { used: number; limit: number; paid: boolean; freeRows: number };
+
+/** Строка подбора площадок: GET /api/placements/search. Просмотры — медиана текущих у постов старше 3 дней. */
+export type PlacementRow = {
+  id: number;
+  name: string;
+  url: string;
+  photo: string | null;
+  members: number;
+  category: PlacementCategory;
+  fit: number;
+  locked: false;
+  views: number | null;
+  viewsLower: number | null;
+  viewsUpper: number | null;
+  viewsToSubscribers: number | null;
+  postsPerDay: number;
+  adsPerWeek: number;
+  adsShare: number | null;
+  adMedianViews: number | null;
+  organicMedianViews: number | null;
+  engagement: number | null;
+  complete: boolean;
+  contacts: Array<{ label: string; url: string }>;
+  messageUrl: string;
+};
+
+/** Строка сверх бесплатного лимита: без метрик. */
+export type PlacementLockedRow = Pick<PlacementRow, 'id' | 'name' | 'url' | 'photo' | 'members' | 'category'> & { locked: true };
+
+export type PlacementSearchResult = {
+  city: PlacementCity;
+  district: string;
+  topic: string;
+  minMembers: number;
+  aiUsed: boolean;
+  aiQueries: string[];
+  candidates: number;
+  cached: boolean;
+  rows: Array<PlacementRow | PlacementLockedRow>;
+  loadedAt: string;
+  usage: PlacementUsage;
 };

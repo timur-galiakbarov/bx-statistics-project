@@ -4,6 +4,7 @@ import { UserModel } from '../models/User.js';
 import { acquisitionSource, type Acquisition } from '../repositories/accountRepository.js';
 import { plans, returningCustomerPlans } from '../routes/payments.js';
 import { getAdminActivityStats, mskDayKey, mskDayStart } from './activityStatsService.js';
+import { getAdminPlacementStats } from './placementStatsService.js';
 import { getAdminPreviewStats } from './previewStatsService.js';
 import { getAdminPushStats } from './pushStatsService.js';
 import { getAdminVkReportStats } from './vkReportStatsService.js';
@@ -54,11 +55,12 @@ function mskMonthStart(now: Date, shiftMonths: number) {
  * Администраторы исключены, имён и VK ID в выгрузке нет — пользователи различаются по userKey.
  */
 export async function getAdminExport(requestedDays: unknown, now = new Date()) {
-  const [activity, preview, push, vkReports] = await Promise.all([
+  const [activity, preview, push, vkReports, placements] = await Promise.all([
     getAdminActivityStats(requestedDays, now),
     getAdminPreviewStats(requestedDays, now),
     getAdminPushStats(requestedDays, now),
-    getAdminVkReportStats(requestedDays, now)
+    getAdminVkReportStats(requestedDays, now),
+    getAdminPlacementStats(requestedDays, now)
   ]);
   const days = activity.days;
   const rangeStart = mskDayStart(now, -(days - 1));
@@ -173,6 +175,7 @@ export async function getAdminExport(requestedDays: unknown, now = new Date()) {
         'preview — краткий отчёт VK для пользователей без доступа: просмотры, клики по закрытым блокам, оплаты после первого просмотра.',
         'push — подписки на уведомления, воронка мягкого запроса и напоминания об окончании доступа (продление — оплата в 7 дней после пуша).',
         'vkReports — еженедельный отчёт сообщениями сообщества VK: mode — переключатель фичи (off / admins / all), connectedUsers — разрешили сообщения, connectPlaces — где нажимали «Подключить» за periodDays и сколько из нажавших подключены, reports — отправленные за periodDays (full — с доступом, locked — доступ закончился), clicked — переход по ссылке из отчёта, paid — оплата в 7 дней после отчёта.',
+        'placements — подбор площадок VK за periodDays: mode — переключатель фичи; users/searches — кто и сколько раз подбирал, repeatUsers — подбирали в 2+ разных дня, topicShare — доля подборов с темой, thinResults — подборы с выдачей меньше 5 строк, rulesSearches — подборы, отфильтрованные запасными правилами без DeepSeek; topCities; openUsers/selectUsers/priceUsers/filterUsers — открыли сообщество или контакт, отметили «в подборку», ввели цену, включили категорию (filters — какие); limitUsers — упёрлись в дневной лимит, paywallClicks — нажали на тариф под закрытыми строками (rows) и в сообщении о лимите (limit); paidAfterFirstSearch/paidAfterLimit — оплаты после первого подбора и после первого упора в лимит. ai — счётчики DeepSeek из Redis по новым (не из кэша) подборам, включая админов: fallbacks — подборы, где часть сообществ отобрали правила, calls/failed — запросы к DeepSeek и неудачные, tokens, avgSeconds — среднее время запроса.',
         'monthly — последние 12 месяцев: регистрации по источникам, платежи, выручка, плательщики и впервые заплатившие.',
         'recentPayments — платежи за periodDays, новые сверху; userKey одинаков у одного пользователя внутри выгрузки.',
         'pricing.newCustomers — цены для новых; pricing.returningCustomers — старые цены, сохранённые за теми, кто уже платил.'
@@ -194,6 +197,7 @@ export async function getAdminExport(requestedDays: unknown, now = new Date()) {
     preview,
     push,
     vkReports,
+    placements,
     recentPayments
   };
 }

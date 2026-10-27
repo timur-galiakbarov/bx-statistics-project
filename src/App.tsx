@@ -5,6 +5,7 @@ import {
   CreditCard,
   GitCompare,
   Home,
+  MapPin,
   LogOut,
   Menu,
   Newspaper,
@@ -25,6 +26,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { AccountPage } from './pages/AccountPage';
 import { AdCheckPage } from './pages/AdCheckPage';
 import { AdminPage } from './pages/AdminPage';
+import { PlacementsPage } from './pages/PlacementsPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { ComparePage } from './pages/ComparePage';
 import { LoginPage } from './pages/LoginPage';
@@ -34,9 +36,11 @@ import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
 import { formatDate } from './utils/date';
 import { startVisitHeartbeat, trackPageView } from './utils/visit';
 
-const navItems: Array<{ to: string; label: string; icon: typeof Home; adminOnly?: boolean }> = [
+// feature — пункт показывается, только когда переключатель фичи включён этому пользователю.
+const navItems: Array<{ to: string; label: string; icon: typeof Home; adminOnly?: boolean; feature?: 'placements' }> = [
   { to: '/dashboard', label: 'Главная', icon: Home },
   { to: '/analytics', label: 'Аналитика', icon: BarChart3 },
+  { to: '/placements', label: 'Подбор площадок', icon: MapPin, feature: 'placements' },
   { to: '/ad-check', label: 'Проверка канала', icon: ClipboardCheck, adminOnly: true },
   { to: '/compare', label: 'Сравнение', icon: GitCompare },
   { to: '/posts', label: 'Публикации', icon: Newspaper },
@@ -206,7 +210,7 @@ export function App() {
   const title = useMemo(() => {
     return [...navItems, adminNavItem].find((item) => location.pathname.startsWith(item.to))?.label ?? 'Socstat';
   }, [location.pathname]);
-  const visibleNavItems = [...navItems, adminNavItem].filter((item) => !item.adminOnly || user?.isAdmin);
+  const visibleNavItems = [...navItems, adminNavItem].filter((item) => (!item.adminOnly || user?.isAdmin) && (!('feature' in item) || !item.feature || user?.placementsEnabled));
   const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions) || isAccessActive(user?.activeTo);
   const isTrialActive = Boolean(user?.trialEndsAt && new Date(user.trialEndsAt).getTime() >= Date.now());
   // Одна плашка за раз и одна просьба за визит: пока не подключён отчёт во VK, предлагаем его,
@@ -321,6 +325,7 @@ export function App() {
             element={<AnalyticsPage isAdmin={Boolean(user?.isAdmin)} groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} />}
           />
           <Route path="/ad-check" element={user?.isAdmin ? <AdCheckPage /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/placements" element={user?.placementsEnabled ? <PlacementsPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/compare" element={hasPaidAccess ? <ComparePage groups={groups} user={user} /> : <CompareShowcase />} />
           <Route path="/posts" element={hasPaidAccess ? <PostsPage groups={groups} /> : <PostsShowcase />} />
           <Route path="/telegram" element={<TelegramAnalyticsRedirect />} />

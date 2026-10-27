@@ -14,7 +14,9 @@ import {
   removeFreeGroups,
   removeSession
 } from '../repositories/accountRepository.js';
-import { requireUser } from '../middleware/auth.js';
+import { requireAdmin, requireUser } from '../middleware/auth.js';
+import { getFeatureModes, isFeatureKey, isFeatureMode, setFeatureMode } from '../services/featureFlags.js';
+import { getNotificationSettings } from './notifications.js';
 import { env } from '../config/env.js';
 import { subscribeToAccountEvents } from '../services/accountEvents.js';
 import { publishAccountUpdated } from '../services/accountEvents.js';
@@ -58,26 +60,53 @@ accountRouter.get('/auth/status', (req, res) => {
   res.json({ success: Boolean(req.user), data: { isAuth: Boolean(req.user) } });
 });
 
-accountRouter.get('/me', requireUser, (req, res) => {
+accountRouter.get('/me', requireUser, async (req, res, next) => {
   const user = req.user!;
-  res.json({
-    success: true,
-    data: {
-      user: {
-        id: user.id,
-        vkId: user.vkId,
-        first_name: user.firstName,
-        last_name: user.lastName,
-        userFullName: `${user.firstName} ${user.lastName}`,
-        photo_200: user.photo,
-        activeTo: user.activeTo,
-        trialEndsAt: user.trialEndsAt,
-        freeGroupsDisabled: user.freeGroupsDisabled,
-        isAdmin: user.isAdmin,
-        enforceAccessRestrictions: user.enforceAccessRestrictions
+  try {
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          vkId: user.vkId,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          userFullName: `${user.firstName} ${user.lastName}`,
+          photo_200: user.photo,
+          activeTo: user.activeTo,
+          trialEndsAt: user.trialEndsAt,
+          freeGroupsDisabled: user.freeGroupsDisabled,
+          isAdmin: user.isAdmin,
+          enforceAccessRestrictions: user.enforceAccessRestrictions,
+          vkReports: await getNotificationSettings(user)
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.get('/admin/features', requireUser, requireAdmin, async (_req, res, next) => {
+  try {
+    res.json({ success: true, data: await getFeatureModes() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.post('/admin/features', requireUser, requireAdmin, async (req, res, next) => {
+  const { key, mode } = req.body ?? {};
+  if (!isFeatureKey(key) || !isFeatureMode(mode)) {
+    res.status(400).json({ success: false, error: 'INVALID_FEATURE_FLAG' });
+    return;
+  }
+  try {
+    await setFeatureMode(key, mode, req.user!.id);
+    res.json({ success: true, data: await getFeatureModes() });
+  } catch (error) {
+    next(error);
+  }
 });
 
 accountRouter.get('/goals', requireUser, async (req, res, next) => {

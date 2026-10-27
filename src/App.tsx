@@ -20,6 +20,7 @@ import type { SavedGroup, User } from './api/types';
 import { isAccessActive } from './components/AccessLock';
 import { CompareShowcase, PostsShowcase } from './components/FeatureShowcase';
 import { PushPrompt } from './components/PushPrompt';
+import { isVkReportPromptDismissed, VkReportPrompt } from './components/VkReports';
 import { DashboardPage } from './pages/DashboardPage';
 import { AccountPage } from './pages/AccountPage';
 import { AdCheckPage } from './pages/AdCheckPage';
@@ -208,6 +209,8 @@ export function App() {
   const visibleNavItems = [...navItems, adminNavItem].filter((item) => !item.adminOnly || user?.isAdmin);
   const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions) || isAccessActive(user?.activeTo);
   const isTrialActive = Boolean(user?.trialEndsAt && new Date(user.trialEndsAt).getTime() >= Date.now());
+  // Одна плашка за раз: пока не подключён отчёт во VK, предлагаем его, а не push.
+  const showVkReportPrompt = Boolean(user?.vkReports?.enabled && !user.vkReports.vkConnected && groups.length > 0 && !isVkReportPromptDismissed());
 
   if (location.pathname === '/auth/vk/implicit-callback') {
     return <VkImplicitCallbackPage />;
@@ -293,7 +296,8 @@ export function App() {
           )}
         </header>
 
-        {hasPaidAccess && groups.length > 0 && <PushPrompt activeTo={user?.activeTo} isTrial={isTrialActive} />}
+        {showVkReportPrompt && user?.vkReports && <VkReportPrompt settings={user.vkReports} onChanged={loadAccount} />}
+        {!showVkReportPrompt && hasPaidAccess && groups.length > 0 && <PushPrompt activeTo={user?.activeTo} isTrial={isTrialActive} />}
 
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -10,7 +10,19 @@ export type User = {
   freeGroupsDisabled?: boolean;
   isAdmin: boolean;
   enforceAccessRestrictions: boolean;
+  vkReports?: VkReportSettings;
 };
+
+/** Еженедельный отчёт сообщением от сообщества socstat во VK. enabled — фича включена этому пользователю. */
+export type VkReportSettings = {
+  enabled: boolean;
+  vkConnected: boolean;
+  weeklyReport: boolean;
+  connectUrl: string;
+};
+
+export type FeatureMode = 'off' | 'admins' | 'all';
+export type FeatureFlag = { key: 'vkReports'; mode: FeatureMode; updatedAt: string | null };
 
 export type SocialPlatform = 'vk' | 'youtube' | 'telegram';
 
@@ -711,6 +723,15 @@ export type AdminPushStats = {
   subscribedBrowsers: number;
   prompt: { shown: number; accepted: number; subscribed: number; dismissed: number; denied: number };
   reminders: Array<{ kind: string; sent: number; clicked: number; renewed: number; revenue: number }>;
+};
+
+export type AdminVkReportStats = {
+  days: number;
+  mode: FeatureMode;
+  configured: boolean;
+  connectedUsers: number;
+  weeklyEnabledUsers: number;
+  reports: { sent: number; full: number; locked: number; failed: number; clicked: number; paid: number; revenue: number };
 };
 
 /** Как пост распознан как реклама: отметка VK, токен erid или строка маркировки. */

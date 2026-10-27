@@ -27,6 +27,16 @@ const userSchema = new Schema(
       status: { type: String, enum: ['checked', 'unavailable'] },
       managesCommunity: { type: Boolean }
     },
+    // Сообщения от сообщества socstat во VK: еженедельный отчёт.
+    notifications: {
+      vk: {
+        // Пользователь разрешил сообщения сообщества (или написал ему) и не запретил их потом.
+        allowed: { type: Boolean },
+        connectedAt: { type: Date },
+        checkedAt: { type: Date }
+      },
+      weeklyReport: { type: Boolean, default: true }
+    },
     lastLoginAt: { type: Date, index: true },
     lastActivityAt: { type: Date, index: true },
     // Первое касание до регистрации: UTM-метки, rb_clickid VK Ads, yclid Директа

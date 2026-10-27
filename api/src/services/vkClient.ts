@@ -50,7 +50,8 @@ function delay(ms: number) {
 async function performVkApiRequest<T>(
   method: string,
   accessToken: string,
-  params: Record<string, string | number | boolean | undefined>
+  params: Record<string, string | number | boolean | undefined>,
+  httpMethod: 'GET' | 'POST' = 'GET'
 ) {
   const query = new URLSearchParams({
     access_token: accessToken,
@@ -63,7 +64,10 @@ async function performVkApiRequest<T>(
     }
   }
 
-  const response = await fetch(`${VK_API_BASE_URL}/${method}?${query.toString()}`);
+  // Длинный текст сообщения не помещается в URL, поэтому messages.send идёт POST-ом.
+  const response = httpMethod === 'POST'
+    ? await fetch(`${VK_API_BASE_URL}/${method}`, { method: 'POST', body: query })
+    : await fetch(`${VK_API_BASE_URL}/${method}?${query.toString()}`);
   const payload = (await response.json()) as VkApiPayload<T>;
 
   if (!response.ok || payload.error) {
@@ -82,11 +86,12 @@ async function performVkApiRequest<T>(
 export async function vkApiRequest<T>(
   method: string,
   accessToken: string,
-  params: Record<string, string | number | boolean | undefined>
+  params: Record<string, string | number | boolean | undefined>,
+  httpMethod: 'GET' | 'POST' = 'GET'
 ) {
   for (let attempt = 0; attempt <= VK_RETRY_DELAYS_MS.length; attempt++) {
     try {
-      return await performVkApiRequest<T>(method, accessToken, params);
+      return await performVkApiRequest<T>(method, accessToken, params, httpMethod);
     } catch (error) {
       if (
         error instanceof VkApiError &&

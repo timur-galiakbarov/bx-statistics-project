@@ -82,6 +82,14 @@ export const env = {
   vapidSubject: process.env.VAPID_SUBJECT ?? 'mailto:support@socstat.ru',
   // Напоминания об окончании доступа. По умолчанию включены только в production.
   pushRemindersEnabled: (process.env.PUSH_REMINDERS_ENABLED ?? (process.env.NODE_ENV === 'production' ? '1' : '0')) === '1',
+  // Сообщения от сообщества socstat (SOCSTAT_VK_GROUP_ID): ключ сообщества с правом «сообщения»
+  // и Callback API — строка подтверждения адреса и секретный ключ из настроек сообщества.
+  vkGroupToken: process.env.VK_GROUP_TOKEN?.trim() ?? '',
+  vkCallbackConfirmation: process.env.VK_CALLBACK_CONFIRMATION?.trim() ?? '',
+  vkCallbackSecret: process.env.VK_CALLBACK_SECRET?.trim() ?? '',
+  // Планировщик еженедельного отчёта. По умолчанию включён только в production; кому он уходит,
+  // решает переключатель фичи в админке.
+  weeklyReportsEnabled: (process.env.WEEKLY_REPORTS_ENABLED ?? (process.env.NODE_ENV === 'production' ? '1' : '0')) === '1',
   adminVkIds: (process.env.ADMIN_VK_IDS ?? '30647716')
     .split(',')
     .map((item) => item.trim())

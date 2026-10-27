@@ -6,6 +6,7 @@ import { seedDevelopmentData } from './db/seed.js';
 import { connectRedis } from './services/redis.js';
 import { startPushReminderScheduler } from './services/pushReminders.js';
 import { startSnapshotScheduler } from './services/snapshotService.js';
+import { startWeeklyReportScheduler } from './services/vkReports.js';
 
 async function bootstrap() {
   await connectDatabase();
@@ -29,6 +30,7 @@ async function bootstrap() {
 
   startSnapshotScheduler();
   startPushReminderScheduler();
+  startWeeklyReportScheduler();
 }
 
 bootstrap().catch((error) => {

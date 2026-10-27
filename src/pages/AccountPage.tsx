@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiGet, apiPost } from '../api/client';
 import { PushSettings } from '../components/PushPrompt';
+import { VkReportSettings } from '../components/VkReports';
 import type { PaymentHistoryItem, PaymentIntent, PaymentPlan, SavedGroup, User } from '../api/types';
 import { formatDate } from '../utils/date';
 
@@ -200,6 +201,7 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
             <span>{groups.length} сохраненных групп</span>
           </div>
         </div>
+        {user?.vkReports?.enabled && <VkReportSettings settings={user.vkReports} onChanged={onAccountChanged} />}
         <PushSettings />
         <button className="secondary-button">
           <LogOut size={17} />

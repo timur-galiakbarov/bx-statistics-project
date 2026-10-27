@@ -13,6 +13,7 @@ import { authRouter } from './routes/auth.js';
 import { compareRouter } from './routes/compare.js';
 import { dashboardRouter } from './routes/dashboard.js';
 import { legacyRouter } from './routes/legacy.js';
+import { notificationsRouter } from './routes/notifications.js';
 import { paymentsRouter } from './routes/payments.js';
 import { postsRouter } from './routes/posts.js';
 import { pushRouter } from './routes/push.js';
@@ -49,6 +50,7 @@ export function createApp() {
   app.use('/api/payments', paymentsRouter);
   app.use('/api/posts', postsRouter);
   app.use('/api/push', pushRouter);
+  app.use('/api/notifications', notificationsRouter);
   app.use('/api/vk', vkRouter);
   app.use('/api/youtube', youtubeRouter);
   app.use('/api/telegram', telegramRouter);

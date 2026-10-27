@@ -118,7 +118,7 @@ function isSourceNote(note: unknown): note is SnapshotSourceNote {
   return note === 'viewed' || note === 'compare' || note === 'posts' || note === 'adcheck' || note === 'seed' || note === 'telegram-peer';
 }
 
-function normalizeSourceId(platform: string, source: { externalId?: string | null; vkGroupId?: string | null; handle?: string | null }): { platform: SnapshotPlatform; externalId: string } | null {
+export function normalizeSourceId(platform: string, source: { externalId?: string | null; vkGroupId?: string | null; handle?: string | null }): { platform: SnapshotPlatform; externalId: string } | null {
   if (platform === 'telegram') {
     const username = telegramUsernameFromSource(source);
     return username ? { platform, externalId: username } : null;

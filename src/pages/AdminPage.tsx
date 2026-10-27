@@ -21,6 +21,7 @@ import type {
   VkTokenStatus
 } from '../api/types';
 import { AdminActivityStats } from '../components/AdminActivityStats';
+import { AdminFeatureFlags } from '../components/AdminFeatureFlags';
 
 type Props = {
   user: User;
@@ -575,6 +576,8 @@ export function AdminPage({ user, onAccountChanged }: Props) {
         {accessRestrictionsError && <div className="debug-error">{accessRestrictionsError}</div>}
       </div>
       )}
+
+      {adminSection === 'settings' && <AdminFeatureFlags onAccountChanged={onAccountChanged} />}
 
       {adminSection === 'system' && (
       <div className="panel span-2">

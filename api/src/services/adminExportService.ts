@@ -6,6 +6,7 @@ import { plans, returningCustomerPlans } from '../routes/payments.js';
 import { getAdminActivityStats, mskDayKey, mskDayStart } from './activityStatsService.js';
 import { getAdminPreviewStats } from './previewStatsService.js';
 import { getAdminPushStats } from './pushStatsService.js';
+import { getAdminVkReportStats } from './vkReportStatsService.js';
 
 const DAY_MS = 86_400_000;
 const MONTHS = 12;
@@ -53,10 +54,11 @@ function mskMonthStart(now: Date, shiftMonths: number) {
  * Администраторы исключены, имён и VK ID в выгрузке нет — пользователи различаются по userKey.
  */
 export async function getAdminExport(requestedDays: unknown, now = new Date()) {
-  const [activity, preview, push] = await Promise.all([
+  const [activity, preview, push, vkReports] = await Promise.all([
     getAdminActivityStats(requestedDays, now),
     getAdminPreviewStats(requestedDays, now),
-    getAdminPushStats(requestedDays, now)
+    getAdminPushStats(requestedDays, now),
+    getAdminVkReportStats(requestedDays, now)
   ]);
   const days = activity.days;
   const rangeStart = mskDayStart(now, -(days - 1));
@@ -170,6 +172,7 @@ export async function getAdminExport(requestedDays: unknown, now = new Date()) {
         'activity.engagement.stickiness — средний DAU за 7 дней / MAU; returnRate — доля когорты, вернувшейся на другой день (только зарегистрировавшиеся после trackingSince, их число — returnCohort).',
         'preview — краткий отчёт VK для пользователей без доступа: просмотры, клики по закрытым блокам, оплаты после первого просмотра.',
         'push — подписки на уведомления, воронка мягкого запроса и напоминания об окончании доступа (продление — оплата в 7 дней после пуша).',
+        'vkReports — еженедельный отчёт сообщениями сообщества VK: mode — переключатель фичи (off / admins / all), connectedUsers — разрешили сообщения, reports — отправленные за periodDays (full — с доступом, locked — доступ закончился), clicked — переход по ссылке из отчёта, paid — оплата в 7 дней после отчёта.',
         'monthly — последние 12 месяцев: регистрации по источникам, платежи, выручка, плательщики и впервые заплатившие.',
         'recentPayments — платежи за periodDays, новые сверху; userKey одинаков у одного пользователя внутри выгрузки.',
         'pricing.newCustomers — цены для новых; pricing.returningCustomers — старые цены, сохранённые за теми, кто уже платил.'
@@ -190,6 +193,7 @@ export async function getAdminExport(requestedDays: unknown, now = new Date()) {
     activity: { ...activity, feed },
     preview,
     push,
+    vkReports,
     recentPayments
   };
 }

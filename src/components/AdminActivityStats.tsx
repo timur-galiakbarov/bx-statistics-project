@@ -2,7 +2,7 @@ import { Download, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiGet } from '../api/client';
-import type { AdminActivityDay, AdminActivityStats, AdminActivitySummary, AdminPreviewStats, AdminPushStats } from '../api/types';
+import type { AdminActivityDay, AdminActivityStats, AdminActivitySummary, AdminPreviewStats, AdminPushStats, AdminVkReportStats } from '../api/types';
 
 const periodOptions = [7, 30, 90] as const;
 
@@ -241,6 +241,58 @@ function PushStatsPanel({ days }: { days: number }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+const vkReportModeLabels: Record<AdminVkReportStats['mode'], string> = {
+  off: 'фича выключена',
+  admins: 'фича включена только администраторам',
+  all: 'фича включена всем'
+};
+
+function VkReportStatsPanel({ days }: { days: number }) {
+  const [stats, setStats] = useState<AdminVkReportStats | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setError(null);
+    apiGet<AdminVkReportStats>(`/api/notifications/admin/stats?days=${days}`)
+      .then(setStats)
+      .catch((reason) => setError(reason instanceof Error ? reason.message : 'Не удалось загрузить статистику отчёта во VK.'));
+  }, [days]);
+
+  const reports = stats?.reports;
+
+  return (
+    <div className="panel activity-panel span-2">
+      <div className="panel-header compact">
+        <div>
+          <h2>Отчёт во VK</h2>
+          <p className="activity-note">
+            {stats
+              ? `${vkReportModeLabels[stats.mode]}${stats.configured ? '' : ', ключ сообщества не задан'}. Подключили сообщения: ${formatNumber(stats.connectedUsers)} польз., отчёт включён у ${formatNumber(stats.weeklyEnabledUsers)}. Отчёты — за ${days} дней, без админов`
+              : 'Загрузка…'}
+          </p>
+        </div>
+      </div>
+      {error && <div className="form-message">{error}</div>}
+      {reports && (reports.sent === 0 && reports.failed === 0 ? <div className="empty-state">Отчётов за период не отправлялось.</div> : (
+        <ul className="activity-funnel">
+          {[
+            { label: 'Отправлено отчётов', value: reports.sent, note: `${formatNumber(reports.full)} полных, ${formatNumber(reports.locked)} урезанных` },
+            { label: 'Перешли по ссылке за 7 дней', value: reports.clicked, note: formatShare(reports.clicked, reports.sent) },
+            { label: 'Оплатили за 7 дней', value: reports.paid, note: reports.revenue ? `${formatNumber(reports.revenue)} ₽` : formatShare(reports.paid, reports.sent) },
+            { label: 'Не доставлено', value: reports.failed, note: '' }
+          ].map((step) => (
+            <li key={step.label}>
+              <span>{step.label}</span>
+              <strong>{formatNumber(step.value)} <small>{step.note}</small></strong>
+              <i style={{ width: `${reports.sent ? Math.min(1, step.value / reports.sent) * 100 : 0}%` }} />
+            </li>
+          ))}
+        </ul>
+      ))}
     </div>
   );
 }
@@ -658,6 +710,7 @@ export function AdminActivityStats() {
         </div>
 
         <PushStatsPanel days={stats.days} />
+        <VkReportStatsPanel days={stats.days} />
         <PreviewStatsPanel days={stats.days} />
 
         <div className="panel activity-panel span-2">

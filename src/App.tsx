@@ -20,7 +20,7 @@ import type { SavedGroup, User } from './api/types';
 import { isAccessActive } from './components/AccessLock';
 import { CompareShowcase, PostsShowcase } from './components/FeatureShowcase';
 import { PushPrompt } from './components/PushPrompt';
-import { isVkReportPromptDismissed, VkReportPrompt } from './components/VkReports';
+import { isVkReportPromptDismissed, VkReportPrompt, wasVkReportPromptShownThisVisit } from './components/VkReports';
 import { DashboardPage } from './pages/DashboardPage';
 import { AccountPage } from './pages/AccountPage';
 import { AdCheckPage } from './pages/AdCheckPage';
@@ -209,7 +209,8 @@ export function App() {
   const visibleNavItems = [...navItems, adminNavItem].filter((item) => !item.adminOnly || user?.isAdmin);
   const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions) || isAccessActive(user?.activeTo);
   const isTrialActive = Boolean(user?.trialEndsAt && new Date(user.trialEndsAt).getTime() >= Date.now());
-  // Одна плашка за раз: пока не подключён отчёт во VK, предлагаем его, а не push.
+  // Одна плашка за раз и одна просьба за визит: пока не подключён отчёт во VK, предлагаем его,
+  // а запрос push после показанной в этом визите плашки отчёта ждёт следующего визита.
   const showVkReportPrompt = Boolean(user?.vkReports?.enabled && !user.vkReports.vkConnected && groups.length > 0 && !isVkReportPromptDismissed());
 
   if (location.pathname === '/auth/vk/implicit-callback') {
@@ -297,7 +298,7 @@ export function App() {
         </header>
 
         {showVkReportPrompt && user?.vkReports && <VkReportPrompt settings={user.vkReports} onChanged={loadAccount} />}
-        {!showVkReportPrompt && hasPaidAccess && groups.length > 0 && <PushPrompt activeTo={user?.activeTo} isTrial={isTrialActive} />}
+        {!showVkReportPrompt && !wasVkReportPromptShownThisVisit() && hasPaidAccess && groups.length > 0 && <PushPrompt activeTo={user?.activeTo} isTrial={isTrialActive} />}
 
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -309,6 +310,7 @@ export function App() {
                 hasPaidAccess={Boolean(hasPaidAccess)}
                 isTrialActive={isTrialActive}
                 freeGroupsDisabled={Boolean(user?.freeGroupsDisabled)}
+                vkReports={user?.vkReports}
                 onGroupsChanged={loadAccount}
               />
             }

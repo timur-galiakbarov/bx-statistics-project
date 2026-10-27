@@ -25,7 +25,9 @@ export const activityEventTypes = [
   'preview_unlock',
   // Проверка канала перед рекламой; label — источник. ad_check_limit — упёрлись в лимит проверок.
   'ad_check_run',
-  'ad_check_limit'
+  'ad_check_limit',
+  // Нажали «Подключить» отчёт во VK; label — где: banner / dashboard / competitors / profile.
+  'vk_report_connect'
 ] as const;
 
 export type ActivityEventType = (typeof activityEventTypes)[number];

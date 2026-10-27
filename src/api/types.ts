@@ -731,6 +731,7 @@ export type AdminVkReportStats = {
   configured: boolean;
   connectedUsers: number;
   weeklyEnabledUsers: number;
+  connectPlaces: Array<{ place: string; users: number; connected: number }>;
   reports: { sent: number; full: number; locked: number; failed: number; clicked: number; paid: number; revenue: number };
 };
 

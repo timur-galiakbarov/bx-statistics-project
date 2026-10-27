@@ -18,6 +18,8 @@ export type AdminVkReportStats = {
   configured: boolean;
   connectedUsers: number;
   weeklyEnabledUsers: number;
+  /** Нажали «Подключить» за период по месту; connected — из них сейчас подключены. */
+  connectPlaces: Array<{ place: string; users: number; connected: number }>;
   reports: { sent: number; full: number; locked: number; failed: number; clicked: number; paid: number; revenue: number };
 };
 
@@ -30,14 +32,29 @@ export async function getAdminVkReportStats(requestedDays: unknown, now = new Da
   const adminIds = await UserModel.distinct('_id', { isAdmin: true }) as Types.ObjectId[];
   const notAdmin = { $nin: adminIds };
 
-  const [mode, connectedUsers, weeklyEnabledUsers, deliveries] = await Promise.all([
+  const [mode, connectedUsers, weeklyEnabledUsers, deliveries, connectClicks] = await Promise.all([
     getFeatureMode('vkReports'),
     UserModel.countDocuments({ _id: notAdmin, 'notifications.vk.allowed': true }),
     UserModel.countDocuments({ _id: notAdmin, 'notifications.vk.allowed': true, 'notifications.weeklyReport': { $ne: false } }),
     NotificationDeliveryModel.find({ kind: WEEKLY_REPORT_KIND, createdAt: { $gte: rangeStart }, userId: notAdmin })
       .select({ userId: 1, variant: 1, status: 1, sentAt: 1 })
-      .lean()
+      .lean(),
+    ActivityEventModel.aggregate<{ _id: string; userIds: Types.ObjectId[] }>([
+      { $match: { type: 'vk_report_connect', createdAt: { $gte: rangeStart }, userId: notAdmin } },
+      { $group: { _id: '$label', userIds: { $addToSet: '$userId' } } }
+    ])
   ]);
+
+  const clickedUserIds = [...new Set(connectClicks.flatMap((row) => row.userIds.map(String)))];
+  const connectedClickers = new Set(
+    clickedUserIds.length
+      ? (await UserModel.distinct('_id', { _id: { $in: clickedUserIds }, 'notifications.vk.allowed': true })).map(String)
+      : []
+  );
+  const connectPlaces = ['banner', 'dashboard', 'competitors', 'profile'].map((place) => {
+    const userIds = connectClicks.find((row) => row._id === place)?.userIds.map(String) ?? [];
+    return { place, users: userIds.length, connected: userIds.filter((id) => connectedClickers.has(id)).length };
+  });
 
   const sent = deliveries.filter((delivery) => delivery.status === 'sent' && delivery.sentAt);
   const userIds = [...new Set(sent.map((delivery) => delivery.userId.toString()))];
@@ -79,6 +96,7 @@ export async function getAdminVkReportStats(requestedDays: unknown, now = new Da
     configured: isVkMessagesConfigured(),
     connectedUsers,
     weeklyEnabledUsers,
+    connectPlaces,
     reports: {
       sent: sent.length,
       full: sent.filter((delivery) => delivery.variant === 'full').length,

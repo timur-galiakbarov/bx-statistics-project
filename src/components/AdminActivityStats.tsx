@@ -48,6 +48,7 @@ const actionLabels: Record<string, string> = {
   preview_unlock: 'Клик по закрытому блоку',
   ad_check_run: 'Проверил канал перед рекламой',
   ad_check_limit: 'Упёрся в лимит проверок',
+  vk_report_connect: 'Нажал «Подключить» отчёт во VK',
   payment: 'Оплатил'
 };
 
@@ -251,6 +252,13 @@ const vkReportModeLabels: Record<AdminVkReportStats['mode'], string> = {
   all: 'Фича включена всем'
 };
 
+const vkReportPlaceLabels: Record<string, string> = {
+  banner: 'Плашка под шапкой',
+  dashboard: 'Ссылка на главной',
+  competitors: 'Панель конкурентов',
+  profile: 'Профиль'
+};
+
 function VkReportStatsPanel({ days }: { days: number }) {
   const [stats, setStats] = useState<AdminVkReportStats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -277,6 +285,19 @@ function VkReportStatsPanel({ days }: { days: number }) {
         </div>
       </div>
       {error && <div className="form-message">{error}</div>}
+      {stats && stats.connectPlaces.some((row) => row.users > 0) && (
+        <div className="activity-mini-table four vk-report-places">
+          <div className="head"><span>Где нажали «Подключить»</span><span>Нажали</span><span title="Из нажавших сейчас подключены">Подключены</span><span /></div>
+          {stats.connectPlaces.map((row) => (
+            <div key={row.place}>
+              <span>{vkReportPlaceLabels[row.place] ?? row.place}</span>
+              <span>{formatNumber(row.users)}</span>
+              <span>{formatNumber(row.connected)} <small>{formatShare(row.connected, row.users)}</small></span>
+              <span />
+            </div>
+          ))}
+        </div>
+      )}
       {reports && (reports.sent === 0 && reports.failed === 0 ? <div className="empty-state">Отчётов за период не отправлялось.</div> : (
         <ul className="activity-funnel">
           {[

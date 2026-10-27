@@ -6,6 +6,7 @@ import { apiGet, apiPost, ApiError } from '../api/client';
 import type { SocialPlatform } from '../api/types';
 import { detectPlatform } from '../utils/sourceQuery';
 import { searchSources, type SourceChannel } from './SourceSetup';
+import { VkReportCompetitorsHint } from './VkReports';
 import { competitorKey, competitorMetrics, isComparable, type CompetitorMetric, type CompetitorReportItem, type Metric } from './competitorMetrics';
 
 type Competitor = { platform: SocialPlatform; externalId: string; name: string };
@@ -301,6 +302,7 @@ function CompetitorsContent({ platform, sourceId, sourceName }: Props) {
 
       {saveError && <p className="competitors-error" role="alert">Список не изменён. {saveError}</p>}
       {removed && !saving && <div className="competitors-toast" role="status"><span>{removed.message}</span><button type="button" onClick={() => void save(removed.previous)}>Вернуть</button></div>}
+      {competitors.length > 0 && <VkReportCompetitorsHint />}
       {freeSuggestions.length > 0 && !full && <div className="competitors-suggestions"><span>Похожие по названию во ВКонтакте</span><div>{freeSuggestions.map((item) => <button type="button" key={competitorKey(item.platform, item.id)} disabled={saving} onClick={() => void add(item)}><Avatar name={item.name} photo={item.photo_100 ?? item.photo_50} size={28} /><span>{item.name}</span><em>+ Добавить</em></button>)}</div></div>}
     </section>}
 

@@ -12,11 +12,12 @@ import { apiDelete, apiGet, apiPost } from '../api/client';
 import { CompetitorsWidget } from '../components/CompetitorsWidget';
 import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
 import { TelegramAvatar, TelegramLogo } from '../components/TelegramLogo';
-import type { DashboardPeriod, DashboardSummary, DashboardSummaryItem, SavedGroup, SocialPlatform, TelegramAnalytics, TelegramChannel, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
+import { VkReportDashboardLink } from '../components/VkReports';
+import type { DashboardPeriod, DashboardSummary, DashboardSummaryItem, SavedGroup, SocialPlatform, TelegramAnalytics, TelegramChannel, VkGroup, VkListResponse, VkReportSettings, YoutubeChannel } from '../api/types';
 import { number } from './dashboardSelectors';
 import { MAX_CUSTOM_PERIOD_DAYS } from '../utils/date';
 
-type Props = { groups: SavedGroup[]; hasPaidAccess: boolean; isTrialActive: boolean; freeGroupsDisabled: boolean; onGroupsChanged: () => Promise<void> };
+type Props = { groups: SavedGroup[]; hasPaidAccess: boolean; isTrialActive: boolean; freeGroupsDisabled: boolean; vkReports?: VkReportSettings; onGroupsChanged: () => Promise<void> };
 type AddMode = 'tracked' | 'free' | 'bonus';
 type Platform = SocialPlatform;
 type SearchResult = VkGroup | YoutubeChannel | TelegramChannel;
@@ -105,7 +106,7 @@ function failedDashboardItem(group: SavedGroup, error: unknown): DashboardSummar
   };
 }
 
-export function DashboardPage({ groups, hasPaidAccess, isTrialActive, freeGroupsDisabled, onGroupsChanged }: Props) {
+export function DashboardPage({ groups, hasPaidAccess, isTrialActive, freeGroupsDisabled, vkReports, onGroupsChanged }: Props) {
   const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [period, setPeriod] = useState<DashboardPeriod>(getSavedDashboardPeriod);
@@ -233,7 +234,7 @@ export function DashboardPage({ groups, hasPaidAccess, isTrialActive, freeGroups
   const managementProps = { platform, setPlatform: (next: Platform) => { setPlatform(next); setResults([]); setSearchError(''); }, query, setQuery: updateQuery, searchError, isSearching, results, search, add, isVkGroupsLoading, managedVkGroups, subscribedVkGroups, savedGroupIds };
   return <div className="page-grid dashboard-page">
     <div className="span-2 dashboard-top-row">
-      <CommunitiesTable groups={trackedGroups} summary={summary} period={period} customRange={customRange} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onCustomRangeApply={setCustomRange} onAdd={() => openAddModal('tracked')} onRefresh={() => isPeriodReady && void loadSummary(true)} onReorder={async (groupIds) => { await apiPost('/api/account/groups/order', { groupIds }); await onGroupsChanged(); }} onRemove={remove} onSelect={(group) => navigate(group.platform === 'telegram' ? `/analytics?platform=telegram&channel=${encodeURIComponent(group.handle ?? group.externalId)}` : `/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
+      <CommunitiesTable groups={trackedGroups} vkReports={vkReports} onAccountChanged={onGroupsChanged} summary={summary} period={period} customRange={customRange} hasPaidAccess={hasPaidAccess} onPeriodChange={setPeriod} onCustomRangeApply={setCustomRange} onAdd={() => openAddModal('tracked')} onRefresh={() => isPeriodReady && void loadSummary(true)} onReorder={async (groupIds) => { await apiPost('/api/account/groups/order', { groupIds }); await onGroupsChanged(); }} onRemove={remove} onSelect={(group) => navigate(group.platform === 'telegram' ? `/analytics?platform=telegram&channel=${encodeURIComponent(group.handle ?? group.externalId)}` : `/analytics?groupId=${encodeURIComponent(group.externalId)}&platform=${group.platform}`)} deletingGroupId={deletingGroupId} isRefreshing={isSummaryLoading} />
       <CompetitorsWidget groups={groups} locked={!hasPaidAccess} />
     </div>
     {freeGroupsDisabled
@@ -310,7 +311,7 @@ function CustomPeriodForm({ range, onApply }: { range: DateRange | null; onApply
   </div>;
 }
 
-function CommunitiesTable({ groups, summary, period, customRange, hasPaidAccess, onPeriodChange, onCustomRangeApply, onAdd, onRefresh, onReorder, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; summary: DashboardSummary | null; period: DashboardPeriod; customRange: DateRange | null; hasPaidAccess: boolean; onPeriodChange: (period: DashboardPeriod) => void; onCustomRangeApply: (range: DateRange) => void; onAdd: () => void; onRefresh: () => void; onReorder: (groupIds: string[]) => Promise<void>; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
+function CommunitiesTable({ groups, vkReports, onAccountChanged, summary, period, customRange, hasPaidAccess, onPeriodChange, onCustomRangeApply, onAdd, onRefresh, onReorder, onRemove, onSelect, deletingGroupId, isRefreshing }: { groups: SavedGroup[]; vkReports?: VkReportSettings; onAccountChanged: () => Promise<void>; summary: DashboardSummary | null; period: DashboardPeriod; customRange: DateRange | null; hasPaidAccess: boolean; onPeriodChange: (period: DashboardPeriod) => void; onCustomRangeApply: (range: DateRange) => void; onAdd: () => void; onRefresh: () => void; onReorder: (groupIds: string[]) => Promise<void>; onRemove: (group: SavedGroup) => Promise<void>; onSelect: (group: SavedGroup) => void; deletingGroupId: string | null; isRefreshing: boolean }) {
   const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'mine' | 'other'>('all');
   const [orderedGroupIds, setOrderedGroupIds] = useState(groups.map((group) => group.id));
   const [draggedGroupId, setDraggedGroupId] = useState<string | null>(null);
@@ -350,7 +351,7 @@ function CommunitiesTable({ groups, summary, period, customRange, hasPaidAccess,
   };
 
   return <section className="panel span-2 communities-panel">
-    <div className="section-title"><div><h2>Отслеживаемые источники</h2><strong>{groups.length}</strong></div><Button disabled={isRefreshing} leftAddons={<RefreshCw size={16} />} loading={isRefreshing} size={40} type="button" view="secondary" onClick={onRefresh}>Обновить данные</Button></div>
+    <div className="section-title"><div><h2>Отслеживаемые источники</h2><strong>{groups.length}</strong>{vkReports?.enabled && <VkReportDashboardLink settings={vkReports} onChanged={onAccountChanged} />}</div><Button disabled={isRefreshing} leftAddons={<RefreshCw size={16} />} loading={isRefreshing} size={40} type="button" view="secondary" onClick={onRefresh}>Обновить данные</Button></div>
     <div className="communities-controls">
       <label className="communities-mobile-select">
         <span>Показывать</span>

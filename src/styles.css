@@ -4306,6 +4306,51 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 .push-settings .vk-report-error, .push-prompt-text .vk-report-error { color: #c62828; }
 .vk-report-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
+/* Ссылка на отчёт во VK под заголовком источников на главной. */
+.vk-report-link { display: grid; gap: 4px; justify-items: start; margin-top: 8px; }
+.vk-report-link .vk-report-error { color: #c62828; font-size: 13px; }
+.vk-report-link-button {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: #287d30;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 6px;
+  padding: 0;
+}
+.vk-report-link-button:hover:not(:disabled) { text-decoration: underline; }
+.vk-report-link-done { align-items: center; color: #687684; display: flex; font-size: 13px; gap: 5px; margin-top: 8px; }
+.vk-report-link-done svg { color: #43a047; }
+
+/* Строка с предложением отчёта в панели конкурентов. */
+.vk-report-hint {
+  align-items: center;
+  background: #f3faf3;
+  border: 1px solid #d7ecd8;
+  border-radius: 10px;
+  color: #3c4858;
+  display: flex;
+  font-size: 14px;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 10px 12px;
+}
+.vk-report-hint > svg { color: #43a047; flex: none; }
+.vk-report-hint > span { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.vk-report-hint .vk-report-error { color: #c62828; font-size: 13px; }
+.vk-report-hint button { flex: none; }
+.vk-report-places { margin-bottom: 16px; }
+
+@media (max-width: 840px) {
+  .vk-report-hint { flex-wrap: wrap; }
+  .vk-report-hint > span { flex-basis: calc(100% - 30px); }
+  .vk-report-hint button { margin-left: 27px; }
+}
+
 .admin-feature-flag {
   align-items: center;
   border-top: 1px solid #e5e5e5;

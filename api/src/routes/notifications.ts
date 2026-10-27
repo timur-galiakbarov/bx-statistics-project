@@ -5,13 +5,15 @@ import { UserModel } from '../models/User.js';
 import { isFeatureEnabledFor } from '../services/featureFlags.js';
 import { snapshotDateKey } from '../services/snapshotUtils.js';
 import { isVkMessagesConfigured, sendVkCommunityMessage, vkCommunityDialogUrl } from '../services/vkCommunityMessages.js';
+import { VkApiError } from '../services/vkClient.js';
 import { getAdminVkReportStats } from '../services/vkReportStatsService.js';
 import {
   buildWeeklyReport,
   checkVkNotifications,
   connectVkNotifications,
   disconnectVkNotifications,
-  handleVkIncomingMessage
+  handleVkIncomingMessage,
+  type WeeklyReportSkip
 } from '../services/vkReports.js';
 
 export const notificationsRouter = Router();
@@ -61,6 +63,12 @@ notificationsRouter.post('/vk/check', requireUser, async (req, res, next) => {
     await checkVkNotifications(req.user!.id, req.user!.vkId);
     res.json({ success: true, data: await getNotificationSettings(req.user!) });
   } catch (error) {
+    // Ошибка ключа сообщества — наша проблема: пользователю не показываем текст VK.
+    if (error instanceof VkApiError) {
+      console.error('VK messages check failed', error.vkCode, error.message);
+      res.status(502).json({ success: false, error: 'VK_MESSAGES_CHECK_FAILED', message: 'Не удалось проверить: VK не ответил. Попробуйте позже.' });
+      return;
+    }
     next(error);
   }
 });
@@ -93,6 +101,12 @@ notificationsRouter.post('/vk/callback', (req, res) => {
   task?.catch((error) => console.error(`VK callback ${body.type} failed`, error));
 });
 
+const skipReasons: Record<WeeklyReportSkip, string> = {
+  access_expired: 'Доступ закончился больше 8 недель назад — отчёт не отправляется. Для проверки выключите «Ограничения включены» выше.',
+  no_sources: 'На дашборде нет отслеживаемых источников.',
+  no_snapshots: 'По источникам дашборда нет свежих срезов (за сегодня или вчера).'
+};
+
 // Отчёт администратору за последние 7 дней: текст в ответе и сообщение во VK, если сообщения подключены.
 notificationsRouter.post('/admin/test-weekly', requireUser, requireAdmin, async (req, res, next) => {
   try {
@@ -102,8 +116,8 @@ notificationsRouter.post('/admin/test-weekly', requireUser, requireAdmin, async 
       return;
     }
     const report = await buildWeeklyReport(user, snapshotDateKey());
-    if (!report) {
-      res.json({ success: true, data: { text: null, sent: false, reason: 'На дашборде нет источников со срезами.' } });
+    if ('skipped' in report) {
+      res.json({ success: true, data: { text: null, sent: false, reason: skipReasons[report.skipped] } });
       return;
     }
     if (user.notifications?.vk?.allowed !== true || !user.vkId) {

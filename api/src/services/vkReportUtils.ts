@@ -92,6 +92,16 @@ export function formatCount(value: number) {
   return numberFormatter.format(value).replace(/ /g, ' ');
 }
 
+/** Русское склонение после числа: 1 просмотр, 2 просмотра, 5 просмотров. */
+export function pluralRu(value: number, forms: [one: string, few: string, many: string]) {
+  const tens = Math.abs(value) % 100;
+  const units = tens % 10;
+  if (tens >= 11 && tens <= 14) return forms[2];
+  if (units === 1) return forms[0];
+  if (units >= 2 && units <= 4) return forms[1];
+  return forms[2];
+}
+
 export function formatSigned(value: number) {
   return value > 0 ? `+${formatCount(value)}` : value < 0 ? `−${formatCount(Math.abs(value))}` : '0';
 }
@@ -131,7 +141,8 @@ export function weeklyReportMessage(options: WeeklyReportMessageOptions) {
       lines.push(`Неделей раньше: ${formatSigned(source.growth.previousChange)}`);
     }
     if (source.bestPost) {
-      lines.push(`Лучший пост: ${formatCount(source.bestPost.views)} просмотров — ${source.bestPost.url}`);
+      const viewsWord = pluralRu(source.bestPost.views, ['просмотр', 'просмотра', 'просмотров']);
+      lines.push(`Лучший пост: ${formatCount(source.bestPost.views)} ${viewsWord} — ${source.bestPost.url}`);
     }
     if (source.competitors) {
       const { place, total, leader } = source.competitors;

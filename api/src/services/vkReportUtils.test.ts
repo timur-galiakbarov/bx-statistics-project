@@ -6,6 +6,7 @@ import {
   formatPercent,
   formatSigned,
   isMondayKey,
+  pluralRu,
   mskDateStart,
   postUrl,
   reportCommand,
@@ -55,6 +56,16 @@ test('competitorGrowthPlace ranks by weekly growth and names a faster leader', (
   assert.deepEqual(competitorGrowthPlace(4, [{ name: 'A', percent: 3 }]), { place: 1, total: 2, leader: null });
   assert.equal(competitorGrowthPlace(null, [{ name: 'A', percent: 3 }]), null);
   assert.equal(competitorGrowthPlace(1, [{ name: 'A', percent: null }]), null);
+});
+
+test('pluralRu picks the Russian form after a number', () => {
+  const forms: [string, string, string] = ['просмотр', 'просмотра', 'просмотров'];
+  assert.equal(pluralRu(1, forms), 'просмотр');
+  assert.equal(pluralRu(2324, forms), 'просмотра');
+  assert.equal(pluralRu(43696, forms), 'просмотров');
+  assert.equal(pluralRu(11, forms), 'просмотров');
+  assert.equal(pluralRu(112, forms), 'просмотров');
+  assert.equal(pluralRu(121, forms), 'просмотр');
 });
 
 test('formatting and post links', () => {

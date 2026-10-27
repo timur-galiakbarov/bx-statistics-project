@@ -4323,7 +4323,9 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 .admin-feature-flag-result pre {
   background: #f6f8fa;
   border-radius: 8px;
-  font: 13px/1.5 inherit;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
   margin: 0;
   max-width: 100%;
   overflow-x: auto;

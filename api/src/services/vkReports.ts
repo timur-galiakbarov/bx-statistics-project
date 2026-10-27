@@ -93,10 +93,14 @@ async function loadBestPosts(sources: SourceKey[], reportDateKey: string) {
   return best;
 }
 
-/** Текст еженедельного отчёта для пользователя или null, если отправлять нечего. */
-export async function buildWeeklyReport(user: ReportUser, reportDateKey: string, now = new Date()) {
+/** Почему отчёт не собран: доступ кончился давно, на дашборде нет источников или по ним нет свежих срезов. */
+export type WeeklyReportSkip = 'access_expired' | 'no_sources' | 'no_snapshots';
+export type WeeklyReportResult = { variant: 'full' | 'locked'; text: string } | { skipped: WeeklyReportSkip };
+
+/** Текст еженедельного отчёта для пользователя или причина, по которой отправлять нечего. */
+export async function buildWeeklyReport(user: ReportUser, reportDateKey: string, now = new Date()): Promise<WeeklyReportResult> {
   const isFull = hasFullAccess(user, now);
-  if (!isFull && user.activeTo.getTime() < now.getTime() - LOCKED_REPORT_DAYS * DAY_MS) return null;
+  if (!isFull && user.activeTo.getTime() < now.getTime() - LOCKED_REPORT_DAYS * DAY_MS) return { skipped: 'access_expired' as const };
 
   const groups = await SavedGroupModel.find(
     { userId: user._id, isTracked: { $ne: false } },
@@ -112,12 +116,12 @@ export async function buildWeeklyReport(user: ReportUser, reportDateKey: string,
     sources.push({ ...id, name: group.name });
     if (sources.length === MAX_REPORT_SOURCES) break;
   }
-  if (!sources.length) return null;
+  if (!sources.length) return { skipped: 'no_sources' as const };
 
   const fromDate = shiftDateKey(reportDateKey, -14);
   const points = await loadSubscriberPoints(sources, fromDate, reportDateKey);
   const growths = new Map(sources.map((source) => [sourceKey(source), weekGrowth(points.get(sourceKey(source)) ?? [], reportDateKey)]));
-  if (![...growths.values()].some((growth) => growth.subscribers !== null)) return null;
+  if (![...growths.values()].some((growth) => growth.subscribers !== null)) return { skipped: 'no_snapshots' as const };
 
   let bestPosts = new Map<string, { views: number; url: string }>();
   const places = new Map<string, ReportSourceWeek['competitors']>();
@@ -197,7 +201,7 @@ export async function sendWeeklyReports(now = new Date()) {
   for (const user of users) {
     if (alreadySent.has(user._id.toString())) continue;
     const report = await buildWeeklyReport(user, reportDateKey, now);
-    if (!report) continue;
+    if ('skipped' in report) continue;
 
     // Уникальный индекс: если другая реплика уже взяла этот отчёт, вставка упадёт и мы его пропустим.
     let deliveryId: Types.ObjectId;

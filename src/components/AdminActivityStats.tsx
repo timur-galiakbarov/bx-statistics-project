@@ -246,9 +246,9 @@ function PushStatsPanel({ days }: { days: number }) {
 }
 
 const vkReportModeLabels: Record<AdminVkReportStats['mode'], string> = {
-  off: 'фича выключена',
-  admins: 'фича включена только администраторам',
-  all: 'фича включена всем'
+  off: 'Фича выключена',
+  admins: 'Фича включена только администраторам',
+  all: 'Фича включена всем'
 };
 
 function VkReportStatsPanel({ days }: { days: number }) {

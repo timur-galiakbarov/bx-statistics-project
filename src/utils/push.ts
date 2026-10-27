@@ -3,7 +3,7 @@ import { apiGet, apiPost } from '../api/client';
 export type PushPromptEvent = 'shown' | 'accepted' | 'dismissed' | 'denied';
 export type PushState = 'unsupported' | 'denied' | 'subscribed' | 'available';
 
-type PushConfig = { enabled: boolean; publicKey: string | null; subscriptions: number; returningVisit: boolean };
+type PushConfig = { enabled: boolean; publicKey: string | null; subscriptions: number };
 
 const DISMISSED_KEY = 'socstat_push_prompt_dismissed_at';
 // После «Не сейчас» спрашиваем снова не раньше чем через три недели.
@@ -22,11 +22,6 @@ function urlBase64ToUint8Array(value: string) {
 async function currentSubscription() {
   const registration = await navigator.serviceWorker.getRegistration('/');
   return registration?.pushManager.getSubscription() ?? null;
-}
-
-/** Whether the user came back after an earlier visit: the first visit is for the product, not for asks. */
-export async function isReturningVisit() {
-  return (await apiGet<PushConfig>('/api/push/config')).returningVisit;
 }
 
 export async function getPushState(): Promise<PushState> {

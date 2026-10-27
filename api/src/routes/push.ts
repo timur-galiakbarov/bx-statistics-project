@@ -4,8 +4,7 @@ import { env } from '../config/env.js';
 import { requireUser } from '../middleware/auth.js';
 import { PushDeliveryModel } from '../models/PushDelivery.js';
 import { PushSubscriptionModel } from '../models/PushSubscription.js';
-import { VisitModel } from '../models/Visit.js';
-import { parseVisitId, trackActivity } from '../services/activityTracking.js';
+import { trackActivity } from '../services/activityTracking.js';
 import { isPushConfigured, sendPushToUser } from '../services/pushReminders.js';
 import { getAdminPushStats } from '../services/pushStatsService.js';
 
@@ -22,24 +21,12 @@ function parseSubscription(body: any) {
   return { endpoint, keys: { p256dh, auth } };
 }
 
-/**
- * Whether the user has been here before the current visit. Visits are kept for 400 days, so
- * old accounts without visit records count as returning by the account creation time.
- */
-async function isReturningVisit(userId: string, currentVisitId?: string) {
-  if (new Types.ObjectId(userId).getTimestamp().getTime() < Date.now() - 400 * 86_400_000) return true;
-  return Boolean(await VisitModel.exists({ userId, ...(currentVisitId ? { visitId: { $ne: currentVisitId } } : {}) }));
-}
-
 pushRouter.get('/config', requireUser, async (req, res, next) => {
   try {
-    const [subscriptions, returningVisit] = await Promise.all([
-      PushSubscriptionModel.countDocuments({ userId: req.user!.id }),
-      isReturningVisit(req.user!.id, parseVisitId(req.header('x-socstat-visit')))
-    ]);
+    const subscriptions = await PushSubscriptionModel.countDocuments({ userId: req.user!.id });
     res.json({
       success: true,
-      data: { enabled: isPushConfigured(), publicKey: env.vapidPublicKey || null, subscriptions, returningVisit }
+      data: { enabled: isPushConfigured(), publicKey: env.vapidPublicKey || null, subscriptions }
     });
   } catch (error) {
     next(error);

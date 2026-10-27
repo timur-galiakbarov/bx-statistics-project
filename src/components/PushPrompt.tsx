@@ -5,7 +5,6 @@ import {
   dismissPushPrompt,
   getPushState,
   isPushPromptDismissed,
-  isReturningVisit,
   subscribeToPush,
   trackPushPrompt,
   unsubscribeFromPush,
@@ -17,9 +16,9 @@ const SHOW_DELAY_MS = 6_000;
 
 /**
  * Soft ask before the browser permission dialog: the native prompt opens only after «Да».
- * Shown from the second visit on, so a new user first gets to know the product.
+ * Mounted once the user has a channel on the dashboard, so it comes after the first real action.
  */
-export function PushPrompt({ activeTo }: { activeTo?: string }) {
+export function PushPrompt({ activeTo, isTrial }: { activeTo?: string; isTrial: boolean }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
@@ -27,9 +26,9 @@ export function PushPrompt({ activeTo }: { activeTo?: string }) {
     if (isPushPromptDismissed()) return;
     let isCancelled = false;
     const timeout = window.setTimeout(() => {
-      Promise.all([getPushState(), isReturningVisit()])
-        .then(([state, returningVisit]) => {
-          if (isCancelled || !returningVisit || state !== 'available' || Notification.permission !== 'default') return;
+      getPushState()
+        .then((state) => {
+          if (isCancelled || state !== 'available' || Notification.permission !== 'default') return;
           setIsVisible(true);
           trackPushPrompt('shown');
         })
@@ -66,10 +65,13 @@ export function PushPrompt({ activeTo }: { activeTo?: string }) {
     <div className="push-prompt" role="region" aria-label="Напоминание об окончании доступа">
       <Bell className="push-prompt-icon" size={22} />
       <div className="push-prompt-text">
-        <strong>Напомнить, когда доступ будет заканчиваться?</strong>
+        <strong>
+          {isTrial ? 'Напомнить, когда пробный доступ будет заканчиваться?' : 'Напомнить, когда доступ будет заканчиваться?'}
+        </strong>
         <span>
-          Пришлём уведомление в браузере за 3 дня до {activeTo ? formatDate(activeTo) : 'окончания доступа'}. Не чаще
-          раза в день и только по делу — отключить можно в профиле.
+          Пришлём уведомление в браузере за 3 дня до {activeTo ? formatDate(activeTo) : 'окончания доступа'}
+          {isTrial ? ', чтобы аналитика по вашим каналам не закрылась внезапно' : ''}. Не чаще раза в день и только по делу —
+          отключить можно в профиле.
         </span>
       </div>
       <div className="push-prompt-actions">

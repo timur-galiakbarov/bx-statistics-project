@@ -293,7 +293,7 @@ export function App() {
           )}
         </header>
 
-        {hasPaidAccess && location.pathname === '/dashboard' && <PushPrompt activeTo={user?.activeTo} />}
+        {hasPaidAccess && groups.length > 0 && <PushPrompt activeTo={user?.activeTo} isTrial={isTrialActive} />}
 
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

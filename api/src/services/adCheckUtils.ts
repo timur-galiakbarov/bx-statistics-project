@@ -18,6 +18,8 @@ export type AdCheckCurves = {
   posts: Array<{ postId: string; milestones: Record<string, number | null> }>;
 };
 
+/** Posts of this many last days make the check: enough for ad frequency, short enough to be current. */
+export const AD_CHECK_WINDOW_DAYS = 30;
 /** Below this many posts a median says nothing about the source. */
 export const MIN_POSTS = 3;
 /** Posts younger than this still gain views and are left out of the typical views. */

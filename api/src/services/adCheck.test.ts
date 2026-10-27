@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { detectAdMarker } from './adDetection.js';
-import { mapVkSource, normalizeVkSource, parseAdCheckSource } from './adCheckService.js';
+import { normalizeVkSource, parseAdCheckSource } from './adCheckService.js';
+import { mapVkSource } from './vkSourceLoader.js';
 import { coverageDays, engagementRate, estimateViews, quantile, summarizeAds, summarizeAdCheck, type AdCheckPost } from './adCheckUtils.js';
 
 const now = new Date('2026-10-14T12:00:00Z').getTime();

@@ -1,22 +1,19 @@
 import { env } from '../config/env.js';
 import { DomainError } from '../errors/domainError.js';
 import { ChannelSnapshotModel } from '../models/ChannelSnapshot.js';
-import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { detectAdMarker } from './adDetection.js';
-import { summarizeAdCheck, type AdCheckPost } from './adCheckUtils.js';
+import { AD_CHECK_WINDOW_DAYS, summarizeAdCheck } from './adCheckUtils.js';
 import { redis } from './redis.js';
 import { RedisJsonCache } from './redisJsonCache.js';
 import { getPostViewCurves, getSubscriberHistory, rememberViewedSource } from './snapshotService.js';
 import { snapshotDateKey } from './snapshotUtils.js';
 import { getTelegramAdCheckChannel, isTelegramAdCheckCached, normalizeTelegramChannelInput } from './telegramClient.js';
-import { VkApiError, vkApiRequest } from './vkClient.js';
+import { VkApiError } from './vkClient.js';
+import { mapVkSource, POST_TEXT_LIMIT, VK_WALL_PAGE, vkRequest, type SourcePayload, type VkGroup, type VkPost } from './vkSourceLoader.js';
 
 export type AdCheckPlatform = 'vk' | 'telegram';
 
-/** Posts of this many last days make the check: enough for ad frequency, short enough to be current. */
-export const AD_CHECK_WINDOW_DAYS = 30;
-const VK_WALL_PAGE = 100;
-const POST_TEXT_LIMIT = 280;
+export { AD_CHECK_WINDOW_DAYS } from './adCheckUtils.js';
 const LIMIT_KEY_TTL_S = 2 * 86_400;
 
 /** Platform from a link; a bare @name is ambiguous and needs the explicit platform. */
@@ -42,92 +39,7 @@ export function normalizeVkSource(value: string) {
   throw new DomainError('Нужна ссылка на сообщество VK, например vk.com/socstat.', { status: 400, code: 'INVALID_VK_SOURCE' });
 }
 
-type SourcePayload = {
-  platform: AdCheckPlatform;
-  /** Id in the snapshot base: VK group id, lowercase Telegram username. */
-  externalId: string;
-  name: string;
-  url: string;
-  photo: string | null;
-  subscribers: number | null;
-  /** All posts of the window are loaded; VK returns at most the last 100. */
-  complete: boolean;
-  loadedAt: string;
-  posts: Array<AdCheckPost & { text: string; url: string }>;
-};
-
 const vkCache = new RedisJsonCache<SourcePayload>('socstat:adcheck:vk', env.adCheckCacheTtlMs);
-
-export type VkGroup = { id: number; name: string; screen_name?: string; photo_200?: string; members_count?: number; is_closed?: number; deactivated?: string };
-export type VkPost = {
-  id: number;
-  date: number;
-  text?: string;
-  is_pinned?: number;
-  marked_as_ads?: number;
-  attachments?: Array<{ type?: string; link?: { url?: string } }>;
-  copy_history?: Array<{ text?: string; attachments?: Array<{ type?: string; link?: { url?: string } }> }>;
-  likes?: { count?: number };
-  reposts?: { count?: number };
-  comments?: { count?: number };
-  views?: { count?: number };
-};
-
-/** The user's own token first (own quota), then the app service key. */
-async function vkRequest<T>(userId: string, method: string, params: Record<string, string | number>) {
-  const userToken = await getVkAccessToken(userId);
-  const tokens = [userToken, env.vkServiceKey].filter((token): token is string => Boolean(token));
-  if (!tokens.length) throw new DomainError('Проверка VK временно недоступна.', { status: 503, code: 'VK_TOKEN_REQUIRED' });
-  for (const [index, token] of tokens.entries()) {
-    try {
-      return await vkApiRequest<T>(method, token, params);
-    } catch (error) {
-      // An expired or limited user token: retry with the service key.
-      const retry = error instanceof VkApiError && [5, 6, 29].includes(error.vkCode ?? -1) && index < tokens.length - 1;
-      if (!retry) throw error;
-    }
-  }
-  throw new DomainError('Проверка VK временно недоступна.', { status: 503, code: 'VK_TOKEN_REQUIRED' });
-}
-
-function vkLinks(attachments: VkPost['attachments']) {
-  return (attachments ?? []).map((item) => item.type === 'link' ? item.link?.url : undefined).filter((url): url is string => Boolean(url));
-}
-
-/** VK group and its last wall page → the check payload. Pinned posts do not decide completeness: they can be old. */
-export function mapVkSource(group: VkGroup, items: VkPost[], now: number): SourcePayload {
-  const windowStart = now / 1000 - AD_CHECK_WINDOW_DAYS * 86_400;
-  const complete = items.length < VK_WALL_PAGE || items.some((post) => !post.is_pinned && post.date < windowStart);
-  const posts = items
-    .filter((post) => post.date >= windowStart)
-    .map((post) => {
-      const repost = post.copy_history?.[0];
-      const text = [post.text, repost?.text].filter(Boolean).join('\n\n');
-      return {
-        id: String(post.id),
-        date: new Date(post.date * 1000).toISOString(),
-        text: text.slice(0, POST_TEXT_LIMIT),
-        url: `https://vk.com/wall-${group.id}_${post.id}`,
-        views: post.views?.count ?? null,
-        reactions: post.likes?.count ?? null,
-        comments: post.comments?.count ?? null,
-        forwards: post.reposts?.count ?? null,
-        ad: detectAdMarker({ text, links: [...vkLinks(post.attachments), ...vkLinks(repost?.attachments)], markedAsAds: Boolean(post.marked_as_ads) })
-      };
-    })
-    .sort((left, right) => right.date.localeCompare(left.date));
-  return {
-    platform: 'vk',
-    externalId: String(group.id),
-    name: group.name,
-    url: `https://vk.com/${group.screen_name ?? `club${group.id}`}`,
-    photo: group.photo_200 ?? null,
-    subscribers: group.members_count ?? null,
-    complete,
-    loadedAt: new Date(now).toISOString(),
-    posts
-  };
-}
 
 async function loadVkSource(userId: string, id: string): Promise<SourcePayload> {
   const cached = await vkCache.get(id);

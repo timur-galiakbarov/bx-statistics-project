@@ -29,6 +29,7 @@ test('запасные правила: город в названии — мес
   assert.deepEqual(ruleLabel({ id: 3, name: 'Анатомия человека' }, voronezh), { local: false, category: 'theme', fit: 0 });
   assert.equal(ruleLabel({ id: 4, name: 'Жесть Абакан Инцидент ЧП Хакасия' }, abakan).category, 'news');
   assert.equal(ruleLabel({ id: 5, name: 'Новости', description: 'Главное о жизни Хакасии' }, abakan).local, true);
+  assert.equal(ruleLabel({ id: 6, name: 'ЧП Хакасия', description: 'Новости, обращения в администрацию' }, abakan).category, 'news');
 });
 
 test('с темой правила ставят 2 только при совпадении темы', () => {

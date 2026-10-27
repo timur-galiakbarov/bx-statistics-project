@@ -15,15 +15,16 @@ import {
 import { redis } from './redis.js';
 import { RedisJsonCache } from './redisJsonCache.js';
 import { snapshotDateKey } from './snapshotUtils.js';
-import { vkApiRequest } from './vkClient.js';
+import { VkApiError, vkApiRequest } from './vkClient.js';
 import { mapVkSource, vkRequest, type VkGroup, type VkPost } from './vkSourceLoader.js';
 
 /** Rows of one search, the candidates the model sees and the posts loaded per community. */
 export const PLACEMENT_ROWS = 30;
 const CANDIDATES = 120;
-const WALL_POSTS = 50;
-// wall.get calls per execute: VK allows 25, 15 keeps the response of 50 posts each small.
-const EXECUTE_BATCH = 15;
+// The whole wall page, as in the pre-ad check: frequent publics post 100 times in a few days.
+const WALL_POSTS = 100;
+// wall.get calls per execute: VK allows 25, but caps the response size — 10 walls of 100 posts already exceed it.
+const EXECUTE_BATCH = 5;
 const SEARCH_PAGE = 100;
 const SEARCH_CONCURRENCY = 3;
 const GET_BY_ID_BATCH = 400;
@@ -192,19 +193,31 @@ async function mapLimit<T, R>(items: T[], limit: number, worker: (item: T) => Pr
   return results;
 }
 
-async function loadWalls(userId: string, ids: number[]) {
-  const walls = new Map<number, VkPost[]>();
-  const batches: number[][] = [];
-  for (let index = 0; index < ids.length; index += EXECUTE_BATCH) batches.push(ids.slice(index, index + EXECUTE_BATCH));
-  await Promise.all(batches.map(async (batch) => {
-    const code = `return [${batch.map((id) => `API.wall.get({"owner_id":${-id},"count":${WALL_POSTS},"filter":"owner"})`).join(',')}];`;
+async function loadWallBatch(userId: string, batch: number[], walls: Map<number, VkPost[]>): Promise<void> {
+  const code = `return [${batch.map((id) => `API.wall.get({"owner_id":${-id},"count":${WALL_POSTS},"filter":"owner"})`).join(',')}];`;
+  try {
     // A failed wall.get inside execute comes back as false, the others still answer.
     const response = await vkRequest<Array<{ items?: VkPost[] } | false>>(userId, 'execute', { code });
     batch.forEach((id, index) => {
       const wall = response[index];
       if (wall && Array.isArray(wall.items)) walls.set(id, wall.items);
     });
-  }));
+  } catch (error) {
+    // Walls with long posts can still overflow the response: halve the batch; a single wall is left without posts.
+    if (!(error instanceof VkApiError && /too big/i.test(error.message)) || batch.length === 1) {
+      console.error(`Failed to load walls ${batch.join(',')}`, error instanceof Error ? error.message : error);
+      return;
+    }
+    const middle = Math.ceil(batch.length / 2);
+    await Promise.all([loadWallBatch(userId, batch.slice(0, middle), walls), loadWallBatch(userId, batch.slice(middle), walls)]);
+  }
+}
+
+async function loadWalls(userId: string, ids: number[]) {
+  const walls = new Map<number, VkPost[]>();
+  const batches: number[][] = [];
+  for (let index = 0; index < ids.length; index += EXECUTE_BATCH) batches.push(ids.slice(index, index + EXECUTE_BATCH));
+  await mapLimit(batches, SEARCH_CONCURRENCY, (batch) => loadWallBatch(userId, batch, walls));
   return walls;
 }
 

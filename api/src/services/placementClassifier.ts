@@ -37,22 +37,28 @@ export function placeStems(place: Pick<PlacementPlace, 'city' | 'region' | 'dist
   return [...new Set(words.map(stem))];
 }
 
+// \b in JS regexps knows only Latin letters, so whole short words are matched with Unicode letter boundaries.
+const word = (value: string) => `(?<!\\p{L})${value}(?!\\p{L})`;
+const rule = (pattern: string) => new RegExp(pattern, 'u');
 const categoryRules: Array<[PlacementCategory, RegExp]> = [
-  ['official', /администрац|правительств|министерств|управлени[ея]|депутат|мэри[яи]|госуслуг|глава (города|района)/],
-  ['jobs', /работа|ваканси|подработк/],
-  ['classifieds', /барахолк|объявлени|авторынок|продам|куплю|отдам даром/],
-  ['events', /афиша|куда пойти|мероприяти|концерт/],
-  ['district', /микрорайон|район|\bжк\b|посел|поселок|село|деревн/],
-  ['overheard', /подслушано|типичн|нетипичн|интересн|настоящ|уютн/],
-  ['news', /новост|\bчп\b|дтп|инцидент|происшеств|жесть|сводк|\bсми\b|вести|\bтв\b|онлайн|live/],
-  ['business', /салон|магазин|студи|\bооо\b|компани|доставк|ресторан|кафе/]
+  ['official', rule(`администрац|правительств|министерств|управлени[ея]|депутат|мэри[яи]|госуслуг|глава (города|района)`)],
+  ['jobs', rule(`работа|ваканси|подработк`)],
+  ['classifieds', rule(`барахолк|объявлени|авторынок|продам|куплю|отдам даром`)],
+  ['events', rule(`афиша|куда пойти|мероприяти|концерт`)],
+  ['district', rule(`микрорайон|район|${word('жк')}|посел|поселок|${word('село')}|деревн`)],
+  ['overheard', rule(`подслушано|типичн|нетипичн|интересн|настоящ|уютн`)],
+  ['news', rule(`новост|${word('чп')}|дтп|инцидент|происшеств|жесть|сводк|${word('сми')}|вести|${word('тв')}|онлайн|live`)],
+  ['business', rule(`салон|магазин|студи|${word('ооо')}|компани|доставк|ресторан|кафе`)]
 ];
 
 /** Fallback when DeepSeek is off or failed: the place in the name or description and keyword categories. */
 export function ruleLabel(group: PlacementGroupText, place: PlacementPlace): PlacementLabel {
-  const text = `${group.name} ${group.description ?? ''}`.toLowerCase().replace(/ё/g, 'е');
+  const name = group.name.toLowerCase().replace(/ё/g, 'е');
+  const text = `${name} ${(group.description ?? '').toLowerCase().replace(/ё/g, 'е')}`;
   const local = placeStems(place).some((item) => text.includes(item));
-  const category = categoryRules.find(([, pattern]) => pattern.test(text))?.[0] ?? (local ? 'other' : 'theme');
+  // The name decides the category first: descriptions of city publics often mention the administration or districts.
+  const byName = categoryRules.find(([, pattern]) => pattern.test(name))?.[0];
+  const category = byName ?? categoryRules.find(([, pattern]) => pattern.test(text))?.[0] ?? (local ? 'other' : 'theme');
   if (!place.topic.trim()) return { local, category, fit: local ? 2 : 0 };
   const topicHit = place.topic.split(/\s+/).filter((word) => word.length >= 4).some((word) => text.includes(stem(word)));
   return { local, category, fit: !local ? 0 : topicHit ? 2 : 1 };

@@ -817,7 +817,8 @@ export type AdCheckResult = {
 
 export type PlacementKind = 'topic' | 'city';
 export type PlacementCity = { id: number; title: string; region: string; area: string };
-export type PlacementUsage = { used: number; limit: number; paid: boolean; freeRows: number };
+/** paidLimit — подборов в сутки с тарифом: для текстов о том, что даёт тариф. */
+export type PlacementUsage = { used: number; limit: number; paid: boolean; paidLimit: number; freeRows: number };
 
 /**
  * Строка подбора площадок: GET /api/placements/search. kind — про интересы аудитории (topic) или общегородской паблик (city);

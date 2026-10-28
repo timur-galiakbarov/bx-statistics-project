@@ -376,7 +376,7 @@ function PlacementsReport({ result, shortlisted, onToggle, shortlistCount, onOpe
 
         {lockedCount > 0 && <div className="placements-paywall">
           <Lock size={18} aria-hidden="true" />
-          <span>Ещё {lockedCount} {plural(lockedCount, 'площадка', 'площадки', 'площадок')} с просмотрами, рекламой и объяснением AI — с тарифом. С ним же до 20 подборов в день.</span>
+          <span>Ещё {lockedCount} {plural(lockedCount, 'площадка', 'площадки', 'площадок')} с просмотрами, рекламой и объяснением AI — с тарифом. С ним же до {result.usage.paidLimit} {plural(result.usage.paidLimit, 'подбора', 'подборов', 'подборов')} в день.</span>
           <Link className="analytics-landing-access-button" to="/account" onClick={() => trackPlacementEvent('placement_paywall_click', 'rows')}>Открыть все площадки</Link>
         </div>}
 

@@ -339,7 +339,7 @@ function limitKey(userId: string) {
 export async function getPlacementUsage(userId: string, paid: boolean) {
   const limit = paid ? env.placementDailyLimitPaid : env.placementDailyLimitFree;
   const used = redis.isReady ? await redis.sCard(limitKey(userId)) : 0;
-  return { used, limit, paid, freeRows: env.placementFreeRows };
+  return { used, limit, paid, paidLimit: env.placementDailyLimitPaid, freeRows: env.placementFreeRows };
 }
 
 /** Service-wide budget of searches with DeepSeek per day; past it the rules work. */

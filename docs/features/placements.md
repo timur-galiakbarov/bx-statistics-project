@@ -133,10 +133,10 @@
 
 Лимиты и кэш живут в Redis; без Redis подбор отвечает 503.
 
-- **Подборов в сутки на пользователя:** без тарифа `PLACEMENT_DAILY_LIMIT_FREE` (1), с тарифом `PLACEMENT_DAILY_LIMIT_PAID` (20). Считаются разные сочетания «описание + город», регистр и лишние пробелы не важны. Повтор того же подбора лимит не тратит. Подбор списывается после успешного ответа, упор в лимит — 429 `PLACEMENT_LIMIT`.
+- **Подборов в сутки на пользователя:** без тарифа `PLACEMENT_DAILY_LIMIT_FREE` (1), с тарифом и в пробный период `PLACEMENT_DAILY_LIMIT_PAID` (10). Считаются разные сочетания «описание + город», регистр и лишние пробелы не важны. Повтор того же подбора лимит не тратит. Подбор списывается после успешного ответа, упор в лимит — 429 `PLACEMENT_LIMIT`.
 - **Без тарифа** подробности видны у первых `PLACEMENT_FREE_ROWS` (5) строк общего порядка. Остальные приходят без метрик, причин и рекламодателей (`locked: true`), под таблицей — призыв к тарифу.
 - **Результат подбора** кэшируется на `PLACEMENT_SEARCH_CACHE_TTL_MS` (24 часа) для всех пользователей. Поле `cached` говорит, взят ли ответ из кэша.
-- **Подборов с DeepSeek на весь сервис:** `PLACEMENT_AI_MAX_PER_DAY` (500) в сутки, сверх — запасной путь. Подборы из кэша в бюджет не входят. Один подбор — около 50 тыс. токенов, порядка 1,5–2 ₽.
+- **Подборов с DeepSeek на весь сервис:** `PLACEMENT_AI_MAX_PER_DAY` (300) в сутки, сверх — запасной путь. Подборы из кэша в бюджет не входят. Один подбор — около 50 тыс. токенов, порядка 1,5–2 ₽.
 
 ## Статистика
 
@@ -186,4 +186,4 @@
 
 ## Настройки
 
-`DEEPSEEK_API_KEY`, `DEEPSEEK_MODEL` (`deepseek-chat`), `DEEPSEEK_TIMEOUT_MS` (25 000), `PLACEMENT_AI_ENABLED` (1), `PLACEMENT_AI_MAX_PER_DAY` (500), `PLACEMENT_DAILY_LIMIT_FREE` (1), `PLACEMENT_DAILY_LIMIT_PAID` (20), `PLACEMENT_FREE_ROWS` (5), `PLACEMENT_SEARCH_CACHE_TTL_MS` (сутки). На проде нужен только `DEEPSEEK_API_KEY` в `api/.env`, остальное — значения по умолчанию.
+`DEEPSEEK_API_KEY`, `DEEPSEEK_MODEL` (`deepseek-chat`), `DEEPSEEK_TIMEOUT_MS` (25 000), `PLACEMENT_AI_ENABLED` (1), `PLACEMENT_AI_MAX_PER_DAY` (300), `PLACEMENT_DAILY_LIMIT_FREE` (1), `PLACEMENT_DAILY_LIMIT_PAID` (10), `PLACEMENT_FREE_ROWS` (5), `PLACEMENT_SEARCH_CACHE_TTL_MS` (сутки). На проде нужен только `DEEPSEEK_API_KEY` в `api/.env`, остальное — значения по умолчанию.

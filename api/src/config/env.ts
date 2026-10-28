@@ -65,11 +65,11 @@ export const env = {
   // Подбор площадок VK: подборов в сутки на пользователя, сколько строк видно без тарифа, кэш выдачи,
   // суточный бюджет подборов с DeepSeek на весь сервис.
   placementDailyLimitFree: Number(process.env.PLACEMENT_DAILY_LIMIT_FREE ?? 1),
-  placementDailyLimitPaid: Number(process.env.PLACEMENT_DAILY_LIMIT_PAID ?? 20),
+  placementDailyLimitPaid: Number(process.env.PLACEMENT_DAILY_LIMIT_PAID ?? 10),
   placementFreeRows: Number(process.env.PLACEMENT_FREE_ROWS ?? 5),
   placementSearchCacheTtlMs: Number(process.env.PLACEMENT_SEARCH_CACHE_TTL_MS ?? 24 * 3_600_000),
   placementAiEnabled: (process.env.PLACEMENT_AI_ENABLED ?? '1') === '1',
-  placementAiMaxPerDay: Number(process.env.PLACEMENT_AI_MAX_PER_DAY ?? 500),
+  placementAiMaxPerDay: Number(process.env.PLACEMENT_AI_MAX_PER_DAY ?? 300),
   // Ежедневные срезы подписчиков и публикаций. По умолчанию включены только в production.
   snapshotsEnabled: (process.env.SNAPSHOTS_ENABLED ?? (process.env.NODE_ENV === 'production' ? '1' : '0')) === '1',
   snapshotStartHour: Number(process.env.SNAPSHOT_START_HOUR ?? 3),

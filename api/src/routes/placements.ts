@@ -44,9 +44,11 @@ placementsRouter.get('/search', async (req, res, next) => {
       userId: req.user!.id,
       paid: hasActiveAccess(req.user),
       brief: req.query.brief,
-      cityId: req.query.cityId
+      cityId: req.query.cityId,
+      groupId: req.query.groupId
     });
-    trackActivity(req, 'placement_search', { platform: 'vk', label: [data.city?.title ?? '', data.brief, data.aiUsed ? 'ai' : 'rules', data.rows.length].join('|') });
+    const task = data.ownGroup ? [data.ownGroup.name, data.brief].filter(Boolean).join(' · ') : data.brief;
+    trackActivity(req, 'placement_search', { platform: 'vk', label: [data.city?.title ?? '', task, data.aiUsed ? 'ai' : 'rules', data.rows.length, data.ownGroup ? 'group' : 'text'].join('|') });
     res.json({ success: true, data });
   } catch (error) {
     if (error instanceof DomainError && error.code === 'PLACEMENT_LIMIT') trackActivity(req, 'placement_limit', { label: error.code });

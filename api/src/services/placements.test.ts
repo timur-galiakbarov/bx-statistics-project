@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { wellFormed } from './deepseekClient.js';
 import { fallbackPlan, parsePlan, parsePrefilter, parseVerdicts, ruleVerdict, stem, type PlacementPlan } from './placementClassifier.js';
-import { buildQueries, buildRow, lockRows, pickShortlist, postTexts, sortRows, type PlacementRow } from './placementSearchService.js';
+import { buildQueries, buildRow, extractGroupRef, lockRows, pickShortlist, postTexts, sizeRangeFor, sortRows, type PlacementRow } from './placementSearchService.js';
 import { parseSearchLabel } from './placementStatsService.js';
 
 const now = new Date('2026-10-28T12:00:00Z').getTime();
@@ -106,13 +106,14 @@ test('порядок строк: живые, затем блок темы, оц�
   assert.deepEqual(sorted.map((item) => item.id), [4, 3, 1, 2]);
   const locked = lockRows(sorted, false, 2);
   assert.equal(locked[1].locked, false);
-  assert.deepEqual(locked[2], { id: 1, name: 'A', url: base.url, photo: null, members: 10, kind: 'city', locked: true });
+  assert.deepEqual(locked[2], { id: 1, name: 'A', url: base.url, photo: null, members: 10, kind: 'city', sizeMatch: false, locked: true });
   assert.ok(lockRows(sorted, true, 1).every((item) => !item.locked));
 });
 
 test('метка подбора разбирается с концов: описание может содержать «|», город может быть пустым', () => {
-  assert.deepEqual(parseSearchLabel('|группа про мемы|ai|30'), { city: '', brief: 'группа про мемы', ai: true, rows: 30 });
-  assert.deepEqual(parseSearchLabel('Уфа|окна|двери|rules|4'), { city: 'Уфа', brief: 'окна|двери', ai: false, rows: 4 });
+  assert.deepEqual(parseSearchLabel('|группа про мемы|ai|30'), { city: '', brief: 'группа про мемы', ai: true, rows: 30, group: false });
+  assert.deepEqual(parseSearchLabel('Уфа|окна|двери|rules|4|text'), { city: 'Уфа', brief: 'окна|двери', ai: false, rows: 4, group: false });
+  assert.deepEqual(parseSearchLabel('|Switch Russia · постарше|ai|27|group'), { city: '', brief: 'Switch Russia · постарше', ai: true, rows: 27, group: true });
   assert.equal(parseSearchLabel('мусор'), null);
 });
 
@@ -120,4 +121,30 @@ test('для DeepSeek из текста убираются половинки р
   assert.equal(wellFormed('Пост 😀'.slice(0, 6) + ' конец'), 'Пост  конец');
   assert.equal(wellFormed('Пост 😀 конец'), 'Пост 😀 конец');
   assert.equal(JSON.stringify(wellFormed('\udc00a')), '"a"');
+});
+
+test('ссылка на свою группу находится в описании, остальной текст — пожелания', () => {
+  assert.deepEqual(extractGroupRef('https://vk.com/switch_ru, хочу подписчиков постарше'), { ref: 'switch_ru', rest: 'хочу подписчиков постарше' });
+  assert.deepEqual(extractGroupRef('vk.ru/club123456'), { ref: '123456', rest: '' });
+  assert.deepEqual(extractGroupRef('моя группа public777 про мемы'), { ref: '777', rest: 'моя группа про мемы' });
+  assert.deepEqual(extractGroupRef('шиномонтаж в Уфе'), { ref: null, rest: 'шиномонтаж в Уфе' });
+  assert.equal(extractGroupRef('супермаркет clubhouse').ref, null);
+});
+
+test('сопоставимый размер — от половины до 20 размеров своей группы, с нижними границами', () => {
+  assert.deepEqual(sizeRangeFor(5_000), { min: 2_500, max: 100_000 });
+  assert.deepEqual(sizeRangeFor(300), { min: 1_000, max: 10_000 });
+  assert.deepEqual(sizeRangeFor(1_000_000), { min: 500_000, max: 20_000_000 });
+});
+
+test('при своей группе сопоставимые по размеру идут первыми и в чтение постов, и в таблице', () => {
+  const range = sizeRangeFor(5_000);
+  const groups = [{ id: 1, name: 'IGM', members_count: 2_800_000 }, { id: 2, name: 'Switch | 2', members_count: 24_000 }, { id: 3, name: 'Zelda', members_count: 18_000 }];
+  const labels = new Map([[1, { fit: 2 as const, competitor: false }], [2, { fit: 2 as const, competitor: false }], [3, { fit: 1 as const, competitor: false }]]);
+  assert.deepEqual(pickShortlist(groups, labels, [], range).map((group) => group.id), [2, 3, 1]);
+  assert.deepEqual(pickShortlist(groups, labels, []).map((group) => group.id), [1, 2, 3]);
+  const verdict = { fit: 2 as const, kind: 'topic' as const, reason: '', advertisers: '', competitor: false };
+  const rows = groups.map((group) => ({ ...buildRow(group, [], verdict, now, range), views: group.members_count / 100 }));
+  assert.deepEqual(rows.map((row) => row.sizeMatch), [false, true, true]);
+  assert.deepEqual(sortRows(rows).map((row) => row.id), [2, 3, 1]);
 });

@@ -325,7 +325,7 @@ export function App() {
             element={<AnalyticsPage isAdmin={Boolean(user?.isAdmin)} groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} />}
           />
           <Route path="/ad-check" element={user?.isAdmin ? <AdCheckPage /> : <Navigate to="/dashboard" replace />} />
-          <Route path="/placements" element={user?.placementsEnabled ? <PlacementsPage /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/placements" element={user?.placementsEnabled ? <PlacementsPage groups={groups} /> : <Navigate to="/dashboard" replace />} />
           <Route path="/compare" element={hasPaidAccess ? <ComparePage groups={groups} user={user} /> : <CompareShowcase />} />
           <Route path="/posts" element={hasPaidAccess ? <PostsPage groups={groups} /> : <PostsShowcase />} />
           <Route path="/telegram" element={<TelegramAnalyticsRedirect />} />

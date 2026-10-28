@@ -807,6 +807,8 @@ export type PlacementRow = {
   reason: string;
   advertisers: string;
   dead: boolean;
+  /** Сопоставимо по размеру со своей группой (от половины до 20 её размеров). */
+  sizeMatch: boolean;
   locked: false;
   views: number | null;
   viewsLower: number | null;
@@ -822,10 +824,16 @@ export type PlacementRow = {
 };
 
 /** Строка сверх бесплатного лимита: без метрик и выводов модели. */
-export type PlacementLockedRow = Pick<PlacementRow, 'id' | 'name' | 'url' | 'photo' | 'members' | 'kind'> & { locked: true };
+export type PlacementLockedRow = Pick<PlacementRow, 'id' | 'name' | 'url' | 'photo' | 'members' | 'kind' | 'sizeMatch'> & { locked: true };
+
+/** Своя группа, от которой начат подбор. */
+export type PlacementOwnGroup = { id: number; name: string; url: string; photo: string | null; members: number; views: number | null; closed: boolean };
 
 export type PlacementSearchResult = {
+  /** Описание задачи или пожелания к своей группе. */
   brief: string;
+  ownGroup: PlacementOwnGroup | null;
+  sizeRange: { min: number; max: number } | null;
   type: 'business' | 'community';
   audience: string;
   city: PlacementCity | null;

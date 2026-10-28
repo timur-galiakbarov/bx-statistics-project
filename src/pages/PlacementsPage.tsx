@@ -1,13 +1,14 @@
-import { ExternalLink, Lock, MapPin, Megaphone, MessageCircle, Search, Sparkles, X } from 'lucide-react';
+import { ExternalLink, Lock, MapPin, Megaphone, MessageCircle, Search, Sparkles, Users, X } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ApiError, apiGet, apiPost } from '../api/client';
-import type { PlacementCity, PlacementKind, PlacementLockedRow, PlacementRow, PlacementSearchResult, PlacementUsage } from '../api/types';
+import type { PlacementCity, PlacementKind, PlacementLockedRow, PlacementRow, PlacementSearchResult, PlacementUsage, SavedGroup, VkGroup, VkListResponse } from '../api/types';
 import { costPerThousand, positiveAmount } from '../utils/adCheck';
 import { trackPlacementEvent } from '../utils/visit';
 
 type SortKey = 'fit' | 'members' | 'views' | 'ratio' | 'cpm';
-type SizeKey = 'all' | 'small' | 'medium' | 'large';
+type SizeKey = 'all' | 'match' | 'small' | 'medium' | 'large';
+type OwnChoice = { id: string; name: string; photo?: string; members?: number | null };
 
 const sizes: Array<{ key: Exclude<SizeKey, 'all'>; label: string; test: (members: number) => boolean }> = [
   { key: 'small', label: 'до 50 тыс.', test: (members) => members < 50_000 },
@@ -23,8 +24,11 @@ const loadingSteps: Array<{ after: number; text: string }> = [
   { after: 75, text: 'Почти готово' }
 ];
 const examples = ['Шиномонтаж в Уфе, клиенты — автомобилисты', 'Группа про Nintendo Switch, хочу больше подписчиков', 'Онлайн-школа английского для взрослых'];
+const GROUP_OPTIONS_SHOWN = 12;
 
 const number = (value: number | null, digits = 0) => value === null ? '—' : new Intl.NumberFormat('ru-RU', { maximumFractionDigits: digits }).format(value);
+// 7 761 → «7,8 тыс.», 1 250 000 → «1,3 млн»: for ranges, where exact numbers only get in the way.
+const compact = (value: number) => value >= 1_000_000 ? `${number(value / 1_000_000, 1)} млн` : value >= 1_000 ? `${number(value / 1_000, value < 10_000 ? 1 : 0)} тыс.` : number(value);
 const rubles = (value: number | null) => value === null ? '—' : `${number(value, value < 10 ? 2 : 0)} ₽`;
 
 function plural(value: number, one: string, few: string, many: string) {
@@ -37,14 +41,20 @@ function plural(value: number, one: string, few: string, many: string) {
 
 const isOpen = (row: PlacementRow | PlacementLockedRow): row is PlacementRow => !row.locked;
 
-export function PlacementsPage() {
+export function PlacementsPage({ groups }: { groups: SavedGroup[] }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const requested = useMemo(() => ({
     brief: searchParams.get('brief') ?? '',
     cityId: searchParams.get('cityId') ?? '',
-    city: searchParams.get('city') ?? ''
+    city: searchParams.get('city') ?? '',
+    groupId: searchParams.get('groupId') ?? '',
+    group: searchParams.get('group') ?? ''
   }), [searchParams]);
   const [brief, setBrief] = useState(requested.brief);
+  const [own, setOwn] = useState<OwnChoice | null>(requested.groupId ? { id: requested.groupId, name: requested.group || `club${requested.groupId}` } : null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [adminGroups, setAdminGroups] = useState<VkGroup[] | null>(null);
+  const [groupFilter, setGroupFilter] = useState('');
   const [cityQuery, setCityQuery] = useState(requested.city);
   const [city, setCity] = useState<{ id: string; title: string } | null>(requested.cityId ? { id: requested.cityId, title: requested.city } : null);
   const [suggestions, setSuggestions] = useState<PlacementCity[]>([]);
@@ -62,7 +72,7 @@ export function PlacementsPage() {
 
   // The search is driven by the URL, so a reload or a shared link opens the same selection.
   useEffect(() => {
-    if (!requested.brief) return;
+    if (!requested.brief && !requested.groupId) return;
     let active = true;
     setIsLoading(true);
     setElapsed(0);
@@ -70,7 +80,7 @@ export function PlacementsPage() {
     setLimitReached(false);
     const startedAt = Date.now();
     const timer = window.setInterval(() => setElapsed(Math.round((Date.now() - startedAt) / 1000)), 1000);
-    const params = new URLSearchParams({ brief: requested.brief, ...(requested.cityId ? { cityId: requested.cityId } : {}) });
+    const params = new URLSearchParams({ brief: requested.brief, ...(requested.cityId ? { cityId: requested.cityId } : {}), ...(requested.groupId ? { groupId: requested.groupId } : {}) });
     apiGet<PlacementSearchResult>(`/api/placements/search?${params}`)
       .then((data) => { if (active) { setResult(data); setUsage(data.usage); } })
       .catch((error) => {
@@ -105,13 +115,45 @@ export function PlacementsPage() {
     setSuggestions([]);
   };
 
+  // Groups the user administers come from VK on demand; the tracked ones are already loaded by the app.
+  const openPicker = () => {
+    setIsPickerOpen((value) => !value);
+    if (adminGroups) return;
+    apiGet<VkListResponse<VkGroup>>('/api/vk/groups/subscriptions')
+      .then((data) => setAdminGroups(data.items.filter((group) => Boolean(group.is_admin))))
+      .catch(() => setAdminGroups([]));
+  };
+
+  const choose = (choice: OwnChoice) => {
+    setOwn(choice);
+    setIsPickerOpen(false);
+    setGroupFilter('');
+  };
+
+  const adminIds = new Set((adminGroups ?? []).map((group) => String(group.id)));
+  const filterGroup = (name: string) => name.toLowerCase().includes(groupFilter.trim().toLowerCase());
+  // The same community can be saved more than once (for example, as tracked and as managed): one option per id.
+  const unique = (items: OwnChoice[]) => [...new Map(items.map((item) => [item.id, item])).values()];
+  const adminOptions: OwnChoice[] = unique((adminGroups ?? [])
+    .map((group) => ({ id: String(group.id), name: group.name, photo: group.photo_100 ?? group.photo_50, members: group.members_count ?? null }))
+    .filter((group) => filterGroup(group.name)));
+  const trackedOptions: OwnChoice[] = unique(groups
+    .filter((group) => group.platform === 'vk' && !adminIds.has(group.vkGroupId || group.externalId))
+    .map((group) => ({ id: group.vkGroupId || group.externalId, name: group.name, photo: group.photo, members: group.membersCount ?? group.followersCount ?? null }))
+    .filter((group) => /^\d+$/.test(group.id) && filterGroup(group.name)));
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
     const value = brief.trim();
-    if (value.length < 3) return setMessage('Опишите, что рекламируете.');
+    if (!own && value.length < 3) return setMessage('Опишите, что рекламируете, или выберите свою группу.');
     if (cityQuery.trim() && !city) return setMessage('Выберите город из подсказок или очистите поле.');
-    setSearchParams({ brief: value, ...(city ? { cityId: city.id, city: city.title } : {}) });
+    setSearchParams({ brief: value, ...(city ? { cityId: city.id, city: city.title } : {}), ...(own ? { groupId: own.id, group: own.name } : {}) });
   };
+
+  const option = (item: OwnChoice) => <button type="button" className="placements-group-option" key={item.id} onClick={() => choose(item)}>
+    {item.photo ? <img src={item.photo} alt="" width={28} height={28} /> : <span className="placements-avatar">VK</span>}
+    <span><b>{item.name}</b>{item.members ? <small>{number(item.members)} {plural(item.members, 'подписчик', 'подписчика', 'подписчиков')}</small> : null}</span>
+  </button>;
 
   const step = [...loadingSteps].reverse().find((item) => elapsed >= item.after)!;
 
@@ -122,10 +164,25 @@ export function PlacementsPage() {
         <p>Расскажите, что рекламируете: поймём, кто ваша аудитория, найдём сообщества, где она сидит, прочитаем их посты и покажем просмотры, рекламу и цену 1 000 просмотров.</p>
       </div></div>
       <form className="placements-form" onSubmit={submit}>
-        <label className="placements-brief">Что рекламируете?
-          <textarea value={brief} onChange={(event) => setBrief(event.target.value)} placeholder={examples[0]} rows={2} maxLength={300} />
-          <span className="placements-examples">Например: {examples.map((item) => <button type="button" key={item} onClick={() => setBrief(item)}>{item}</button>)}</span>
-        </label>
+        <div className="placements-brief">
+          {own
+            ? <div className="placements-own-chip"><Users size={16} aria-hidden="true" /><span>Ваша группа: <b>{own.name}</b></span><button type="button" onClick={() => setOwn(null)} aria-label="Убрать свою группу"><X size={16} /></button></div>
+            : null}
+          <label>{own ? 'Пожелания — необязательно' : 'Что рекламируете?'}
+            <textarea value={brief} onChange={(event) => setBrief(event.target.value)} placeholder={own ? 'Например: нужны подписчики постарше' : 'Опишите задачу или вставьте ссылку на свою группу ВК'} rows={2} maxLength={300} />
+          </label>
+          <span className="placements-examples">
+            <button type="button" className="placements-pick" onClick={openPicker} aria-expanded={isPickerOpen}><Users size={14} aria-hidden="true" /> {own ? 'Выбрать другую группу' : 'Выбрать свою группу'}</button>
+            {!own && <>или например: {examples.map((item) => <button type="button" key={item} onClick={() => setBrief(item)}>{item}</button>)}</>}
+          </span>
+          {isPickerOpen && <div className="placements-picker">
+            {(adminGroups?.length ?? 0) + trackedOptions.length > 8 && <input value={groupFilter} onChange={(event) => setGroupFilter(event.target.value)} placeholder="Найти по названию" aria-label="Найти группу по названию" />}
+            {adminGroups === null && <p className="ad-check-data-note">Загружаем ваши сообщества…</p>}
+            {adminOptions.length > 0 && <><strong>Вы администратор</strong><div className="placements-group-options">{adminOptions.slice(0, GROUP_OPTIONS_SHOWN).map(option)}</div></>}
+            {trackedOptions.length > 0 && <><strong>Отслеживаемые</strong><div className="placements-group-options">{trackedOptions.slice(0, GROUP_OPTIONS_SHOWN).map(option)}</div></>}
+            {adminGroups !== null && !adminOptions.length && !trackedOptions.length && <p className="ad-check-data-note">{groupFilter ? 'Ничего не нашлось.' : 'Сообществ, где вы администратор, и отслеживаемых сообществ VK нет. Вставьте ссылку на группу в поле выше.'}</p>}
+          </div>}
+        </div>
         <div className="placements-city">
           <label htmlFor="placement-city">Город <small>— если бизнес местный</small></label>
           <div className="placements-city-input">
@@ -169,14 +226,15 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
   const priceTracked = useRef(false);
 
   useEffect(() => {
-    setSize('all');
+    setSize(result.sizeRange ? 'match' : 'all');
     setSelected(new Set());
     setPrices({});
   }, [result]);
 
   const cpmOf = (row: PlacementRow) => costPerThousand(positiveAmount(prices[row.id] ?? ''), row.views);
   const rowsOf = (kind: PlacementKind) => {
-    const sizeTest = sizes.find((item) => item.key === size)?.test;
+    const sizeTest = size === 'match' ? (members: number) => Boolean(result.sizeRange && members >= result.sizeRange.min && members <= result.sizeRange.max)
+      : sizes.find((item) => item.key === size)?.test;
     const filtered = result.rows.filter((row) => row.kind === kind && (!sizeTest || sizeTest(row.members)));
     if (sort === 'fit') return filtered;
     const value = (row: PlacementRow | PlacementLockedRow) => !isOpen(row) ? -Infinity
@@ -214,7 +272,13 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
 
   const chooseSize = (value: SizeKey) => {
     setSize(value);
-    if (value !== 'all') trackPlacementEvent('placement_filter', value);
+    if (value !== 'all' && value !== 'match') trackPlacementEvent('placement_filter', value);
+  };
+  const ownMembers = result.ownGroup?.members ?? 0;
+  const times = (members: number) => {
+    if (!ownMembers) return null;
+    const ratio = members / ownMembers;
+    return ratio >= 1.5 ? `в ${number(ratio, ratio < 10 ? 1 : 0)} раза больше вашей` : ratio <= 0.67 ? `в ${number(1 / ratio, 1)} раза меньше вашей` : 'как ваша';
   };
 
   const chip = (active: boolean, label: string, onClick: () => void, key?: string) => <button type="button" key={key} className={active ? 'active' : ''} aria-pressed={active} onClick={onClick}>{label}</button>;
@@ -236,7 +300,7 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
           ? <tr key={row.id} className={[selected.has(row.id) ? 'selected' : '', row.dead ? 'placements-dead' : ''].join(' ')}>
             <td><input type="checkbox" checked={selected.has(row.id)} onChange={() => toggle(row)} aria-label={`В подборку: ${row.name}`} /></td>
             <td><PlacementName row={row} /></td>
-            <td>{number(row.members)}</td>
+            <td>{number(row.members)}{times(row.members) && <small>{times(row.members)}</small>}</td>
             <td title={row.viewsLower !== null ? `Обычно от ${number(row.viewsLower)} до ${number(row.viewsUpper)}` : undefined}>{number(row.views)}</td>
             <td className={row.dead ? 'placements-low' : ''}>{row.viewsToSubscribers === null ? '—' : `${number(row.viewsToSubscribers, 1)}%`}{row.dead && <small>мало просмотров</small>}</td>
             <td title={row.complete ? undefined : 'По последним 100 постам: они покрывают меньше 30 дней'}>{number(row.adsPerWeek, 1)}</td>
@@ -257,9 +321,17 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
 
   return <div className="panel span-2 analytics-section">
     <div className="section-title"><div>
-      <h2>{result.brief}</h2>
+      <h2>{result.ownGroup ? `Площадки для «${result.ownGroup.name}»` : result.brief}</h2>
       <p>{result.type === 'community' ? 'Сообщество' : 'Бизнес'} · {where} · {result.rows.length} {plural(result.rows.length, 'площадка', 'площадки', 'площадок')} из {result.candidates} {plural(result.candidates, 'найденного сообщества', 'найденных сообществ', 'найденных сообществ')} · данные на {new Date(result.loadedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
     </div></div>
+    {result.ownGroup && <div className="placements-own-card">
+      {result.ownGroup.photo ? <img src={result.ownGroup.photo} alt="" width={44} height={44} /> : <span className="placements-avatar">VK</span>}
+      <span>
+        <small>Ваша группа</small>
+        <a href={result.ownGroup.url} target="_blank" rel="noreferrer">{result.ownGroup.name}</a>
+        <small>{number(result.ownGroup.members)} {plural(result.ownGroup.members, 'подписчик', 'подписчика', 'подписчиков')}{result.ownGroup.views !== null ? ` · пост смотрят ~${number(result.ownGroup.views)}` : ''}{result.ownGroup.closed ? ' · закрытая: посты не видны, подбирали по названию и описанию' : ''}{result.brief ? ` · пожелания: ${result.brief}` : ''}</small>
+      </span>
+    </div>}
     {result.audience && <p className="placements-audience"><Sparkles size={14} aria-hidden="true" /> <b>Аудитория:</b> {result.audience}</p>}
     {result.cityMissing && <div className="ad-check-notice">Похоже, бизнес местный, но город не указан — искали по всей России. Укажите город, чтобы найти местные паблики.</div>}
     {!result.aiUsed && <div className="ad-check-notice">DeepSeek был недоступен или ответил с ошибкой: часть площадок отобрана простыми правилами, у них нет причины и списка рекламодателей.</div>}
@@ -271,6 +343,7 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
         <div className="placements-toolbar">
           <div className="placements-chips" role="group" aria-label="Размер">
             <span>Размер:</span>
+            {result.sizeRange && chip(size === 'match', `рядом с вашей: ${compact(result.sizeRange.min)}–${compact(result.sizeRange.max)}`, () => chooseSize('match'))}
             {chip(size === 'all', 'любой', () => chooseSize('all'))}
             {sizes.map((item) => chip(size === item.key, item.label, () => chooseSize(item.key), item.key))}
           </div>
@@ -289,7 +362,7 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
           <p className="ad-check-data-note">Новости, подслушано, афиши — подходят любому местному бизнесу.</p>
           {table(cityRows)}
         </section>}
-        {!topicRows.length && !cityRows.length && <div className="empty-state">Площадок такого размера нет — выберите другой размер.</div>}
+        {!topicRows.length && !cityRows.length && <div className="empty-state">Площадок такого размера нет — выберите «любой» или другой размер.</div>}
 
         {lockedCount > 0 && <div className="placements-paywall">
           <span>Ещё {lockedCount} {plural(lockedCount, 'площадка', 'площадки', 'площадок')} с просмотрами, рекламой, причинами и CPM — с тарифом. С ним же до 20 подборов в день.</span>
@@ -313,15 +386,16 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
 }
 
 function PlacementName({ row }: { row: PlacementRow | PlacementLockedRow }) {
+  const suffix = row.sizeMatch ? '_match' as const : '' as const;
   return <div className="placements-name">
     {row.photo ? <img src={row.photo} alt="" width={36} height={36} loading="lazy" /> : <span className="placements-avatar">VK</span>}
     <span>
-      <a href={row.url} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', 'vk')}>{row.name}<ExternalLink size={12} aria-hidden="true" /></a>
+      <a href={row.url} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', `vk${suffix}`)}>{row.name}<ExternalLink size={12} aria-hidden="true" /></a>
       {isOpen(row) && row.reason && <small className="placements-reason">{row.reason}</small>}
       {isOpen(row) && row.advertisers && <small className="placements-advertisers"><Megaphone size={12} aria-hidden="true" /> Рекламируются: {row.advertisers}</small>}
       {isOpen(row) && <span className="placements-contacts">
-        {row.contacts.map((contact) => <a key={contact.url} href={contact.url} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', 'contact')}>{contact.label}</a>)}
-        <a href={row.messageUrl} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', 'message')}><MessageCircle size={12} aria-hidden="true" /> Написать</a>
+        {row.contacts.map((contact) => <a key={contact.url} href={contact.url} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', `contact${suffix}`)}>{contact.label}</a>)}
+        <a href={row.messageUrl} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', `message${suffix}`)}><MessageCircle size={12} aria-hidden="true" /> Написать</a>
       </span>}
     </span>
   </div>;

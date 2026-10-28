@@ -14,6 +14,10 @@ export type AdminPlacementStats = {
   repeatUsers: number;
   /** Доля подборов с городом (местный бизнес); остальные — по всей России. */
   cityShare: number | null;
+  /** Доля подборов от своей группы (ссылка или выбор из списка), остальные — по описанию. */
+  groupShare: number | null;
+  /** Доля открытий площадок, сопоставимых по размеру со своей группой, среди всех открытий из подбора. */
+  sizeMatchOpenShare: number | null;
   thinResults: number;
   rulesSearches: number;
   topCities: Array<{ city: string; users: number; searches: number }>;
@@ -32,11 +36,15 @@ export type AdminPlacementStats = {
 
 type EventRow = { userId: Types.ObjectId; type: string; label?: string; createdAt: Date };
 
-/** «Город|описание задачи|ai или rules|строк»: описание может содержать «|», поэтому разбор с концов. Город пуст, если подбор без города. */
+/**
+ * «Город|задача|ai или rules|строк|group или text»: задача может содержать «|», поэтому разбор с концов. Город пуст, если подбор
+ * без города; последней части нет у подборов до появления своей группы — они считаются подборами по описанию.
+ */
 export function parseSearchLabel(label = '') {
   const parts = label.split('|');
+  const mode = parts.at(-1) === 'group' || parts.at(-1) === 'text' ? parts.pop() : 'text';
   if (parts.length < 4) return null;
-  return { city: parts[0], brief: parts.slice(1, -2).join('|'), ai: parts.at(-2) === 'ai', rows: Number(parts.at(-1)) };
+  return { city: parts[0], brief: parts.slice(1, -2).join('|'), ai: parts.at(-2) === 'ai', rows: Number(parts.at(-1)), group: mode === 'group' };
 }
 
 /** Счётчики DeepSeek из Redis по дням периода; админы в них не отделены. */
@@ -69,6 +77,7 @@ export async function getAdminPlacementStats(requestedDays: unknown, now = new D
 
   const usersOf = (type: string, label?: string) => new Set(events.filter((event) => event.type === type && (label === undefined || event.label === label)).map((event) => event.userId.toString()));
   const searches = events.filter((event) => event.type === 'placement_search');
+  const opens = events.filter((event) => event.type === 'placement_open');
   const parsed = searches.map((event) => parseSearchLabel(event.label)).filter((item): item is NonNullable<ReturnType<typeof parseSearchLabel>> => item !== null);
 
   const searchDays = new Map<string, Set<string>>();
@@ -116,6 +125,8 @@ export async function getAdminPlacementStats(requestedDays: unknown, now = new D
     searches: searches.length,
     repeatUsers: [...searchDays.values()].filter((set) => set.size >= 2).length,
     cityShare: parsed.length ? Math.round(parsed.filter((item) => item.city).length / parsed.length * 100) / 100 : null,
+    groupShare: parsed.length ? Math.round(parsed.filter((item) => item.group).length / parsed.length * 100) / 100 : null,
+    sizeMatchOpenShare: opens.length ? Math.round(opens.filter((event) => event.label?.endsWith('_match')).length / opens.length * 100) / 100 : null,
     thinResults: parsed.filter((item) => item.rows < 5).length,
     rulesSearches: parsed.filter((item) => !item.ai).length,
     topCities: [...cities.entries()].map(([city, value]) => ({ city, users: value.users.size, searches: value.searches }))

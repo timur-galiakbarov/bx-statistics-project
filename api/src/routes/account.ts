@@ -153,7 +153,7 @@ const uiEventLabels: Partial<Record<ActivityEventType, string[]>> = {
   competitors_widget: ['open', 'add', 'other', 'expand', 'teaser'],
   preview_unlock: ['banner', 'kpi', 'chart', 'insights', 'posts', 'section', 'period', 'refresh', 'compare', 'posts_page'],
   vk_report_connect: ['banner', 'dashboard', 'competitors', 'profile'],
-  placement_open: ['vk', 'contact', 'message'],
+  placement_open: ['vk', 'contact', 'message', 'vk_match', 'contact_match', 'message_match'],
   placement_price: ['entered'],
   placement_filter: ['small', 'medium', 'large'],
   placement_paywall_click: ['rows', 'limit']

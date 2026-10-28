@@ -1,6 +1,7 @@
 import { env } from '../config/env.js';
 import { DomainError } from '../errors/domainError.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
+import { normalizeVkSource } from './adCheckService.js';
 import { summarizeAdCheck } from './adCheckUtils.js';
 import { isDeepseekConfigured } from './deepseekClient.js';
 import {
@@ -8,6 +9,7 @@ import {
   inParallel,
   judgeGroups,
   planBrief,
+  planFromGroup,
   prefilterGroups,
   ruleVerdict,
   stem,
@@ -20,6 +22,7 @@ import {
 } from './placementClassifier.js';
 import { redis } from './redis.js';
 import { RedisJsonCache } from './redisJsonCache.js';
+import { rememberViewedSource } from './snapshotService.js';
 import { snapshotDateKey } from './snapshotUtils.js';
 import { VkApiError, vkApiRequest } from './vkClient.js';
 import { mapVkSource, vkRequest, type VkGroup, type VkPost } from './vkSourceLoader.js';
@@ -51,7 +54,13 @@ type VkSearchGroup = VkGroup & {
   type?: string;
   description?: string;
   contacts?: Array<{ user_id?: number; desc?: string }>;
+  city?: { id: number; title: string };
 };
+
+/** The advertiser's own community when the search starts from it. */
+export type PlacementOwnGroup = { id: number; name: string; url: string; photo: string | null; members: number; views: number | null; closed: boolean };
+/** Placements of comparable size: from half to twenty sizes of the own community. */
+export type PlacementSizeRange = { min: number; max: number };
 
 export type PlacementContact = { label: string; url: string };
 
@@ -69,6 +78,8 @@ export type PlacementRow = {
   advertisers: string;
   /** Few views for its size: under 100 or under 0.3% of members. */
   dead: boolean;
+  /** Comparable in size to the own community; false when the search started from a description. */
+  sizeMatch: boolean;
   locked: false;
   /** Median current views of the last posts older than 72 hours. */
   views: number | null;
@@ -86,10 +97,13 @@ export type PlacementRow = {
 };
 
 /** A row past the free limit: what it is, without the metrics and the model's notes. */
-export type PlacementLockedRow = Pick<PlacementRow, 'id' | 'name' | 'url' | 'photo' | 'members' | 'kind'> & { locked: true };
+export type PlacementLockedRow = Pick<PlacementRow, 'id' | 'name' | 'url' | 'photo' | 'members' | 'kind' | 'sizeMatch'> & { locked: true };
 
 export type PlacementSearchResult = {
+  /** The description, or the wishes added to the own community. */
   brief: string;
+  ownGroup: PlacementOwnGroup | null;
+  sizeRange: PlacementSizeRange | null;
   type: AdvertiserType;
   audience: string;
   city: PlacementCity | null;
@@ -157,11 +171,35 @@ export function buildQueries(plan: PlacementPlan, city: PlacementCity | null): S
   });
 }
 
-/** Communities worth reading posts of: no competitors, the model's best fit first, then the biggest. */
+const VK_GROUP_LINK = /(?:https?:\/\/)?(?:m\.)?vk\.(?:com|ru)\/[a-z0-9_.]+|(?<![\p{L}\d_])(?:club|public)\d+(?![\p{L}\d_])/iu;
+
+/** A VK community link in the description: its screen name or id, and the rest of the text as wishes. */
+export function extractGroupRef(brief: string): { ref: string | null; rest: string } {
+  const match = brief.match(VK_GROUP_LINK);
+  if (!match) return { ref: null, rest: brief };
+  try {
+    return { ref: normalizeVkSource(match[0]), rest: brief.replace(match[0], ' ').replace(/^[\s,.;:—-]+|[\s,.;:—-]+$/g, '').replace(/\s+/g, ' ') };
+  } catch {
+    return { ref: null, rest: brief };
+  }
+}
+
+/** From half to twenty sizes of the own community, but not below 1 000 and the upper bound not below 10 000. */
+export function sizeRangeFor(members: number): PlacementSizeRange {
+  return { min: Math.max(1_000, Math.round(members / 2)), max: Math.max(10_000, members * 20) };
+}
+
+const inRange = (members: number | undefined, range: PlacementSizeRange | null) => Boolean(range && members !== undefined && members >= range.min && members <= range.max);
+
+/**
+ * Communities worth reading posts of: no competitors; comparable in size first, so the giants do not take the shortlist;
+ * then the model's best fit, then the biggest.
+ */
 export function pickShortlist<T extends { id: number; name: string; members_count?: number }>(
   groups: T[],
   labels: Map<number, PlacementPrefilter>,
   competitors: string[],
+  range: PlacementSizeRange | null = null,
   limit = SHORTLIST
 ) {
   const competitorWords = competitors.map((item) => item.toLowerCase());
@@ -170,7 +208,9 @@ export function pickShortlist<T extends { id: number; name: string; members_coun
       const label = labels.get(group.id);
       return label && label.fit >= 1 && !label.competitor && !competitorWords.some((item) => group.name.toLowerCase().includes(item));
     })
-    .sort((left, right) => labels.get(right.id)!.fit - labels.get(left.id)!.fit || (right.members_count ?? 0) - (left.members_count ?? 0))
+    .sort((left, right) => Number(inRange(right.members_count, range)) - Number(inRange(left.members_count, range))
+      || labels.get(right.id)!.fit - labels.get(left.id)!.fit
+      || (right.members_count ?? 0) - (left.members_count ?? 0))
     .slice(0, limit);
 }
 
@@ -182,7 +222,7 @@ function contactsOf(group: VkSearchGroup): PlacementContact[] {
 }
 
 /** A table row from the community, its posts and the verdict: the same estimates as the pre-ad check, without snapshots. */
-export function buildRow(group: VkSearchGroup, items: VkPost[], verdict: PlacementVerdict & { kind: PlacementKind }, now: number): PlacementRow {
+export function buildRow(group: VkSearchGroup, items: VkPost[], verdict: PlacementVerdict & { kind: PlacementKind }, now: number, range: PlacementSizeRange | null = null): PlacementRow {
   const source = mapVkSource(group, items, now, WALL_POSTS);
   const summary = summarizeAdCheck({ posts: source.posts, subscribers: source.subscribers, curves: null, windowDays: 30, complete: source.complete, now });
   const views = summary.estimate?.views ?? null;
@@ -197,6 +237,7 @@ export function buildRow(group: VkSearchGroup, items: VkPost[], verdict: Placeme
     reason: verdict.reason,
     advertisers: verdict.advertisers,
     dead: views !== null && (views < 100 || (summary.viewsToSubscribers !== null && summary.viewsToSubscribers < 0.3)),
+    sizeMatch: inRange(group.members_count, range),
     locked: false,
     views,
     viewsLower: summary.estimate?.lower ?? null,
@@ -212,9 +253,10 @@ export function buildRow(group: VkSearchGroup, items: VkPost[], verdict: Placeme
   };
 }
 
-/** Live communities first, then the topic block before the city one, the model's fit, the views. */
+/** Live communities first, then comparable in size, the topic block before the city one, the model's fit, the views. */
 export function sortRows(rows: PlacementRow[]) {
   return [...rows].sort((left, right) => Number(left.dead) - Number(right.dead)
+    || Number(right.sizeMatch) - Number(left.sizeMatch)
     || Number(left.kind !== 'topic') - Number(right.kind !== 'topic')
     || right.fit - left.fit
     || (right.views ?? -1) - (left.views ?? -1));
@@ -224,7 +266,7 @@ export function sortRows(rows: PlacementRow[]) {
 export function lockRows(rows: PlacementRow[], paid: boolean, freeRows = env.placementFreeRows): Array<PlacementRow | PlacementLockedRow> {
   return rows.map((row, index) => paid || index < freeRows
     ? row
-    : { id: row.id, name: row.name, url: row.url, photo: row.photo, members: row.members, kind: row.kind, locked: true as const });
+    : { id: row.id, name: row.name, url: row.url, photo: row.photo, members: row.members, kind: row.kind, sizeMatch: row.sizeMatch, locked: true as const });
 }
 
 /** Post texts the model reads: the latest ordinary posts and the latest ad posts. */
@@ -269,8 +311,8 @@ export function normalizeBrief(value: unknown) {
   return typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, 300) : '';
 }
 
-function searchKey(brief: string, cityId: number | null) {
-  return `${cityId ?? ''}|${brief.toLowerCase()}`;
+function searchKey(brief: string, cityId: number | null, groupRef: string | null) {
+  return `${cityId ?? ''}|${groupRef ? `g:${groupRef.toLowerCase()}|` : ''}${brief.toLowerCase()}`;
 }
 
 function limitKey(userId: string) {
@@ -312,14 +354,20 @@ async function recordAiStats(aiWanted: boolean, aiUsed: boolean, usage: AiUsage)
   }
 }
 
-export type PlacementSearchOptions = { userId: string; paid: boolean; brief: unknown; cityId: unknown };
+export type PlacementSearchOptions = { userId: string; paid: boolean; brief: unknown; cityId: unknown; groupId?: unknown };
 
 export async function runPlacementSearch(options: PlacementSearchOptions) {
-  const brief = normalizeBrief(options.brief);
-  if (brief.length < 3) throw new DomainError('Опишите, что рекламируете: например, «шиномонтаж в Уфе» или «группа про Nintendo Switch».', { status: 400, code: 'PLACEMENT_BRIEF_REQUIRED' });
+  const text = normalizeBrief(options.brief);
+  // The own community comes from the list (groupId) or from a link in the description; the rest of the text is wishes.
+  const picked = typeof options.groupId === 'string' && /^\d{1,12}$/.test(options.groupId) ? options.groupId : null;
+  const extracted = picked ? { ref: picked, rest: text } : extractGroupRef(text);
+  // A link by screen name and the same community picked from the list are one search: the cache and the limit go by id.
+  const groupRef = extracted.ref && !/^\d+$/.test(extracted.ref) ? await resolveGroupId(options.userId, extracted.ref) : extracted.ref;
+  const brief = extracted.rest;
+  if (!groupRef && brief.length < 3) throw new DomainError('Опишите, что рекламируете, или выберите свою группу: например, «шиномонтаж в Уфе» или vk.com/ваша_группа.', { status: 400, code: 'PLACEMENT_BRIEF_REQUIRED' });
   const cityId = options.cityId === undefined || options.cityId === '' ? null : Number(options.cityId);
   if (cityId !== null && (!Number.isInteger(cityId) || cityId <= 0)) throw new DomainError('Выберите город из подсказок.', { status: 400, code: 'PLACEMENT_CITY_INVALID' });
-  const key = searchKey(brief, cityId);
+  const key = searchKey(brief, cityId, groupRef);
 
   const usage = await getPlacementUsage(options.userId, options.paid);
   const limitSet = limitKey(options.userId);
@@ -336,7 +384,7 @@ export async function runPlacementSearch(options: PlacementSearchOptions) {
   let cached = true;
   if (!result) {
     cached = false;
-    result = await searchPlacements(options.userId, brief, cityId);
+    result = await searchPlacements(options.userId, brief, cityId, groupRef);
     await searchCache.set(key, result);
   }
   // Counted after a successful search, so an error does not spend the limit.
@@ -350,19 +398,65 @@ export async function runPlacementSearch(options: PlacementSearchOptions) {
   };
 }
 
-async function searchPlacements(userId: string, brief: string, cityId: number | null): Promise<PlacementSearchResult> {
+async function resolveGroupId(userId: string, screenName: string) {
+  try {
+    await vkSlot(userId);
+    const [group] = await vkRequest<VkSearchGroup[]>(userId, 'groups.getById', { group_id: screenName });
+    if (group?.id) return String(group.id);
+  } catch (error) {
+    if (!(error instanceof VkApiError && error.vkCode === 100)) throw error;
+  }
+  throw new DomainError('Не нашли сообщество VK по этой ссылке. Проверьте её или выберите группу из списка.', { status: 404, code: 'PLACEMENT_GROUP_NOT_FOUND' });
+}
+
+/** The own community with its last posts: what it is about, its size and typical views. */
+async function loadOwnGroup(userId: string, ref: string) {
+  let group: VkSearchGroup | undefined;
+  try {
+    await vkSlot(userId);
+    [group] = await vkRequest<VkSearchGroup[]>(userId, 'groups.getById', { group_id: ref, fields: 'members_count,description,city,photo_200,screen_name' });
+  } catch (error) {
+    if (!(error instanceof VkApiError && error.vkCode === 100)) throw error;
+  }
+  if (!group || group.deactivated) throw new DomainError('Не нашли сообщество VK по этой ссылке. Проверьте её или выберите группу из списка.', { status: 404, code: 'PLACEMENT_GROUP_NOT_FOUND' });
+  const items = group.is_closed ? [] : (await loadWalls(userId, [group.id])).get(group.id) ?? [];
+  const now = Date.now();
+  const source = mapVkSource(group, items, now, WALL_POSTS);
+  const summary = summarizeAdCheck({ posts: source.posts, subscribers: source.subscribers, curves: null, windowDays: 30, complete: source.complete, now });
+  const own: PlacementOwnGroup = {
+    id: group.id,
+    name: group.name,
+    url: source.url,
+    photo: source.photo,
+    members: group.members_count ?? 0,
+    views: summary.estimate?.views ?? null,
+    closed: Boolean(group.is_closed)
+  };
+  return { own, group, posts: postTexts(group, items, now).posts };
+}
+
+async function searchPlacements(userId: string, brief: string, cityId: number | null, groupRef: string | null): Promise<PlacementSearchResult> {
   // groups.search does not work with the service key: the user's own token is required.
   const userToken = await getVkAccessToken(userId);
   if (!userToken) throw new DomainError('Для подбора нужен вход через VK. Выйдите и войдите заново.', { status: 401, code: 'VK_TOKEN_REQUIRED' });
 
+  const owned = groupRef ? await loadOwnGroup(userId, groupRef) : null;
   const useAi = await consumeAiBudget();
   const aiUsage: AiUsage = { calls: 0, tokens: 0, ms: 0, failed: 0 };
-  const modelPlan = useAi ? await planBrief(brief, aiUsage) : null;
-  const plan = modelPlan ?? fallbackPlan(brief, cityId !== null);
+  const modelPlan = !useAi ? null : owned
+    ? await planFromGroup({ name: owned.own.name, members: owned.own.members, description: owned.group.description ?? '', city: owned.group.city?.title ?? null, posts: owned.posts, wishes: brief }, aiUsage)
+    : await planBrief(brief, aiUsage);
+  const plan = modelPlan ?? fallbackPlan(owned ? `${owned.own.name} ${brief}`.trim() : brief, cityId !== null);
+  // The model reads the task as text: for the own community — its name, audience and the wishes.
+  const task = owned ? `Сообщество «${owned.own.name}» (${owned.own.members} подписчиков). ${plan.audience}${brief ? ` Пожелания: ${brief}` : ''}` : brief;
 
   let city = cityId !== null ? await resolveCity(userId, cityId) : null;
+  if (!city && plan.local && owned?.group.city?.id) city = await resolveCity(userId, owned.group.city.id).catch(() => null);
   if (!city && plan.local && plan.city) city = (await searchCities(userId, plan.city).catch(() => []))[0] ?? null;
   const cityMissing = plan.local && !city;
+  const range = owned && owned.own.members > 0 ? sizeRangeFor(owned.own.members) : null;
+  // The own community gets nightly snapshots: the base for measuring what the bought ads bring.
+  if (owned) rememberViewedSource('vk', owned.own.id, 'placement');
 
   const pool = new Map<number, VkSearchGroup>();
   const sources = new Map<number, PlacementKind>();
@@ -382,7 +476,7 @@ async function searchPlacements(userId: string, brief: string, cityId: number | 
       sources.set(group.id, answer.source);
     }
   }
-  const open = [...pool.values()].filter((group) => !group.is_closed && !group.deactivated && group.type !== 'event').map((group) => group.id);
+  const open = [...pool.values()].filter((group) => !group.is_closed && !group.deactivated && group.type !== 'event' && group.id !== owned?.own.id).map((group) => group.id);
   if (!open.length) throw new DomainError('VK не нашёл сообществ по этому запросу. Опишите задачу иначе или выберите другой город.', { status: 404, code: 'PLACEMENT_NOTHING_FOUND' });
 
   const details: VkSearchGroup[] = [];
@@ -404,17 +498,17 @@ async function searchPlacements(userId: string, brief: string, cityId: number | 
 
   const cityStems = city ? [...new Set([city.title, city.region].join(' ').split(/[\s-]+/).filter((item) => item.length >= 4 && !/^(республика|область|край)$/i.test(item)).map(stem))] : [];
   const rule = (group: VkSearchGroup) => ruleVerdict(group, sources.get(group.id) ?? 'topic', cityStems);
-  const prefilter = modelPlan ? await prefilterGroups(brief, plan, city?.title ?? null, candidates, aiUsage) : new Map<number, PlacementPrefilter>();
+  const prefilter = modelPlan ? await prefilterGroups(task, plan, city?.title ?? null, candidates, aiUsage) : new Map<number, PlacementPrefilter>();
   // A community the model skipped in its answer gets the rules quietly; a failed request marks the whole search.
   for (const group of candidates) {
     if (!prefilter.has(group.id)) prefilter.set(group.id, { fit: rule(group).fit, competitor: false });
   }
-  const shortlist = pickShortlist(candidates, prefilter, plan.competitors);
+  const shortlist = pickShortlist(candidates, prefilter, plan.competitors, range);
 
   const walls = await loadWalls(userId, shortlist.map((group) => group.id));
   const now = Date.now();
   const verdicts = modelPlan
-    ? await judgeGroups(brief, plan, city?.title ?? null, shortlist.map((group) => ({
+    ? await judgeGroups(task, plan, city?.title ?? null, shortlist.map((group) => ({
       id: group.id,
       name: group.name,
       members: group.members_count ?? 0,
@@ -425,13 +519,15 @@ async function searchPlacements(userId: string, brief: string, cityId: number | 
   for (const group of shortlist) {
     const verdict = verdicts.get(group.id) ?? rule(group);
     if (verdict.fit < 1 || verdict.competitor || verdict.kind === 'none') continue;
-    rows.push(buildRow(group, walls.get(group.id) ?? [], { ...verdict, kind: verdict.kind }, now));
+    rows.push(buildRow(group, walls.get(group.id) ?? [], { ...verdict, kind: verdict.kind }, now, range));
   }
   const aiUsed = Boolean(modelPlan) && aiUsage.failed === 0;
   await recordAiStats(useAi, aiUsed, aiUsage);
 
   return {
     brief,
+    ownGroup: owned?.own ?? null,
+    sizeRange: range,
     type: plan.type,
     audience: plan.audience,
     city,

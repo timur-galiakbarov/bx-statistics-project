@@ -47,6 +47,18 @@ const PLAN_PROMPT = 'Пользователь хочет купить рекла
   + 'competitors — только для type=business: 2-4 слова, по которым узнаются конкуренты; для community — пустой список.\n'
   + 'Ответ JSON: {"type": "business", "local": true, "city": "...", "audience": "...", "queries": [], "competitors": []}';
 
+const GROUP_PLAN_PROMPT = 'Владелец сообщества ВКонтакте хочет купить рекламу своего сообщества в других сообществах. Дано: его сообщество '
+  + '(название, подписчики, описание, город из настроек, последние посты) и, возможно, пожелания. Определи:\n'
+  + 'type — "community", если это паблик, блог или канал, который растит подписчиков; "business", если это страница бизнеса '
+  + '(магазин, услуга, заведение), которая ищет клиентов.\n'
+  + 'local — true, если аудитория сообщества — жители конкретного города (городской паблик, местный бизнес); false — если тема не привязана к месту.\n'
+  + 'city — город, если local=true (из настроек или из содержания; иначе null).\n'
+  + 'audience — одним предложением: кто читает это сообщество.\n'
+  + 'queries — 12-16 коротких запросов (1-3 слова) для поиска сообществ ВКонтакте с той же аудиторией. '
+  + 'Для type=community включи 3-5 запросов про саму тему сообщества: похожие сообщества — лучшие площадки. Без названия города.\n'
+  + 'competitors — только для type=business: 2-4 слова, по которым узнаются конкуренты; для community — пустой список.\n'
+  + 'Ответ JSON: {"type": "community", "local": false, "city": null, "audience": "...", "queries": [], "competitors": []}';
+
 const PREFILTER_PROMPT = `${RULES}Ты отбираешь сообщества ВКонтакте для рекламы. Дано описание рекламодателя, его аудитория и список сообществ `
   + '(id: название — описание). Для каждого верни fit: 2 — аудитория явно совпадает с целевой, 1 — может подойти, '
   + '0 — не подходит; competitor: true, если это конкурент рекламодателя. '
@@ -185,6 +197,16 @@ export async function inParallel<T, R>(items: T[], limit: number, worker: (item:
 
 export async function planBrief(brief: string, usage: AiUsage) {
   return parsePlan(await ask(PLAN_PROMPT, brief, usage));
+}
+
+export type OwnGroupText = { name: string; members: number; description: string; city: string | null; posts: string[]; wishes: string };
+
+/** The task read from the advertiser's own community instead of a description. */
+export async function planFromGroup(group: OwnGroupText, usage: AiUsage) {
+  const text = `Сообщество: ${group.name}\nПодписчики: ${group.members}\nОписание: ${group.description.replace(/\s+/g, ' ').slice(0, 400) || 'нет'}\n`
+    + `Город в настройках: ${group.city ?? 'не указан'}\nПоследние посты: ${group.posts.map((post) => post.slice(0, POST_LIMIT)).join(' | ') || 'не видны'}\n`
+    + `Пожелания: ${group.wishes || 'нет'}`;
+  return parsePlan(await ask(GROUP_PLAN_PROMPT, text, usage));
 }
 
 /** Labels by name and description; communities the model skipped get no label. */

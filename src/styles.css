@@ -4875,3 +4875,13 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 .placements-sells.yes { background: #e6f4ea; color: #1e6b34; }
 .placements-sells.likely { background: #fff4e0; color: #8a4b08; }
 .placements-price-hint { color: #1e6b34; font-size: 12px; line-height: 1.4; white-space: normal; }
+.placements-star { display: inline-flex; padding: 4px; border: 0; border-radius: 6px; background: none; color: #9aa9bd; cursor: pointer; }
+.placements-star:hover { background: #f4f7fb; color: #c98a00; }
+.placements-star.active { color: #e0a100; }
+.placements-star.active svg { fill: currentColor; }
+.placements-shortlist h2 svg { color: #e0a100; fill: currentColor; }
+.placements-shortlist-table { min-width: 1040px; }
+.placements-status { min-height: 34px; padding: 4px 8px; border: 1px solid #b7c6dc; border-radius: 6px; background: #fff; color: #253247; font: inherit; font-size: 13px; }
+.placements-note { width: 200px; min-height: 34px; padding: 6px 8px; border: 1px solid #b7c6dc; border-radius: 6px; font: inherit; font-size: 13px; }
+.placements-remove { display: inline-flex; padding: 6px; border: 0; border-radius: 6px; background: none; color: #5d6d84; cursor: pointer; }
+.placements-remove:hover { background: #fdecea; color: #9f342a; }

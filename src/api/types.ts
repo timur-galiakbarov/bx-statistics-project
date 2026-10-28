@@ -853,3 +853,25 @@ export type PlacementSearchResult = {
   loadedAt: string;
   usage: PlacementUsage;
 };
+
+export type ShortlistStatus = 'new' | 'contacted' | 'answered' | 'agreed' | 'published' | 'declined';
+
+/** Площадка в подборке: снимок строки подбора и записи пользователя о переговорах. */
+export type ShortlistItem = {
+  groupId: number;
+  name: string;
+  url: string;
+  photo: string | null;
+  members: number;
+  views: number | null;
+  viewsToSubscribers: number | null;
+  sellsAds: 'yes' | 'likely' | 'unknown';
+  contacts: Array<{ label: string; url: string }>;
+  messageUrl: string;
+  task: string;
+  status: ShortlistStatus;
+  price: number | null;
+  note: string;
+  addedAt: string;
+  updatedAt: string;
+};

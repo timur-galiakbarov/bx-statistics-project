@@ -5,6 +5,7 @@ import { fallbackPlan, parsePlan, parsePrefilter, parseVerdicts, ruleVerdict, st
 import { buildQueries, buildRow, extractGroupRef, lockRows, pickShortlist, postTexts, sizeRangeFor, sortRows, type PlacementRow } from './placementSearchService.js';
 import { parseSearchLabel } from './placementStatsService.js';
 import { adSignals, findPriceHint, isPromoPost } from './placementAdSignals.js';
+import { sanitizeShortlistItem, sanitizeShortlistPatch } from './placementShortlistService.js';
 
 const now = new Date('2026-10-28T12:00:00Z').getTime();
 const plan = (overrides: Partial<PlacementPlan> = {}): PlacementPlan => ({ type: 'business', local: true, city: 'Уфа', audience: '', queries: ['автолюбители', 'шины'], competitors: [], ...overrides });
@@ -184,4 +185,27 @@ test('продаёт рекламу: маркировка или продвиж�
   assert.equal(adSignals(self, [{ id: 3, date: ago(40), copy_history: [{ owner_id: -55 }] }], 0, now).sellsAds, 'unknown');
   const pinned = adSignals(self, [{ id: 4, date: ago(90), is_pinned: 1, text: 'Реклама у нас: пост 800 ₽' }], 0, now);
   assert.equal(pinned.priceHint, 'Реклама у нас: пост 800 ₽');
+});
+
+test('в подборку попадает проверенный снимок строки: ссылки только на vk, лишние поля отбрасываются', () => {
+  const item = sanitizeShortlistItem({
+    groupId: '42', name: '  Nintendo Switch | 2 ', url: 'https://vk.com/ns2', photo: 'javascript:alert(1)', members: 23_862, views: 4_880,
+    sellsAds: 'yes', contacts: [{ label: 'Реклама', url: 'https://vk.com/id5' }, { label: 'Сайт', url: 'https://evil.example' }], status: 'published', task: 'switchbreak!'
+  });
+  assert.deepEqual(item, {
+    groupId: 42, name: 'Nintendo Switch | 2', url: 'https://vk.com/ns2', photo: null, members: 23_862, views: 4_880, viewsToSubscribers: null,
+    sellsAds: 'yes', contacts: [{ label: 'Реклама', url: 'https://vk.com/id5' }], messageUrl: 'https://vk.com/im?sel=-42', task: 'switchbreak!'
+  });
+  assert.throws(() => sanitizeShortlistItem({ groupId: 0, name: 'A', url: 'https://vk.com/a' }), /Не удалось добавить/);
+  assert.throws(() => sanitizeShortlistItem({ groupId: 1, name: 'A', url: 'https://example.com' }), /Не удалось добавить/);
+});
+
+test('изменения в подборке: только переданные поля, цена положительная или пустая, статус из списка', () => {
+  assert.deepEqual(sanitizeShortlistPatch({ status: 'contacted' }), { status: 'contacted' });
+  assert.deepEqual(sanitizeShortlistPatch({ price: '1500.555', note: '  ответят завтра ' }), { price: 1500.56, note: 'ответят завтра' });
+  assert.deepEqual(sanitizeShortlistPatch({ price: null }), { price: null });
+  assert.deepEqual(sanitizeShortlistPatch({ price: '' }), { price: null });
+  assert.throws(() => sanitizeShortlistPatch({ status: 'paid' }), /Неизвестный статус/);
+  assert.throws(() => sanitizeShortlistPatch({ price: -5 }), /положительное/);
+  assert.equal(sanitizeShortlistPatch({ note: 'x'.repeat(900) }).note!.length, 500);
 });

@@ -1,6 +1,7 @@
 import type { Types } from 'mongoose';
 import { ActivityEventModel } from '../models/ActivityEvent.js';
 import { PaymentModel } from '../models/Payment.js';
+import { PlacementShortlistModel } from '../models/PlacementShortlist.js';
 import { UserModel } from '../models/User.js';
 import { mskDayKey, mskDayStart } from './activityStatsService.js';
 import { getFeatureMode } from './featureFlags.js';
@@ -31,6 +32,8 @@ export type AdminPlacementStats = {
   paywallClicks: { rows: number; limit: number };
   paidAfterFirstSearch: { users: number; revenue: number };
   paidAfterLimit: { users: number; revenue: number };
+  /** Подборки сейчас (не за период): у скольких пользователей есть, площадок, по статусам, с ценой. */
+  shortlist: { users: number; items: number; withPrice: number; statuses: Record<string, number> };
   ai: { searches: number; fallbacks: number; calls: number; failed: number; tokens: number; avgSeconds: number | null };
 };
 
@@ -66,13 +69,17 @@ export async function getAdminPlacementStats(requestedDays: unknown, now = new D
   const rangeStart = mskDayStart(now, -(days - 1));
   const adminIds = await UserModel.distinct('_id', { isAdmin: true }) as Types.ObjectId[];
 
-  const [mode, events, counters] = await Promise.all([
+  const [mode, events, counters, shortlistRows] = await Promise.all([
     getFeatureMode('placements'),
     ActivityEventModel.find({ type: { $regex: /^placement_/ }, createdAt: { $gte: rangeStart }, userId: { $nin: adminIds } })
       .select({ userId: 1, type: 1, label: 1, createdAt: 1 })
       .sort({ createdAt: 1 })
       .lean<EventRow[]>(),
-    aiCounters(days, now)
+    aiCounters(days, now),
+    PlacementShortlistModel.aggregate<{ _id: string; items: number; users: Types.ObjectId[]; withPrice: number }>([
+      { $match: { userId: { $nin: adminIds } } },
+      { $group: { _id: '$status', items: { $sum: 1 }, users: { $addToSet: '$userId' }, withPrice: { $sum: { $cond: [{ $gt: ['$price', 0] }, 1, 0] } } } }
+    ])
   ]);
 
   const usersOf = (type: string, label?: string) => new Set(events.filter((event) => event.type === type && (label === undefined || event.label === label)).map((event) => event.userId.toString()));
@@ -141,6 +148,12 @@ export async function getAdminPlacementStats(requestedDays: unknown, now = new D
     paywallClicks: { rows: usersOf('placement_paywall_click', 'rows').size, limit: usersOf('placement_paywall_click', 'limit').size },
     paidAfterFirstSearch: paidAfter(firstSearch),
     paidAfterLimit: paidAfter(firstLimit),
+    shortlist: {
+      users: new Set(shortlistRows.flatMap((row) => row.users.map((id) => id.toString()))).size,
+      items: shortlistRows.reduce((sum, row) => sum + row.items, 0),
+      withPrice: shortlistRows.reduce((sum, row) => sum + row.withPrice, 0),
+      statuses: Object.fromEntries(shortlistRows.map((row) => [row._id, row.items]))
+    },
     ai: {
       searches: counters.searches,
       fallbacks: counters.fallbacks,

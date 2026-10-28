@@ -27,10 +27,12 @@ export const activityEventTypes = [
   'ad_check_run',
   'ad_check_limit',
   // Подбор площадок VK. placement_search — label «город|задача|ai или rules|строк|group или text»; placement_limit — упёрлись в лимит;
-  // placement_select — отметили «в подборку», label — id сообщества; остальные — клики, label из закрытого списка.
+  // placement_select — добавили в подборку, label — id сообщества; остальные — клики, label из закрытого списка.
   'placement_search',
   'placement_limit',
   'placement_select',
+  // Сменили статус площадки в подборке; label — новый статус.
+  'placement_status',
   'placement_open',
   'placement_price',
   'placement_filter',

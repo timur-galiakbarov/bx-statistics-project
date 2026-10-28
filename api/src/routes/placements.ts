@@ -5,6 +5,7 @@ import { requireUser } from '../middleware/auth.js';
 import { trackActivity } from '../services/activityTracking.js';
 import { isFeatureEnabledFor } from '../services/featureFlags.js';
 import { getPlacementUsage, runPlacementSearch, searchCities } from '../services/placementSearchService.js';
+import { addToShortlist, getShortlist, removeFromShortlist, updateShortlistItem } from '../services/placementShortlistService.js';
 import { redis } from '../services/redis.js';
 import { rememberViewedSource } from '../services/snapshotService.js';
 
@@ -17,6 +18,37 @@ placementsRouter.use(async (req, res, next) => {
   try {
     if (await isFeatureEnabledFor('placements', req.user!)) return next();
     res.status(403).json({ success: false, error: 'FEATURE_OFF', message: 'Подбор площадок пока недоступен.' });
+  } catch (error) { next(error); }
+});
+
+// The shortlist lives in MongoDB and works without Redis. Adding a community also puts it into the nightly snapshots.
+placementsRouter.get('/shortlist', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await getShortlist(req.user!.id) });
+  } catch (error) { next(error); }
+});
+
+placementsRouter.post('/shortlist', async (req, res, next) => {
+  try {
+    const { item, created } = await addToShortlist(req.user!.id, req.body);
+    rememberViewedSource('vk', item.groupId, 'placement');
+    if (created) trackActivity(req, 'placement_select', { platform: 'vk', label: String(item.groupId) });
+    res.json({ success: true, data: item });
+  } catch (error) { next(error); }
+});
+
+placementsRouter.patch('/shortlist/:groupId', async (req, res, next) => {
+  try {
+    const { item, patch } = await updateShortlistItem(req.user!.id, Number(req.params.groupId), req.body);
+    if (patch.status) trackActivity(req, 'placement_status', { platform: 'vk', label: patch.status });
+    res.json({ success: true, data: item });
+  } catch (error) { next(error); }
+});
+
+placementsRouter.delete('/shortlist/:groupId', async (req, res, next) => {
+  try {
+    await removeFromShortlist(req.user!.id, Number(req.params.groupId));
+    res.json({ success: true });
   } catch (error) { next(error); }
 });
 
@@ -54,16 +86,4 @@ placementsRouter.get('/search', async (req, res, next) => {
     if (error instanceof DomainError && error.code === 'PLACEMENT_LIMIT') trackActivity(req, 'placement_limit', { label: error.code });
     next(error);
   }
-});
-
-// «В подборку»: the community joins the nightly snapshots, so its history builds up from now on.
-placementsRouter.post('/select', (req, res) => {
-  const id = Number(req.body?.groupId);
-  if (!Number.isInteger(id) || id <= 0) {
-    res.status(400).json({ success: false, error: 'INVALID_GROUP_ID' });
-    return;
-  }
-  rememberViewedSource('vk', id, 'placement');
-  trackActivity(req, 'placement_select', { platform: 'vk', label: String(id) });
-  res.json({ success: true });
 });

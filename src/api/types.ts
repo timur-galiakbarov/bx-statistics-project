@@ -794,7 +794,7 @@ export type PlacementUsage = { used: number; limit: number; paid: boolean; freeR
 
 /**
  * Строка подбора площадок: GET /api/placements/search. kind — про интересы аудитории (topic) или общегородской паблик (city);
- * reason и advertisers — выводы DeepSeek по постам; просмотры — медиана текущих у постов старше 3 дней.
+ * reason и advertisers — выводы AI по постам; просмотры — медиана текущих у постов старше 3 дней.
  */
 export type PlacementRow = {
   id: number;

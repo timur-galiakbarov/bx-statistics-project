@@ -37,10 +37,10 @@ import { formatDate } from './utils/date';
 import { startVisitHeartbeat, trackPageView } from './utils/visit';
 
 // feature — пункт показывается, только когда переключатель фичи включён этому пользователю.
-const navItems: Array<{ to: string; label: string; icon: typeof Home; adminOnly?: boolean; feature?: 'placements' }> = [
+const navItems: Array<{ to: string; label: string; icon: typeof Home; adminOnly?: boolean; feature?: 'placements'; ai?: boolean }> = [
   { to: '/dashboard', label: 'Главная', icon: Home },
   { to: '/analytics', label: 'Аналитика', icon: BarChart3 },
-  { to: '/placements', label: 'Подбор площадок', icon: MapPin, feature: 'placements' },
+  { to: '/placements', label: 'Подбор площадок', icon: MapPin, feature: 'placements', ai: true },
   { to: '/ad-check', label: 'Проверка канала', icon: ClipboardCheck, adminOnly: true },
   { to: '/compare', label: 'Сравнение', icon: GitCompare },
   { to: '/posts', label: 'Публикации', icon: Newspaper },
@@ -246,6 +246,7 @@ export function App() {
             <NavLink key={item.to} to={item.to} onClick={closeMobileMenu}>
               <item.icon size={18} />
               <span>{item.label}</span>
+              {'ai' in item && item.ai && <span className="nav-ai-badge" title="Работает на AI">AI</span>}
               {item.adminOnly && <span className="nav-admin-badge" title="Только для администратора" aria-label="Только для администратора"><ShieldCheck size={15} aria-hidden="true" /></span>}
             </NavLink>
           ))}

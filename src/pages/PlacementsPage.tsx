@@ -17,10 +17,10 @@ const sizes: Array<{ key: Exclude<SizeKey, 'all'>; label: string; test: (members
 ];
 // The search takes about a minute; the steps follow its usual timing, the server does not report progress.
 const loadingSteps: Array<{ after: number; text: string }> = [
-  { after: 0, text: 'Понимаем задачу и аудиторию' },
-  { after: 4, text: 'Ищем сообщества во ВКонтакте' },
-  { after: 25, text: 'Отбираем подходящие площадки' },
-  { after: 32, text: 'Читаем посты и считаем просмотры' },
+  { after: 0, text: 'AI разбирает задачу и вашу аудиторию' },
+  { after: 4, text: 'Ищем сообщества во ВКонтакте по подсказкам AI' },
+  { after: 25, text: 'AI отбирает подходящие площадки' },
+  { after: 32, text: 'AI читает посты и оценивает площадки' },
   { after: 75, text: 'Почти готово' }
 ];
 const examples = ['Шиномонтаж в Уфе, клиенты — автомобилисты', 'Группа про Nintendo Switch, хочу больше подписчиков', 'Онлайн-школа английского для взрослых'];
@@ -174,8 +174,8 @@ export function PlacementsPage({ groups }: { groups: SavedGroup[] }) {
   return <section className="page-grid analytics-page placements-page">
     <div className="panel span-2 analytics-section">
       <div className="section-title"><div>
-        <h2><MapPin size={20} aria-hidden="true" /> Подбор площадок для рекламы во ВКонтакте</h2>
-        <p>Расскажите, что рекламируете: поймём, кто ваша аудитория, найдём сообщества, где она сидит, прочитаем их посты и покажем просмотры и рекламу. Подходящие сохраните в подборку и ведите переговоры там.</p>
+        <h2><MapPin size={20} aria-hidden="true" /> AI-подбор площадок для рекламы во ВКонтакте <span className="placements-ai-badge"><Sparkles size={13} aria-hidden="true" /> AI</span></h2>
+        <p>Расскажите, что рекламируете, — AI поймёт, кто ваша аудитория, найдёт сообщества, где она сидит, прочитает их посты и объяснит, почему площадка подходит. Мы добавим просмотры и рекламу, а подходящие площадки вы сохраните в подборку и будете вести переговоры там.</p>
       </div></div>
       <form className="placements-form" onSubmit={submit}>
         <div className="placements-brief">
@@ -209,7 +209,7 @@ export function PlacementsPage({ groups }: { groups: SavedGroup[] }) {
             </li>)}
           </ul>}
         </div>
-        <button className="primary-button" type="submit" disabled={isLoading}><Search size={18} />{isLoading ? 'Подбираем' : 'Подобрать'}</button>
+        <button className="primary-button" type="submit" disabled={isLoading}>{isLoading ? <Search size={18} /> : <Sparkles size={18} />}{isLoading ? 'Подбираем' : 'Подобрать с AI'}</button>
       </form>
       {usage && <p className="ad-check-data-note">Сегодня {Math.min(usage.used, usage.limit)} из {usage.limit} {plural(usage.limit, 'подбора', 'подборов', 'подборов')}. Повторить тот же подбор можно бесплатно.{!usage.paid && ` Без тарифа подробности видны у первых ${usage.freeRows} площадок.`}</p>}
       {message && <div className="form-message telegram-message-error" role="alert">{message}
@@ -219,13 +219,14 @@ export function PlacementsPage({ groups }: { groups: SavedGroup[] }) {
 
     {shortlist.length > 0 && <PlacementShortlist items={shortlist} onChange={setShortlist} />}
 
-    {isLoading && <div className="panel span-2 analytics-loading" aria-live="polite" role="status"><div><strong>{step.text}</strong><span>Обычно подбор занимает около минуты · {elapsed} сек.</span></div><div className="analytics-loading-progress" role="progressbar" aria-label="Загрузка"><span /></div></div>}
+    {isLoading && <div className="panel span-2 analytics-loading" aria-live="polite" role="status"><div><strong><Sparkles size={16} aria-hidden="true" /> {step.text}</strong><span>Обычно подбор занимает около минуты · {elapsed} сек.</span></div><div className="analytics-loading-progress" role="progressbar" aria-label="Загрузка"><span /></div></div>}
 
     {!isLoading && !result && <div className="panel span-2 ad-check-start">
       <h2>Что покажет подбор</h2>
       <ul className="ad-check-checklist">
+        <li><b>AI поймёт задачу</b> по описанию или по вашей группе: кто аудитория, нужен ли город, какие сообщества искать.</li>
         <li><b>Сообщества, где сидит ваша аудитория</b>: для местного бизнеса — тематические и общегородские паблики, для своей группы — похожие сообщества. Страницы компаний и конкурентов отсеиваем.</li>
-        <li><b>Почему площадка подходит</b> и <b>кто там уже рекламируется</b> — по содержанию её постов. Отмечаем, <b>продаёт ли сообщество рекламу</b> и продвигает ли другие паблики, а если прайс опубликован — показываем его.</li>
+        <li><b>Почему площадка подходит</b> и <b>кто там уже рекламируется</b> — AI читает её посты и объясняет. Отмечаем, <b>продаёт ли сообщество рекламу</b> и продвигает ли другие паблики, а если прайс опубликован — показываем его.</li>
         <li><b>Типичные просмотры поста</b> и их доля от подписчиков; сообщества с мёртвой аудиторией — внизу с пометкой. Подходящие площадки сохраняйте в подборку: там статусы переговоров, цены и CPM.</li>
       </ul>
     </div>}
@@ -312,10 +313,10 @@ function PlacementsReport({ result, shortlisted, onToggle }: { result: Placement
         <small>{number(result.ownGroup.members)} {plural(result.ownGroup.members, 'подписчик', 'подписчика', 'подписчиков')}{result.ownGroup.views !== null ? ` · пост смотрят ~${number(result.ownGroup.views)}` : ''}{result.ownGroup.closed ? ' · закрытая: посты не видны, подбирали по названию и описанию' : ''}{result.brief ? ` · пожелания: ${result.brief}` : ''}</small>
       </span>
     </div>}
-    {result.audience && <p className="placements-audience"><Sparkles size={14} aria-hidden="true" /> <b>Аудитория:</b> {result.audience}</p>}
+    {result.audience && <p className="placements-audience"><Sparkles size={14} aria-hidden="true" /> <b>AI определил аудиторию:</b> {result.audience}</p>}
     {result.cityMissing && <div className="ad-check-notice">Похоже, бизнес местный, но город не указан — искали по всей России. Укажите город, чтобы найти местные паблики.</div>}
-    {!result.aiUsed && <div className="ad-check-notice">DeepSeek был недоступен или ответил с ошибкой: часть площадок отобрана простыми правилами, у них нет причины и списка рекламодателей.</div>}
-    {result.queries.length > 0 && <p className="ad-check-data-note">Искали: {result.queries.join(', ')}.</p>}
+    {!result.aiUsed && <div className="ad-check-notice">AI был недоступен или ответил с ошибкой: часть площадок отобрана простыми правилами, у них нет объяснения и списка рекламодателей.</div>}
+    {result.queries.length > 0 && <p className="ad-check-data-note">AI искал: {result.queries.join(', ')}.</p>}
 
     {result.rows.length === 0
       ? <div className="empty-state">Подходящих площадок не нашлось. Опишите задачу подробнее или выберите другой город.</div>
@@ -357,9 +358,9 @@ function PlacementsReport({ result, shortlisted, onToggle }: { result: Placement
 
     <details className="ad-check-method">
       <summary>Как подбираем</summary>
-      <p>DeepSeek читает описание: бизнес это или сообщество, нужен ли город, кто аудитория и какие сообщества искать. Ищем поиском VK, отсеиваем страницы компаний и конкурентов, затем модель читает последние посты лучших сообществ и объясняет, подходит ли площадка и кто там рекламируется.</p>
+      <p>AI читает описание или вашу группу: бизнес это или сообщество, нужен ли город, кто аудитория и какие сообщества искать. Ищем поиском VK, AI отсеивает страницы компаний и конкурентов, затем читает последние посты лучших сообществ и объясняет, подходит ли площадка и кто там рекламируется.</p>
       <p>«Продаёт рекламу» — за месяц были маркированные рекламные посты или хотя бы два поста с продвижением других сообществ (репост из сообщества или ссылка на него с призывом подписаться). «Похоже, продаёт» — рекламы не видно, но о ней говорят контакты или описание. Прайс берём из описания и закреплённого поста, если он там есть.</p>
-      <p>Просмотры поста — медиана текущих просмотров последних постов старше 3 дней, разброс в подсказке — от 25-го до 75-го процентиля. «Мало просмотров» — меньше 100 или меньше 0,3% подписчиков. Рекламу видим только маркированную. Модель может ошибаться в оценке — сверяйтесь с постами. Сообщества из подборки Socstat начинает отслеживать каждую ночь.</p>
+      <p>Просмотры поста — медиана текущих просмотров последних постов старше 3 дней, разброс в подсказке — от 25-го до 75-го процентиля. «Мало просмотров» — меньше 100 или меньше 0,3% подписчиков. Рекламу видим только маркированную. AI может ошибаться в оценке — сверяйтесь с постами. Сообщества из подборки Socstat начинает отслеживать каждую ночь.</p>
     </details>
   </div>;
 }
@@ -371,7 +372,7 @@ function PlacementName({ row }: { row: PlacementRow | PlacementLockedRow }) {
     <span>
       <a href={row.url} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', `vk${suffix}`)}>{row.name}<ExternalLink size={12} aria-hidden="true" /></a>
       {isOpen(row) && row.sellsAds !== 'unknown' && <small className={`placements-sells ${row.sellsAds}`} title={row.sellsAdsNote}>{row.sellsAds === 'yes' ? 'Продаёт рекламу' : 'Похоже, продаёт рекламу'}</small>}
-      {isOpen(row) && row.reason && <small className="placements-reason">{row.reason}</small>}
+      {isOpen(row) && row.reason && <small className="placements-reason" title="Вывод AI по постам сообщества"><Sparkles size={11} aria-hidden="true" /> {row.reason}</small>}
       {isOpen(row) && row.priceHint && <small className="placements-price-hint">Прайс: «{row.priceHint}»</small>}
       {isOpen(row) && row.advertisers && <small className="placements-advertisers"><Megaphone size={12} aria-hidden="true" /> Рекламируются: {row.advertisers}</small>}
       {isOpen(row) && row.promoPosts > 0 && <small className="placements-advertisers"><Users size={12} aria-hidden="true" /> Продвигают другие паблики: {row.promoPosts} {plural(row.promoPosts, 'пост', 'поста', 'постов')} за месяц</small>}

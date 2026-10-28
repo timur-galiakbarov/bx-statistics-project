@@ -4885,3 +4885,7 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 .placements-note { width: 200px; min-height: 34px; padding: 6px 8px; border: 1px solid #b7c6dc; border-radius: 6px; font: inherit; font-size: 13px; }
 .placements-remove { display: inline-flex; padding: 6px; border: 0; border-radius: 6px; background: none; color: #5d6d84; cursor: pointer; }
 .placements-remove:hover { background: #fdecea; color: #9f342a; }
+.placements-ai-badge { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; padding: 2px 8px; border-radius: 999px; background: linear-gradient(90deg, #6d4aff, #2f6fd1); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .02em; vertical-align: middle; }
+.nav-ai-badge { display: inline-flex; align-items: center; margin-left: auto; padding: 1px 6px; border-radius: 999px; background: linear-gradient(90deg, #6d4aff, #2f6fd1); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .03em; line-height: 1.5; }
+.placements-reason svg { color: #6d4aff; vertical-align: -1px; }
+.analytics-loading strong svg { color: #6d4aff; vertical-align: -2px; }

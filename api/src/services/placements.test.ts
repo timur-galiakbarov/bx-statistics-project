@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { wellFormed } from './deepseekClient.js';
-import { fallbackPlan, parsePlan, parsePrefilter, parseVerdicts, ruleVerdict, stem, type PlacementPlan } from './placementClassifier.js';
-import { buildQueries, buildRow, extractGroupRef, lockRows, pickShortlist, postTexts, sizeRangeFor, sortRows, type PlacementRow } from './placementSearchService.js';
+import { fallbackPlan, mentionsCity, parsePlan, parsePrefilter, parseVerdicts, reasonSaysBusinessPage, ruleVerdict, stem, type PlacementPlan } from './placementClassifier.js';
+import { buildQueries, buildRow, cityStemsOf, districtCity, extractGroupRef, lockRows, pickShortlist, postTexts, sizeRangeFor, sortRows, type PlacementRow } from './placementSearchService.js';
 import { parseSearchLabel } from './placementStatsService.js';
 import { adSignals, findPriceHint, isPromoPost } from './placementAdSignals.js';
 import { sanitizeShortlistItem, sanitizeShortlistPatch } from './placementShortlistService.js';
@@ -96,16 +96,69 @@ test('строка таблицы: метрики как в проверке п�
   assert.equal(dead.dead, true);
 });
 
+test('нет постов за 30 дней — мёртвая; стена не загрузилась — просмотры неизвестны, но не мёртвая', () => {
+  const verdict = { fit: 2 as const, kind: 'topic' as const, reason: '', advertisers: '', competitor: false };
+  const group = { id: 8, name: 'Авторынок Уфа', members_count: 50_000 };
+  const old = wall([['Продам', 500]]).map((post) => ({ ...post, date: Math.round((now - 60 * 86_400_000) / 1000) }));
+  const silent = buildRow(group, old, verdict, now);
+  assert.equal(silent.silent, true);
+  assert.equal(silent.dead, true);
+  const unknown = buildRow(group, null, verdict, now);
+  assert.equal(unknown.views, null);
+  assert.equal(unknown.silent, false);
+  assert.equal(unknown.dead, false);
+});
+
+test('у паблика с десятками постов в день просмотры считаются по постам старше суток', () => {
+  const verdict = { fit: 2 as const, kind: 'city' as const, reason: '', advertisers: '', competitor: false };
+  // 100 постов за 2 дня: старше 3 дней нет ни одного.
+  const posts = Array.from({ length: 100 }, (_, index) => ({
+    id: index + 1,
+    date: Math.round((now - index * 28 * 60_000) / 1000),
+    text: 'Новости',
+    views: { count: index * 28 >= 24 * 60 ? 8_000 : 3_000 },
+    likes: { count: 1 }, reposts: { count: 0 }, comments: { count: 0 }
+  }));
+  const row = buildRow({ id: 9, name: 'Новости Уфы', members_count: 400_000 }, posts, verdict, now);
+  assert.equal(row.viewsEarly, true);
+  assert.equal(row.views, 8_000);
+  assert.equal(row.viewsToSubscribers, 2);
+  assert.equal(row.dead, false);
+});
+
+test('модель сама пишет «страница бизнеса» — строка не площадка; упоминание города — по названию и описанию', () => {
+  assert.equal(reasonSaysBusinessPage('Фитнес-клуб, аудитория следит за собой, но это страница бизнеса, не площадка'), true);
+  assert.equal(reasonSaysBusinessPage('Страница компании, а не паблик'), true);
+  assert.equal(reasonSaysBusinessPage('Автобарахолка Уфы, владельцы машин'), false);
+  const stems = [stem('Новосибирск')];
+  assert.equal(mentionsCity({ id: 1, name: 'Kolsanova.fit', description: 'Тренировки дома' }, stems), false);
+  assert.equal(mentionsCity({ id: 2, name: 'ЧАНДРА', description: 'Йога для женщин в Новосибирске' }, stems), true);
+  assert.equal(mentionsCity({ id: 3, name: 'Мемы' }, []), true);
+  const ufaStems = cityStemsOf({ id: 2, title: 'Уфа', region: 'Республика Башкортостан', area: '' });
+  assert.deepEqual(ufaStems, ['уфа', 'башкортостан']);
+  assert.equal(mentionsCity({ id: 4, name: 'БАШавто | Авторынок Уфа' }, ufaStems), true);
+});
+
+test('район без своего города в VK ищется как город: Адлер — Сочи', () => {
+  assert.deepEqual(districtCity(' Адлер '), { name: 'Адлер', city: 'Сочи' });
+  assert.deepEqual(districtCity('зеленоград'), { name: 'Зеленоград', city: 'Москва' });
+  assert.equal(districtCity('Пушкино'), null);
+  assert.equal(districtCity('Уфа'), null);
+});
+
 test('модель читает обычные и рекламные посты отдельно', () => {
   const texts = postTexts({ id: 1, name: 'A' }, wall([['Реклама. ООО «Шины»', 1], ['ДТП', 1], ['', 1]]), now);
   assert.deepEqual(texts, { posts: ['ДТП'], ads: ['Реклама. ООО «Шины»'] });
 });
 
 test('порядок строк: живые, затем блок темы, оценка, просмотры; без тарифа открыты первые строки', () => {
-  const base = buildRow({ id: 1, name: 'A', members_count: 10 }, [], { fit: 1, kind: 'topic', reason: '', advertisers: '', competitor: false }, now);
+  const base = buildRow({ id: 1, name: 'A', members_count: 10 }, null, { fit: 1, kind: 'topic', reason: '', advertisers: '', competitor: false }, now);
   const row = (id: number, patch: Partial<PlacementRow>): PlacementRow => ({ ...base, id, ...patch });
   const sorted = sortRows([row(1, { kind: 'city', fit: 2, views: 9_000 }), row(2, { dead: true, fit: 2 }), row(3, { fit: 1, views: 100 }), row(4, { fit: 2, views: 50 })]);
   assert.deepEqual(sorted.map((item) => item.id), [4, 3, 1, 2]);
+  // Для местного бизнеса свои группы раньше общероссийских, неизвестные просмотры — после измеренных.
+  const byPlace = sortRows([row(8, { fit: 2, views: 50_000, local: false }), row(9, { fit: 1, views: 300 }), row(10, { fit: 2, views: null })]);
+  assert.deepEqual(byPlace.map((item) => item.id), [9, 8, 10]);
   const bySales = sortRows([row(5, { fit: 2, views: 9_000 }), row(6, { fit: 2, views: 10, sellsAds: 'yes' }), row(7, { fit: 2, views: 20, sellsAds: 'likely' })]);
   assert.deepEqual(bySales.map((item) => item.id), [6, 7, 5]);
   const locked = lockRows(sorted, false, 2);
@@ -148,7 +201,7 @@ test('при своей группе сопоставимые по размер�
   assert.deepEqual(pickShortlist(groups, labels, [], range).map((group) => group.id), [2, 3, 1]);
   assert.deepEqual(pickShortlist(groups, labels, []).map((group) => group.id), [1, 2, 3]);
   const verdict = { fit: 2 as const, kind: 'topic' as const, reason: '', advertisers: '', competitor: false };
-  const rows = groups.map((group) => ({ ...buildRow(group, [], verdict, now, range), views: group.members_count / 100 }));
+  const rows = groups.map((group) => ({ ...buildRow(group, null, verdict, now, range), views: group.members_count / 100 }));
   assert.deepEqual(rows.map((row) => row.sizeMatch), [false, true, true]);
   assert.deepEqual(sortRows(rows).map((row) => row.id), [2, 3, 1]);
 });

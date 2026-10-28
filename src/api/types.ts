@@ -848,7 +848,11 @@ export type PlacementRow = {
   fit: number;
   reason: string;
   advertisers: string;
+  /** Мало просмотров для своего размера или нет постов за 30 дней (silent). */
   dead: boolean;
+  silent: boolean;
+  /** Для местного бизнеса: общегородской паблик или группа, где город или регион есть в названии или описании. Без города всегда true. */
+  local: boolean;
   /** Сопоставимо по размеру со своей группой (от половины до 20 её размеров). */
   sizeMatch: boolean;
   /** Продаёт рекламу: yes — видна реклама или продвижение сообществ; likely — об этом говорят только контакты или описание. */
@@ -860,6 +864,8 @@ export type PlacementRow = {
   priceHint: string | null;
   locked: false;
   views: number | null;
+  /** Просмотры по постам старше суток: у пабликов с десятками постов в день нет постов старше 3 дней среди последних 100. */
+  viewsEarly: boolean;
   viewsLower: number | null;
   viewsUpper: number | null;
   viewsToSubscribers: number | null;

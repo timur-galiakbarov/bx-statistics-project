@@ -69,7 +69,7 @@ const JUDGE_PROMPT = `${RULES}Ты эксперт по закупке рекла
   + 'fit — 2: аудитория явно совпадает с целевой; 1: может подойти; 0: не подходит;\n'
   + 'kind — "topic", если сообщество про интересы аудитории; "city", если это общегородской паблик (новости, подслушано, афиша), '
   + 'подходящий любому местному бизнесу; "none" — не подходит;\n'
-  + 'reason — до 90 символов, почему подходит или нет, по содержанию постов;\n'
+  + 'reason — до 90 символов, почему подходит или нет, по содержанию постов; если это страница бизнеса, а не площадка, — fit 0 и kind "none";\n'
   + 'advertisers — до 80 символов: кто рекламируется в рекламных постах (типы бизнеса); пустая строка, если рекламных постов нет;\n'
   + 'competitor — true, если сообщество само продаёт то же, что рекламодатель.\n'
   + 'Ответ JSON: {"items": [{"id": 1, "fit": 2, "kind": "topic", "reason": "...", "advertisers": "...", "competitor": false}]}';
@@ -246,11 +246,23 @@ export function stem(value: string) {
 const word = (value: string) => `(?<!\\p{L})${value}(?!\\p{L})`;
 const BUSINESS_PAGE = new RegExp(`салон|магазин|студи|${word('ооо')}|${word('ип')}|компани|под ключ|на заказ|доставк|ресторан|кафе|${word('бар')}|клуб|мастер`, 'u');
 
+/** The name or the description mentions the city or its region; without a city any community passes. */
+export function mentionsCity(group: PlacementGroupText, cityStems: string[]) {
+  const text = `${group.name} ${group.description ?? ''}`.toLowerCase().replace(/ё/g, 'е');
+  return !cityStems.length || cityStems.some((item) => text.includes(item));
+}
+
+// The model sometimes writes «это страница бизнеса» in the reason yet keeps fit 1: such a row is not a placement.
+const BUSINESS_PAGE_REASON = /страниц\p{L}* (бизнеса|компании|заведения|магазина)|не площадка/iu;
+
+/** The model's own reason says the community is a company page, not a placement. */
+export function reasonSaysBusinessPage(reason: string) {
+  return BUSINESS_PAGE_REASON.test(reason);
+}
+
 /** Fallback verdict: a company page is not a placement; in a city the name or description must mention it. */
 export function ruleVerdict(group: PlacementGroupText, source: PlacementKind, cityStems: string[]): PlacementVerdict {
   const name = group.name.toLowerCase().replace(/ё/g, 'е');
-  const text = `${name} ${(group.description ?? '').toLowerCase().replace(/ё/g, 'е')}`;
-  const local = !cityStems.length || cityStems.some((item) => text.includes(item));
-  const fit = BUSINESS_PAGE.test(name) || !local ? 0 : 1;
+  const fit = BUSINESS_PAGE.test(name) || !mentionsCity(group, cityStems) ? 0 : 1;
   return { fit, kind: fit ? source : 'none', reason: '', advertisers: '', competitor: false };
 }

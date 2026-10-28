@@ -2,16 +2,18 @@ import { env } from '../config/env.js';
 import { DomainError } from '../errors/domainError.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { normalizeVkSource } from './adCheckService.js';
-import { summarizeAdCheck } from './adCheckUtils.js';
+import { estimateViews, MATURE_HOURS, summarizeAdCheck } from './adCheckUtils.js';
 import { adSignals, type SellsAds } from './placementAdSignals.js';
 import { isDeepseekConfigured } from './deepseekClient.js';
 import {
   fallbackPlan,
   inParallel,
   judgeGroups,
+  mentionsCity,
   planBrief,
   planFromGroup,
   prefilterGroups,
+  reasonSaysBusinessPage,
   ruleVerdict,
   stem,
   type AdvertiserType,
@@ -48,6 +50,14 @@ const AI_STATS_TTL_S = 120 * 86_400;
 const CITY_CACHE_TTL_MS = 30 * 86_400_000;
 // Words of city publics: searched inside the city, they find the general publics any local business can use.
 const CITY_WORDS = ['подслушано', 'типичный', 'новости', 'инцидент', 'афиша', 'чп'];
+// Frequent publics post 100 times before the oldest post turns 3 days old: then views are taken from posts older than a day.
+const EARLY_HOURS = 24;
+// Districts VK has no city of their own for: its suggestions offer a namesake village instead («Адлер» → Адлеровка).
+const CITY_DISTRICTS: Record<string, string> = {
+  адлер: 'Сочи', хоста: 'Сочи', лазаревское: 'Сочи', дагомыс: 'Сочи',
+  зеленоград: 'Москва',
+  колпино: 'Санкт-Петербург', пушкин: 'Санкт-Петербург', петергоф: 'Санкт-Петербург', кронштадт: 'Санкт-Петербург'
+};
 
 export type PlacementCity = { id: number; title: string; region: string; area: string };
 
@@ -77,8 +87,12 @@ export type PlacementRow = {
   reason: string;
   /** Who advertises there, by its ad posts. */
   advertisers: string;
-  /** Few views for its size: under 100 or under 0.3% of members. */
+  /** Few views for its size (under 100 or under 0.3% of members) or no posts in 30 days. */
   dead: boolean;
+  /** The wall loaded, but there are no posts in 30 days. */
+  silent: boolean;
+  /** For a local business: a city public or one that names the city or its region; false for others. Always true without a local city. */
+  local: boolean;
   /** Comparable in size to the own community; false when the search started from a description. */
   sizeMatch: boolean;
   /** Sells ads: yes — ads or promotion of communities seen; likely — only the contacts or the description say so. */
@@ -89,8 +103,10 @@ export type PlacementRow = {
   /** A line with a price from the description or the pinned post. */
   priceHint: string | null;
   locked: false;
-  /** Median current views of the last posts older than 72 hours. */
+  /** Median current views of the last posts older than 72 hours; older than a day when there are none (viewsEarly). */
   views: number | null;
+  /** Views come from posts older than a day: a lower estimate for publics posting dozens of times a day. */
+  viewsEarly: boolean;
   viewsLower: number | null;
   viewsUpper: number | null;
   viewsToSubscribers: number | null;
@@ -145,9 +161,31 @@ export async function searchCities(userId: string, query: string): Promise<Place
   const response = await vkRequest<{ items: Array<{ id: number; title: string; region?: string; area?: string }> }>(userId, 'database.getCities', {
     country_id: 1, q, count: 10, need_all: 0, lang: 'ru'
   });
-  const cities = response.items.map((item) => ({ id: item.id, title: item.title, region: item.region ?? '', area: item.area ?? '' }));
+  let cities = response.items.map((item) => ({ id: item.id, title: item.title, region: item.region ?? '', area: item.area ?? '' }));
+  const district = districtCity(q);
+  if (district) {
+    await vkSlot(userId);
+    const parent = (await vkRequest<{ items: Array<{ id: number; title: string; region?: string; area?: string }> }>(userId, 'database.getCities', {
+      country_id: 1, q: district.city, count: 5, need_all: 0, lang: 'ru'
+    })).items.find((item) => item.title === district.city);
+    // The district goes into area: the suggestion reads «Сочи · Адлер», the city stays a real VK city.
+    if (parent) cities = [{ id: parent.id, title: parent.title, region: parent.region ?? '', area: district.name }, ...cities.filter((city) => city.id !== parent.id)];
+  }
   await Promise.all(cities.map((city) => cityCache.set(String(city.id), city)));
   return cities;
+}
+
+/** Word stems that tie a community to the city: the city's own name (even «Уфа»), and the region's words without «область». */
+export function cityStemsOf(city: PlacementCity) {
+  const words = (value: string, min: number) => value.split(/[\s-]+/).filter((item) => item.length >= min && !/^(республика|область|край|автономный|округ)$/i.test(item));
+  return [...new Set([...words(city.title, 3), ...words(city.region, 4)].map(stem))];
+}
+
+/** A city district VK has no city for: the city to search in instead. */
+export function districtCity(query: string) {
+  const key = query.trim().toLowerCase().replace(/ё/g, 'е');
+  const city = CITY_DISTRICTS[key];
+  return city ? { name: key[0].toUpperCase() + key.slice(1), city } : null;
 }
 
 async function resolveCity(userId: string, cityId: number): Promise<PlacementCity> {
@@ -229,12 +267,21 @@ function contactsOf(group: VkSearchGroup): PlacementContact[] {
     .map((contact) => ({ label: contact.desc?.trim() || 'Контакт', url: `https://vk.com/id${contact.user_id}` }));
 }
 
-/** A table row from the community, its posts and the verdict: the same estimates as the pre-ad check, without snapshots. */
-export function buildRow(group: VkSearchGroup, items: VkPost[], verdict: PlacementVerdict & { kind: PlacementKind }, now: number, range: PlacementSizeRange | null = null): PlacementRow {
-  const source = mapVkSource(group, items, now, WALL_POSTS);
+/**
+ * A table row from the community, its posts and the verdict: the same estimates as the pre-ad check, without snapshots.
+ * items is null when the wall failed to load: then nothing is known about the posts.
+ */
+export function buildRow(group: VkSearchGroup, items: VkPost[] | null, verdict: PlacementVerdict & { kind: PlacementKind }, now: number, range: PlacementSizeRange | null = null): PlacementRow {
+  const source = mapVkSource(group, items ?? [], now, WALL_POSTS);
   const summary = summarizeAdCheck({ posts: source.posts, subscribers: source.subscribers, curves: null, windowDays: 30, complete: source.complete, now });
-  const views = summary.estimate?.views ?? null;
-  const signals = adSignals(group, items, summary.ads.posts, now);
+  // Shifting «now» makes posts older than a day count as mature for the shared estimate.
+  const early = summary.estimate ? null : estimateViews(source.posts, null, now + (MATURE_HOURS - EARLY_HOURS) * 3_600_000);
+  const estimate = summary.estimate ?? early;
+  const views = estimate?.views ?? null;
+  const viewsToSubscribers = summary.estimate ? summary.viewsToSubscribers
+    : early && source.subscribers ? Math.round(early.views / source.subscribers * 1_000) / 10 : null;
+  const silent = items !== null && summary.postsPerDay === 0;
+  const signals = adSignals(group, items ?? [], summary.ads.posts, now);
   return {
     id: group.id,
     name: group.name,
@@ -245,14 +292,17 @@ export function buildRow(group: VkSearchGroup, items: VkPost[], verdict: Placeme
     fit: verdict.fit,
     reason: verdict.reason,
     advertisers: verdict.advertisers,
-    dead: views !== null && (views < 100 || (summary.viewsToSubscribers !== null && summary.viewsToSubscribers < 0.3)),
+    dead: silent || (views !== null && (views < 100 || (viewsToSubscribers !== null && viewsToSubscribers < 0.3))),
+    silent,
+    local: true,
     sizeMatch: inRange(group.members_count, range),
     ...signals,
     locked: false,
     views,
-    viewsLower: summary.estimate?.lower ?? null,
-    viewsUpper: summary.estimate?.upper ?? null,
-    viewsToSubscribers: summary.viewsToSubscribers,
+    viewsEarly: Boolean(early),
+    viewsLower: estimate?.lower ?? null,
+    viewsUpper: estimate?.upper ?? null,
+    viewsToSubscribers,
     postsPerDay: summary.postsPerDay,
     adsPerWeek: summary.ads.perWeek,
     adsShare: summary.ads.share,
@@ -266,11 +316,14 @@ export function buildRow(group: VkSearchGroup, items: VkPost[], verdict: Placeme
 const SELLS_RANK: Record<SellsAds, number> = { yes: 2, likely: 1, unknown: 0 };
 
 /**
- * Live communities first, then comparable in size, the topic block before the city one, the model's fit; among equals
+ * Live communities first, those with unknown views after the measured ones; for a local business its city's communities
+ * before nationwide ones; then comparable in size, the topic block before the city one, the model's fit; among equals
  * those that sell ads — one can actually buy a post there — then the views.
  */
 export function sortRows(rows: PlacementRow[]) {
   return [...rows].sort((left, right) => Number(left.dead) - Number(right.dead)
+    || Number(left.views === null) - Number(right.views === null)
+    || Number(right.local) - Number(left.local)
     || Number(right.sizeMatch) - Number(left.sizeMatch)
     || Number(left.kind !== 'topic') - Number(right.kind !== 'topic')
     || right.fit - left.fit
@@ -512,7 +565,7 @@ async function searchPlacements(userId: string, brief: string, cityId: number | 
     ...alive.filter((group) => sources.get(group.id) === 'city').slice(0, CITY_CANDIDATES)
   ];
 
-  const cityStems = city ? [...new Set([city.title, city.region].join(' ').split(/[\s-]+/).filter((item) => item.length >= 4 && !/^(республика|область|край)$/i.test(item)).map(stem))] : [];
+  const cityStems = city ? cityStemsOf(city) : [];
   const rule = (group: VkSearchGroup) => ruleVerdict(group, sources.get(group.id) ?? 'topic', cityStems);
   const prefilter = modelPlan ? await prefilterGroups(task, plan, city?.title ?? null, candidates, aiUsage) : new Map<number, PlacementPrefilter>();
   // A community the model skipped in its answer gets the rules quietly; a failed request marks the whole search.
@@ -531,11 +584,16 @@ async function searchPlacements(userId: string, brief: string, cityId: number | 
       ...postTexts(group, walls.get(group.id) ?? [], now)
     })), aiUsage)
     : new Map<number, PlacementVerdict>();
+  // For a local business nationwide publics are pushed below the city's own: most of their reach is elsewhere.
+  // The city in a group's settings proves nothing — groups.search finds groups by it, nationwide ones included.
+  const localSearch = plan.local && city !== null;
   const rows: PlacementRow[] = [];
   for (const group of shortlist) {
     const verdict = verdicts.get(group.id) ?? rule(group);
-    if (verdict.fit < 1 || verdict.competitor || verdict.kind === 'none') continue;
-    rows.push(buildRow(group, walls.get(group.id) ?? [], { ...verdict, kind: verdict.kind }, now, range));
+    if (verdict.fit < 1 || verdict.competitor || verdict.kind === 'none' || reasonSaysBusinessPage(verdict.reason)) continue;
+    const row = buildRow(group, walls.get(group.id) ?? null, { ...verdict, kind: verdict.kind }, now, range);
+    row.local = !localSearch || verdict.kind === 'city' || mentionsCity(group, cityStems);
+    rows.push(row);
   }
   const aiUsed = Boolean(modelPlan) && aiUsage.failed === 0;
   await recordAiStats(useAi, aiUsed, aiUsage);

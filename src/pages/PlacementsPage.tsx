@@ -313,8 +313,8 @@ function PlacementsReport({ result, shortlisted, onToggle, shortlistCount, onOpe
             <td><button type="button" className={`placements-star${shortlisted.has(row.id) ? ' active' : ''}`} onClick={() => onToggle(row)} aria-pressed={shortlisted.has(row.id)} aria-label={shortlisted.has(row.id) ? `Убрать из подборки: ${row.name}` : `В подборку: ${row.name}`} title={shortlisted.has(row.id) ? 'В подборке — нажмите, чтобы убрать' : 'Добавить в подборку'}><Star size={18} aria-hidden="true" /></button></td>
             <td><PlacementName row={row} /></td>
             <td>{number(row.members)}{times(row.members) && <small>{times(row.members)}</small>}</td>
-            <td title={row.viewsLower !== null ? `Обычно от ${number(row.viewsLower)} до ${number(row.viewsUpper)}` : undefined}>{number(row.views)}</td>
-            <td className={row.dead ? 'placements-low' : ''}>{row.viewsToSubscribers === null ? '—' : `${number(row.viewsToSubscribers, 1)}%`}{row.dead && <small>мало просмотров</small>}</td>
+            <td title={[row.viewsLower !== null ? `Обычно от ${number(row.viewsLower)} до ${number(row.viewsUpper)}` : '', row.viewsEarly ? 'По постам старше суток: паблик выпускает десятки постов в день, к третьим суткам просмотров будет чуть больше' : ''].filter(Boolean).join('. ') || undefined}>{number(row.views)}{row.viewsEarly && <small>за сутки</small>}</td>
+            <td className={row.dead ? 'placements-low' : ''}>{row.viewsToSubscribers === null ? '—' : `${number(row.viewsToSubscribers, 1)}%`}{row.dead && <small>{row.silent ? 'нет постов за 30 дней' : 'мало просмотров'}</small>}</td>
             <td title={row.complete ? undefined : 'По последним 100 постам: они покрывают меньше 30 дней'}>{number(row.adsPerWeek, 1)}</td>
           </tr>
           : <tr key={row.id} className="placements-locked">

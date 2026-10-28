@@ -43,9 +43,9 @@ type NavItem = { to: string; label: string; icon: typeof Home; description?: str
 const navItems: NavItem[] = [
   { to: '/dashboard', label: 'Дашборд', icon: Home, description: 'Ваши источники за период' },
   { to: '/analytics', label: 'Аналитика', icon: BarChart3, description: 'Отчёты по сообществам и каналам' },
+  { to: '/placements', label: 'Площадки для рекламы', icon: MapPin, description: 'AI подберёт площадки ВК', feature: 'placements' },
   { to: '/compare', label: 'Сравнение', icon: GitCompare, description: 'Метрики до 10 сообществ рядом' },
   { to: '/posts', label: 'Идеи для постов', icon: Newspaper, description: 'Лучшие посты в вашей нише' },
-  { to: '/placements', label: 'Площадки для рекламы', icon: MapPin, description: 'AI подберёт площадки ВК', feature: 'placements' },
   { to: '/ad-check', label: 'Проверка канала', icon: ClipboardCheck, adminOnly: true },
   { to: '/account', label: 'Профиль и оплата', icon: CreditCard }
 ];

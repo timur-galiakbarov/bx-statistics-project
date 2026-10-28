@@ -1,4 +1,5 @@
 import { Router, type Request } from 'express';
+import { isValidObjectId } from 'mongoose';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import {
   ackPendingGoals,
@@ -28,7 +29,7 @@ import { VkApiError, vkApiRequest } from '../services/vkClient.js';
 import { DomainError } from '../errors/domainError.js';
 import { ComparisonCollectionModel } from '../models/ComparisonCollection.js';
 import { parseVisitId, recordVisitHit, trackActivity } from '../services/activityTracking.js';
-import { getAdminActivityStats } from '../services/activityStatsService.js';
+import { getAdminActivityFeed, getAdminActivityStats } from '../services/activityStatsService.js';
 import { getAdminExport } from '../services/adminExportService.js';
 import { getAdminPlacementStats } from '../services/placementStatsService.js';
 
@@ -501,6 +502,20 @@ accountRouter.get('/admin/activity/stats', requireUser, async (req, res, next) =
 
   try {
     res.json({ success: true, data: await getAdminActivityStats(req.query.days) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.get('/admin/activity/feed', requireUser, requireAdmin, async (req, res, next) => {
+  const { userId } = req.query;
+  if (userId !== undefined && (typeof userId !== 'string' || !isValidObjectId(userId))) {
+    res.status(400).json({ success: false, error: 'INVALID_USER_ID' });
+    return;
+  }
+
+  try {
+    res.json({ success: true, data: await getAdminActivityFeed(userId) });
   } catch (error) {
     next(error);
   }

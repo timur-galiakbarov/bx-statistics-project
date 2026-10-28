@@ -11,6 +11,7 @@ const MSK_OFFSET_MS = 3 * 3_600_000;
 const DAY_MS = 86_400_000;
 const BOUNCE_MAX_MS = 15_000;
 const FEED_LIMIT = 60;
+const USER_FEED_LIMIT = 100;
 
 export type AdminActivitySummary = {
   users: number;
@@ -141,6 +142,65 @@ function countBy<T>(items: T[], getKey: (item: T) => string) {
   return [...counts.entries()].map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
 }
 
+/**
+ * Лента: действия плюс регистрации и оплаты, которые есть в истории и до появления трекинга.
+ * С userId — только этот пользователь и больше событий: в общей ленте одного человека почти не видно.
+ */
+export async function getAdminActivityFeed(userId?: string, adminIds?: Types.ObjectId[]): Promise<AdminActivityFeedItem[]> {
+  const limit = userId ? USER_FEED_LIMIT : FEED_LIMIT;
+  const ids = adminIds ?? await UserModel.distinct('_id', { isAdmin: true }) as Types.ObjectId[];
+  const owner = userId ?? { $nin: ids };
+  const [feedEvents, feedRegistrations, feedPayments] = await Promise.all([
+    ActivityEventModel.find({ userId: owner }).sort({ createdAt: -1 }).limit(limit).lean<EventRow[]>(),
+    UserModel.find(userId ? { _id: userId } : { isAdmin: { $ne: true } }).sort({ createdAt: -1 }).limit(20)
+      .select({ createdAt: 1, acquisition: 1 })
+      .lean<Array<{ _id: Types.ObjectId; createdAt: Date; acquisition?: Acquisition }>>(),
+    PaymentModel.find({ status: 'paid', amount: { $gt: 0 }, paidAt: { $exists: true }, userId: owner })
+      .sort({ paidAt: -1 }).limit(20)
+      .select({ userId: 1, amount: 1, period: 1, paidAt: 1 })
+      .lean<Array<{ _id: Types.ObjectId; userId: Types.ObjectId; amount: number; period?: string; paidAt: Date }>>()
+  ]);
+
+  const feedUserIds = [...new Set([...feedEvents, ...feedPayments].map((item) => item.userId.toString())
+    .concat(feedRegistrations.map((user) => user._id.toString())))];
+  const feedUsers = await UserModel.find({ _id: { $in: feedUserIds } })
+    .select({ firstName: 1, lastName: 1 })
+    .lean<Array<{ _id: Types.ObjectId; firstName?: string; lastName?: string }>>();
+  const userNames = new Map(feedUsers.map((user) => [
+    user._id.toString(),
+    [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени'
+  ]));
+  const nameOf = (id: string) => userNames.get(id) ?? 'Удалённый пользователь';
+  return [
+    ...feedEvents.map((event) => ({
+      id: event._id.toString(),
+      at: event.createdAt.toISOString(),
+      userId: event.userId.toString(),
+      userName: nameOf(event.userId.toString()),
+      type: event.type,
+      platform: event.platform,
+      label: event.label
+    })),
+    ...feedRegistrations.map((user) => ({
+      id: `registration:${user._id.toString()}`,
+      at: user.createdAt.toISOString(),
+      userId: user._id.toString(),
+      userName: nameOf(user._id.toString()),
+      type: 'registration' as const,
+      label: acquisitionSource(user.acquisition)
+    })),
+    ...feedPayments.map((payment) => ({
+      id: `payment:${payment._id.toString()}`,
+      at: payment.paidAt.toISOString(),
+      userId: payment.userId.toString(),
+      userName: nameOf(payment.userId.toString()),
+      type: 'payment' as const,
+      label: payment.period,
+      amount: payment.amount
+    }))
+  ].sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
+}
+
 export async function getAdminActivityStats(requestedDays: unknown, now = new Date()): Promise<AdminActivityStats> {
   const parsedDays = Number(requestedDays);
   const days = Number.isFinite(parsedDays) ? Math.min(90, Math.max(7, Math.round(parsedDays))) : 30;
@@ -154,7 +214,7 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
   const adminIds = await UserModel.distinct('_id', { isAdmin: true }) as Types.ObjectId[];
   const notAdmin = { $nin: adminIds };
 
-  const [visits, events, activeUsers, registrations, groups, payments, firstVisit, feedEvents, feedRegistrations, feedPayments] = await Promise.all([
+  const [visits, events, activeUsers, registrations, groups, payments, firstVisit, feed] = await Promise.all([
     VisitModel.find({ startedAt: { $gte: windowStart }, userId: notAdmin })
       .select({ userId: 1, startedAt: 1, lastSeenAt: 1, pageViews: 1, actions: 1, entryPath: 1, paths: 1, device: 1 })
       .lean<VisitRow[]>(),
@@ -187,14 +247,7 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
       .select({ userId: 1, amount: 1, paidAt: 1 })
       .lean<Array<{ userId: Types.ObjectId; amount: number; paidAt: Date }>>(),
     VisitModel.findOne().sort({ startedAt: 1 }).select({ startedAt: 1 }).lean<{ startedAt: Date }>(),
-    ActivityEventModel.find({ userId: notAdmin }).sort({ createdAt: -1 }).limit(FEED_LIMIT).lean<EventRow[]>(),
-    UserModel.find({ isAdmin: { $ne: true } }).sort({ createdAt: -1 }).limit(20)
-      .select({ createdAt: 1, acquisition: 1 })
-      .lean<Array<{ _id: Types.ObjectId; createdAt: Date; acquisition?: Acquisition }>>(),
-    PaymentModel.find({ status: 'paid', amount: { $gt: 0 }, paidAt: { $exists: true }, userId: notAdmin })
-      .sort({ paidAt: -1 }).limit(20)
-      .select({ userId: 1, amount: 1, period: 1, paidAt: 1 })
-      .lean<Array<{ _id: Types.ObjectId; userId: Types.ObjectId; amount: number; period?: string; paidAt: Date }>>()
+    getAdminActivityFeed(undefined, adminIds)
   ]);
 
   // Дни активности по пользователям: визиты, действия, регистрация и «последняя активность»
@@ -396,46 +449,6 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
 
   const hours = Array.from({ length: 24 }, () => 0);
   rangeVisits.forEach((visit) => { hours[new Date(visit.startedAt.getTime() + MSK_OFFSET_MS).getUTCHours()] += 1; });
-
-  // Лента: действия плюс регистрации и оплаты, которые есть в истории и до появления трекинга.
-  const feedUserIds = [...new Set([...feedEvents, ...feedPayments].map((item) => item.userId.toString())
-    .concat(feedRegistrations.map((user) => user._id.toString())))];
-  const feedUsers = await UserModel.find({ _id: { $in: feedUserIds } })
-    .select({ firstName: 1, lastName: 1 })
-    .lean<Array<{ _id: Types.ObjectId; firstName?: string; lastName?: string }>>();
-  const userNames = new Map(feedUsers.map((user) => [
-    user._id.toString(),
-    [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени'
-  ]));
-  const nameOf = (id: string) => userNames.get(id) ?? 'Удалённый пользователь';
-  const feed: AdminActivityFeedItem[] = [
-    ...feedEvents.map((event) => ({
-      id: event._id.toString(),
-      at: event.createdAt.toISOString(),
-      userId: event.userId.toString(),
-      userName: nameOf(event.userId.toString()),
-      type: event.type,
-      platform: event.platform,
-      label: event.label
-    })),
-    ...feedRegistrations.map((user) => ({
-      id: `registration:${user._id.toString()}`,
-      at: user.createdAt.toISOString(),
-      userId: user._id.toString(),
-      userName: nameOf(user._id.toString()),
-      type: 'registration' as const,
-      label: acquisitionSource(user.acquisition)
-    })),
-    ...feedPayments.map((payment) => ({
-      id: `payment:${payment._id.toString()}`,
-      at: payment.paidAt.toISOString(),
-      userId: payment.userId.toString(),
-      userName: nameOf(payment.userId.toString()),
-      type: 'payment' as const,
-      label: payment.period,
-      amount: payment.amount
-    }))
-  ].sort((a, b) => b.at.localeCompare(a.at)).slice(0, FEED_LIMIT);
 
   const audienceIds = new Set<string>();
   for (const key of dayKeysBetween(rangeStart, tomorrowStart)) {

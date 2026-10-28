@@ -3798,11 +3798,18 @@ a {
 .activity-hours > span { align-items: end; display: flex; height: 100%; position: relative; }
 .activity-hours i { background: #4caf50; border-radius: 2px 2px 0 0; display: block; min-height: 2px; width: 100%; }
 .activity-hours small { bottom: -20px; color: #77837b; font-size: 11px; left: 0; position: absolute; }
-.activity-feed li { align-items: baseline; border-top: 1px solid #f1f3f2; display: grid; gap: 12px; grid-template-columns: 96px minmax(120px, 220px) 170px minmax(0, 1fr); padding: 8px 0; }
-.activity-feed time { color: #77837b; font-size: 13px; font-variant-numeric: tabular-nums; }
-.activity-feed strong { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.activity-feed small { color: #77837b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.activity-feed-type { background: #f2f4f3; border-radius: 999px; color: #42564a; font-size: 12px; font-weight: 600; justify-self: start; padding: 2px 9px; }
+.activity-feed { font-size: 13px; }
+.activity-feed li { align-items: baseline; border-top: 1px solid #f1f3f2; display: grid; gap: 10px; grid-template-columns: 82px minmax(110px, 200px) auto minmax(0, 1fr); padding: 3px 0; }
+.activity-feed.single-user li { grid-template-columns: 82px auto minmax(0, 1fr); }
+.activity-feed time { color: #77837b; font-size: 12px; font-variant-numeric: tabular-nums; }
+.activity-feed-user { background: none; border: 0; color: #24342a; cursor: pointer; font: inherit; font-weight: 600; overflow: hidden; padding: 0; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.activity-feed-user:hover { color: #2e7d32; text-decoration: underline; }
+.activity-feed small { color: #77837b; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.activity-feed-type { background: #f2f4f3; border-radius: 999px; color: #42564a; font-size: 11px; font-weight: 600; justify-self: start; padding: 1px 8px; white-space: nowrap; }
+.activity-feed-type b { font-weight: 700; }
+.activity-feed-filter { align-items: center; display: flex; gap: 8px; margin: 2px 0 0; }
+.activity-feed-reset { align-items: center; background: #f2f4f3; border: 0; border-radius: 999px; color: #42564a; cursor: pointer; display: inline-flex; font: inherit; font-size: 12px; gap: 3px; padding: 2px 9px; }
+.activity-feed-reset:hover { background: #e4e8e6; }
 .activity-feed-type.registration { background: #e3f2fd; color: #1565c0; }
 .activity-feed-type.payment, .activity-feed-type.payment_started { background: #e8f5e9; color: #2e7d32; }
 .activity-feed-type.ad_return { background: #ede7f6; color: #5e35b1; }
@@ -3821,7 +3828,7 @@ a {
   .activity-mini-table > .head > span { white-space: normal; }
   .activity-mini-table.five > div { grid-template-columns: minmax(0, 1fr) repeat(3, minmax(64px, auto)); }
   .activity-mini-table.five > div > span:nth-child(2) { display: none; }
-  .activity-feed li { gap: 2px 10px; grid-template-columns: auto minmax(0, 1fr); }
+  .activity-feed li, .activity-feed.single-user li { gap: 2px 10px; grid-template-columns: auto minmax(0, 1fr); }
   .activity-feed-type { grid-column: 1; }
   .activity-feed small { grid-column: 2; }
 }

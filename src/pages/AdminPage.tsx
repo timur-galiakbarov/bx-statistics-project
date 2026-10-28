@@ -20,6 +20,7 @@ import type {
   VkPermissions,
   VkTokenStatus
 } from '../api/types';
+import { AdminActivityFeed } from '../components/AdminActivityFeed';
 import { AdminActivityStats } from '../components/AdminActivityStats';
 import { AdminFeatureFlags } from '../components/AdminFeatureFlags';
 
@@ -830,6 +831,8 @@ export function AdminPage({ user, onAccountChanged }: Props) {
           </div>
         )}
       </div>
+
+      <AdminActivityFeed />
       </>}
 
       {adminSection === 'payments' && <>

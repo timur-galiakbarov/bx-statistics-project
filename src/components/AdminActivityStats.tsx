@@ -28,7 +28,7 @@ const chartSeries: Record<ChartMode, Array<{ key: string; name: string; color: s
   revenue: [{ key: 'revenue', name: 'Выручка, ₽', color: '#4caf50' }]
 };
 
-const actionLabels: Record<string, string> = {
+export const actionLabels: Record<string, string> = {
   login: 'Вход через VK',
   registration: 'Регистрация',
   source_search: 'Искал источник',
@@ -70,7 +70,7 @@ const pageLabels: Record<string, string> = {
   '/admin': 'Админка'
 };
 
-const platformLabels: Record<string, string> = {
+export const platformLabels: Record<string, string> = {
   vk: 'ВКонтакте',
   youtube: 'YouTube',
   telegram: 'Telegram',
@@ -89,13 +89,6 @@ const deviceLabels: Record<string, string> = { desktop: 'Компьютер', mo
 
 const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 const dayFormatter = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
-const feedTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
-  day: '2-digit',
-  month: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit'
-  // Без timeZone: в часовом поясе браузера, как и время в списках пользователей.
-});
 const sinceFormatter = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });
 
 function formatNumber(value: number) {
@@ -844,28 +837,6 @@ export function AdminActivityStats() {
         <VkReportStatsPanel days={stats.days} />
         <PlacementStatsPanel days={stats.days} />
         <PreviewStatsPanel days={stats.days} />
-
-        <div className="panel activity-panel span-2">
-          <div className="panel-header compact"><div><h2>Лента событий</h2><p className="activity-note">Последние действия, регистрации и оплаты</p></div></div>
-          {stats.feed.length === 0 ? <div className="empty-state">Событий пока нет.</div> : (
-            <ul className="activity-feed">
-              {stats.feed.map((item) => (
-                <li key={item.id}>
-                  <time>{feedTimeFormatter.format(new Date(item.at))}</time>
-                  <strong>{item.userName}</strong>
-                  <span className={`activity-feed-type ${item.type}`}>{actionLabels[item.type] ?? item.type}</span>
-                  <small>
-                    {[
-                      item.platform ? platformLabels[item.platform] ?? item.platform : null,
-                      item.label,
-                      item.amount ? `${formatNumber(item.amount)} ₽` : null
-                    ].filter(Boolean).join(' · ')}
-                  </small>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
       </>}
     </>
   );

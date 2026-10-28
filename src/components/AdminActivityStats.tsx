@@ -2,7 +2,7 @@ import { Download, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiGet } from '../api/client';
-import type { AdminActivityDay, AdminActivityStats, AdminActivitySummary, AdminPreviewStats, AdminPushStats, AdminVkReportStats } from '../api/types';
+import type { AdminActivityDay, AdminActivityStats, AdminActivitySummary, AdminPlacementStats, AdminPreviewStats, AdminPushStats, AdminVkReportStats } from '../api/types';
 
 const periodOptions = [7, 30, 90] as const;
 
@@ -323,6 +323,96 @@ function VkReportStatsPanel({ days }: { days: number }) {
           ))}
         </ul>
       ))}
+    </div>
+  );
+}
+
+const shortlistStatusLabels: Record<string, string> = {
+  new: 'Новая',
+  contacted: 'Написал',
+  answered: 'Ответили',
+  agreed: 'Договорились',
+  published: 'Реклама вышла',
+  declined: 'Отказ'
+};
+
+const sizeFilterLabels: Record<string, string> = {
+  small: 'до 50 тыс.',
+  medium: '50–500 тыс.',
+  large: 'больше 500 тыс.',
+  sells: 'только продающие'
+};
+
+function PlacementStatsPanel({ days }: { days: number }) {
+  const [stats, setStats] = useState<AdminPlacementStats | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setError(null);
+    apiGet<AdminPlacementStats>(`/api/account/admin/placements/stats?days=${days}`)
+      .then(setStats)
+      .catch((reason) => setError(reason instanceof Error ? reason.message : 'Не удалось загрузить статистику подбора площадок.'));
+  }, [days]);
+
+  const share = (value: number | null) => value === null ? '—' : formatPercent(value);
+  const ai = stats?.ai;
+
+  return (
+    <div className="panel activity-panel span-2">
+      <div className="panel-header compact">
+        <div>
+          <h2>Площадки для рекламы</h2>
+          <p className="activity-note">
+            {stats
+              ? `${vkReportModeLabels[stats.mode]}. За ${days} дней, без админов: ${formatNumber(stats.searches)} подборов, с городом ${share(stats.cityShare)}, от своей группы ${share(stats.groupShare)}; выдача меньше 5 строк — ${formatNumber(stats.thinResults)}, по запасным правилам — ${formatNumber(stats.rulesSearches)}`
+              : 'Загрузка…'}
+          </p>
+        </div>
+      </div>
+      {error && <div className="form-message">{error}</div>}
+      {stats && (stats.users === 0 ? <div className="empty-state">Подборов за период не было.</div> : (
+        <ul className="activity-funnel">
+          {[
+            { label: 'Подбирали площадки', value: stats.users, note: `${formatNumber(stats.searches)} подборов` },
+            { label: 'Подбирали в 2+ разных дня', value: stats.repeatUsers, note: formatShare(stats.repeatUsers, stats.users) },
+            { label: 'Открыли площадку или контакт', value: stats.openUsers, note: stats.sizeMatchOpenShare === null ? formatShare(stats.openUsers, stats.users) : `${formatShare(stats.openUsers, stats.users)} · сопоставимые по размеру ${share(stats.sizeMatchOpenShare)}` },
+            { label: 'Добавили в подборку', value: stats.selectUsers, note: `${formatNumber(stats.selectedCommunities)} площадок` },
+            { label: 'Записали цену', value: stats.priceUsers, note: formatShare(stats.priceUsers, stats.users) },
+            { label: 'Упёрлись в дневной лимит', value: stats.limitUsers, note: formatShare(stats.limitUsers, stats.users) },
+            { label: 'Нажали на тариф', value: stats.paywallClicks.rows + stats.paywallClicks.limit, note: `под таблицей ${formatNumber(stats.paywallClicks.rows)}, при лимите ${formatNumber(stats.paywallClicks.limit)}` },
+            { label: 'Оплатили после первого подбора', value: stats.paidAfterFirstSearch.users, note: stats.paidAfterFirstSearch.revenue ? `${formatNumber(stats.paidAfterFirstSearch.revenue)} ₽` : '' },
+            { label: '— из них после упора в лимит', value: stats.paidAfterLimit.users, note: stats.paidAfterLimit.revenue ? `${formatNumber(stats.paidAfterLimit.revenue)} ₽` : '' }
+          ].map((step) => (
+            <li key={step.label}>
+              <span>{step.label}</span>
+              <strong>{formatNumber(step.value)} <small>{step.note}</small></strong>
+              <i style={{ width: `${stats.users ? Math.min(1, step.value / stats.users) * 100 : 0}%` }} />
+            </li>
+          ))}
+        </ul>
+      ))}
+      {stats && stats.topCities.length > 0 && (
+        <div className="activity-mini-table four">
+          <div className="head"><span>Где подбирали</span><span>Польз.</span><span>Подборов</span><span /></div>
+          {stats.topCities.map((row) => (
+            <div key={row.city}><span>{row.city}</span><span>{formatNumber(row.users)}</span><span>{formatNumber(row.searches)}</span><span /></div>
+          ))}
+        </div>
+      )}
+      {stats && stats.sizeFilters.length > 0 && (
+        <p className="activity-note">Фильтры: {stats.sizeFilters.map((row) => `${sizeFilterLabels[row.size] ?? row.size} — ${formatNumber(row.users)}`).join(', ')}</p>
+      )}
+      {stats && (
+        <p className="activity-note">
+          Подборки сейчас: {formatNumber(stats.shortlist.users)} польз., {formatNumber(stats.shortlist.items)} площадок, с ценой {formatNumber(stats.shortlist.withPrice)}
+          {Object.keys(stats.shortlist.statuses).length > 0 && ` · ${Object.entries(stats.shortlist.statuses).map(([status, count]) => `${shortlistStatusLabels[status] ?? status}: ${formatNumber(count)}`).join(', ')}`}
+        </p>
+      )}
+      {ai && (
+        <p className="activity-note">
+          AI за {days} дней (новые подборы, включая админов): {formatNumber(ai.searches)} подборов, частично по правилам {formatNumber(ai.fallbacks)}, запросов к модели {formatNumber(ai.calls)}{ai.failed ? `, из них неудачных ${formatNumber(ai.failed)}` : ''}, токенов {formatNumber(ai.tokens)}{ai.searches ? ` (~${formatNumber(Math.round(ai.tokens / ai.searches))} на подбор)` : ''}{ai.avgSeconds !== null ? `, среднее время запроса ${ai.avgSeconds} с` : ''}
+        </p>
+      )}
     </div>
   );
 }
@@ -741,6 +831,7 @@ export function AdminActivityStats() {
 
         <PushStatsPanel days={stats.days} />
         <VkReportStatsPanel days={stats.days} />
+        <PlacementStatsPanel days={stats.days} />
         <PreviewStatsPanel days={stats.days} />
 
         <div className="panel activity-panel span-2">

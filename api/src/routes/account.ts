@@ -29,6 +29,7 @@ import { ComparisonCollectionModel } from '../models/ComparisonCollection.js';
 import { parseVisitId, recordVisitHit, trackActivity } from '../services/activityTracking.js';
 import { getAdminActivityStats } from '../services/activityStatsService.js';
 import { getAdminExport } from '../services/adminExportService.js';
+import { getAdminPlacementStats } from '../services/placementStatsService.js';
 
 export const accountRouter = Router();
 
@@ -523,6 +524,14 @@ accountRouter.get('/admin/export', async (req, res, next) => {
 
   try {
     res.json({ success: true, data: await getAdminExport(req.query.days) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.get('/admin/placements/stats', requireUser, requireAdmin, async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await getAdminPlacementStats(req.query.days) });
   } catch (error) {
     next(error);
   }

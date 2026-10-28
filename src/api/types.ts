@@ -737,6 +737,33 @@ export type AdminVkReportStats = {
   reports: { sent: number; full: number; locked: number; failed: number; clicked: number; paid: number; revenue: number };
 };
 
+/** Подбор площадок за период: GET /api/account/admin/placements/stats. Админы исключены, кроме счётчиков AI. */
+export type AdminPlacementStats = {
+  days: number;
+  mode: FeatureMode;
+  users: number;
+  searches: number;
+  repeatUsers: number;
+  cityShare: number | null;
+  groupShare: number | null;
+  sizeMatchOpenShare: number | null;
+  thinResults: number;
+  rulesSearches: number;
+  topCities: Array<{ city: string; users: number; searches: number }>;
+  openUsers: number;
+  selectUsers: number;
+  selectedCommunities: number;
+  priceUsers: number;
+  filterUsers: number;
+  sizeFilters: Array<{ size: string; users: number }>;
+  limitUsers: number;
+  paywallClicks: { rows: number; limit: number };
+  paidAfterFirstSearch: { users: number; revenue: number };
+  paidAfterLimit: { users: number; revenue: number };
+  shortlist: { users: number; items: number; withPrice: number; statuses: Record<string, number> };
+  ai: { searches: number; fallbacks: number; calls: number; failed: number; tokens: number; avgSeconds: number | null };
+};
+
 /** Как пост распознан как реклама: отметка VK, токен erid или строка маркировки. */
 export type AdMarker = 'platform' | 'erid' | 'label';
 

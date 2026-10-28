@@ -18,7 +18,7 @@ export type VkPost = {
   is_pinned?: number;
   marked_as_ads?: number;
   attachments?: Array<{ type?: string; link?: { url?: string } }>;
-  copy_history?: Array<{ text?: string; attachments?: Array<{ type?: string; link?: { url?: string } }> }>;
+  copy_history?: Array<{ owner_id?: number; text?: string; attachments?: Array<{ type?: string; link?: { url?: string } }> }>;
   likes?: { count?: number };
   reposts?: { count?: number };
   comments?: { count?: number };

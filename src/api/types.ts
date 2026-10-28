@@ -809,6 +809,13 @@ export type PlacementRow = {
   dead: boolean;
   /** Сопоставимо по размеру со своей группой (от половины до 20 её размеров). */
   sizeMatch: boolean;
+  /** Продаёт рекламу: yes — видна реклама или продвижение сообществ; likely — об этом говорят только контакты или описание. */
+  sellsAds: 'yes' | 'likely' | 'unknown';
+  sellsAdsNote: string;
+  /** Постов с продвижением других сообществ VK за 30 дней. */
+  promoPosts: number;
+  /** Строка с ценой из описания или закреплённого поста. */
+  priceHint: string | null;
   locked: false;
   views: number | null;
   viewsLower: number | null;

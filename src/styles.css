@@ -4871,3 +4871,7 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
 .placements-own-card a { color: #253247; font-size: 15px; font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
 .placements-own-card a:hover { color: #1d5fb8; text-decoration: underline; }
 .placements-own-card small { color: #5d6d84; font-size: 12px; line-height: 1.5; }
+.placements-sells { display: inline-flex; flex-wrap: wrap; align-self: flex-start; cursor: help; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 1.6; }
+.placements-sells.yes { background: #e6f4ea; color: #1e6b34; }
+.placements-sells.likely { background: #fff4e0; color: #8a4b08; }
+.placements-price-hint { color: #1e6b34; font-size: 12px; line-height: 1.4; white-space: normal; }

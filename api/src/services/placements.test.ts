@@ -4,6 +4,7 @@ import { wellFormed } from './deepseekClient.js';
 import { fallbackPlan, parsePlan, parsePrefilter, parseVerdicts, ruleVerdict, stem, type PlacementPlan } from './placementClassifier.js';
 import { buildQueries, buildRow, extractGroupRef, lockRows, pickShortlist, postTexts, sizeRangeFor, sortRows, type PlacementRow } from './placementSearchService.js';
 import { parseSearchLabel } from './placementStatsService.js';
+import { adSignals, findPriceHint, isPromoPost } from './placementAdSignals.js';
 
 const now = new Date('2026-10-28T12:00:00Z').getTime();
 const plan = (overrides: Partial<PlacementPlan> = {}): PlacementPlan => ({ type: 'business', local: true, city: 'Уфа', audience: '', queries: ['автолюбители', 'шины'], competitors: [], ...overrides });
@@ -104,6 +105,8 @@ test('порядок строк: живые, затем блок темы, оц�
   const row = (id: number, patch: Partial<PlacementRow>): PlacementRow => ({ ...base, id, ...patch });
   const sorted = sortRows([row(1, { kind: 'city', fit: 2, views: 9_000 }), row(2, { dead: true, fit: 2 }), row(3, { fit: 1, views: 100 }), row(4, { fit: 2, views: 50 })]);
   assert.deepEqual(sorted.map((item) => item.id), [4, 3, 1, 2]);
+  const bySales = sortRows([row(5, { fit: 2, views: 9_000 }), row(6, { fit: 2, views: 10, sellsAds: 'yes' }), row(7, { fit: 2, views: 20, sellsAds: 'likely' })]);
+  assert.deepEqual(bySales.map((item) => item.id), [6, 7, 5]);
   const locked = lockRows(sorted, false, 2);
   assert.equal(locked[1].locked, false);
   assert.deepEqual(locked[2], { id: 1, name: 'A', url: base.url, photo: null, members: 10, kind: 'city', sizeMatch: false, locked: true });
@@ -147,4 +150,38 @@ test('при своей группе сопоставимые по размер�
   const rows = groups.map((group) => ({ ...buildRow(group, [], verdict, now, range), views: group.members_count / 100 }));
   assert.deepEqual(rows.map((row) => row.sizeMatch), [false, true, true]);
   assert.deepEqual(sortRows(rows).map((row) => row.id), [2, 3, 1]);
+});
+
+const self = { id: 10, screen_name: 'switchbreak' };
+const ago = (days: number) => Math.round((now - days * 86_400_000) / 1000);
+
+test('продвижение сообществ: репост из другой группы или ссылка на неё с призывом, не своя группа и не новость', () => {
+  assert.equal(isPromoPost({ id: 1, date: ago(1), copy_history: [{ owner_id: -55, text: 'Розыгрыш' }] }, self), true);
+  assert.equal(isPromoPost({ id: 2, date: ago(1), copy_history: [{ owner_id: -10, text: 'Наш старый пост' }] }, self), false);
+  assert.equal(isPromoPost({ id: 3, date: ago(1), text: 'Подпишись на [club777|Мир Nintendo] — там раздачи' }, self), true);
+  assert.equal(isPromoPost({ id: 4, date: ago(1), text: 'Рекомендуем канал vk.com/retro_games' }, self), true);
+  assert.equal(isPromoPost({ id: 5, date: ago(1), text: 'Подписывайтесь на нас vk.com/switchbreak' }, self), false);
+  assert.equal(isPromoPost({ id: 6, date: ago(1), text: 'По данным [club777|Мэрии], дорогу откроют завтра' }, self), false);
+  assert.equal(isPromoPost({ id: 7, date: ago(1), text: 'Смотрите vk.com/video-1_2 и подписывайтесь' }, self), false);
+});
+
+test('прайс — строка про рекламу с ценой из описания или закрепа', () => {
+  assert.equal(findPriceHint(['Новости Уфы. Реклама — 1 500 ₽ за пост, пишите в лс']), 'Реклама — 1 500 ₽ за пост, пишите в лс');
+  assert.equal(findPriceHint(['Прайс:\nпост 700р\nзакреп 1200 руб.']), 'пост 700р');
+  assert.equal(findPriceHint(['Скидки до 500 ₽ в магазине']), null);
+  assert.equal(findPriceHint(['Реклама в лс']), null);
+});
+
+test('продаёт рекламу: маркировка или продвижение сообществ — да; контакт или описание — похоже; иначе неизвестно', () => {
+  const promo = { id: 1, date: ago(2), copy_history: [{ owner_id: -55 }] };
+  assert.equal(adSignals(self, [], 3, now).sellsAds, 'yes');
+  assert.match(adSignals(self, [], 3, now).sellsAdsNote, /3 рекламных поста с маркировкой/);
+  assert.equal(adSignals(self, [promo, { ...promo, id: 2 }], 0, now).sellsAds, 'yes');
+  assert.equal(adSignals(self, [promo], 0, now).sellsAds, 'likely');
+  const contact = adSignals({ ...self, contacts: [{ desc: 'По вопросам рекламы' }] }, [], 0, now);
+  assert.deepEqual([contact.sellsAds, contact.sellsAdsNote], ['likely', 'контакт «По вопросам рекламы»']);
+  assert.equal(adSignals({ ...self, description: 'Сотрудничество — в лс' }, [], 0, now).sellsAds, 'likely');
+  assert.equal(adSignals(self, [{ id: 3, date: ago(40), copy_history: [{ owner_id: -55 }] }], 0, now).sellsAds, 'unknown');
+  const pinned = adSignals(self, [{ id: 4, date: ago(90), is_pinned: 1, text: 'Реклама у нас: пост 800 ₽' }], 0, now);
+  assert.equal(pinned.priceHint, 'Реклама у нас: пост 800 ₽');
 });

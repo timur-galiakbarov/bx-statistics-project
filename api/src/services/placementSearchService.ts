@@ -3,6 +3,7 @@ import { DomainError } from '../errors/domainError.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { normalizeVkSource } from './adCheckService.js';
 import { summarizeAdCheck } from './adCheckUtils.js';
+import { adSignals, type SellsAds } from './placementAdSignals.js';
 import { isDeepseekConfigured } from './deepseekClient.js';
 import {
   fallbackPlan,
@@ -80,6 +81,13 @@ export type PlacementRow = {
   dead: boolean;
   /** Comparable in size to the own community; false when the search started from a description. */
   sizeMatch: boolean;
+  /** Sells ads: yes — ads or promotion of communities seen; likely — only the contacts or the description say so. */
+  sellsAds: SellsAds;
+  sellsAdsNote: string;
+  /** Posts promoting other VK communities in 30 days: someone buys community promotion here. */
+  promoPosts: number;
+  /** A line with a price from the description or the pinned post. */
+  priceHint: string | null;
   locked: false;
   /** Median current views of the last posts older than 72 hours. */
   views: number | null;
@@ -226,6 +234,7 @@ export function buildRow(group: VkSearchGroup, items: VkPost[], verdict: Placeme
   const source = mapVkSource(group, items, now, WALL_POSTS);
   const summary = summarizeAdCheck({ posts: source.posts, subscribers: source.subscribers, curves: null, windowDays: 30, complete: source.complete, now });
   const views = summary.estimate?.views ?? null;
+  const signals = adSignals(group, items, summary.ads.posts, now);
   return {
     id: group.id,
     name: group.name,
@@ -238,6 +247,7 @@ export function buildRow(group: VkSearchGroup, items: VkPost[], verdict: Placeme
     advertisers: verdict.advertisers,
     dead: views !== null && (views < 100 || (summary.viewsToSubscribers !== null && summary.viewsToSubscribers < 0.3)),
     sizeMatch: inRange(group.members_count, range),
+    ...signals,
     locked: false,
     views,
     viewsLower: summary.estimate?.lower ?? null,
@@ -253,12 +263,18 @@ export function buildRow(group: VkSearchGroup, items: VkPost[], verdict: Placeme
   };
 }
 
-/** Live communities first, then comparable in size, the topic block before the city one, the model's fit, the views. */
+const SELLS_RANK: Record<SellsAds, number> = { yes: 2, likely: 1, unknown: 0 };
+
+/**
+ * Live communities first, then comparable in size, the topic block before the city one, the model's fit; among equals
+ * those that sell ads — one can actually buy a post there — then the views.
+ */
 export function sortRows(rows: PlacementRow[]) {
   return [...rows].sort((left, right) => Number(left.dead) - Number(right.dead)
     || Number(right.sizeMatch) - Number(left.sizeMatch)
     || Number(left.kind !== 'topic') - Number(right.kind !== 'topic')
     || right.fit - left.fit
+    || SELLS_RANK[right.sellsAds] - SELLS_RANK[left.sellsAds]
     || (right.views ?? -1) - (left.views ?? -1));
 }
 

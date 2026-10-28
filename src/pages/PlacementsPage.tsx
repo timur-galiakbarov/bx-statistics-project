@@ -209,7 +209,7 @@ export function PlacementsPage({ groups }: { groups: SavedGroup[] }) {
       <h2>Что покажет подбор</h2>
       <ul className="ad-check-checklist">
         <li><b>Сообщества, где сидит ваша аудитория</b>: для местного бизнеса — тематические и общегородские паблики, для своей группы — похожие сообщества. Страницы компаний и конкурентов отсеиваем.</li>
-        <li><b>Почему площадка подходит</b> и <b>кто там уже рекламируется</b> — по содержанию её постов.</li>
+        <li><b>Почему площадка подходит</b> и <b>кто там уже рекламируется</b> — по содержанию её постов. Отмечаем, <b>продаёт ли сообщество рекламу</b> и продвигает ли другие паблики, а если прайс опубликован — показываем его.</li>
         <li><b>Типичные просмотры поста</b>, их доля от подписчиков и цена 1 000 просмотров по цене, которую назвал владелец. Сообщества с мёртвой аудиторией — внизу с пометкой.</li>
       </ul>
     </div>}
@@ -221,12 +221,14 @@ export function PlacementsPage({ groups }: { groups: SavedGroup[] }) {
 function PlacementsReport({ result }: { result: PlacementSearchResult }) {
   const [size, setSize] = useState<SizeKey>('all');
   const [sort, setSort] = useState<SortKey>('fit');
+  const [sellsOnly, setSellsOnly] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [prices, setPrices] = useState<Record<number, string>>({});
   const priceTracked = useRef(false);
 
   useEffect(() => {
     setSize(result.sizeRange ? 'match' : 'all');
+    setSellsOnly(false);
     setSelected(new Set());
     setPrices({});
   }, [result]);
@@ -235,7 +237,7 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
   const rowsOf = (kind: PlacementKind) => {
     const sizeTest = size === 'match' ? (members: number) => Boolean(result.sizeRange && members >= result.sizeRange.min && members <= result.sizeRange.max)
       : sizes.find((item) => item.key === size)?.test;
-    const filtered = result.rows.filter((row) => row.kind === kind && (!sizeTest || sizeTest(row.members)));
+    const filtered = result.rows.filter((row) => row.kind === kind && (!sizeTest || sizeTest(row.members)) && (!sellsOnly || (isOpen(row) && row.sellsAds !== 'unknown')));
     if (sort === 'fit') return filtered;
     const value = (row: PlacementRow | PlacementLockedRow) => !isOpen(row) ? -Infinity
       : sort === 'members' ? row.members : sort === 'views' ? row.views ?? -1 : sort === 'ratio' ? row.viewsToSubscribers ?? -1 : -(cpmOf(row) ?? Infinity);
@@ -347,6 +349,9 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
             {chip(size === 'all', 'любой', () => chooseSize('all'))}
             {sizes.map((item) => chip(size === item.key, item.label, () => chooseSize(item.key), item.key))}
           </div>
+          <div className="placements-chips" role="group" aria-label="Продажа рекламы">
+            {chip(sellsOnly, 'только продающие рекламу', () => { setSellsOnly(!sellsOnly); if (!sellsOnly) trackPlacementEvent('placement_filter', 'sells'); })}
+          </div>
           <div className="placements-chips" role="group" aria-label="Сортировка">
             <span>Сортировать:</span>
             {(['members', 'views', 'ratio', 'cpm'] as const).map((key) => chip(sort === key, { members: 'подписчики', views: 'просмотры', ratio: 'просм./подп.', cpm: 'CPM' }[key], () => setSort(sort === key ? 'fit' : key), key))}
@@ -380,6 +385,7 @@ function PlacementsReport({ result }: { result: PlacementSearchResult }) {
     <details className="ad-check-method">
       <summary>Как подбираем</summary>
       <p>DeepSeek читает описание: бизнес это или сообщество, нужен ли город, кто аудитория и какие сообщества искать. Ищем поиском VK, отсеиваем страницы компаний и конкурентов, затем модель читает последние посты лучших сообществ и объясняет, подходит ли площадка и кто там рекламируется.</p>
+      <p>«Продаёт рекламу» — за месяц были маркированные рекламные посты или хотя бы два поста с продвижением других сообществ (репост из сообщества или ссылка на него с призывом подписаться). «Похоже, продаёт» — рекламы не видно, но о ней говорят контакты или описание. Прайс берём из описания и закреплённого поста, если он там есть.</p>
       <p>Просмотры поста — медиана текущих просмотров последних постов старше 3 дней, разброс в подсказке — от 25-го до 75-го процентиля. «Мало просмотров» — меньше 100 или меньше 0,3% подписчиков. Рекламу видим только маркированную. Модель может ошибаться в оценке — сверяйтесь с постами. Отмеченные «в подборку» сообщества Socstat начинает отслеживать каждую ночь.</p>
     </details>
   </div>;
@@ -391,8 +397,11 @@ function PlacementName({ row }: { row: PlacementRow | PlacementLockedRow }) {
     {row.photo ? <img src={row.photo} alt="" width={36} height={36} loading="lazy" /> : <span className="placements-avatar">VK</span>}
     <span>
       <a href={row.url} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', `vk${suffix}`)}>{row.name}<ExternalLink size={12} aria-hidden="true" /></a>
+      {isOpen(row) && row.sellsAds !== 'unknown' && <small className={`placements-sells ${row.sellsAds}`} title={row.sellsAdsNote}>{row.sellsAds === 'yes' ? 'Продаёт рекламу' : 'Похоже, продаёт рекламу'}</small>}
       {isOpen(row) && row.reason && <small className="placements-reason">{row.reason}</small>}
+      {isOpen(row) && row.priceHint && <small className="placements-price-hint">Прайс: «{row.priceHint}»</small>}
       {isOpen(row) && row.advertisers && <small className="placements-advertisers"><Megaphone size={12} aria-hidden="true" /> Рекламируются: {row.advertisers}</small>}
+      {isOpen(row) && row.promoPosts > 0 && <small className="placements-advertisers"><Users size={12} aria-hidden="true" /> Продвигают другие паблики: {row.promoPosts} {plural(row.promoPosts, 'пост', 'поста', 'постов')} за месяц</small>}
       {isOpen(row) && <span className="placements-contacts">
         {row.contacts.map((contact) => <a key={contact.url} href={contact.url} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', `contact${suffix}`)}>{contact.label}</a>)}
         <a href={row.messageUrl} target="_blank" rel="noreferrer" onClick={() => trackPlacementEvent('placement_open', `message${suffix}`)}><MessageCircle size={12} aria-hidden="true" /> Написать</a>

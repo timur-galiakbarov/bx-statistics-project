@@ -36,29 +36,21 @@ import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
 import { formatDate } from './utils/date';
 import { startVisitHeartbeat, trackPageView } from './utils/visit';
 
-type NavSection = 'own' | 'content' | 'ads' | 'account';
-type NavItem = { to: string; label: string; icon: typeof Home; section: NavSection; adminOnly?: boolean; feature?: 'placements' };
+type NavItem = { to: string; label: string; icon: typeof Home; description?: string; adminOnly?: boolean; feature?: 'placements' };
 
-// Меню разбито на разделы; у раздела «account» заголовка нет. feature — пункт показывается, только когда
-// переключатель фичи включён этому пользователю.
-const navSections: Array<{ key: NavSection; title: string | null }> = [
-  { key: 'own', title: 'Мои сообщества' },
-  { key: 'content', title: 'Контент и конкуренты' },
-  { key: 'ads', title: 'Реклама' },
-  { key: 'account', title: null }
-];
-
+// Подпись под пунктом объясняет, зачем он нужен. feature — пункт показывается, только когда переключатель фичи
+// включён этому пользователю.
 const navItems: NavItem[] = [
-  { to: '/dashboard', label: 'Главная', icon: Home, section: 'own' },
-  { to: '/analytics', label: 'Аналитика', icon: BarChart3, section: 'own' },
-  { to: '/compare', label: 'Сравнение', icon: GitCompare, section: 'content' },
-  { to: '/posts', label: 'Публикации', icon: Newspaper, section: 'content' },
-  { to: '/placements', label: 'Подбор площадок', icon: MapPin, section: 'ads', feature: 'placements' },
-  { to: '/ad-check', label: 'Проверка канала', icon: ClipboardCheck, section: 'ads', adminOnly: true },
-  { to: '/account', label: 'Профиль и оплата', icon: CreditCard, section: 'account' }
+  { to: '/dashboard', label: 'Дашборд', icon: Home, description: 'Ваши источники за период' },
+  { to: '/analytics', label: 'Аналитика', icon: BarChart3, description: 'Отчёты по сообществам и каналам' },
+  { to: '/compare', label: 'Сравнение', icon: GitCompare, description: 'Метрики до 10 сообществ рядом' },
+  { to: '/posts', label: 'Идеи для постов', icon: Newspaper, description: 'Лучшие посты в вашей нише' },
+  { to: '/placements', label: 'Где дать рекламу', icon: MapPin, description: 'AI подберёт площадки ВК', feature: 'placements' },
+  { to: '/ad-check', label: 'Проверка канала', icon: ClipboardCheck, adminOnly: true },
+  { to: '/account', label: 'Профиль и оплата', icon: CreditCard }
 ];
 
-const adminNavItem: NavItem = { to: '/admin', label: 'Админка', icon: Shield, section: 'account', adminOnly: true };
+const adminNavItem: NavItem = { to: '/admin', label: 'Админка', icon: Shield, adminOnly: true };
 function TelegramAnalyticsRedirect() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -253,20 +245,16 @@ export function App() {
           <span>Аналитика соцсетей</span>
         </div>
         <nav className="nav">
-          {navSections.map((section) => {
-            const items = visibleNavItems.filter((item) => item.section === section.key);
-            if (!items.length) return null;
-            return <div className={`nav-section${section.title ? '' : ' nav-section-untitled'}`} key={section.key}>
-              {section.title && <span className="nav-section-title">{section.title}</span>}
-              {items.map((item) => (
-                <NavLink key={item.to} to={item.to} onClick={closeMobileMenu}>
-                  <item.icon size={18} />
-                  <span>{item.label}</span>
-                  {item.adminOnly && <span className="nav-admin-badge" title="Только для администратора" aria-label="Только для администратора"><ShieldCheck size={15} aria-hidden="true" /></span>}
-                </NavLink>
-              ))}
-            </div>;
-          })}
+          {visibleNavItems.map((item) => (
+            <NavLink key={item.to} to={item.to} onClick={closeMobileMenu}>
+              <item.icon size={18} />
+              <span className="nav-text">
+                <span>{item.label}</span>
+                {item.description && <small>{item.description}</small>}
+              </span>
+              {item.adminOnly && <span className="nav-admin-badge" title="Только для администратора" aria-label="Только для администратора"><ShieldCheck size={15} aria-hidden="true" /></span>}
+            </NavLink>
+          ))}
         </nav>
         {user && <div className="mobile-menu-account">
           <NavLink className="profile-pill" to="/account" onClick={closeMobileMenu}>

@@ -10,10 +10,18 @@ export type User = {
   freeGroupsDisabled?: boolean;
   isAdmin: boolean;
   enforceAccessRestrictions: boolean;
+  /** Бесплатный полный отчёт без доступа; null, когда доступ активен. */
+  reportPass?: ReportPassState | null;
   vkReports?: VkReportSettings;
   /** Подбор площадок включён этому пользователю переключателем фичи. */
   placementsEnabled?: boolean;
 };
+
+/** Один полный отчёт VK или YouTube на 24 часа раз в 30 дней для пользователя без доступа. */
+export type ReportPassState =
+  | { status: 'available' }
+  | { status: 'active'; platform: 'vk' | 'youtube'; sourceId: string; sourceName: string; expiresAt: string; nextAt: string }
+  | { status: 'used'; nextAt: string };
 
 /** Еженедельный отчёт сообщением от сообщества socstat во VK. enabled — фича включена этому пользователю. */
 export type VkReportSettings = {
@@ -424,6 +432,8 @@ export type CommunityAnalytics = {
     hiddenPosts: number;
     snapshotGrowth: SnapshotGrowth | null;
   };
+  /** Present when the full report is open by the free pass. */
+  reportPass?: { expiresAt: string };
 };
 
 export type CompareItem = {
@@ -717,6 +727,10 @@ export type AdminPreviewStats = {
   unlockTargets: Array<{ label: string; users: number }>;
   paidUsers: number;
   revenue: number;
+  passUsers: number;
+  passPaidUsers: number;
+  passRevenue: number;
+  lockViewers: Array<{ platform: 'youtube' | 'telegram'; users: number }>;
 };
 
 export type AdminPushStats = {

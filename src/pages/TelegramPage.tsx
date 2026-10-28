@@ -10,7 +10,7 @@ import {
 import { lazy, FormEvent, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ApiError, apiGet } from '../api/client';
-import type { AnalyticsPeriod, TelegramAnalytics } from '../api/types';
+import type { AnalyticsPeriod, ReportPassState, TelegramAnalytics } from '../api/types';
 import { PlatformAccessLock } from '../components/AccessLock';
 import { TelegramAvatar, TelegramLogo } from '../components/TelegramLogo';
 import { SubscriberHistoryPanel } from '../components/SubscriberHistoryPanel';
@@ -104,7 +104,7 @@ function TelegramPostCard({ channel, post }: { channel: TelegramAnalytics['chann
   </article>;
 }
 
-export function TelegramPage({ hasPaidAccess, activeTo, isAdmin = false }: { hasPaidAccess: boolean; activeTo?: string; isAdmin?: boolean }) {
+export function TelegramPage({ hasPaidAccess, activeTo, isAdmin = false, reportPass = null }: { hasPaidAccess: boolean; activeTo?: string; isAdmin?: boolean; reportPass?: ReportPassState | null }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const requestedChannel = searchParams.get('channel')?.trim() ?? '';
@@ -209,7 +209,7 @@ export function TelegramPage({ hasPaidAccess, activeTo, isAdmin = false }: { has
   const hiddenPosts = Math.max(0, posts.length - visiblePosts.length);
 
   if (!hasPaidAccess || isAccessExpired) {
-    return <section className="page-grid analytics-page telegram-page telegram-analytics-page"><PlatformAccessLock platform="telegram" activeTo={activeTo} /></section>;
+    return <section className="page-grid analytics-page telegram-page telegram-analytics-page"><PlatformAccessLock platform="telegram" activeTo={activeTo} reportPass={reportPass} /></section>;
   }
 
   return <section className="page-grid analytics-page telegram-page telegram-analytics-page">

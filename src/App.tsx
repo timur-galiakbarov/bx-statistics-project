@@ -328,7 +328,7 @@ export function App() {
           <Route path="/account" element={<AccountPage user={user} groups={groups} onAccountChanged={loadAccount} />} />
           <Route
             path="/analytics"
-            element={<AnalyticsPage isAdmin={Boolean(user?.isAdmin)} groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} />}
+            element={<AnalyticsPage isAdmin={Boolean(user?.isAdmin)} groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} reportPass={user?.reportPass ?? null} onAccountChange={loadAccount} />}
           />
           <Route path="/ad-check" element={user?.isAdmin ? <AdCheckPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/placements" element={user?.placementsEnabled ? <PlacementsPage groups={groups} /> : <Navigate to="/dashboard" replace />} />

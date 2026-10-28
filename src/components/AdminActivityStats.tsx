@@ -145,11 +145,11 @@ function PreviewStatsPanel({ days }: { days: number }) {
       <div className="panel-header compact">
         <div>
           <h2>Краткий отчёт без доступа</h2>
-          <p className="activity-note">{stats ? `За ${days} дней, без админов. Оплата засчитывается, если пришла после первого просмотра` : 'Загрузка…'}</p>
+          <p className="activity-note">{stats ? `За ${days} дней, без админов. Оплата засчитывается, если пришла после первого просмотра или включения пропуска` : 'Загрузка…'}</p>
         </div>
       </div>
       {error && <div className="form-message">{error}</div>}
-      {stats && (stats.viewers === 0 ? <div className="empty-state">Краткий отчёт за период никто не открывал.</div> : (
+      {stats && (stats.viewers === 0 && stats.passUsers === 0 && stats.lockViewers.every((row) => row.users === 0) ? <div className="empty-state">Краткий отчёт и заглушки за период никто не видел.</div> : (
         <div className="push-stats-grid">
           <div>
             <h3>Воронка</h3>
@@ -177,6 +177,17 @@ function PreviewStatsPanel({ days }: { days: number }) {
                 ))}
               </div>
             )}
+          </div>
+          <div>
+            <h3>Бесплатный полный отчёт и заглушки</h3>
+            <div className="activity-mini-table two">
+              <div className="head"><span>Что</span><span>Польз.</span></div>
+              <div><span>Включили пропуск</span><span>{formatNumber(stats.passUsers)}</span></div>
+              <div><span>Оплатили после пропуска{stats.passRevenue ? ` · ${formatNumber(stats.passRevenue)} ₽` : ''}</span><span>{formatNumber(stats.passPaidUsers)}</span></div>
+              {stats.lockViewers.map((row) => (
+                <div key={row.platform}><span>Видели заглушку {row.platform === 'youtube' ? 'YouTube' : 'Telegram'}</span><span>{formatNumber(row.users)}</span></div>
+              ))}
+            </div>
           </div>
         </div>
       ))}

@@ -20,6 +20,13 @@ const userSchema = new Schema(
     freeGroupsDisabled: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
     enforceAccessRestrictions: { type: Boolean, default: false },
+    // Бесплатный полный отчёт без доступа: один источник на 24 часа раз в 30 дней, см. services/reportPass.ts.
+    reportPass: {
+      platform: { type: String, enum: ['vk', 'youtube'] },
+      sourceId: { type: String },
+      sourceName: { type: String },
+      usedAt: { type: Date }
+    },
     isActive: { type: Boolean, default: true },
     vkManagement: {
       attemptedAt: { type: Date },

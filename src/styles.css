@@ -4434,6 +4434,65 @@ p.competitors-error { margin-top: 12px !important; padding: 10px 12px; border-ra
   margin-top: 2px;
 }
 
+.preview-banner .preview-banner-icon { display: flex; margin-top: 0; }
+
+.preview-banner small {
+  color: #2e7d32;
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.preview-banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-banner-actions .secondary-button { margin-top: 0; }
+
+/* Бесплатный полный отчёт: тот же баннер, но зелёный и с подсветкой при клике по замку. */
+.report-pass-offer { border-left-color: #4caf50; }
+
+.report-pass-icon {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.report-pass-highlight { animation: report-pass-pulse 1.4s ease-out; }
+
+@keyframes report-pass-pulse {
+  0%, 60% { box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.35); }
+  100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
+.report-pass-notice {
+  align-items: center;
+  border-left: 4px solid #4caf50;
+  color: #5b6875;
+  display: flex;
+  font-size: 14px;
+  gap: 12px;
+  padding-bottom: 12px;
+  padding-top: 12px;
+}
+
+.report-pass-notice > svg { color: #2e7d32; flex: none; }
+.report-pass-notice > span { flex: 1; }
+.report-pass-notice strong { color: #17212b; font-weight: 500; }
+.report-pass-notice .secondary-button { flex: none; margin-top: 0; }
+
+.preview-section-note {
+  color: #777;
+  font-size: 13px;
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .report-pass-notice { align-items: flex-start; flex-wrap: wrap; }
+}
+
 .preview-locked {
   background: none;
   border: 0;

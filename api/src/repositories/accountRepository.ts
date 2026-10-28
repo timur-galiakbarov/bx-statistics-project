@@ -10,6 +10,7 @@ import type { SavedGroup } from '../store/types.js';
 import { DomainError } from '../errors/domainError.js';
 import { getLegacyPricingUserIds } from '../services/legacyPricing.js';
 import { env } from '../config/env.js';
+import type { ReportPassRecord } from '../services/reportPass.js';
 
 export const FREE_GROUP_LIMIT = 1;
 
@@ -24,6 +25,7 @@ type UserDocument = {
   freeGroupsDisabled?: boolean;
   isAdmin: boolean;
   enforceAccessRestrictions?: boolean;
+  reportPass?: { platform?: string; sourceId?: string; sourceName?: string; usedAt?: Date };
 };
 
 type GroupDocument = {
@@ -52,6 +54,7 @@ export type AccountUser = {
   freeGroupsDisabled: boolean;
   isAdmin: boolean;
   enforceAccessRestrictions: boolean;
+  reportPass?: ReportPassRecord;
 };
 
 export type RecentAdminUser = {
@@ -94,7 +97,10 @@ export function mapUser(user: UserDocument): AccountUser {
     trialEndsAt: user.trialEndsAt?.toISOString() ?? undefined,
     freeGroupsDisabled: Boolean(user.freeGroupsDisabled),
     isAdmin: user.isAdmin,
-    enforceAccessRestrictions: Boolean(user.enforceAccessRestrictions)
+    enforceAccessRestrictions: Boolean(user.enforceAccessRestrictions),
+    reportPass: user.reportPass?.usedAt && user.reportPass.sourceId && (user.reportPass.platform === 'vk' || user.reportPass.platform === 'youtube')
+      ? { platform: user.reportPass.platform, sourceId: user.reportPass.sourceId, sourceName: user.reportPass.sourceName ?? '', usedAt: user.reportPass.usedAt.toISOString() }
+      : undefined
   };
 }
 

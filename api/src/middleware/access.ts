@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { env } from '../config/env.js';
 import { SavedGroupModel } from '../models/SavedGroup.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
+import { getReportPassState, isReportPassActiveFor } from '../services/reportPass.js';
 import { vkApiRequest } from '../services/vkClient.js';
 
 function getAccessEnd(activeTo: string) {
@@ -22,6 +23,15 @@ export function hasActiveAccess(user: Express.Request['user']) {
   const accessEnd = getAccessEnd(user.activeTo);
 
   return Boolean(accessEnd && accessEnd.getTime() >= Date.now());
+}
+
+/** Free full report state for a user without access; null when access is active and the pass is not needed. */
+export function getUserReportPassState(user: NonNullable<Express.Request['user']>) {
+  return hasActiveAccess(user) ? null : getReportPassState(user.reportPass);
+}
+
+export function hasReportPassAccess(user: Express.Request['user'], platform: string, sourceId: string) {
+  return Boolean(user && isReportPassActiveFor(user.reportPass, platform, sourceId));
 }
 
 export function requireActiveAccess(req: Request, res: Response, next: NextFunction) {

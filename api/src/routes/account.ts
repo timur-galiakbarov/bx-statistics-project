@@ -15,6 +15,7 @@ import {
   removeSession
 } from '../repositories/accountRepository.js';
 import { requireAdmin, requireUser } from '../middleware/auth.js';
+import { getUserReportPassState } from '../middleware/access.js';
 import { getFeatureModes, isFeatureEnabledFor, isFeatureKey, isFeatureMode, setFeatureMode } from '../services/featureFlags.js';
 import { getNotificationSettings } from './notifications.js';
 import { env } from '../config/env.js';
@@ -80,6 +81,7 @@ accountRouter.get('/me', requireUser, async (req, res, next) => {
           freeGroupsDisabled: user.freeGroupsDisabled,
           isAdmin: user.isAdmin,
           enforceAccessRestrictions: user.enforceAccessRestrictions,
+          reportPass: getUserReportPassState(user),
           vkReports: await getNotificationSettings(user),
           placementsEnabled: await isFeatureEnabledFor('placements', user)
         }
@@ -153,6 +155,7 @@ accountRouter.post('/activity', requireUser, async (req, res, next) => {
 const uiEventLabels: Partial<Record<ActivityEventType, string[]>> = {
   competitors_widget: ['open', 'add', 'other', 'expand', 'teaser'],
   preview_unlock: ['banner', 'kpi', 'chart', 'insights', 'posts', 'section', 'period', 'refresh', 'compare', 'posts_page'],
+  access_lock: ['youtube', 'telegram'],
   vk_report_connect: ['banner', 'dashboard', 'competitors', 'profile'],
   placement_open: ['vk', 'contact', 'message', 'vk_match', 'contact_match', 'message_match'],
   placement_price: ['entered'],

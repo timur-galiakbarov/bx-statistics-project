@@ -1,10 +1,12 @@
-import { ArrowDown, ArrowUp, BarChart3, LockKeyhole, TrendingDown, TrendingUp } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../api/client';
-import type { CommunityAnalytics, PaymentPlan } from '../api/types';
+import { ArrowDown, ArrowUp, BarChart3, LockKeyhole, Ticket, TrendingDown, TrendingUp } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import type { CommunityAnalytics, ReportPassState } from '../api/types';
 import { trackPreviewUnlock, type PreviewUnlockTarget } from '../utils/visit';
 import { PostCard } from './PostCard';
+import { formatPassDay, formatPassMoment, highlightReportPassOffer, REPORT_PASS_OFFER_ID, reportPassLink, tariffLabel, useMonthPrice } from './ReportPass';
+
+export { useMonthPrice };
 
 type Section = 'summary' | 'audience' | 'posts' | 'competitors';
 
@@ -27,16 +29,6 @@ function formatNumber(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value);
 }
 
-export function useMonthPrice() {
-  const [price, setPrice] = useState<number | null>(null);
-  useEffect(() => {
-    apiGet<PaymentPlan[]>('/api/payments/plans')
-      .then((plans) => setPrice(plans.find((plan) => plan.id === 'month')?.priceRub ?? null))
-      .catch(() => undefined);
-  }, []);
-  return price;
-}
-
 function Locked({ target, onUnlock, className = '', children }: { target: PreviewUnlockTarget; onUnlock: (target: PreviewUnlockTarget) => void; className?: string; children: ReactNode }) {
   return <button className={`preview-locked ${className}`} type="button" onClick={() => onUnlock(target)} aria-label="Открыть полный отчёт">
     <span className="preview-locked-content" aria-hidden="true">{children}</span>
@@ -44,12 +36,58 @@ function Locked({ target, onUnlock, className = '', children }: { target: Previe
   </button>;
 }
 
-export function AnalyticsPreviewView({ analytics, section }: { analytics: CommunityAnalytics; section: Section }) {
+/** Banner over the short report: offers the free full report first, the tariff second. */
+function PreviewBanner({ reportPass, price, isActivatingPass, onActivatePass, onTariff }: {
+  reportPass: ReportPassState | null;
+  price: number | null;
+  isActivatingPass: boolean;
+  onActivatePass: () => void;
+  onTariff: () => void;
+}) {
+  if (reportPass?.status === 'available') {
+    return <div className="panel span-2 preview-banner report-pass-offer" id={REPORT_PASS_OFFER_ID}>
+      <span className="preview-banner-icon report-pass-icon"><Ticket size={20} /></span>
+      <div>
+        <small>С возвращением!</small>
+        <strong>Доступ закончился, но этот отчёт можно открыть полностью</strong>
+        <span>Раз в 30 дней — один полный отчёт бесплатно: любой период до 90 дней, охват, ER, графики и все публикации. Открывается на 24 часа.</span>
+      </div>
+      <div className="preview-banner-actions">
+        <button className="primary-button" disabled={isActivatingPass} type="button" onClick={onActivatePass}>{isActivatingPass ? 'Открываем…' : 'Открыть полный отчёт бесплатно'}</button>
+        <button className="secondary-button" type="button" onClick={onTariff}>{tariffLabel(price)}</button>
+      </div>
+    </div>;
+  }
+  return <div className="panel span-2 preview-banner">
+    <span className="preview-banner-icon"><LockKeyhole size={20} /></span>
+    <div>
+      <strong>Краткий отчёт за последние 7 дней</strong>
+      {reportPass?.status === 'active'
+        ? <span>Бесплатный полный отчёт сейчас открыт для «{reportPass.sourceName || 'другого источника'}» — до {formatPassMoment(reportPass.expiresAt)}. Следующий — {formatPassDay(reportPass.nextAt)}.</span>
+        : reportPass?.status === 'used'
+          ? <span>Бесплатный полный отчёт снова будет доступен {formatPassDay(reportPass.nextAt)}. Без ожидания — на тарифе: любой период до 90 дней, охват, ER и конкуренты.</span>
+          : <span>Охват, ER, графики, разбор публикаций и конкуренты — в полном отчёте. Любой период до 90 дней.</span>}
+    </div>
+    <div className="preview-banner-actions">
+      {reportPass?.status === 'active' && <Link className="secondary-button" to={reportPassLink(reportPass)}>Вернуться к «{reportPass.sourceName || 'источнику'}»</Link>}
+      <button className="primary-button" type="button" onClick={onTariff}>{tariffLabel(price)}</button>
+    </div>
+  </div>;
+}
+
+export function AnalyticsPreviewView({ analytics, section, reportPass, isActivatingPass, onActivatePass }: {
+  analytics: CommunityAnalytics;
+  section: Section;
+  reportPass: ReportPassState | null;
+  isActivatingPass: boolean;
+  onActivatePass: () => void;
+}) {
   const navigate = useNavigate();
   const price = useMonthPrice();
   const preview = analytics.preview!;
   const unlock = (target: PreviewUnlockTarget) => {
     trackPreviewUnlock(target);
+    if (reportPass?.status === 'available' && highlightReportPassOffer()) return;
     navigate('/account');
   };
   const previousPosts = analytics.previous.wall.available ? analytics.previous.wall.periodPosts : null;
@@ -58,14 +96,13 @@ export function AnalyticsPreviewView({ analytics, section }: { analytics: Commun
   const officialGrowth = analytics.stats.unavailable ? null : analytics.stats;
   const snapshotDirection = preview.snapshotGrowth?.direction ?? null;
 
-  const banner = <div className="panel span-2 preview-banner">
-    <span className="preview-banner-icon"><LockKeyhole size={20} /></span>
-    <div>
-      <strong>Краткий отчёт за последние 7 дней</strong>
-      <span>Охват, ER, графики, разбор публикаций и конкуренты откроются в полном отчёте. Любой период до 90 дней.</span>
-    </div>
-    <button className="primary-button" type="button" onClick={() => unlock('banner')}>{price ? `Открыть полный отчёт за ${formatNumber(price)} ₽` : 'Открыть полный отчёт'}</button>
-  </div>;
+  const banner = <PreviewBanner
+    reportPass={reportPass}
+    price={price}
+    isActivatingPass={isActivatingPass}
+    onActivatePass={onActivatePass}
+    onTariff={() => { trackPreviewUnlock('banner'); navigate('/account'); }}
+  />;
 
   if (section !== 'summary') {
     const content = sectionContents[section];
@@ -75,7 +112,8 @@ export function AnalyticsPreviewView({ analytics, section }: { analytics: Commun
         <LockKeyhole size={26} />
         <h2>{content.title} — в полном отчёте</h2>
         <ul>{content.items.map((item) => <li key={item}>{item}</li>)}</ul>
-        <button className="primary-button" type="button" onClick={() => unlock('section')}>Открыть раздел</button>
+        <button className="primary-button" type="button" onClick={() => section === 'competitors' ? (trackPreviewUnlock('section'), navigate('/account')) : unlock('section')}>{reportPass?.status === 'available' && section !== 'competitors' ? 'Открыть бесплатно' : 'Открыть раздел'}</button>
+        {section === 'competitors' && <p className="preview-section-note">Конкуренты открываются только на тарифе, бесплатный полный отчёт их не включает.</p>}
       </div>
     </>;
   }

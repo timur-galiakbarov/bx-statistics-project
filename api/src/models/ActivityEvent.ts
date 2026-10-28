@@ -23,6 +23,10 @@ export const activityEventTypes = [
   'analytics_preview',
   // Клик по закрытому блоку урезанного отчёта; label — какой блок.
   'preview_unlock',
+  // Включили бесплатный полный отчёт без доступа; label — id источника.
+  'report_pass_used',
+  // Показали заглушку «доступ закончился»; label — youtube / telegram.
+  'access_lock',
   // Проверка канала перед рекламой; label — источник. ad_check_limit — упёрлись в лимит проверок.
   'ad_check_run',
   'ad_check_limit',

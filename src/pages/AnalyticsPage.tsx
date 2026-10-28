@@ -19,12 +19,13 @@ import { Button } from '@alfalab/core-components-button';
 import { CalendarInput } from '@alfalab/core-components-calendar-input';
 import { Select } from '@alfalab/core-components-select';
 import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
-import { lazy, FormEvent, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, FormEvent, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ApiError, apiGet } from '../api/client';
-import type { AnalyticsPeriod, CommunityAnalytics, SavedGroup, TelegramAnalytics, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
+import { ApiError, apiGet, apiPost } from '../api/client';
+import type { AnalyticsPeriod, CommunityAnalytics, ReportPassState, SavedGroup, TelegramAnalytics, VkGroup, VkListResponse, YoutubeChannel } from '../api/types';
 import { PlatformAccessLock } from '../components/AccessLock';
 import { AnalyticsPreviewView } from '../components/AnalyticsPreview';
+import { highlightReportPassOffer, isReportPassFor, ReportPassNotice } from '../components/ReportPass';
 import { AnalyticsLanding, type AnalyticsChannel, type AnalyticsPlatform, analyticsExamples } from '../components/AnalyticsLanding';
 import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
 import { PostCard } from '../components/PostCard';
@@ -225,26 +226,24 @@ function KpiCard({
   );
 }
 
-export function AnalyticsPage({
-  groups,
-  hasPaidAccess,
-  isTrialActive,
-  isAdmin = false,
-  activeTo
-}: {
+type AnalyticsPageProps = {
   groups: SavedGroup[];
   hasPaidAccess: boolean;
   isTrialActive: boolean;
   isAdmin?: boolean;
   activeTo?: string;
-}) {
+  reportPass?: ReportPassState | null;
+  onAccountChange?: () => void;
+};
+
+export function AnalyticsPage(props: AnalyticsPageProps) {
   const [searchParams] = useSearchParams();
 
   if (searchParams.get('platform') === 'telegram' && searchParams.get('channel')) {
-    return <TelegramPage isAdmin={isAdmin} hasPaidAccess={hasPaidAccess} activeTo={activeTo} />;
+    return <TelegramPage isAdmin={props.isAdmin} hasPaidAccess={props.hasPaidAccess} activeTo={props.activeTo} reportPass={props.reportPass ?? null} />;
   }
 
-  return <CommunityAnalyticsPage isAdmin={isAdmin} groups={groups} hasPaidAccess={hasPaidAccess} isTrialActive={isTrialActive} activeTo={activeTo} />;
+  return <CommunityAnalyticsPage {...props} />;
 }
 
 function CommunityAnalyticsPage({
@@ -252,14 +251,10 @@ function CommunityAnalyticsPage({
   hasPaidAccess,
   isTrialActive,
   isAdmin = false,
-  activeTo
-}: {
-  groups: SavedGroup[];
-  hasPaidAccess: boolean;
-  isTrialActive: boolean;
-  isAdmin?: boolean;
-  activeTo?: string;
-}) {
+  activeTo,
+  reportPass: accountReportPass = null,
+  onAccountChange
+}: AnalyticsPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const groupIdParam = searchParams.get('groupId');
@@ -285,6 +280,12 @@ function CommunityAnalyticsPage({
   const [analyticsLoadingStep, setAnalyticsLoadingStep] = useState(0);
   // YouTube без доступа: вместо отчёта — явный блок про оплату.
   const [isPlatformLocked, setIsPlatformLocked] = useState(false);
+  // Бесплатный полный отчёт: ref нужен loadAnalytics сразу после включения, до перерисовки.
+  const [reportPass, setReportPass] = useState<ReportPassState | null>(accountReportPass);
+  const reportPassRef = useRef(reportPass);
+  reportPassRef.current = reportPass;
+  const [isActivatingPass, setIsActivatingPass] = useState(false);
+  useEffect(() => setReportPass(accountReportPass), [accountReportPass]);
 
   useEffect(() => {
     try {
@@ -321,7 +322,7 @@ function CommunityAnalyticsPage({
       setIsCommunityPickerOpen(false);
       setIsPlatformLocked(true);
     };
-    if (!hasPaidAccess && !hasBonusAccess && group.platform === 'youtube') {
+    if (!hasPaidAccess && !hasBonusAccess && group.platform === 'youtube' && !isReportPassFor(reportPassRef.current, 'youtube', group.id)) {
       showPlatformLock();
       if (groupIdParam !== String(group.id) || analyticsPlatform !== group.platform) {
         navigate(`/analytics?groupId=${encodeURIComponent(String(group.id))}&platform=${group.platform}&section=${analyticsSection}`);
@@ -431,7 +432,28 @@ function CommunityAnalyticsPage({
   const isPreview = Boolean(analytics?.preview);
   const unlockPreview = (target: PreviewUnlockTarget) => {
     trackPreviewUnlock(target);
+    if (reportPass?.status === 'available' && highlightReportPassOffer()) return;
     navigate('/account');
+  };
+
+  const activateReportPass = async () => {
+    const group = selectedGroup;
+    if (!group || (group.platform !== 'vk' && group.platform !== 'youtube')) return;
+    const sourceId = String(analytics?.group.id ?? group.id);
+    setIsActivatingPass(true);
+    setMessage(null);
+    try {
+      const next = await apiPost<ReportPassState>('/api/analytics/report-pass', { platform: group.platform, sourceId, sourceName: analytics?.group.name ?? group.name });
+      reportPassRef.current = next;
+      setReportPass(next);
+      onAccountChange?.();
+      await loadAnalytics({ ...group, id: sourceId }, 'week');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Не удалось открыть полный отчёт.');
+      onAccountChange?.();
+    } finally {
+      setIsActivatingPass(false);
+    }
   };
 
   const changeSection = (id: string | number) => {
@@ -649,7 +671,8 @@ function CommunityAnalyticsPage({
       </header>
       {isCommunityPickerOpen && <div className="panel span-2 community-picker">{recentGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Clock3 size={17} /><strong>Недавно анализировали</strong></div><div className="community-options">{recentGroups.map((group) => renderCommunityOption(group, 'недавний анализ'))}</div></div>}{bonusGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Бонусные источники</strong></div><div className="community-options">{bonusGroups.map((group) => renderCommunityOption(group, 'доступно без тарифа'))}</div></div>}{trackedGroups.length > 0 && <div className="community-picker-section"><div className="community-picker-title"><Users size={17} /><strong>Отслеживаемые источники</strong></div><div className="community-options">{trackedGroups.map((group) => renderCommunityOption(group))}</div></div>}<SegmentedControl className="social-platform-switcher" onChange={(id) => { setSearchPlatform(id as AnalyticsPlatform); setSearchResults([]); setMessage(null); }} selectedId={searchPlatform} size={40}><Segment id="vk" title={<PlatformSegmentTitle platform="vk" />} /><Segment id="youtube" title={<PlatformSegmentTitle platform="youtube" />} /><Segment id="telegram" title={<PlatformSegmentTitle platform="telegram" />} /></SegmentedControl><form className="search-form" onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={searchPlatform === 'youtube' ? 'URL, @handle, channel ID или название' : searchPlatform === 'telegram' ? '@username или ссылка t.me' : 'Название, screen name или ссылка VK'} /><button type="submit" disabled={isSearching}><Search size={18} />{isSearching ? 'Ищем' : 'Найти'}</button></form>{searchResults.length > 0 && <div className="search-results">{searchResults.map((group) => <button className="analytics-result" key={`${group.platform}:${group.id}`} type="button" onClick={() => loadAnalytics(group)}>{group.photo_100 ?? group.photo_50 ? <img src={group.photo_100 ?? group.photo_50} alt="" /> : <span className="community-avatar-placeholder" />}<span><strong>{group.name}</strong><small>{group.screen_name ?? group.id}{group.members_count === null ? ' · Подписчики: Недоступно' : group.members_count ? ` · ${formatNumber(group.members_count)} подписчиков` : ''}</small></span></button>)}</div>}</div>}
       {message && <div className="span-2 form-message">{message}</div>}
-      {isPlatformLocked && <PlatformAccessLock platform="youtube" activeTo={activeTo} />}
+      {isPlatformLocked && <PlatformAccessLock platform="youtube" activeTo={activeTo} reportPass={reportPass} isActivatingPass={isActivatingPass} onActivatePass={activateReportPass} />}
+      {analytics?.reportPass && !isLoadingAnalytics && <ReportPassNotice expiresAt={analytics.reportPass.expiresAt} />}
       {!isPlatformLocked && <div className="span-2 analytics-toolbar">
         {analytics && !isLoadingAnalytics && <div className="analytics-section-switcher">
           {analytics.platform === 'youtube'
@@ -661,7 +684,7 @@ function CommunityAnalyticsPage({
       {!isPlatformLocked && analyticsSection !== 'competitors' && period === 'custom' && <div className="panel span-2"><div className="custom-period-form"><div className="custom-period-fields"><CalendarInput className="custom-period-picker" client="desktop" label="Дата начала" maxDate={customDateToTimestamp ?? Date.now()} size={40} value={formatDatePickerValue(customDateFrom)} onChange={(_, { date }) => !Number.isNaN(date.getTime()) && setCustomDateFrom(formatIsoDate(date))} /><CalendarInput className="custom-period-picker" client="desktop" label="Дата окончания" maxDate={customPeriodEndMaxDate} minDate={customDateFromTimestamp} size={40} value={formatDatePickerValue(customDateTo)} onChange={(_, { date }) => !Number.isNaN(date.getTime()) && setCustomDateTo(formatIsoDate(date))} /><Button className="custom-period-submit" client="desktop" disabled={!selectedGroup || !customDateFrom || !customDateTo || isLoadingAnalytics} size={40} type="button" view="primary" onClick={() => selectedGroup && loadAnalytics(selectedGroup, 'custom')}>Применить период</Button></div><span className="custom-period-hint">Можно выбрать период до {MAX_CUSTOM_PERIOD_DAYS} дней включительно.</span></div></div>}
     </>}
     {isLoadingAnalytics && <div className="panel span-2 analytics-loading" aria-live="polite" role="status"><div><strong>Готовим аналитику</strong><span>{activeLoadingSteps[analyticsLoadingStep].label}</span></div><div aria-label={activeLoadingSteps[analyticsLoadingStep].label} className="analytics-loading-progress" role="progressbar"><span /></div></div>}
-    {analytics && !isLoadingAnalytics && isPreview && <AnalyticsPreviewView analytics={analytics} section={analyticsSection} />}
+    {analytics && !isLoadingAnalytics && isPreview && <AnalyticsPreviewView analytics={analytics} section={analyticsSection} reportPass={reportPass} isActivatingPass={isActivatingPass} onActivatePass={activateReportPass} />}
     {analytics && !isLoadingAnalytics && !isPreview && <>
       {analyticsSection === 'competitors' && <CompetitorsPanel platform={analytics.platform ?? 'vk'} sourceId={analytics.group.externalId ?? analytics.group.id} sourceName={analytics.group.name} />}
       {analytics.platform === 'youtube' && (analyticsSection === 'summary' || analyticsSection === 'posts') && <YoutubeAnalyticsView analytics={analytics} section={analyticsSection === 'posts' ? 'posts' : 'summary'} />}

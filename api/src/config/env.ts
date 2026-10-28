@@ -15,7 +15,7 @@ export const env = {
   vkServiceKey: process.env.VK_SERVICE_KEY?.trim() ?? '',
   vkAuthScope: process.env.VK_AUTH_SCOPE ?? 'stats,groups,photos,video,offline',
   socstatVkGroupId: process.env.SOCSTAT_VK_GROUP_ID ?? '125792332',
-  socstatVkGroupUrl: process.env.SOCSTAT_VK_GROUP_URL ?? 'https://vk.com/socstat',
+  socstatVkGroupUrl: process.env.SOCSTAT_VK_GROUP_URL ?? 'https://vk.com/socstat_ru',
   vkForceRevoke: process.env.VK_FORCE_REVOKE === '1',
   vkRedirectUrl: process.env.VK_REDIRECT_URL ?? 'http://localhost:4000/api/auth/vk/callback',
   vkPublicRedirectUrl:

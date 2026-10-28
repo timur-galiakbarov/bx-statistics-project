@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiPost } from '../api/client';
+import { rememberAfterLogin } from '../utils/afterLogin';
 
 type Props = {
   onDevLogin: () => Promise<void>;
@@ -17,6 +19,12 @@ export function LoginPage({ onDevLogin }: Props) {
   const [searchParams] = useSearchParams();
   const authError = searchParams.get('authError');
   const details = searchParams.get('details');
+  const next = searchParams.get('next');
+
+  // Лендинг ведёт на /app/login?next=…, а после VK сервер возвращает на /dashboard — запоминаем, куда шли.
+  useEffect(() => {
+    rememberAfterLogin(next);
+  }, [next]);
   const authErrorMessage =
     authError === 'VK_TOKEN_EXCHANGE_FAILED'
       ? 'VK не принял код авторизации. Обычно это значит, что ссылка была открыта повторно, код устарел или вход был начат в другой вкладке.'

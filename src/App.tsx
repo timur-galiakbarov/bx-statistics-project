@@ -14,7 +14,7 @@ import {
   Users
 } from 'lucide-react';
 import { IconButton } from '@alfalab/core-components-icon-button';
-import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiGet, apiPost } from './api/client';
 import type { SavedGroup, User } from './api/types';
@@ -33,6 +33,7 @@ import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PostsPage } from './pages/PostsPage';
 import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
+import { getAfterLoginPath, takeAfterLogin } from './utils/afterLogin';
 import { formatDate } from './utils/date';
 import { startVisitHeartbeat, trackPageView } from './utils/visit';
 
@@ -60,6 +61,7 @@ function TelegramAnalyticsRedirect() {
 
 export function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const isSendingGoalsRef = useRef(false);
   const [groups, setGroups] = useState<SavedGroup[]>([]);
@@ -113,6 +115,18 @@ export function App() {
   }, [location.pathname, user?.id]);
 
   useEffect(() => (user ? startVisitHeartbeat() : undefined), [user?.id]);
+
+  // После входа через VK сервер всегда возвращает на /dashboard; если вход начинали с лендинга, ведём туда, куда звали.
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const next = takeAfterLogin();
+    if (next && (next !== '/placements' || user.placementsEnabled)) {
+      navigate(next, { replace: true });
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) {
@@ -233,7 +247,7 @@ export function App() {
   }
 
   if (location.pathname === '/login') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getAfterLoginPath(new URLSearchParams(location.search).get('next')) ?? '/dashboard'} replace />;
   }
 
   return (

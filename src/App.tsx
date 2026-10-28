@@ -36,18 +36,29 @@ import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
 import { formatDate } from './utils/date';
 import { startVisitHeartbeat, trackPageView } from './utils/visit';
 
-// feature — пункт показывается, только когда переключатель фичи включён этому пользователю.
-const navItems: Array<{ to: string; label: string; icon: typeof Home; adminOnly?: boolean; feature?: 'placements'; ai?: boolean }> = [
-  { to: '/dashboard', label: 'Главная', icon: Home },
-  { to: '/analytics', label: 'Аналитика', icon: BarChart3 },
-  { to: '/placements', label: 'Подбор площадок', icon: MapPin, feature: 'placements', ai: true },
-  { to: '/ad-check', label: 'Проверка канала', icon: ClipboardCheck, adminOnly: true },
-  { to: '/compare', label: 'Сравнение', icon: GitCompare },
-  { to: '/posts', label: 'Публикации', icon: Newspaper },
-  { to: '/account', label: 'Профиль и оплата', icon: CreditCard }
+type NavSection = 'own' | 'content' | 'ads' | 'account';
+type NavItem = { to: string; label: string; icon: typeof Home; section: NavSection; adminOnly?: boolean; feature?: 'placements' };
+
+// Меню разбито на разделы; у раздела «account» заголовка нет. feature — пункт показывается, только когда
+// переключатель фичи включён этому пользователю.
+const navSections: Array<{ key: NavSection; title: string | null }> = [
+  { key: 'own', title: 'Мои сообщества' },
+  { key: 'content', title: 'Контент и конкуренты' },
+  { key: 'ads', title: 'Реклама' },
+  { key: 'account', title: null }
 ];
 
-const adminNavItem = { to: '/admin', label: 'Админка', icon: Shield, adminOnly: true };
+const navItems: NavItem[] = [
+  { to: '/dashboard', label: 'Главная', icon: Home, section: 'own' },
+  { to: '/analytics', label: 'Аналитика', icon: BarChart3, section: 'own' },
+  { to: '/compare', label: 'Сравнение', icon: GitCompare, section: 'content' },
+  { to: '/posts', label: 'Публикации', icon: Newspaper, section: 'content' },
+  { to: '/placements', label: 'Подбор площадок', icon: MapPin, section: 'ads', feature: 'placements' },
+  { to: '/ad-check', label: 'Проверка канала', icon: ClipboardCheck, section: 'ads', adminOnly: true },
+  { to: '/account', label: 'Профиль и оплата', icon: CreditCard, section: 'account' }
+];
+
+const adminNavItem: NavItem = { to: '/admin', label: 'Админка', icon: Shield, section: 'account', adminOnly: true };
 function TelegramAnalyticsRedirect() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -210,7 +221,7 @@ export function App() {
   const title = useMemo(() => {
     return [...navItems, adminNavItem].find((item) => location.pathname.startsWith(item.to))?.label ?? 'Socstat';
   }, [location.pathname]);
-  const visibleNavItems = [...navItems, adminNavItem].filter((item) => (!item.adminOnly || user?.isAdmin) && (!('feature' in item) || !item.feature || user?.placementsEnabled));
+  const visibleNavItems = [...navItems, adminNavItem].filter((item) => (!item.adminOnly || user?.isAdmin) && (!item.feature || user?.placementsEnabled));
   const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions) || isAccessActive(user?.activeTo);
   const isTrialActive = Boolean(user?.trialEndsAt && new Date(user.trialEndsAt).getTime() >= Date.now());
   // Одна плашка за раз и одна просьба за визит: пока не подключён отчёт во VK, предлагаем его,
@@ -242,14 +253,20 @@ export function App() {
           <span>Аналитика соцсетей</span>
         </div>
         <nav className="nav">
-          {visibleNavItems.map((item) => (
-            <NavLink key={item.to} to={item.to} onClick={closeMobileMenu}>
-              <item.icon size={18} />
-              <span>{item.label}</span>
-              {'ai' in item && item.ai && <span className="nav-ai-badge" title="Работает на AI">AI</span>}
-              {item.adminOnly && <span className="nav-admin-badge" title="Только для администратора" aria-label="Только для администратора"><ShieldCheck size={15} aria-hidden="true" /></span>}
-            </NavLink>
-          ))}
+          {navSections.map((section) => {
+            const items = visibleNavItems.filter((item) => item.section === section.key);
+            if (!items.length) return null;
+            return <div className={`nav-section${section.title ? '' : ' nav-section-untitled'}`} key={section.key}>
+              {section.title && <span className="nav-section-title">{section.title}</span>}
+              {items.map((item) => (
+                <NavLink key={item.to} to={item.to} onClick={closeMobileMenu}>
+                  <item.icon size={18} />
+                  <span>{item.label}</span>
+                  {item.adminOnly && <span className="nav-admin-badge" title="Только для администратора" aria-label="Только для администратора"><ShieldCheck size={15} aria-hidden="true" /></span>}
+                </NavLink>
+              ))}
+            </div>;
+          })}
         </nav>
         {user && <div className="mobile-menu-account">
           <NavLink className="profile-pill" to="/account" onClick={closeMobileMenu}>

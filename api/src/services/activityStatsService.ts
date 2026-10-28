@@ -10,8 +10,10 @@ import { acquisitionSource, type Acquisition } from '../repositories/accountRepo
 const MSK_OFFSET_MS = 3 * 3_600_000;
 const DAY_MS = 86_400_000;
 const BOUNCE_MAX_MS = 15_000;
-const FEED_LIMIT = 60;
-const USER_FEED_LIMIT = 100;
+const FEED_LIMIT = 180;
+const USER_FEED_LIMIT = 300;
+// В статистике и выгрузке для агента лента короче, чтобы не раздувать файл.
+const STATS_FEED_LIMIT = 60;
 
 export type AdminActivitySummary = {
   users: number;
@@ -146,17 +148,22 @@ function countBy<T>(items: T[], getKey: (item: T) => string) {
  * Лента: действия плюс регистрации и оплаты, которые есть в истории и до появления трекинга.
  * С userId — только этот пользователь и больше событий: в общей ленте одного человека почти не видно.
  */
-export async function getAdminActivityFeed(userId?: string, adminIds?: Types.ObjectId[]): Promise<AdminActivityFeedItem[]> {
-  const limit = userId ? USER_FEED_LIMIT : FEED_LIMIT;
+export async function getAdminActivityFeed(
+  userId?: string,
+  adminIds?: Types.ObjectId[],
+  limit = userId ? USER_FEED_LIMIT : FEED_LIMIT
+): Promise<AdminActivityFeedItem[]> {
+  // Регистраций и оплат меньше, чем действий: берём треть лимита.
+  const extraLimit = Math.ceil(limit / 3);
   const ids = adminIds ?? await UserModel.distinct('_id', { isAdmin: true }) as Types.ObjectId[];
   const owner = userId ?? { $nin: ids };
   const [feedEvents, feedRegistrations, feedPayments] = await Promise.all([
     ActivityEventModel.find({ userId: owner }).sort({ createdAt: -1 }).limit(limit).lean<EventRow[]>(),
-    UserModel.find(userId ? { _id: userId } : { isAdmin: { $ne: true } }).sort({ createdAt: -1 }).limit(20)
+    UserModel.find(userId ? { _id: userId } : { isAdmin: { $ne: true } }).sort({ createdAt: -1 }).limit(extraLimit)
       .select({ createdAt: 1, acquisition: 1 })
       .lean<Array<{ _id: Types.ObjectId; createdAt: Date; acquisition?: Acquisition }>>(),
     PaymentModel.find({ status: 'paid', amount: { $gt: 0 }, paidAt: { $exists: true }, userId: owner })
-      .sort({ paidAt: -1 }).limit(20)
+      .sort({ paidAt: -1 }).limit(extraLimit)
       .select({ userId: 1, amount: 1, period: 1, paidAt: 1 })
       .lean<Array<{ _id: Types.ObjectId; userId: Types.ObjectId; amount: number; period?: string; paidAt: Date }>>()
   ]);
@@ -247,7 +254,7 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
       .select({ userId: 1, amount: 1, paidAt: 1 })
       .lean<Array<{ userId: Types.ObjectId; amount: number; paidAt: Date }>>(),
     VisitModel.findOne().sort({ startedAt: 1 }).select({ startedAt: 1 }).lean<{ startedAt: Date }>(),
-    getAdminActivityFeed(undefined, adminIds)
+    getAdminActivityFeed(undefined, adminIds, STATS_FEED_LIMIT)
   ]);
 
   // Дни активности по пользователям: визиты, действия, регистрация и «последняя активность»

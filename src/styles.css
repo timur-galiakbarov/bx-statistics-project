@@ -205,7 +205,7 @@ a {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 290px minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -228,7 +228,7 @@ a {
   padding: 15px 0;
   position: fixed;
   top: 0;
-  width: 260px;
+  width: 290px;
   z-index: 2;
 }
 
@@ -1132,10 +1132,10 @@ a {
 .dashboard-add-competitor { align-items: center; display: flex; justify-content: space-between; gap: 16px; }.dashboard-add-competitor p { margin-bottom: 0; }.dashboard-add-competitor details { position: relative; }.dashboard-add-competitor summary { align-items: center; cursor: pointer; display: flex; gap: 6px; list-style: none; }.dashboard-add-competitor details[open] { flex: 1; }.dashboard-add-competitor details[open] summary { margin-bottom: 12px; width: max-content; }
 @media (max-width: 840px) { .dashboard-header, .dashboard-add-competitor { align-items: stretch; flex-direction: column; }.dashboard-header-controls { justify-content: flex-start; }.summary-metrics, .onboarding-steps { grid-template-columns: 1fr 1fr; }.summary-metrics > div, .summary-metrics > div:first-child { border: 0; border-top: 1px solid #edf0ee; padding: 12px 0; }.summary-metrics > div:nth-child(-n+2) { border-top: 0; }.comparison-head, .comparison-row { grid-template-columns: 1fr 70px 48px; }.comparison-head span:nth-child(3), .comparison-row > span:nth-child(3) { display: none; }.events-list > div { gap: 8px; grid-template-columns: 1fr; }.communities-table { overflow-x: auto; }.communities-table-head, .communities-table-row { min-width: 950px; } }
 
-/* A 260px sidebar leaves too little room for the full data table on compact
+/* A 290px sidebar leaves too little room for the full data table on compact
    desktop and tablet screens. Keep its familiar tabular form, but make the
    overflow explicit and local instead of clipping the last metrics. */
-@media (min-width: 841px) and (max-width: 1180px) {
+@media (min-width: 841px) and (max-width: 1400px) {
   .communities-panel .section-title { align-items: stretch; flex-direction: column; }
   .communities-panel .section-title > :last-child { align-self: flex-start; }
   .communities-controls { align-items: stretch; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3506,7 +3506,7 @@ a {
 .visibility-chart-note { color: #687684; font-size: 13px; line-height: 1.5; margin: 14px 0 0; }
 
 /* Responsive shell and compact layouts. 840px is also the point at which a
-   persistent 260px navigation rail starts to compromise the working area. */
+   persistent 290px navigation rail starts to compromise the working area. */
 @media (max-width: 840px) {
   html, body, #root { max-width: 100%; overflow-x: clip; }
   .app-shell { display: block; min-height: 100dvh; }

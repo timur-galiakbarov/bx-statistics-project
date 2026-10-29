@@ -137,6 +137,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [activeUsers, setActiveUsers] = useState<AdminActiveUsers | null>(null);
   const [activeUsersFilter, setActiveUsersFilter] = useState<ActiveUsersFilter>('all');
   const [isActiveUsersListOpen, setIsActiveUsersListOpen] = useState(false);
+  const [isRecentUsersOpen, setIsRecentUsersOpen] = useState(false);
   const [recentUsers, setRecentUsers] = useState<RecentAdminUser[]>([]);
   const [manualPermissions, setManualPermissions] = useState<VkPermissions | null>(null);
   const [manualStats, setManualStats] = useState<VkManualStatsResult | null>(null);
@@ -734,10 +735,13 @@ export function AdminPage({ user, onAccountChanged }: Props) {
       </div>
 
       <div className="panel span-2">
+        <button aria-controls="admin-recent-users" aria-expanded={isRecentUsersOpen} className="panel-header compact admin-accordion-toggle" type="button" onClick={() => setIsRecentUsersOpen((isOpen) => !isOpen)}>
+          <h2>Последние активные пользователи</h2>
+          <ChevronDown aria-hidden="true" size={20} />
+        </button>
+        {isRecentUsersOpen && <div id="admin-recent-users">
         <div className="panel-header compact">
-          <div>
-            <h2>Последние активные пользователи</h2>
-          </div>
+          <div />
           <div className="admin-recent-users-actions">
             <button className="secondary-button inline" type="button" onClick={loadRecentUsers} disabled={isRecentUsersLoading}>
               {isRecentUsersLoading ? <RefreshCw className="spin" size={18} /> : <Users size={18} />}
@@ -830,6 +834,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             ))}
           </div>
         )}
+        </div>}
       </div>
 
       <AdminActivityFeed />

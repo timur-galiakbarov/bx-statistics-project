@@ -1,4 +1,4 @@
-import { RefreshCw, X } from 'lucide-react';
+import { ChevronDown, RefreshCw, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiGet } from '../api/client';
 import type { AdminActivityFeedItem } from '../api/types';
@@ -44,6 +44,7 @@ export function AdminActivityFeed() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [isOpen, setIsOpen] = useState(true);
 
   useEffect(() => {
     let isCurrent = true;
@@ -60,9 +61,13 @@ export function AdminActivityFeed() {
 
   return (
     <div className="panel activity-panel span-2">
+      <button aria-controls="admin-activity-feed" aria-expanded={isOpen} className="panel-header compact admin-accordion-toggle" type="button" onClick={() => setIsOpen((open) => !open)}>
+        <h2>Лента событий</h2>
+        <ChevronDown aria-hidden="true" size={20} />
+      </button>
+      {isOpen && <div id="admin-activity-feed">
       <div className="panel-header compact">
         <div>
-          <h2>Лента событий</h2>
           {user ? (
             <p className="activity-feed-filter">
               <strong>{user.name}</strong>
@@ -100,6 +105,7 @@ export function AdminActivityFeed() {
           ))}
         </ul>
       )}
+      </div>}
     </div>
   );
 }

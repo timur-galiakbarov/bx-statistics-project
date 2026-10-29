@@ -286,7 +286,7 @@ function VkReportStatsPanel({ days }: { days: number }) {
   const reports = stats?.reports;
 
   return (
-    <div className="panel activity-panel span-2">
+    <div className="panel activity-panel">
       <div className="panel-header compact">
         <div>
           <h2>Отчёт во VK</h2>
@@ -362,7 +362,7 @@ function PlacementStatsPanel({ days }: { days: number }) {
   const ai = stats?.ai;
 
   return (
-    <div className="panel activity-panel span-2">
+    <div className="panel activity-panel">
       <div className="panel-header compact">
         <div>
           <h2>Площадки для рекламы</h2>
@@ -816,7 +816,7 @@ export function AdminActivityStats() {
           )}
         </div>
 
-        <div className="panel activity-panel span-2">
+        <div className="panel activity-panel">
           <div className="panel-header compact"><div><h2>Возвраты по рекламе</h2><p className="activity-note">Уже зарегистрированные пользователи, пришедшие по ссылке с метками, за {stats.days} дней; оплаты — в 30 дней после возврата</p></div></div>
           {stats.adReturns.length === 0 ? <div className="empty-state">За период возвратов по рекламе не было.</div> : (
             <div className="activity-mini-table four">

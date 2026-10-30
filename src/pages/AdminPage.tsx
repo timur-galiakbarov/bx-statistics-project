@@ -23,13 +23,14 @@ import type {
 import { AdminActivityFeed } from '../components/AdminActivityFeed';
 import { AdminActivityStats } from '../components/AdminActivityStats';
 import { AdminFeatureFlags } from '../components/AdminFeatureFlags';
+import { AdminServerMetrics } from '../components/AdminServerMetrics';
 
 type Props = {
   user: User;
   onAccountChanged: () => Promise<void>;
 };
 
-type AdminSection = 'activity' | 'statistics' | 'payments' | 'system' | 'settings';
+type AdminSection = 'activity' | 'statistics' | 'payments' | 'system' | 'server' | 'settings';
 type ActiveUsersFilter = 'all' | 'paid' | 'withoutPayment';
 
 const paymentStatusOptions = [
@@ -556,8 +557,11 @@ export function AdminPage({ user, onAccountChanged }: Props) {
         <button aria-selected={adminSection === 'statistics'} className={adminSection === 'statistics' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('statistics')}>Пользователи</button>
         <button aria-selected={adminSection === 'payments'} className={adminSection === 'payments' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('payments')}>Платежи</button>
         <button aria-selected={adminSection === 'system'} className={adminSection === 'system' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('system')}>Система</button>
+        <button aria-selected={adminSection === 'server'} className={adminSection === 'server' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('server')}>Сервер</button>
         <button aria-selected={adminSection === 'settings'} className={adminSection === 'settings' ? 'active' : ''} role="tab" type="button" onClick={() => setAdminSection('settings')}>Настройки</button>
       </div>
+
+      {adminSection === 'server' && <AdminServerMetrics />}
 
       {adminSection === 'settings' && (
       <div className="panel span-2">

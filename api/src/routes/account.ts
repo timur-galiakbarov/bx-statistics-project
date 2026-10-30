@@ -1,4 +1,5 @@
 import { Router, type Request } from 'express';
+import { getServerMetrics } from '../services/serverMetrics.js';
 import { isValidObjectId } from 'mongoose';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import {
@@ -91,6 +92,13 @@ accountRouter.get('/me', requireUser, async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+accountRouter.get('/admin/server-metrics', requireUser, requireAdmin, async (_req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: await getServerMetrics() });
+  } catch (error) { next(error); }
 });
 
 accountRouter.get('/admin/features', requireUser, requireAdmin, async (_req, res, next) => {

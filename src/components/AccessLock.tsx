@@ -6,6 +6,7 @@ import { apiPost } from '../api/client';
 import type { ReportPassState } from '../api/types';
 import { formatDate } from '../utils/date';
 import { formatPassDay, formatPassMoment, reportPassLink, tariffLabel, useMonthPrice } from './ReportPass';
+import { SurveyCard } from './SurveyCard';
 import { TelegramLogo } from './TelegramLogo';
 
 export function isAccessActive(activeTo?: string) {
@@ -38,6 +39,7 @@ export function PlatformAccessLock({ platform, activeTo, reportPass = null, isAc
   }, [platform]);
 
   return (
+    <>
     <section className="panel span-2 platform-access-lock">
       <div className="platform-access-lock-card">
         <span className="platform-access-lock-icon">
@@ -82,5 +84,7 @@ export function PlatformAccessLock({ platform, activeTo, reportPass = null, isAc
         </div>
       </div>
     </section>
+    <SurveyCard place="access-ended" />
+    </>
   );
 }

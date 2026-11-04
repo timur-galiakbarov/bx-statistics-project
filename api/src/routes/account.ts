@@ -30,8 +30,9 @@ import { VkApiError, vkApiRequest } from '../services/vkClient.js';
 import { DomainError } from '../errors/domainError.js';
 import { ComparisonCollectionModel } from '../models/ComparisonCollection.js';
 import { parseVisitId, recordVisitHit, trackActivity } from '../services/activityTracking.js';
-import { getAdminActivityFeed, getAdminActivityStats } from '../services/activityStatsService.js';
+import { getAdminActivityFeed, getAdminActivityStats, mskDayKey } from '../services/activityStatsService.js';
 import { getAdminExport } from '../services/adminExportService.js';
+import { SurveyResponseModel, surveyOutcomes, surveyPlaces } from '../models/SurveyResponse.js';
 import { getAdminPlacementStats } from '../services/placementStatsService.js';
 
 export const accountRouter = Router();
@@ -121,6 +122,57 @@ accountRouter.post('/admin/features', requireUser, requireAdmin, async (req, res
   } catch (error) {
     next(error);
   }
+});
+
+accountRouter.get('/survey', requireUser, async (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: await isFeatureEnabledFor('survey', req.user!) });
+  } catch (error) { next(error); }
+});
+
+accountRouter.post('/survey', requireUser, async (req, res, next) => {
+  const { submissionId, place, goal, outcome, suggestion = '' } = req.body ?? {};
+  if (!req.is('application/json')
+    || typeof submissionId !== 'string'
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(submissionId)
+    || !surveyPlaces.includes(place)
+    || !surveyOutcomes.includes(outcome)
+    || typeof goal !== 'string' || !goal.trim() || goal.length > 500
+    || typeof suggestion !== 'string' || suggestion.length > 1000) {
+    res.status(400).json({ success: false, message: 'Проверьте ответы и попробуйте ещё раз.' });
+    return;
+  }
+
+  try {
+    if (!await isFeatureEnabledFor('survey', req.user!)) {
+      res.status(403).json({ success: false, message: 'Опрос уже закрыт.' });
+      return;
+    }
+
+    // Храним случайный ключ отправки для повторных запросов, без привязки к аккаунту или визиту.
+    await SurveyResponseModel.updateOne({ _id: submissionId }, {
+      $setOnInsert: { place, goal: goal.trim(), outcome, suggestion: suggestion.trim(), day: mskDayKey(new Date()) }
+    }, { upsert: true });
+    res.json({ success: true, data: null });
+  } catch (error) { next(error); }
+});
+
+accountRouter.get('/admin/survey', requireUser, requireAdmin, async (req, res, next) => {
+  const page = Number(req.query.page ?? 1);
+  const place = req.query.place || undefined;
+  if (!Number.isSafeInteger(page) || page < 1 || page > 10_000
+    || (place !== undefined && place !== 'report' && place !== 'access-ended')) {
+    res.status(400).json({ success: false, message: 'Проверьте параметры списка.' });
+    return;
+  }
+  try {
+    const pageSize = 50;
+    const responses = await SurveyResponseModel.find(place ? { place } : {})
+      .sort({ day: -1, _id: -1 }).skip((page - 1) * pageSize).limit(pageSize + 1).lean();
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: { responses: responses.slice(0, pageSize), hasMore: responses.length > pageSize } });
+  } catch (error) { next(error); }
 });
 
 accountRouter.get('/goals', requireUser, async (req, res, next) => {

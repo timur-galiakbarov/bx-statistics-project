@@ -1,3 +1,4 @@
+import { SurveyCard } from '../components/SurveyCard';
 import { CompetitorsPanel } from '../components/CompetitorsPanel';
 import { Button } from '@alfalab/core-components-button';
 import { Select } from '@alfalab/core-components-select';
@@ -257,5 +258,6 @@ export function TelegramPage({ hasPaidAccess, activeTo, isAdmin = false, reportP
         <div className="panel span-2 posts-section"><div className="section-title"><div><h2>Все публикации</h2><p>Показано {number(visiblePosts.length)} из {number(posts.length)}.</p></div></div><div className="posts-toolbar"><ArrowDownUp size={16} /><span>Сортировка</span><Select className="analytics-post-sort-select" client="desktop" options={sortOptions} optionsListWidth="content" selected={sort} size={40} onChange={({ selected }) => selected && setSort(selected.key as TelegramSort)} /></div><div className="post-filter-tabs">{filters.map((item) => <Button className={filter === item.key ? 'post-filter-button active' : 'post-filter-button'} client="desktop" key={item.key} size={40} type="button" view="secondary" onClick={() => setFilter(item.key)}>{item.label}</Button>)}</div>{posts.length ? <><div className="posts-list">{visiblePosts.map((post) => <TelegramPostCard channel={analytics.channel} key={post.id} post={post} />)}</div>{hiddenPosts > 0 && <Button className="load-more-button" client="desktop" size={40} type="button" view="secondary" onClick={() => setVisibleCount((count) => count + POSTS_PAGE_SIZE)}>Показать ещё {number(Math.min(hiddenPosts, POSTS_PAGE_SIZE))}</Button>}</> : <div className="empty-state">За выбранный период публикаций не найдено.</div>}</div>
       </>}
     </>}
+    {analytics && !isLoading && section !== 'competitors' && <SurveyCard place="report" />}
   </section>;
 }

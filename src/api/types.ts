@@ -32,7 +32,7 @@ export type VkReportSettings = {
 };
 
 export type FeatureMode = 'off' | 'admins' | 'all';
-export type FeatureFlag = { key: 'vkReports' | 'placements'; mode: FeatureMode; updatedAt: string | null };
+export type FeatureFlag = { key: 'vkReports' | 'placements' | 'survey'; mode: FeatureMode; updatedAt: string | null };
 
 export type SocialPlatform = 'vk' | 'youtube' | 'telegram';
 

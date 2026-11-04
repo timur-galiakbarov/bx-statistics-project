@@ -1,0 +1,20 @@
+.survey-card { display: grid; gap: 12px; padding: 20px; }
+.survey-card h2, .survey-card p { margin: 0; }
+.survey-card h2 { font-size: 18px; }
+.survey-form { display: grid; gap: 14px; max-width: 640px; }
+.survey-form > label { display: grid; gap: 6px; }
+.survey-form textarea, .survey-card select {
+  background: var(--surface, #fff);
+  border: 1px solid #a8b5ae;
+  border-radius: 8px;
+  color: inherit;
+  font: inherit;
+  padding: 8px 10px;
+}
+.survey-form textarea { resize: vertical; }
+.survey-form fieldset { border: 0; margin: 0; padding: 0; }
+.survey-form legend { margin-bottom: 6px; padding: 0; }
+.survey-form fieldset label { display: inline-flex; align-items: center; gap: 4px; margin-right: 14px; }
+.survey-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.survey-response { border-top: 1px solid #dce4df; display: grid; gap: 5px; padding-top: 12px; }
+.survey-response p { overflow-wrap: anywhere; white-space: pre-wrap; }

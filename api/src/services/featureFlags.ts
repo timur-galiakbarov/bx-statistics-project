@@ -1,6 +1,6 @@
 import { FeatureFlagModel } from '../models/FeatureFlag.js';
 
-export const featureKeys = ['vkReports', 'placements'] as const;
+export const featureKeys = ['vkReports', 'placements', 'survey'] as const;
 export type FeatureKey = (typeof featureKeys)[number];
 
 export const featureModes = ['off', 'admins', 'all'] as const;

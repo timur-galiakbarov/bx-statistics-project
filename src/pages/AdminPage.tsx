@@ -1,3 +1,4 @@
+import { AdminSurveyResponses } from '../components/AdminSurveyResponses';
 import { Bug, CheckCircle2, ChevronDown, CreditCard, Info, Link, MoreHorizontal, RefreshCw, Search, Trash2, UserPlus, Users, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../api/client';
@@ -660,7 +661,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
       </div>
       )}
 
-      {adminSection === 'activity' && <AdminActivityStats />}
+      {adminSection === 'activity' && <><AdminActivityStats /><AdminSurveyResponses /></>}
 
       {adminSection === 'statistics' && <>
       <div className="panel admin-summary-panel span-2">

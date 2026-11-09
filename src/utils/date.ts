@@ -10,3 +10,9 @@ export function formatDate(value?: string | null, fallback = '-') {
 
   return match ? `${match[3]}.${match[2]}.${match[1]}` : fallback;
 }
+
+export function formatAccessEnd(date?: string, exact?: string) {
+  return exact
+    ? new Date(exact).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
+    : formatDate(date);
+}

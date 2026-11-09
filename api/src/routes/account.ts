@@ -80,6 +80,7 @@ accountRouter.get('/me', requireUser, async (req, res, next) => {
           userFullName: `${user.firstName} ${user.lastName}`,
           photo_200: user.photo,
           activeTo: user.activeTo,
+          activeToExact: user.activeToExact,
           trialEndsAt: user.trialEndsAt,
           freeGroupsDisabled: user.freeGroupsDisabled,
           isAdmin: user.isAdmin,

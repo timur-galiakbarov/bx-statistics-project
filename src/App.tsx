@@ -34,7 +34,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { PostsPage } from './pages/PostsPage';
 import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
 import { getAfterLoginPath, takeAfterLogin } from './utils/afterLogin';
-import { formatDate } from './utils/date';
+import { formatAccessEnd } from './utils/date';
 import { startVisitHeartbeat, trackPageView } from './utils/visit';
 
 type NavItem = { to: string; label: string; icon: typeof Home; description?: string; adminOnly?: boolean; feature?: 'placements' };
@@ -68,6 +68,7 @@ export function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expiredAccessEnd, setExpiredAccessEnd] = useState<string>();
   const menuRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const topMailLastUrlRef = useRef(`${location.pathname}${location.search}`);
@@ -95,6 +96,18 @@ export function App() {
   useEffect(() => {
     loadAccount();
   }, [loadAccount]);
+
+  useEffect(() => {
+    const exact = user?.activeToExact;
+    if (!exact) return;
+    const remaining = new Date(exact).getTime() - Date.now();
+    if (remaining <= 0) return;
+    const timer = window.setTimeout(() => {
+      setExpiredAccessEnd(exact);
+      void loadAccount();
+    }, remaining);
+    return () => window.clearTimeout(timer);
+  }, [loadAccount, user?.activeToExact]);
 
   useEffect(() => {
     if (import.meta.env.PROD) {
@@ -228,7 +241,9 @@ export function App() {
     return [...navItems, adminNavItem].find((item) => location.pathname.startsWith(item.to))?.label ?? 'Socstat';
   }, [location.pathname]);
   const visibleNavItems = [...navItems, adminNavItem].filter((item) => (!item.adminOnly || user?.isAdmin) && (!item.feature || user?.placementsEnabled));
-  const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions) || isAccessActive(user?.activeTo);
+  const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions)
+    || ((!user?.activeToExact || user.activeToExact !== expiredAccessEnd)
+      && isAccessActive(user?.activeTo, user?.activeToExact));
   const isTrialActive = Boolean(user?.trialEndsAt && new Date(user.trialEndsAt).getTime() >= Date.now());
   // Одна плашка за раз и одна просьба за визит: пока не подключён отчёт во VK, предлагаем его,
   // а запрос push после показанной в этом визите плашки отчёта ждёт следующего визита.
@@ -275,7 +290,7 @@ export function App() {
             <Users size={18} />
             <span>{user.userFullName}</span>
             <small className={`profile-access-status ${hasPaidAccess ? 'active' : 'inactive'}`}>
-              {hasPaidAccess ? `Активен до ${formatDate(user.activeTo)}` : 'Доступ не активен'}
+              {hasPaidAccess ? `Активен до ${formatAccessEnd(user.activeTo, user.activeToExact)}` : 'Доступ не активен'}
             </small>
           </NavLink>
           <button className="mobile-menu-logout" type="button" onClick={() => { closeMobileMenu(); void logout(); }}>
@@ -306,7 +321,7 @@ export function App() {
                 <Users size={17} />
                 <span>{user.userFullName}</span>
                 <small className={`profile-access-status ${hasPaidAccess ? 'active' : 'inactive'}`}>
-                  {hasPaidAccess ? `Активен до ${formatDate(user.activeTo)}` : 'Не активен'}
+                  {hasPaidAccess ? `Активен до ${formatAccessEnd(user.activeTo, user.activeToExact)}` : 'Не активен'}
                 </small>
                 <ChevronRight size={16} />
               </NavLink>
@@ -339,10 +354,10 @@ export function App() {
               />
             }
           />
-          <Route path="/account" element={<AccountPage user={user} groups={groups} onAccountChanged={loadAccount} />} />
+          <Route path="/account" element={<AccountPage user={user} groups={groups} hasPaidAccess={hasPaidAccess} onAccountChanged={loadAccount} />} />
           <Route
             path="/analytics"
-            element={<AnalyticsPage isAdmin={Boolean(user?.isAdmin)} groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} reportPass={user?.reportPass ?? null} onAccountChange={loadAccount} />}
+            element={<AnalyticsPage key={user?.activeToExact && hasPaidAccess ? 'day-access' : 'analytics'} isAdmin={Boolean(user?.isAdmin)} groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} reportPass={user?.reportPass ?? null} onAccountChange={loadAccount} />}
           />
           <Route path="/ad-check" element={user?.isAdmin ? <AdCheckPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/placements" element={user?.placementsEnabled ? <PlacementsPage groups={groups} /> : <Navigate to="/dashboard" replace />} />

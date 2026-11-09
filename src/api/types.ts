@@ -6,6 +6,7 @@ export type User = {
   userFullName: string;
   photo_200?: string;
   activeTo: string;
+  activeToExact?: string;
   trialEndsAt?: string;
   freeGroupsDisabled?: boolean;
   isAdmin: boolean;
@@ -32,7 +33,7 @@ export type VkReportSettings = {
 };
 
 export type FeatureMode = 'off' | 'admins' | 'all';
-export type FeatureFlag = { key: 'vkReports' | 'placements' | 'survey'; mode: FeatureMode; updatedAt: string | null };
+export type FeatureFlag = { key: 'vkReports' | 'placements' | 'survey' | 'dayPlan'; mode: FeatureMode; updatedAt: string | null };
 
 export type SocialPlatform = 'vk' | 'youtube' | 'telegram';
 
@@ -514,12 +515,12 @@ export type NewsItem = {
 };
 
 export type PaymentPlan = {
-  id: 'month' | 'quarter' | 'year' | 'admin-test';
+  id: 'day' | 'month' | 'quarter' | 'year' | 'admin-test';
   title: string;
   months?: number;
   days?: number;
   priceRub: number;
-  monthlyPriceRub: number;
+  monthlyPriceRub?: number;
   durationLabel?: string;
 };
 

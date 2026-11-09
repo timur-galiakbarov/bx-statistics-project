@@ -3,21 +3,25 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { isValidObjectId, type Types } from 'mongoose';
 import { env } from '../config/env.js';
 import { requireUser } from '../middleware/auth.js';
+import { hasActiveAccess } from '../middleware/access.js';
 import { PaymentModel } from '../models/Payment.js';
 import { UserModel } from '../models/User.js';
+import { hasTrialAccess } from '../repositories/accountRepository.js';
 import { publishAccountUpdated } from '../services/accountEvents.js';
 import { hasLegacyPricing } from '../services/legacyPricing.js';
 import { trackActivity } from '../services/activityTracking.js';
+import { DAY_PLAN_PERIOD, dayPlanAccessEnd, dayPlanGroup } from '../services/dayPlan.js';
+import { getFeatureMode } from '../services/featureFlags.js';
 
 export const paymentsRouter = Router();
 
 type PaymentPlan = {
-  id: 'month' | 'quarter' | 'year' | 'admin-test';
+  id: 'day' | 'month' | 'quarter' | 'year' | 'admin-test';
   title: string;
   months?: number;
   days?: number;
   priceRub: number;
-  monthlyPriceRub: number;
+  monthlyPriceRub?: number;
   durationLabel?: string;
 };
 
@@ -32,6 +36,12 @@ export const returningCustomerPlans: PaymentPlan[] = [
   { id: 'quarter', title: '3 месяца', months: 3, priceRub: 899, monthlyPriceRub: 300 },
   { id: 'year', title: '1 год', months: 12, priceRub: 1999, monthlyPriceRub: 167 }
 ];
+export const dayPlan: PaymentPlan = {
+  id: 'day',
+  title: DAY_PLAN_PERIOD,
+  priceRub: 249,
+  durationLabel: 'Разовая оплата'
+};
 const adminTestPlan: PaymentPlan = {
   id: 'admin-test',
   title: 'Тестовый режим',
@@ -41,13 +51,30 @@ const adminTestPlan: PaymentPlan = {
   durationLabel: '15 дней'
 };
 
-async function plansForUser(user: Express.Request['user']) {
-  const basePlans = user && (await hasLegacyPricing(user.id)) ? returningCustomerPlans : plans;
-  return user?.isAdmin && user.enforceAccessRestrictions ? [...basePlans, adminTestPlan] : basePlans;
+async function plansForUser(user: NonNullable<Express.Request['user']>, offer?: unknown) {
+  const [legacyPricing, dayPlanMode] = await Promise.all([hasLegacyPricing(user.id), getFeatureMode('dayPlan')]);
+  const basePlans = legacyPricing ? returningCustomerPlans : plans;
+  const canBuyDay = Boolean(env.yoomoneyReceiver) && !hasActiveAccess(user) && !hasTrialAccess(user);
+  if (user.isAdmin && user.enforceAccessRestrictions) {
+    const testPlans = [...basePlans, adminTestPlan];
+    return dayPlanMode !== 'off' && canBuyDay ? [...testPlans, dayPlan] : testPlans;
+  }
+  if (dayPlanMode !== 'all' || !canBuyDay || user.isAdmin || legacyPricing) {
+    return basePlans;
+  }
+
+  const group = dayPlanGroup(user.id);
+  if (offer === 'account' || offer === 'telegram' || offer === 'competitors') {
+    await UserModel.updateOne(
+      { _id: user.id, 'dayPlanExperiment.shownAt': { $exists: false } },
+      { $set: { dayPlanExperiment: { group, shownAt: new Date() } } }
+    );
+  }
+  return group === 'offer' ? [...basePlans, dayPlan] : basePlans;
 }
 
 function allPlans() {
-  return [...plans, adminTestPlan];
+  return [...plans, dayPlan, adminTestPlan];
 }
 
 type YooMoneyCallback = {
@@ -128,9 +155,8 @@ function verifyYooMoneyCallback(payload: YooMoneyCallback) {
   return safeEqual(signature, payload.sign);
 }
 
-function extendActiveTo(currentActiveTo: Date, months: number) {
-  const now = new Date();
-  const base = currentActiveTo > now ? new Date(currentActiveTo) : now;
+function extendActiveTo(currentActiveTo: Date, months: number, now = new Date()) {
+  const base = new Date(currentActiveTo > now ? currentActiveTo : now);
 
   base.setDate(base.getDate() + 1);
   base.setMonth(base.getMonth() + months);
@@ -139,9 +165,8 @@ function extendActiveTo(currentActiveTo: Date, months: number) {
   return base;
 }
 
-function extendActiveToByDays(currentActiveTo: Date, days: number) {
-  const now = new Date();
-  const base = currentActiveTo > now ? new Date(currentActiveTo) : now;
+function extendActiveToByDays(currentActiveTo: Date, days: number, now = new Date()) {
+  const base = new Date(currentActiveTo > now ? currentActiveTo : now);
 
   base.setDate(base.getDate() + days);
   base.setHours(0, 0, 0, 0);
@@ -306,6 +331,7 @@ async function updateUserAccess(
     return { error: 'INVALID_ACCESS_ACTION' as const };
   }
 
+  user.hasExactAccessEnd = false;
   await user.save();
 
   publishAccountUpdated(user.id);
@@ -345,32 +371,64 @@ async function confirmPayment(paymentId: string, options: { operationId?: string
     return { status: 'amount_mismatch' };
   }
 
-  const user = await UserModel.findById(payment.userId);
-
-  if (!user) {
+  const grant = await applyPaymentAccess(payment, plan);
+  if (!grant) {
     return { status: 'user_not_found' };
   }
 
-  user.activeTo = plan.days
-    ? extendActiveToByDays(user.activeTo, plan.days)
-    : extendActiveTo(user.activeTo, plan.months ?? 0);
-  user.pendingGoals.push({ goal: 'payment', value: payment.amount });
-  payment.status = 'paid';
-  payment.paidAt = new Date();
-  payment.providerTransactionId = options.operationId ?? payment.providerTransactionId;
-  payment.rawCallbackPayload = options.rawPayload ?? {
-    source: 'admin',
-    confirmedAt: new Date().toISOString()
-  };
+  const confirmed = await PaymentModel.updateOne({ _id: payment._id, status: { $ne: 'paid' } }, {
+    $set: {
+      status: 'paid',
+      paidAt: grant.paidAt,
+      providerTransactionId: options.operationId ?? payment.providerTransactionId,
+      rawCallbackPayload: options.rawPayload ?? { source: 'admin', confirmedAt: grant.paidAt.toISOString() }
+    }
+  });
+  if (!confirmed.modifiedCount) return { status: 'already_paid' };
 
-  await Promise.all([user.save(), payment.save()]);
-
-  publishAccountUpdated(user.id);
+  publishAccountUpdated(payment.userId.toString());
 
   return {
     status: 'paid',
-    activeTo: user.activeTo.toISOString().slice(0, 10)
+    activeTo: plan.id === 'day' ? grant.activeTo.toISOString() : grant.activeTo.toISOString().slice(0, 10)
   };
+}
+
+// MongoDB работает без репликации. Доступ, отметку о платеже и цель
+// сохраняем одной записью пользователя, чтобы повтор мог завершить оплату.
+async function applyPaymentAccess(payment: { _id: Types.ObjectId; userId: Types.ObjectId; amount: number }, plan: PaymentPlan) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const user = await UserModel.findById(payment.userId, {
+      activeTo: 1,
+      hasExactAccessEnd: 1,
+      appliedPayments: { $elemMatch: { _id: payment._id } }
+    }).lean();
+    if (!user) return null;
+
+    const appliedAt = user.appliedPayments?.[0]?.paidAt;
+    if (appliedAt) return { paidAt: appliedAt, activeTo: user.activeTo };
+
+    const paidAt = new Date();
+    const hasExactAccessEnd = plan.id === 'day';
+    const activeTo = hasExactAccessEnd
+      ? dayPlanAccessEnd(paidAt, user.activeTo, user.hasExactAccessEnd)
+      : plan.days
+        ? extendActiveToByDays(user.activeTo, plan.days, paidAt)
+        : extendActiveTo(user.activeTo, plan.months ?? 0, paidAt);
+
+    const updated = await UserModel.updateOne(
+      { _id: user._id, activeTo: user.activeTo, 'appliedPayments._id': { $ne: payment._id } },
+      {
+        $set: { activeTo, hasExactAccessEnd },
+        $push: {
+          appliedPayments: { _id: payment._id, paidAt },
+          pendingGoals: { goal: 'payment', value: payment.amount, createdAt: paidAt }
+        }
+      }
+    );
+    if (updated.modifiedCount) return { paidAt, activeTo };
+  }
+  throw new Error('Could not apply payment after concurrent access updates');
 }
 
 async function cancelPayment(paymentId: string, reason?: string): Promise<PaymentActionResult> {
@@ -401,9 +459,10 @@ async function cancelPayment(paymentId: string, reason?: string): Promise<Paymen
 
 paymentsRouter.get('/plans', requireUser, async (req, res, next) => {
   try {
+    res.set('Cache-Control', 'no-store');
     res.json({
       success: true,
-      data: await plansForUser(req.user)
+      data: await plansForUser(req.user!, req.query.offer)
     });
   } catch (error) {
     next(error);
@@ -636,7 +695,7 @@ paymentsRouter.post('/admin/:paymentId/cancel', requireUser, async (req, res, ne
 
 paymentsRouter.post('/create', requireUser, async (req, res, next) => {
   try {
-    const plan = (await plansForUser(req.user)).find((item) => item.id === req.body?.planId);
+    const plan = (await plansForUser(req.user!)).find((item) => item.id === req.body?.planId);
     const paymentType = req.body?.paymentType === 'PC' ? 'PC' : 'AC';
 
     if (!plan) {

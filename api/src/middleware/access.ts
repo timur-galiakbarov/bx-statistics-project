@@ -20,6 +20,10 @@ export function hasActiveAccess(user: Express.Request['user']) {
     return true;
   }
 
+  if (user.activeToExact) {
+    return new Date(user.activeToExact).getTime() > Date.now();
+  }
+
   const accessEnd = getAccessEnd(user.activeTo);
 
   return Boolean(accessEnd && accessEnd.getTime() >= Date.now());

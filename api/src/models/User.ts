@@ -15,6 +15,12 @@ const userSchema = new Schema(
     lastName: { type: String, default: '' },
     photo: { type: String },
     activeTo: { type: Date, required: true },
+    hasExactAccessEnd: { type: Boolean },
+    appliedPayments: [{ _id: Schema.Types.ObjectId, paidAt: Date }],
+    dayPlanExperiment: {
+      group: { type: String, enum: ['control', 'offer'] },
+      shownAt: { type: Date }
+    },
     trialEndsAt: { type: Date },
     // Пользователи, зарегистрированные после отмены бесплатных сообществ, их не получают.
     freeGroupsDisabled: { type: Boolean, default: false },

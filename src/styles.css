@@ -2985,6 +2985,10 @@ a {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.plan-grid.with-day-plan {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+}
+
 .plan-card {
   background: #fff;
   border: 1px solid #d2d2d2;
@@ -3587,7 +3591,7 @@ a {
   .chart-heading { align-items: flex-start; flex-direction: column; gap: 2px; }
   .posts-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
   .post-card { min-height: 0; }
-  .free-communities-slots, .plan-grid { grid-template-columns: 1fr; }
+  .free-communities-slots, .plan-grid, .plan-grid.with-day-plan { grid-template-columns: 1fr; }
   .free-communities-action { align-items: stretch; flex-direction: column; }
   .free-communities-action .dashboard-action-button, .communities-add > .primary-button { justify-content: center; width: 100%; }
   .free-communities-add { width: 100%; }

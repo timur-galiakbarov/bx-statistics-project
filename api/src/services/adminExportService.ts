@@ -2,8 +2,10 @@ import type { Types } from 'mongoose';
 import { PaymentModel } from '../models/Payment.js';
 import { UserModel } from '../models/User.js';
 import { acquisitionSource, type Acquisition } from '../repositories/accountRepository.js';
-import { plans, returningCustomerPlans } from '../routes/payments.js';
+import { dayPlan, plans, returningCustomerPlans } from '../routes/payments.js';
 import { getAdminActivityStats, mskDayKey, mskDayStart } from './activityStatsService.js';
+import { summarizeDayPlanExperiment } from './dayPlan.js';
+import { getFeatureMode } from './featureFlags.js';
 import { getAdminPlacementStats } from './placementStatsService.js';
 import { getAdminPreviewStats } from './previewStatsService.js';
 import { getAdminPushStats } from './pushStatsService.js';
@@ -55,12 +57,13 @@ function mskMonthStart(now: Date, shiftMonths: number) {
  * Администраторы исключены, имён и VK ID в выгрузке нет — пользователи различаются по userKey.
  */
 export async function getAdminExport(requestedDays: unknown, now = new Date()) {
-  const [activity, preview, push, vkReports, placements] = await Promise.all([
+  const [activity, preview, push, vkReports, placements, dayPlanMode] = await Promise.all([
     getAdminActivityStats(requestedDays, now),
     getAdminPreviewStats(requestedDays, now),
     getAdminPushStats(requestedDays, now),
     getAdminVkReportStats(requestedDays, now),
-    getAdminPlacementStats(requestedDays, now)
+    getAdminPlacementStats(requestedDays, now),
+    getFeatureMode('dayPlan')
   ]);
   const days = activity.days;
   const rangeStart = mskDayStart(now, -(days - 1));
@@ -69,7 +72,7 @@ export async function getAdminExport(requestedDays: unknown, now = new Date()) {
   const adminIds = await UserModel.distinct('_id', { isAdmin: true }) as Types.ObjectId[];
   const notAdmin = { $nin: adminIds };
 
-  const [usersTotal, usersWithAccess, allPayments, registrations] = await Promise.all([
+  const [usersTotal, usersWithAccess, allPayments, registrations, experimentUsers] = await Promise.all([
     UserModel.countDocuments({ isAdmin: { $ne: true } }),
     UserModel.countDocuments({ isAdmin: { $ne: true }, activeTo: { $gt: now } }),
     PaymentModel.find({ status: 'paid', amount: { $gt: 0 }, userId: notAdmin })
@@ -77,11 +80,22 @@ export async function getAdminExport(requestedDays: unknown, now = new Date()) {
       .lean<PaymentRow[]>(),
     UserModel.find({ isAdmin: { $ne: true }, createdAt: { $gte: monthsStart } })
       .select({ createdAt: 1, acquisition: 1 })
-      .lean<UserRow[]>()
+      .lean<UserRow[]>(),
+    UserModel.find({ isAdmin: { $ne: true }, 'dayPlanExperiment.shownAt': { $lte: now } })
+      .select({ dayPlanExperiment: 1 }).lean()
   ]);
 
   const paidAtOf = (payment: PaymentRow) => payment.paidAt ?? payment.createdAt;
   const payments = [...allPayments].sort((a, b) => paidAtOf(a).getTime() - paidAtOf(b).getTime());
+  const dayPlanExperiment = summarizeDayPlanExperiment(
+    experimentUsers.flatMap(({ _id, dayPlanExperiment: exposure }) => exposure?.group && exposure.shownAt
+      ? [{ id: _id.toString(), group: exposure.group, shownAt: exposure.shownAt }]
+      : []),
+    payments.map((payment) => ({
+      userId: payment.userId.toString(), paidAt: paidAtOf(payment), amount: payment.amount, period: payment.period
+    })),
+    now
+  );
   const firstPaymentAt = new Map<string, number>();
   for (const payment of payments) {
     const id = payment.userId.toString();
@@ -178,12 +192,14 @@ export async function getAdminExport(requestedDays: unknown, now = new Date()) {
         'placements — подбор площадок VK за periodDays: mode — переключатель фичи; users/searches — кто и сколько раз подбирал, repeatUsers — подбирали в 2+ разных дня, cityShare — доля подборов с городом (местный бизнес), остальные — по всей России; groupShare — доля подборов от своей группы (ссылка или выбор из списка); sizeMatchOpenShare — какую долю открытий площадок дают сопоставимые по размеру со своей группой; thinResults — подборы с выдачей меньше 5 строк, rulesSearches — подборы, где DeepSeek не помог и сработали запасные правила; topCities («без города» — подборы по всей России); openUsers/selectUsers/priceUsers/filterUsers — открыли сообщество или контакт, отметили «в подборку», ввели цену, включили фильтр (sizeFilters: small до 50 тыс., medium 50–500 тыс., large больше 500 тыс., sells — только продающие рекламу); limitUsers — упёрлись в дневной лимит, paywallClicks — нажали на тариф под закрытыми строками (rows) и в сообщении о лимите (limit); paidAfterFirstSearch/paidAfterLimit — оплаты после первого подбора и после первого упора в лимит. shortlist — подборки на момент выгрузки, не за период: у скольких пользователей есть подборка, сколько в них площадок, сколько с ценой, statuses — площадки по статусам (new — добавлена, contacted — написал, answered — ответили, agreed — договорились, published — реклама вышла, declined — отказ). ai — счётчики DeepSeek из Redis по новым (не из кэша) подборам, включая админов: fallbacks — подборы, где часть работы сделали правила, calls/failed — запросы к DeepSeek и неудачные, tokens, avgSeconds — среднее время запроса.',
         'monthly — последние 12 месяцев: регистрации по источникам, платежи, выручка, плательщики и впервые заплатившие.',
         'recentPayments — платежи за periodDays, новые сверху; userKey одинаков у одного пользователя внутри выгрузки.',
-        'pricing.newCustomers — цены для новых; pricing.returningCustomers — старые цены, сохранённые за теми, кто уже платил.'
+        'pricing.newCustomers — цены для новых; pricing.returningCustomers — старые цены, сохранённые за теми, кто уже платил за тариф кроме суток.',
+        'dayPlanExperiment — сравнение двух групп по первым 30 суткам после первого показа тарифов. Выручка и покупки включают только пользователей, для которых этот срок прошёл.'
       ]
     },
     pricing: {
       newCustomers: plans.map(({ id, priceRub, monthlyPriceRub }) => ({ id, priceRub, monthlyPriceRub })),
-      returningCustomers: returningCustomerPlans.map(({ id, priceRub, monthlyPriceRub }) => ({ id, priceRub, monthlyPriceRub }))
+      returningCustomers: returningCustomerPlans.map(({ id, priceRub, monthlyPriceRub }) => ({ id, priceRub, monthlyPriceRub })),
+      dayPlan: { priceRub: dayPlan.priceRub, hours: 24, mode: dayPlanMode }
     },
     totals: {
       users: usersTotal,
@@ -198,6 +214,7 @@ export async function getAdminExport(requestedDays: unknown, now = new Date()) {
     push,
     vkReports,
     placements,
+    dayPlanExperiment,
     recentPayments
   };
 }

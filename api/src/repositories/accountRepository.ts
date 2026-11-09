@@ -8,7 +8,7 @@ import { UserModel } from '../models/User.js';
 import { VkTokenModel } from '../models/VkToken.js';
 import type { SavedGroup } from '../store/types.js';
 import { DomainError } from '../errors/domainError.js';
-import { getLegacyPricingUserIds } from '../services/legacyPricing.js';
+import { getLegacyPricingUserIds, getPaidUserIds } from '../services/legacyPricing.js';
 import { env } from '../config/env.js';
 import type { ReportPassRecord } from '../services/reportPass.js';
 
@@ -21,6 +21,7 @@ type UserDocument = {
   lastName: string;
   photo?: string;
   activeTo: Date;
+  hasExactAccessEnd?: boolean;
   trialEndsAt?: Date;
   freeGroupsDisabled?: boolean;
   isAdmin: boolean;
@@ -50,6 +51,7 @@ export type AccountUser = {
   lastName: string;
   photo?: string;
   activeTo: string;
+  activeToExact?: string;
   trialEndsAt?: string;
   freeGroupsDisabled: boolean;
   isAdmin: boolean;
@@ -94,6 +96,7 @@ export function mapUser(user: UserDocument): AccountUser {
     lastName: user.lastName,
     photo: user.photo,
     activeTo: user.activeTo.toISOString().slice(0, 10),
+    activeToExact: user.hasExactAccessEnd ? user.activeTo.toISOString() : undefined,
     trialEndsAt: user.trialEndsAt?.toISOString() ?? undefined,
     freeGroupsDisabled: Boolean(user.freeGroupsDisabled),
     isAdmin: user.isAdmin,
@@ -600,7 +603,10 @@ export async function getActiveAdminUsers(limit = 300): Promise<AdminActiveUsers
     UserModel.find(activeAccessQuery).select({ _id: 1 }).lean<Array<{ _id: Types.ObjectId }>>()
   ]);
   const activeUserIds = activeUserRecords.map((user) => user._id);
-  const paidUserIdSet = await getLegacyPricingUserIds(activeUserIds);
+  const [paidUserIdSet, legacyPricingUserIds] = await Promise.all([
+    getPaidUserIds(activeUserIds),
+    getLegacyPricingUserIds(users.map((user) => user._id))
+  ]);
 
   return {
     total: activeUserIds.length,
@@ -612,7 +618,7 @@ export async function getActiveAdminUsers(limit = 300): Promise<AdminActiveUsers
       vkId: user.vkId,
       name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени',
       hasActiveAccess: true,
-      hasLegacyPricing: paidUserIdSet.has(user._id.toString()),
+      hasLegacyPricing: legacyPricingUserIds.has(user._id.toString()),
       hasPaidPayment: paidUserIdSet.has(user._id.toString()),
       registeredAt: user.createdAt.toISOString(),
       lastLoginAt: (user.lastLoginAt ?? user.lastActivityAt ?? user.createdAt).toISOString(),

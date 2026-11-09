@@ -23,6 +23,10 @@ const featureTexts: Record<FeatureFlag['key'], { title: string; description: str
     title: 'Подбор площадок',
     description:
       'Страница «Подбор площадок»: сообщества VK под описание задачи — AI понимает аудиторию и отбирает площадки по постам; просмотры, реклама и CPM. «Только администраторам» — проверка на проде до выкатки всем.'
+  },
+  dayPlan: {
+    title: 'Дневной тариф',
+    description: '24 часа доступа за 249 ₽. В эксперименте предложение увидит примерно половина новых покупателей после окончания доступа.'
   }
 };
 
@@ -90,7 +94,7 @@ export function AdminFeatureFlags({ onAccountChanged }: { onAccountChanged: () =
             onChange={(event) => changeMode(flag.key, event.target.value as FeatureMode)}
           >
             {(Object.keys(modeLabels) as FeatureMode[]).map((mode) => (
-              <option key={mode} value={mode}>{modeLabels[mode]}</option>
+              <option key={mode} value={mode}>{flag.key === 'dayPlan' && mode === 'all' ? 'Эксперимент' : modeLabels[mode]}</option>
             ))}
           </select>
           {flag.key === 'vkReports' && (

@@ -5,20 +5,24 @@ import { apiGet, apiPost } from '../api/client';
 import { PushSettings } from '../components/PushPrompt';
 import { VkReportSettings } from '../components/VkReports';
 import type { PaymentHistoryItem, PaymentIntent, PaymentPlan, SavedGroup, User } from '../api/types';
-import { formatDate } from '../utils/date';
+import { formatAccessEnd, formatDate } from '../utils/date';
 
 type Props = {
   user: User | null;
   groups: SavedGroup[];
+  hasPaidAccess: boolean;
   onAccountChanged: () => Promise<void>;
 };
 
-export function AccountPage({ user, groups, onAccountChanged }: Props) {
+export function AccountPage({ user, groups, hasPaidAccess, onAccountChanged }: Props) {
   const [searchParams] = useSearchParams();
   const isPaymentReturn = searchParams.get('payment') === 'success';
   const [plans, setPlans] = useState<PaymentPlan[]>([]);
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
-  const [selectedPlanId, setSelectedPlanId] = useState<PaymentPlan['id']>('quarter');
+  const requestedPlan = searchParams.get('plan');
+  const [selectedPlanId, setSelectedPlanId] = useState<PaymentPlan['id']>(
+    requestedPlan === 'day' || requestedPlan === 'month' ? requestedPlan : 'quarter'
+  );
   const [paymentType, setPaymentType] = useState<'AC' | 'PC'>('AC');
   const [message, setMessage] = useState<string | null>(null);
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
@@ -27,15 +31,20 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
   const loadPaymentHistory = () => apiGet<PaymentHistoryItem[]>('/api/payments/history').then(setPayments);
 
   useEffect(() => {
-    Promise.all([apiGet<PaymentPlan[]>('/api/payments/plans'), apiGet<PaymentHistoryItem[]>('/api/payments/history')])
+    let cancelled = false;
+    Promise.all([apiGet<PaymentPlan[]>('/api/payments/plans?offer=account'), apiGet<PaymentHistoryItem[]>('/api/payments/history')])
       .then(([nextPlans, nextPayments]) => {
+        if (cancelled) return;
         setPlans(nextPlans);
         setPayments(nextPayments);
       })
-      .catch((error) => setMessage(error instanceof Error ? error.message : 'Не удалось загрузить данные оплаты.'));
-  }, []);
+      .catch((error) => {
+        if (!cancelled) setMessage(error instanceof Error ? error.message : 'Не удалось загрузить данные оплаты.');
+      });
+    return () => { cancelled = true; };
+  }, [user?.id, user?.activeTo, user?.activeToExact, hasPaidAccess]);
 
-  const selectedPlan = plans.find((plan) => plan.id === selectedPlanId) ?? plans[0];
+  const selectedPlan = plans.find((plan) => plan.id === selectedPlanId) ?? plans.find((plan) => plan.id === 'quarter') ?? plans[0];
 
   const submitPaymentForm = (intent: PaymentIntent) => {
     const form = document.createElement('form');
@@ -137,10 +146,10 @@ export function AccountPage({ user, groups, onAccountChanged }: Props) {
 
         <div className="billing-current">
           <span>Текущий доступ</span>
-          <strong>до {formatDate(user?.activeTo)}</strong>
+          <strong>до {formatAccessEnd(user?.activeTo, user?.activeToExact)}</strong>
         </div>
 
-        <div className="plan-grid">
+        <div className={plans.some((plan) => plan.id === 'day') ? 'plan-grid with-day-plan' : 'plan-grid'}>
           {plans.map((plan) => (
             <button
               className={selectedPlan?.id === plan.id ? 'plan-card active' : 'plan-card'}

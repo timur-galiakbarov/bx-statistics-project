@@ -1,10 +1,12 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@alfalab/core-components-button';
 import { Segment, SegmentedControl } from '@alfalab/core-components-segmented-control';
 import { ExternalLink, Plus, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
 import { apiGet, apiPost, ApiError } from '../api/client';
 import type { SocialPlatform } from '../api/types';
 import { detectPlatform } from '../utils/sourceQuery';
+import { DAY_PLAN_LINK, useDayOffer } from './DayPlanOffer';
 import { searchSources, type SourceChannel } from './SourceSetup';
 import { VkReportCompetitorsHint } from './VkReports';
 import { competitorKey, competitorMetrics, isComparable, type CompetitorMetric, type CompetitorReportItem, type Metric } from './competitorMetrics';
@@ -63,6 +65,7 @@ function CompetitorsContent({ platform, sourceId, sourceName }: Props) {
   const [loadError, setLoadError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [locked, setLocked] = useState(false);
+  const dayOffer = useDayOffer(locked ? 'competitors' : undefined);
   const [period, setPeriod] = useState<Period>('month');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResults | null>(null);
@@ -239,7 +242,7 @@ function CompetitorsContent({ platform, sourceId, sourceName }: Props) {
     </>;
   };
 
-  if (locked) return <section className="panel span-2 competitors-panel" aria-label="Конкуренты"><div className="competitors-state"><Users size={28} /><h3>Сравнение доступно на активном тарифе</h3><p>Продлите доступ, чтобы добавлять конкурентов и смотреть сравнение.</p><a className="primary-button" href="/app/account">Перейти к оплате</a></div></section>;
+  if (locked) return <section className="panel span-2 competitors-panel" aria-label="Конкуренты"><div className="competitors-state"><Users size={28} /><h3>Сравнение доступно на активном тарифе</h3><p>Продлите доступ, чтобы добавлять конкурентов и смотреть сравнение.</p><Link className="primary-button" to={dayOffer ? DAY_PLAN_LINK : '/account'}>{dayOffer ?? 'Перейти к оплате'}</Link></div></section>;
 
   return <div className="span-2 competitors-panel">
     <div className="competitors-topbar">

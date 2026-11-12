@@ -168,7 +168,7 @@ export function ChannelsPage() {
               <div className="debug-summary">
                 <strong>Доступность методов</strong>
                 <span>
-                  partnerStats: {debug.stats ? 'есть ответ' : 'нет ответа'} / статистика по постам:{' '}
+                  stats.get: {debug.stats ? 'есть ответ' : 'нет ответа'} / stats.getPostReach:{' '}
                   {debug.postReach ? 'есть ответ' : 'нет ответа'}
                 </span>
               </div>

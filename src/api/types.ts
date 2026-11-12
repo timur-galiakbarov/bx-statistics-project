@@ -190,6 +190,7 @@ export type DashboardSummaryItem = {
     unsubscribed: number;
   };
   traffic: {
+    visitors: number;
     views: number;
   };
   reach: {
@@ -330,6 +331,7 @@ export type CommunityAnalytics = {
     growth: number;
     subscribed: number;
     unsubscribed: number;
+    visitors: number;
     views: number;
     reach: number;
     reachSubscribers: number;
@@ -401,6 +403,7 @@ export type CommunityAnalytics = {
     };
     stats: null | {
       growth: number;
+      visitors: number;
       reach: number;
       dayGroups?: Array<{ date: string; dayIndex: number; reach: number | null }>;
     };

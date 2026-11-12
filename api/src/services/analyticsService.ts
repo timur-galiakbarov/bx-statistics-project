@@ -1,6 +1,5 @@
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { isVkStatsUnavailableError, VkApiError, vkApiRequest } from './vkClient.js';
-import { fetchGeneralStatsByPeriod, fetchGeneralStatsTotal } from './partnerStatsClient.js';
 import { TtlCache } from './ttlCache.js';
 import {
   CUSTOM_PERIOD_TOO_LONG_MESSAGE,
@@ -8,8 +7,7 @@ import {
   buildReachSeries,
   getAnalyticsPeriod,
   getPreviousAnalyticsPeriod,
-  getWallCompleteness,
-  sumPartnerStatsDays
+  getWallCompleteness
 } from './analyticsUtils.js';
 
 type VkGroupInfo = {
@@ -21,6 +19,22 @@ type VkGroupInfo = {
   photo_100?: string;
   photo_200?: string;
   members_count?: number;
+};
+
+type VkStatsDay = {
+  period_from?: number;
+  visitors?: {
+    views?: number;
+    visitors?: number;
+  };
+  reach?: {
+    reach?: number;
+    reach_subscribers?: number;
+  };
+  activity?: {
+    subscribed?: number;
+    unsubscribed?: number;
+  };
 };
 
 type VkWallPost = {
@@ -116,6 +130,27 @@ function formatDate(date: Date) {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+}
+
+function sumStats(stats: VkStatsDay[]) {
+  return stats.reduce(
+    (acc, day) => ({
+      subscribed: acc.subscribed + (day.activity?.subscribed ?? 0),
+      unsubscribed: acc.unsubscribed + (day.activity?.unsubscribed ?? 0),
+      visitors: acc.visitors + (day.visitors?.visitors ?? 0),
+      views: acc.views + (day.visitors?.views ?? 0),
+      reachSubscribers: acc.reachSubscribers + (day.reach?.reach_subscribers ?? 0),
+      reach: acc.reach + (day.reach?.reach ?? 0)
+    }),
+    {
+      subscribed: 0,
+      unsubscribed: 0,
+      visitors: 0,
+      views: 0,
+      reachSubscribers: 0,
+      reach: 0
+    }
+  );
 }
 
 function round(value: number, digits: number) {
@@ -352,41 +387,22 @@ async function getStatsForPeriod(
   period: ReturnType<typeof getAnalyticsPeriod>,
   onUnavailable: () => void
 ) {
-  try {
-    const intervals = await fetchGeneralStatsByPeriod(accessToken, {
-      ownerId: groupId,
-      unixFrom: period.unixFrom,
-      unixTo: period.unixTo,
-      fields: 'reach,views,subscribe_action,unsubscribe_action'
-    });
-    // Охват за период VK отдаёт дедуплицированным: сумма дневных значений его завышает.
-    const total = await fetchGeneralStatsTotal(accessToken, {
-      ownerId: groupId,
-      unixFrom: period.unixFrom,
-      unixTo: period.unixTo,
-      fields: 'reach'
-    });
-    const sums = sumPartnerStatsDays(intervals);
-
-    return {
-      ...sums,
-      reach: total.owner?.reach?.all ?? sums.reach,
-      dayGroups: buildReachSeries(
-        period,
-        intervals.map((interval) => ({
-          period_from: interval.period_from,
-          reach: { reach: interval.owner?.reach?.all }
-        }))
-      )
-    };
-  } catch (error) {
+  const stats = await vkApiRequest<VkStatsDay[]>('stats.get', accessToken, {
+    group_id: groupId,
+    timestamp_from: period.unixFrom,
+    timestamp_to: period.unixTo,
+    interval: 'day',
+    stats_groups: 'visitors,reach,activity'
+  }).catch((error) => {
     if (isVkStatsUnavailableError(error)) {
       onUnavailable();
-      return { subscribed: 0, unsubscribed: 0, views: 0, reach: 0, reachSubscribers: 0, dayGroups: buildReachSeries(period, []) };
+      return [] as VkStatsDay[];
     }
 
     throw error;
-  }
+  });
+
+  return { ...sumStats(stats), dayGroups: buildReachSeries(period, stats) };
 }
 
 async function loadCommunityAnalytics(
@@ -519,6 +535,7 @@ async function loadCommunityAnalytics(
       growth: stats.subscribed - stats.unsubscribed,
       subscribed: stats.subscribed,
       unsubscribed: stats.unsubscribed,
+      visitors: stats.visitors,
       views: stats.views,
       reach: stats.reach,
       reachSubscribers: stats.reachSubscribers,
@@ -537,6 +554,7 @@ async function loadCommunityAnalytics(
         ? null
         : {
             growth: previousStats.subscribed - previousStats.unsubscribed,
+            visitors: previousStats.visitors,
             reach: previousStats.reach,
             dayGroups: previousStats.dayGroups
           },

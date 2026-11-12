@@ -141,7 +141,7 @@ export async function getYoutubeChannelAnalytics(
       publicVideoCount: channel.videoCount,
       isManagedByCurrentUser: false
     },
-    stats: { unavailable: true, growth: 0, subscribed: 0, unsubscribed: 0, views: 0, reach: 0, reachSubscribers: 0, dayGroups: [] },
+    stats: { unavailable: true, growth: 0, subscribed: 0, unsubscribed: 0, visitors: 0, views: 0, reach: 0, reachSubscribers: 0, dayGroups: [] },
     wall,
     previous: {
       period: { dateFrom: formatDate(previousPeriod.dateFrom), dateTo: formatDate(previousPeriod.dateTo) },

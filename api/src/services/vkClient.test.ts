@@ -18,8 +18,3 @@ test('treats VK internal error from stats.get as unavailable statistics', () => 
   assert.equal(isVkStatsUnavailableError(new VkApiError('Too many requests', { vkCode: 6 })), false);
   assert.equal(isVkPermissionDeniedError(new VkApiError('Internal server error', { vkCode: 10 })), false);
 });
-
-test('treats a disabled or unknown VK method as unavailable statistics', () => {
-  assert.equal(isVkStatsUnavailableError(new VkApiError('Unknown method passed', { vkCode: 3 })), true);
-  assert.equal(isVkPermissionDeniedError(new VkApiError('Unknown method passed', { vkCode: 3 })), false);
-});

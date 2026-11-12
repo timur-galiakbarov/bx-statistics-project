@@ -117,7 +117,7 @@ function toComparableTelegramAnalytics(telegram: Awaited<ReturnType<typeof getTe
     platform: 'telegram' as const,
     period,
     group: { id: channel.id, platform: 'telegram' as const, externalId: channel.username, name: channel.title, screenName: channel.username, photo: channel.photo, membersCount: channel.subscribers, url: channel.url },
-    stats: { unavailable: true, growth: 0, subscribed: 0, unsubscribed: 0, views: summary.views, reach: 0, reachSubscribers: 0 },
+    stats: { unavailable: true, growth: 0, subscribed: 0, unsubscribed: 0, visitors: 0, views: summary.views, reach: 0, reachSubscribers: 0 },
     wall,
     previous: { period: previous.period, stats: null, wall: { ...previousWall, available: true } },
     photos: { total: 0, period: posts.filter((post) => post.mediaType === 'photo').length, likes: 0, reposts: 0, comments: 0, views: 0 },

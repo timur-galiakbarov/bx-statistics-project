@@ -96,6 +96,7 @@ export function toAnalyticsPreview(analytics: CommunityAnalyticsResult, snapshot
     ...analytics,
     stats: {
       ...analytics.stats,
+      visitors: 0,
       views: 0,
       reach: 0,
       reachSubscribers: 0,

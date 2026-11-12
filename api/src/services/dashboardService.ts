@@ -2,7 +2,6 @@ import { getGroups, getVkAccessToken } from '../repositories/accountRepository.j
 import { DomainError } from '../errors/domainError.js';
 import type { SavedGroup, SocialPlatform } from '../store/types.js';
 import { isVkStatsUnavailableError, VkApiError, vkApiRequest } from './vkClient.js';
-import { fetchGeneralStatsTotal } from './partnerStatsClient.js';
 import { TtlCache } from './ttlCache.js';
 import { RedisJsonCache } from './redisJsonCache.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
@@ -25,6 +24,21 @@ type VkGroupInfo = {
 type VkGroupsGetResponse = {
   count: number;
   items: Array<number | VkGroupInfo>;
+};
+
+type VkStatsDay = {
+  visitors?: {
+    views?: number;
+    visitors?: number;
+  };
+  reach?: {
+    reach?: number;
+    reach_subscribers?: number;
+  };
+  activity?: {
+    subscribed?: number;
+    unsubscribed?: number;
+  };
 };
 
 type VkWallResponse = {
@@ -56,6 +70,7 @@ export type DashboardSummaryItem = {
     unsubscribed: number;
   };
   traffic: {
+    visitors: number;
     views: number;
   };
   reach: {
@@ -164,6 +179,27 @@ function formatDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+function sumStats(stats: VkStatsDay[]) {
+  return stats.reduce(
+    (acc, day) => ({
+      subscribed: acc.subscribed + (day.activity?.subscribed ?? 0),
+      unsubscribed: acc.unsubscribed + (day.activity?.unsubscribed ?? 0),
+      visitors: acc.visitors + (day.visitors?.visitors ?? 0),
+      views: acc.views + (day.visitors?.views ?? 0),
+      reachSubscribers: acc.reachSubscribers + (day.reach?.reach_subscribers ?? 0),
+      reach: acc.reach + (day.reach?.reach ?? 0)
+    }),
+    {
+      subscribed: 0,
+      unsubscribed: 0,
+      visitors: 0,
+      views: 0,
+      reachSubscribers: 0,
+      reach: 0
+    }
+  );
+}
+
 function sumWallActivity(wall: VkWallResponse, unixFrom: number, unixTo: number) {
   return wall.items
     .filter((post) => post.date >= unixFrom && post.date <= unixTo)
@@ -201,6 +237,7 @@ function emptySummaryItem(savedGroupId: string, source: string, platform: Social
       unsubscribed: 0
     },
     traffic: {
+      visitors: 0,
       views: 0
     },
     reach: {
@@ -290,7 +327,7 @@ async function buildDashboardSummaryItem(
         group: { id: channel.id, name: channel.name, screenName: channel.handle, photo: channel.photo },
         membersCount: channel.followersCount,
         statsAvailable: true,
-        traffic: { views: videos.reduce((sum, video) => sum + (video.views ?? 0), 0) },
+        traffic: { visitors: 0, views: videos.reduce((sum, video) => sum + (video.views ?? 0), 0) },
         activity: includePremiumMetrics ? { likes, reposts: 0, comments } : fallback.activity,
         snapshotGrowth,
         warnings: ['Просмотры и реакции YouTube — текущие накопительные показатели видео, опубликованных в выбранном периоде. Репосты недоступны, прирост подписчиков считается по ежедневным срезам Socstat.']
@@ -321,7 +358,7 @@ async function buildDashboardSummaryItem(
         },
         membersCount: analytics.channel.subscribers,
         statsAvailable: true,
-        traffic: { views: analytics.summary.views },
+        traffic: { visitors: 0, views: analytics.summary.views },
         activity: includePremiumMetrics
           ? { likes: analytics.summary.reactions, reposts: analytics.summary.forwards, comments: analytics.summary.comments }
           : fallback.activity,
@@ -354,15 +391,15 @@ async function buildDashboardSummaryItem(
     }
 
     let statsUnavailable = false;
-    const stats = await fetchGeneralStatsTotal(accessToken!, {
-      ownerId: groupInfo.id,
-      unixFrom: period.unixFrom,
-      unixTo: period.unixTo,
-      fields: includePremiumMetrics ? 'reach,views,subscribe_action,unsubscribe_action' : 'views,subscribe_action,unsubscribe_action'
+    const stats = await vkApiRequest<VkStatsDay[]>('stats.get', accessToken!, {
+      group_id: groupInfo.id,
+      timestamp_from: period.unixFrom,
+      timestamp_to: period.unixTo,
+      stats_groups: includePremiumMetrics ? 'visitors,reach,activity' : 'visitors,activity'
     }).catch((error) => {
       if (isVkStatsUnavailableError(error)) {
         statsUnavailable = true;
-        return null;
+        return [] as VkStatsDay[];
       }
       throw error;
     });
@@ -376,13 +413,7 @@ async function buildDashboardSummaryItem(
           offset: 0
         })
       : null;
-    const stat = {
-      subscribed: stats?.owner?.subscribe_action ?? 0,
-      unsubscribed: stats?.owner?.unsubscribe_action ?? 0,
-      views: stats?.owner?.views?.all ?? 0,
-      reach: stats?.owner?.reach?.all ?? 0,
-      reachSubscribers: stats?.owner?.reach?.subscribers ?? 0
-    };
+    const stat = sumStats(stats);
     const membersCount = groupInfo.members_count ?? savedGroup.membersCount ?? 0;
     const snapshotGrowth = statsUnavailable ? await loadSnapshotGrowth('vk', String(groupInfo.id), period, membersCount, includePremiumMetrics) : null;
     const activity = wall ? sumWallActivity(wall, period.unixFrom, period.unixTo) : fallback.activity;
@@ -407,7 +438,7 @@ async function buildDashboardSummaryItem(
         subscribed: stat.subscribed,
         unsubscribed: stat.unsubscribed
       },
-      traffic: { views: stat.views },
+      traffic: { visitors: stat.visitors, views: stat.views },
       reach: includePremiumMetrics ? { subscribers: stat.reachSubscribers, total: stat.reach } : fallback.reach,
       activity,
       snapshotGrowth,

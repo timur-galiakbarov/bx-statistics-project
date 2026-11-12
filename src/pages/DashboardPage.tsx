@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, CalendarClock, CalendarDays, Check, CircleHelp, ExternalLink, GripVertical, Heart, LockKeyhole, MessageCircle, MoreHorizontal, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarClock, CalendarDays, Check, CircleHelp, ExternalLink, Eye, GripVertical, Heart, LockKeyhole, MessageCircle, MoreHorizontal, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react';
 import { IconButton } from '@alfalab/core-components-icon-button';
 import { Input } from '@alfalab/core-components-input';
 import { Tooltip } from '@alfalab/core-components-tooltip';
@@ -94,7 +94,7 @@ function failedDashboardItem(group: SavedGroup, error: unknown): DashboardSummar
     isManagedByUser: group.source === 'managed',
     statsAvailable: null,
     growth: { total: 0, subscribed: 0, unsubscribed: 0 },
-    traffic: { views: 0 },
+    traffic: { visitors: 0, views: 0 },
     reach: { subscribers: 0, total: 0 },
     activity: { likes: 0, reposts: 0, comments: 0 },
     snapshotGrowth: null,
@@ -386,7 +386,7 @@ function CommunitiesTable({ groups, vkReports, onAccountChanged, summary, period
     <p className="communities-reorder-hint"><GripVertical size={16} />Перетащите источник за значок слева, чтобы изменить порядок.</p>
     {reorderError && <div className="form-message">{reorderError}</div>}
     <div className="communities-table">
-      <div className="communities-table-head"><span aria-label="Перемещение" /><span>Сеть</span><span>Сообщество</span><span>Участники</span><span className="communities-table-head-help">Прирост<GrowthHelp /></span><span>Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span title="Реакции, репосты или пересылки и комментарии к публикациям периода">Активность</span><span aria-label="Действия" /></div>
+      <div className="communities-table-head"><span aria-label="Перемещение" /><span>Сеть</span><span>Сообщество</span><span>Участники</span><span className="communities-table-head-help">Прирост<GrowthHelp /></span><span>Посещения<br />Просмотры</span><span>Охват подписчиков<br />Полный охват</span><span title="Реакции, репосты или пересылки и комментарии к публикациям периода">Активность</span><span aria-label="Действия" /></div>
       {visibleRows.length ? visibleRows.map(({ group, summaryItem, isManaged }) => {
         const membersCount = summaryItem?.membersCount ?? group.membersCount;
         const selectGroup = () => onSelect(group);
@@ -396,7 +396,7 @@ function CommunitiesTable({ groups, vkReports, onAccountChanged, summary, period
           <span className="communities-table-name">{group.platform === 'telegram' ? <TelegramAvatar src={summaryItem?.group.photo ?? group.photo} size={30} /> : group.photo ? <img src={group.photo} alt="" /> : <Users size={18} />}<span><strong>{group.name}</strong><small className={`communities-table-owner ${isManaged ? 'managed' : ''}`}><PlatformIcon platform={group.platform} mobile />{group.platform === 'youtube' ? 'YouTube-канал' : group.platform === 'telegram' ? 'Telegram-канал' : isManaged ? 'Моё сообщество' : 'Чужое сообщество'}</small></span></span>
           <MetricValue value={membersCount} loading={!summaryItem} />
           {group.platform !== 'vk' ? <SnapshotGrowthValue item={summaryItem} periodFrom={summary?.period.dateFrom} /> : <GrowthValue item={summaryItem} periodFrom={summary?.period.dateFrom} />}
-          <MetricValue value={isStatsUnavailable(summaryItem) ? null : summaryItem?.traffic.views} loading={!summaryItem} />
+          {group.platform !== 'vk' ? <MetricValue value={summaryItem?.traffic.views} loading={!summaryItem} /> : <PairValue first={summaryItem?.traffic.visitors} second={summaryItem?.traffic.views} firstIcon={Users} secondIcon={Eye} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
           {!hasPaidAccess ? <TariffUnavailableValue /> : group.platform !== 'vk' ? <MetricValue /> : <PairValue first={summaryItem?.reach.subscribers} second={summaryItem?.reach.total} unavailable={isStatsUnavailable(summaryItem)} loading={!summaryItem} />}
           {!hasPaidAccess ? <TariffUnavailableValue /> : <TripleValue item={summaryItem} loading={!summaryItem} platform={group.platform} />}
           <details className="community-actions" onClick={(event) => event.stopPropagation()}>

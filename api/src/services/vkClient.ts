@@ -3,8 +3,6 @@ const VK_API_VERSION = '5.131';
 const VK_TOO_MANY_REQUESTS_CODE = 6;
 const VK_PERMISSION_DENIED_CODES = new Set([7, 15]);
 const VK_INTERNAL_ERROR_CODE = 10;
-// VK отвечает 3 (unknown method), когда метод отключён или переименован.
-const VK_UNKNOWN_METHOD_CODE = 3;
 const VK_RETRY_DELAYS_MS = [450, 900, 1500];
 
 type VkApiPayload<T> = {
@@ -38,13 +36,9 @@ export function isVkPermissionDeniedError(error: unknown): error is VkApiError {
 /**
  * stats.get answers 10 (internal error) instead of 15 for some communities on every period and
  * stats group — seen on a 400k group the user manages. Treat it like restricted statistics.
- * Code 3 covers a method VK disabled: for such a community statistics are unavailable either way.
  */
 export function isVkStatsUnavailableError(error: unknown): error is VkApiError {
-  return (
-    isVkPermissionDeniedError(error) ||
-    (error instanceof VkApiError && (error.vkCode === VK_INTERNAL_ERROR_CODE || error.vkCode === VK_UNKNOWN_METHOD_CODE))
-  );
+  return isVkPermissionDeniedError(error) || (error instanceof VkApiError && error.vkCode === VK_INTERNAL_ERROR_CODE);
 }
 
 function delay(ms: number) {

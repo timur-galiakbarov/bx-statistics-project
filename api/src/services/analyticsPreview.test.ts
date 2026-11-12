@@ -22,11 +22,11 @@ function wall(overrides: Partial<CommunityAnalyticsResult['wall']> = {}) {
 const analytics = {
   period: { key: 'week', dateFrom: '2026-10-01', dateTo: '2026-10-07' },
   group: { id: 1, name: 'Группа', screenName: 'group', description: '', photo: '', membersCount: 1000, isManagedByCurrentUser: false },
-  stats: { unavailable: false, growth: 5, subscribed: 9, unsubscribed: 4, views: 900, reach: 4000, reachSubscribers: 2000, dayGroups: [{ date: '01.10.2026', dayIndex: 0, reach: 4000 }] },
+  stats: { unavailable: false, growth: 5, subscribed: 9, unsubscribed: 4, visitors: 300, views: 900, reach: 4000, reachSubscribers: 2000, dayGroups: [{ date: '01.10.2026', dayIndex: 0, reach: 4000 }] },
   wall: wall(),
   previous: {
     period: { dateFrom: '2026-09-24', dateTo: '2026-09-30' },
-    stats: { growth: 1, reach: 3000, dayGroups: [] },
+    stats: { growth: 1, visitors: 200, reach: 3000, dayGroups: [] },
     wall: { ...wall({ periodPosts: 3, erAverage: 2, averageViewsPerPost: 400 }), available: true }
   },
   photos: { total: 10, period: 2, likes: 5, reposts: 1, comments: 2, views: 0 },
@@ -42,6 +42,7 @@ test('preview hides closed metrics and keeps open ones', () => {
   assert.equal(preview.wall.periodPosts, 4);
   assert.equal(preview.previous.wall.periodPosts, 3);
   assert.equal(preview.stats.reach, 0);
+  assert.equal(preview.stats.visitors, 0);
   assert.equal(preview.wall.erAverage, 0);
   assert.equal(preview.wall.averageViewsPerPost, 0);
   assert.equal(preview.previous.stats, null);

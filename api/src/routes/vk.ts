@@ -4,6 +4,7 @@ import { requireActiveAccess } from '../middleware/access.js';
 import { requireUser } from '../middleware/auth.js';
 import { getVkAccessToken, getVkTokenStatus } from '../repositories/accountRepository.js';
 import { VkApiError, vkApiRequest } from '../services/vkClient.js';
+import { fetchContentStatsByPeriod, fetchGeneralStatsByPeriod, fetchGeneralStatsTotal } from '../services/partnerStatsClient.js';
 import { buildVkAuthorizeUrl } from './auth.js';
 import { trackActivity } from '../services/activityTracking.js';
 
@@ -154,17 +155,26 @@ vkRouter.post('/debug/stats', requireUser, async (req, res, next) => {
       });
     }
 
+    const ownerId = Number(groupId);
+
+    if (!Number.isInteger(ownerId) || ownerId <= 0) {
+      throw new VkApiError('VK group id is invalid', {
+        status: 400,
+        code: 'VK_GROUP_ID_INVALID'
+      });
+    }
+
     const now = new Date();
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     const twoDaysAgo = new Date(now);
     twoDaysAgo.setDate(now.getDate() - 2);
 
-    const data = await vkApiRequest('stats.get', accessToken, {
-      group_id: groupId,
-      timestamp_from: Math.floor(twoDaysAgo.getTime() / 1000),
-      timestamp_to: Math.floor(yesterday.getTime() / 1000),
-      stats_groups: 'visitors,reach,activity'
+    const data = await fetchGeneralStatsTotal(accessToken, {
+      ownerId,
+      unixFrom: Math.floor(twoDaysAgo.getTime() / 1000),
+      unixTo: Math.floor(yesterday.getTime() / 1000),
+      fields: 'reach,views,subscribe_action,unsubscribe_action'
     });
 
     res.json({ success: true, data });
@@ -239,25 +249,29 @@ vkRouter.get('/groups/:groupId/channel-debug', requireUser, requireActiveAccess,
         offset: toPositiveInt(req.query.offset, 0, 10000)
       })
     );
-    const postIds = wall?.items?.map((post) => post.id).slice(0, 30).join(',');
-    const postReach = postIds
+    const postIds = wall?.items?.map((post) => post.id).slice(0, 30) ?? [];
+    const debugUnixTo = toUnixTime(req.query.dateTo) ?? Math.floor(Date.now() / 1000);
+    const debugUnixFrom = toUnixTime(req.query.dateFrom) ?? debugUnixTo - 30 * 86_400;
+    const postReach = postIds.length
       ? await optionalVkDebugRequest(
           warnings,
-          'stats.getPostReach',
-          vkApiRequest('stats.getPostReach', accessToken, {
-            owner_id: -resolvedGroupId,
-            post_ids: postIds
+          'partnerStats.getContentStatsByPeriod',
+          fetchContentStatsByPeriod(accessToken, {
+            ownerId: resolvedGroupId,
+            contentType: 'post',
+            contentIds: postIds,
+            unixFrom: debugUnixFrom,
+            unixTo: debugUnixTo
           })
         )
       : null;
     const stats = await optionalVkDebugRequest(
       warnings,
-      'stats.get',
-      vkApiRequest('stats.get', accessToken, {
-        group_id: resolvedGroupId,
-        timestamp_from: toUnixTime(req.query.dateFrom),
-        timestamp_to: toUnixTime(req.query.dateTo),
-        stats_groups: 'visitors,reach,activity'
+      'partnerStats.getGeneralStatsByPeriod',
+      fetchGeneralStatsByPeriod(accessToken, {
+        ownerId: resolvedGroupId,
+        unixFrom: debugUnixFrom,
+        unixTo: debugUnixTo
       })
     );
 
@@ -373,11 +387,12 @@ vkRouter.get('/groups/:groupId', requireUser, async (req, res, next) => {
 vkRouter.get('/groups/:groupId/stats', requireUser, requireActiveAccess, async (req, res, next) => {
   try {
     const accessToken = await getRequiredVkToken(req.user!.id);
-    const data = await vkApiRequest('stats.get', accessToken, {
-      group_id: req.params.groupId,
-      timestamp_from: toUnixTime(req.query.dateFrom),
-      timestamp_to: toUnixTime(req.query.dateTo),
-      stats_groups: 'visitors,reach,activity'
+    const unixTo = toUnixTime(req.query.dateTo) ?? Math.floor(Date.now() / 1000);
+    const unixFrom = toUnixTime(req.query.dateFrom) ?? unixTo - 7 * 86_400;
+    const data = await fetchGeneralStatsByPeriod(accessToken, {
+      ownerId: Number(req.params.groupId),
+      unixFrom,
+      unixTo
     });
 
     res.json({ success: true, data });

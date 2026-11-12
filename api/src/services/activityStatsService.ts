@@ -158,7 +158,7 @@ export async function getAdminActivityFeed(
   const ids = adminIds ?? await UserModel.distinct('_id', { isAdmin: true }) as Types.ObjectId[];
   const owner = userId ?? { $nin: ids };
   const [feedEvents, feedRegistrations, feedPayments] = await Promise.all([
-    ActivityEventModel.find({ userId: owner }).sort({ createdAt: -1 }).limit(limit).lean<EventRow[]>(),
+    ActivityEventModel.find({ userId: owner, type: { $ne: 'day_plan_offer_shown' } }).sort({ createdAt: -1 }).limit(limit).lean<EventRow[]>(),
     UserModel.find(userId ? { _id: userId } : { isAdmin: { $ne: true } }).sort({ createdAt: -1 }).limit(extraLimit)
       .select({ createdAt: 1, acquisition: 1 })
       .lean<Array<{ _id: Types.ObjectId; createdAt: Date; acquisition?: Acquisition }>>(),
@@ -225,7 +225,7 @@ export async function getAdminActivityStats(requestedDays: unknown, now = new Da
     VisitModel.find({ startedAt: { $gte: windowStart }, userId: notAdmin })
       .select({ userId: 1, startedAt: 1, lastSeenAt: 1, pageViews: 1, actions: 1, entryPath: 1, paths: 1, device: 1 })
       .lean<VisitRow[]>(),
-    ActivityEventModel.find({ createdAt: { $gte: windowStart }, userId: notAdmin })
+    ActivityEventModel.find({ createdAt: { $gte: windowStart }, userId: notAdmin, type: { $ne: 'day_plan_offer_shown' } })
       .select({ userId: 1, type: 1, platform: 1, createdAt: 1 })
       .lean<EventRow[]>(),
     UserModel.find({ isAdmin: { $ne: true }, lastActivityAt: { $gte: windowStart } })

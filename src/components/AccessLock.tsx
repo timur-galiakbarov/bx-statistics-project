@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { apiPost } from '../api/client';
 import type { ReportPassState } from '../api/types';
 import { formatDate } from '../utils/date';
-import { DAY_PLAN_LINK, useDayOffer } from './DayPlanOffer';
+import { DAY_PLAN_LINK, useDayOffer, useDayOfferImpression } from './DayPlanOffer';
 import { formatPassDay, formatPassMoment, reportPassLink, tariffLabel, useMonthPrice } from './ReportPass';
 import { SurveyCard } from './SurveyCard';
 import { TelegramLogo } from './TelegramLogo';
@@ -35,6 +35,7 @@ export function PlatformAccessLock({ platform, activeTo, reportPass = null, isAc
   const platformName = platform === 'youtube' ? 'YouTube' : 'Telegram';
   const price = useMonthPrice();
   const dayOffer = useDayOffer(platform === 'telegram' ? 'telegram' : undefined);
+  const dayOfferRef = useDayOfferImpression<HTMLAnchorElement>(dayOffer ? 'telegram' : undefined);
   const canUsePass = platform === 'youtube' && reportPass?.status === 'available' && Boolean(onActivatePass);
 
   useEffect(() => {
@@ -72,7 +73,7 @@ export function PlatformAccessLock({ platform, activeTo, reportPass = null, isAc
               <Link className="secondary-button" to="/account">{tariffLabel(price)}</Link>
             </>
             : <>
-              {dayOffer && <Link className="primary-button" to={DAY_PLAN_LINK}>{dayOffer}</Link>}
+              {dayOffer && <Link className="primary-button" ref={dayOfferRef} to={DAY_PLAN_LINK}>{dayOffer}</Link>}
               <Link className={dayOffer ? 'secondary-button' : 'primary-button'} to={dayOffer ? '/account?plan=month' : '/account'}>
                 <CreditCard size={18} />
                 {tariffLabel(price)}

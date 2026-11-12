@@ -9,6 +9,7 @@ import {
   LogOut,
   Menu,
   Newspaper,
+  Sparkles,
   Shield,
   ShieldCheck,
   Users
@@ -32,6 +33,7 @@ import { ComparePage } from './pages/ComparePage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PostsPage } from './pages/PostsPage';
+import { ContentPage } from './pages/ContentPage';
 import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
 import { getAfterLoginPath, takeAfterLogin } from './utils/afterLogin';
 import { formatAccessEnd } from './utils/date';
@@ -47,6 +49,7 @@ const navItems: NavItem[] = [
   { to: '/placements', label: 'Площадки для рекламы', icon: MapPin, description: 'AI подберёт площадки ВК', feature: 'placements' },
   { to: '/compare', label: 'Сравнение', icon: GitCompare, description: 'Метрики до 10 сообществ рядом' },
   { to: '/posts', label: 'Идеи для постов', icon: Newspaper, description: 'Лучшие посты в вашей нише' },
+  { to: '/content', label: 'Контент', icon: Sparkles, description: 'Проекты, идеи и черновики с ИИ' },
   { to: '/ad-check', label: 'Проверка канала', icon: ClipboardCheck, adminOnly: true },
   { to: '/account', label: 'Профиль и оплата', icon: CreditCard }
 ];
@@ -354,7 +357,7 @@ export function App() {
               />
             }
           />
-          <Route path="/account" element={<AccountPage user={user} groups={groups} hasPaidAccess={hasPaidAccess} onAccountChanged={loadAccount} />} />
+          <Route path="/account" element={<AccountPage user={user} groups={groups} hasPaidAccess={hasPaidAccess} onAccountChanged={loadAccount} onLogout={logout} />} />
           <Route
             path="/analytics"
             element={<AnalyticsPage key={user?.activeToExact && hasPaidAccess ? 'day-access' : 'analytics'} isAdmin={Boolean(user?.isAdmin)} groups={groups} hasPaidAccess={Boolean(hasPaidAccess)} isTrialActive={isTrialActive} activeTo={user?.activeTo} reportPass={user?.reportPass ?? null} onAccountChange={loadAccount} />}
@@ -363,6 +366,7 @@ export function App() {
           <Route path="/placements" element={user?.placementsEnabled ? <PlacementsPage groups={groups} /> : <Navigate to="/dashboard" replace />} />
           <Route path="/compare" element={hasPaidAccess ? <ComparePage groups={groups} user={user} /> : <CompareShowcase />} />
           <Route path="/posts" element={hasPaidAccess ? <PostsPage groups={groups} /> : <PostsShowcase />} />
+          <Route path="/content" element={<ContentPage hasAccess={Boolean(hasPaidAccess)} />} />
           <Route path="/telegram" element={<TelegramAnalyticsRedirect />} />
           <Route
             path="/admin"

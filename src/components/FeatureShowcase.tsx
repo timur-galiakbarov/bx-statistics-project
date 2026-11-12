@@ -5,7 +5,7 @@ import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { trackPreviewUnlock } from '../utils/visit';
 import { useMonthPrice } from './AnalyticsPreview';
-import { DAY_PLAN_LINK, useDayOffer } from './DayPlanOffer';
+import { DAY_PLAN_LINK, useDayOffer, useDayOfferImpression } from './DayPlanOffer';
 import { PostCard, type PostCardData } from './PostCard';
 import { TelegramLogo } from './TelegramLogo';
 
@@ -174,6 +174,7 @@ function Showcase({ feature, icon, title, description, items, example }: { featu
   const navigate = useNavigate();
   const price = useMonthPrice();
   const dayOffer = useDayOffer(feature === 'compare' ? 'competitors' : undefined);
+  const dayOfferRef = useDayOfferImpression<HTMLButtonElement>(dayOffer ? 'competitors' : undefined);
   const unlock = () => {
     trackPreviewUnlock(feature);
     navigate(dayOffer ? DAY_PLAN_LINK : '/account');
@@ -190,7 +191,7 @@ function Showcase({ feature, icon, title, description, items, example }: { featu
             <ul>{items.map((item) => <li key={item}><Check size={16} />{item}</li>)}</ul>
           </div>
           <div className="feature-showcase-action">
-            <button className="primary-button" type="button" onClick={unlock}>{dayOffer ?? (price ? `Открыть за ${new Intl.NumberFormat('ru-RU').format(price)} ₽` : 'Выбрать тариф')}</button>
+            <button className="primary-button" ref={dayOfferRef} type="button" onClick={unlock}>{dayOffer ?? (price ? `Открыть за ${new Intl.NumberFormat('ru-RU').format(price)} ₽` : 'Выбрать тариф')}</button>
             {dayOffer && price && <button className="secondary-button" type="button" onClick={() => {
               trackPreviewUnlock(feature);
               navigate('/account?plan=month');

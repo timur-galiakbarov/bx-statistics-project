@@ -65,7 +65,7 @@ export type RecentAdminUser = {
   vkId?: string;
   name: string;
   hasActiveAccess: boolean;
-  /** Платил раньше — на странице оплаты видит старые цены. */
+  /** На странице оплаты видит старые цены. */
   hasLegacyPricing: boolean;
   registeredAt: string;
   lastLoginAt: string;

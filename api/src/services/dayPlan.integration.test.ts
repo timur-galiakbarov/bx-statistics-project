@@ -12,21 +12,22 @@ import { FeatureFlagModel } from '../models/FeatureFlag.js';
 import { PaymentModel } from '../models/Payment.js';
 import { UserModel } from '../models/User.js';
 import { mapUser } from '../repositories/accountRepository.js';
+import { accountRouter } from '../routes/account.js';
 import { paymentsRouter } from '../routes/payments.js';
-import { DAY_PLAN_DURATION_MS, dayPlanGroup } from './dayPlan.js';
+import { DAY_PLAN_DURATION_MS, DAY_PLAN_PERIOD, dayPlanGroup } from './dayPlan.js';
 import { setFeatureMode } from './featureFlags.js';
-import { hasLegacyPricing } from './legacyPricing.js';
+import { getLegacyPricingUserIds, hasLegacyPricing } from './legacyPricing.js';
 
 type Intent = { paymentId: string; fields: { label: string; sum: string } };
 
-function accountUser(user: { _id: mongoose.Types.ObjectId; activeTo: Date; hasExactAccessEnd?: boolean | null }) {
+function accountUser(user: { _id: mongoose.Types.ObjectId; activeTo: Date; hasExactAccessEnd?: boolean | null; isAdmin?: boolean | null }) {
   return mapUser({
     _id: user._id,
     activeTo: user.activeTo,
     hasExactAccessEnd: user.hasExactAccessEnd ?? undefined,
     firstName: '',
     lastName: '',
-    isAdmin: false
+    isAdmin: user.isAdmin ?? false
   });
 }
 
@@ -64,7 +65,16 @@ test('дневной тариф: группы, оплата, повтор уве
   };
   const buyerId = findId('offer');
   const controlId = findId('control');
-  await UserModel.create([{ _id: buyerId, activeTo: expired }, { _id: controlId, activeTo: expired }]);
+  const olderUserId = new mongoose.Types.ObjectId();
+  const otherViewerId = findId('offer');
+  const adminId = new mongoose.Types.ObjectId();
+  await UserModel.create([
+    { _id: buyerId, activeTo: expired, createdAt: new Date('2026-10-08T00:00:00.000+03:00') },
+    { _id: controlId, activeTo: expired },
+    { _id: olderUserId, activeTo: expired, createdAt: new Date('2026-10-07T23:59:59.999+03:00') },
+    { _id: otherViewerId, activeTo: expired, createdAt: new Date('2026-10-08T00:00:00.000+03:00') },
+    { _id: adminId, activeTo: expired, isAdmin: true }
+  ]);
 
   const app = express();
   app.use(express.json());
@@ -78,6 +88,7 @@ test('дневной тариф: группы, оплата, повтор уве
       next(error);
     }
   });
+  app.use('/account', accountRouter);
   app.use(paymentsRouter);
   app.use((_error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     res.status(500).json({ success: false });
@@ -101,6 +112,10 @@ test('дневной тариф: группы, оплата, повтор уве
       .update(Object.entries(payload).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')).digest('hex');
     return { ...payload, sign };
   };
+  const monthPrice = async (actor: mongoose.Types.ObjectId) => {
+    const { data } = await call<{ id: string; priceRub: number }[]>('/plans?offer=account', actor);
+    return data.find((plan) => plan.id === 'month')?.priceRub;
+  };
 
   await setFeatureMode('dayPlan', 'off', buyerId.toString());
   assert.equal((await call('/create', buyerId, { planId: 'day' })).status, 400);
@@ -110,6 +125,25 @@ test('дневной тариф: группы, оплата, повтор уве
   assert.equal((await call('/create', controlId, { planId: 'day' })).status, 400);
   await call('/plans?offer=account', controlId);
   assert.equal((await UserModel.findById(controlId).lean())?.dayPlanExperiment?.group, 'control');
+
+  const statsPath = '/account/admin/day-plan-offer-stats';
+  const impression = (actor: mongoose.Types.ObjectId, label: string) =>
+    call('/account/ui-event', actor, { event: 'day_plan_offer_shown', label });
+  assert.equal((await call(statsPath)).status, 403);
+  assert.deepEqual((await call(statsPath, adminId)).data, { days: 30, users: 0, impressions: 0 });
+  assert.equal((await impression(buyerId, 'unknown')).status, 400);
+  assert.equal((await impression(buyerId, 'telegram')).status, 200);
+  assert.equal((await impression(buyerId, 'account')).status, 200);
+  assert.equal((await impression(otherViewerId, 'competitors')).status, 200);
+  assert.equal((await impression(adminId, 'account')).status, 200);
+  assert.equal(await ActivityEventModel.countDocuments({ type: 'day_plan_offer_shown' }), 3);
+
+  await ActivityEventModel.create([
+    { userId: controlId, type: 'day_plan_offer_shown', label: 'account', createdAt: new Date(Date.now() - 31 * DAY_PLAN_DURATION_MS) },
+    { userId: adminId, type: 'day_plan_offer_shown', label: 'account' },
+    { userId: controlId, type: 'access_lock', label: 'telegram' }
+  ]);
+  assert.deepEqual((await call(statsPath, adminId)).data, { days: 30, users: 2, impressions: 3 });
 
   const payment = await call<Intent>('/create', buyerId, { planId: 'day' });
   assert.equal(payment.status, 201);
@@ -146,9 +180,23 @@ test('дневной тариф: группы, оплата, повтор уве
   assert.equal(hasActiveAccess(accountUser(upgraded)), true);
   const monthPaid = await PaymentModel.findById(month.data.paymentId).orFail().lean();
   assert.ok(monthPaid.paidAt && monthPaid.paidAt >= now && monthPaid.paidAt.getTime() <= Date.now());
-  assert.equal(await hasLegacyPricing(buyerId), true);
+  assert.equal(await hasLegacyPricing(buyerId), false);
+  assert.equal(await monthPrice(buyerId), 699);
+  assert.equal((await call<Intent>('/create', buyerId, { planId: 'month' })).data.fields.sum, '699');
+
+  assert.equal(await monthPrice(olderUserId), 699);
+  await PaymentModel.create({ userId: olderUserId, provider: 'yoomoney', amount: 249, period: DAY_PLAN_PERIOD, status: 'paid' });
+  assert.equal(await hasLegacyPricing(olderUserId), false);
+  const firstOlderPayment = await call<Intent>('/create', olderUserId, { planId: 'month' });
+  assert.equal(firstOlderPayment.data.fields.sum, '699');
+  assert.equal(await hasLegacyPricing(olderUserId), false);
+  assert.equal((await confirm(notification(firstOlderPayment.data))).data.status, 'paid');
+  assert.equal(await monthPrice(olderUserId), 499);
+  assert.equal((await call<Intent>('/create', olderUserId, { planId: 'month' })).data.fields.sum, '499');
+  assert.deepEqual(await getLegacyPricingUserIds([buyerId, olderUserId]), new Set([olderUserId.toString()]));
+
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    if (await ActivityEventModel.countDocuments({ type: 'payment_started' }) === 3) return;
+    if (await ActivityEventModel.countDocuments({ type: 'payment_started' }) === 6) return;
     await setTimeout(10);
   }
   assert.fail('Не все события начала оплаты записаны');

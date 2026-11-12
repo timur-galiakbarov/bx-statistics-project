@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Socstat — макет настройки скидки</title>
+  <link rel="stylesheet" href="mock.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <strong>socstat.ru</strong>
+        <span>Аналитика соцсетей</span>
+      </div>
+      <nav class="nav" aria-label="Основная навигация">
+        <a href="#">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+          <span class="nav-text"><span>Дашборд</span><small>Ваши источники за период</small></span>
+        </a>
+        <a href="#">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19H2"/></svg>
+          <span class="nav-text"><span>Аналитика</span><small>Отчёты по сообществам и каналам</small></span>
+        </a>
+        <a href="#">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h8"/><path d="m5 10 3-3-3-3"/><path d="M16 17H8"/><path d="m19 14-3 3 3 3"/></svg>
+          <span class="nav-text"><span>Сравнение</span><small>Метрики до 10 сообществ рядом</small></span>
+        </a>
+        <a href="#">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 9h8"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
+          <span class="nav-text"><span>Идеи для постов</span><small>Лучшие посты в вашей нише</small></span>
+        </a>
+        <a href="#">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 15h3"/></svg>
+          <span class="nav-text"><span>Профиль и оплата</span><small>Тариф, срок и история оплат</small></span>
+        </a>
+        <a class="active" href="#">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+          <span class="nav-text"><span>Админка</span><small>Данные, платежи и настройки</small></span>
+        </a>
+      </nav>
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">СА</div>
+        <span><strong>Сергей А.</strong><small>Администратор</small></span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="mobile-menu" type="button" aria-label="Открыть меню">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <h1>Админка</h1>
+        <div class="user-pill">
+          <div class="sidebar-avatar">СА</div>
+          <span><strong>Сергей А.</strong><small>Администратор</small></span>
+          <svg class="chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+      </header>
+
+      <div class="page">
+        <div class="admin-head">
+          <div>
+            <h2>Настройки</h2>
+            <p>Фичи и цены, которые можно включить без выкатки.</p>
+          </div>
+        </div>
+
+        <div class="admin-tabs" role="tablist" aria-label="Разделы админки">
+          <span>Посещаемость</span>
+          <span>Пользователи</span>
+          <span>Платежи</span>
+          <span>Система</span>
+          <span>Сервер</span>
+          <span class="active">Настройки</span>
+        </div>
+
+        <div class="admin-board">
+          <div class="admin-state">
+            <div class="state-label">Как выглядит сейчас <span>по умолчанию</span></div>
+            <section class="panel admin-panel">
+              <span class="eyebrow">Цены</span>
+              <h2>Скидка на первую покупку</h2>
+              <p>Для новых покупателей после пробного периода. Старые цены и дневной тариф не участвуют.</p>
+
+              <div class="switch-row">
+                <span><strong>Скидка включена</strong><small>Пока выключена — все видят обычные цены</small></span>
+                <span class="switch" role="switch" aria-checked="false"></span>
+              </div>
+
+              <div class="admin-fields">
+                <div class="field">
+                  <label>Процент</label>
+                  <input value="20" inputmode="numeric">
+                </div>
+                <div class="field">
+                  <label>Действует до (МСК)</label>
+                  <input value="" placeholder="дд.мм.гггг">
+                </div>
+              </div>
+
+              <div class="preview" style="opacity:.62">
+                <div class="preview-head"><strong>Предпросмотр при включении</strong><span>новые цены</span></div>
+                <div class="preview-row"><span>1 месяц</span><del>699 ₽</del><b>559 ₽</b></div>
+                <div class="preview-row"><span>3 месяца</span><del>1 490 ₽</del><b>1 192 ₽</b></div>
+                <div class="preview-row"><span>1 год</span><del>3 990 ₽</del><b>3 192 ₽</b></div>
+              </div>
+
+              <div class="admin-note">Скидка выключена. Пользователи видят 699 / 1 490 / 3 990 ₽, клиенты со старыми ценами — 499 / 899 / 1 999 ₽.</div>
+
+              <div class="admin-footer">
+                <span class="admin-status">Изменения не сохранены</span>
+                <button class="save" type="button">Сохранить</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="admin-state">
+            <div class="state-label">После запуска <span class="live">включено</span></div>
+            <section class="panel admin-panel">
+              <span class="eyebrow">Цены</span>
+              <h2>Скидка на первую покупку</h2>
+              <p>Для новых покупателей после пробного периода. Старые цены и дневной тариф не участвуют.</p>
+
+              <div class="switch-row">
+                <span><strong>Скидка включена</strong><small>Показывается в тарифах и считается на сервере</small></span>
+                <span class="switch on" role="switch" aria-checked="true"></span>
+              </div>
+
+              <div class="admin-fields">
+                <div class="field">
+                  <label>Процент</label>
+                  <input value="20" inputmode="numeric">
+                </div>
+                <div class="field">
+                  <label>Действует до (МСК)</label>
+                  <input value="30.11.2026">
+                </div>
+              </div>
+
+              <div class="preview">
+                <div class="preview-head"><strong>Цены для новых покупателей</strong><span>−20%</span></div>
+                <div class="preview-row"><span>1 месяц</span><del>699 ₽</del><b>559 ₽</b></div>
+                <div class="preview-row"><span>3 месяца</span><del>1 490 ₽</del><b>1 192 ₽</b></div>
+                <div class="preview-row"><span>1 год</span><del>3 990 ₽</del><b>3 192 ₽</b></div>
+              </div>
+
+              <div class="admin-note">Активна до 30 ноября 2026, 23:59 МСК. Право на скидку проверяется на сервере при создании платежа.</div>
+
+              <div class="admin-footer">
+                <span class="admin-status ok">Скидка активна</span>
+                <button class="save" type="button">Сохранить</button>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <section class="panel rules">
+          <h2>Как это работает</h2>
+          <div class="rules-grid">
+            <div class="rule">
+              <strong>Только первая покупка</strong>
+              <p>После пробного периода и до первой оплаты тарифа на 1, 3 или 12 месяцев.</p>
+            </div>
+            <div class="rule">
+              <strong>Старые цены сохраняются</strong>
+              <p>Кто уже платил за тариф, видит 499 / 899 / 1 999 ₽. Скидка к ним не применяется.</p>
+            </div>
+            <div class="rule">
+              <strong>Дневной тариф не участвует</strong>
+              <p>Сутки остаются 249 ₽. Покупка суток не сжигает скидку на месячный тариф.</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="footer">Нашли ошибку? Сообщите нам.</div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

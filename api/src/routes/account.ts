@@ -23,7 +23,7 @@ import { getNotificationSettings } from './notifications.js';
 import { env } from '../config/env.js';
 import { subscribeToAccountEvents } from '../services/accountEvents.js';
 import { publishAccountUpdated } from '../services/accountEvents.js';
-import type { ActivityEventType } from '../models/ActivityEvent.js';
+import { ActivityEventModel, type ActivityEventType } from '../models/ActivityEvent.js';
 import { UserModel } from '../models/User.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { VkApiError, vkApiRequest } from '../services/vkClient.js';
@@ -31,6 +31,7 @@ import { DomainError } from '../errors/domainError.js';
 import { ComparisonCollectionModel } from '../models/ComparisonCollection.js';
 import { parseVisitId, recordVisitHit, trackActivity } from '../services/activityTracking.js';
 import { getAdminActivityFeed, getAdminActivityStats, mskDayKey } from '../services/activityStatsService.js';
+import { getAdminDayPlanOfferStats } from '../services/dayPlanOfferStatsService.js';
 import { getAdminExport } from '../services/adminExportService.js';
 import { SurveyResponseModel, surveyOutcomes, surveyPlaces } from '../models/SurveyResponse.js';
 import { getAdminPlacementStats } from '../services/placementStatsService.js';
@@ -106,6 +107,15 @@ accountRouter.get('/admin/server-metrics', requireUser, requireAdmin, async (_re
 accountRouter.get('/admin/features', requireUser, requireAdmin, async (_req, res, next) => {
   try {
     res.json({ success: true, data: await getFeatureModes() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.get('/admin/day-plan-offer-stats', requireUser, requireAdmin, async (_req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: await getAdminDayPlanOfferStats() });
   } catch (error) {
     next(error);
   }
@@ -213,7 +223,7 @@ accountRouter.post('/activity', requireUser, async (req, res, next) => {
   }
 });
 
-// Клики по элементам интерфейса, которые не порождают серверного запроса. Метки — из закрытого списка.
+// События интерфейса, которые не порождают серверного запроса. Метки — из закрытого списка.
 const uiEventLabels: Partial<Record<ActivityEventType, string[]>> = {
   competitors_widget: ['open', 'add', 'other', 'expand', 'teaser'],
   preview_unlock: ['banner', 'kpi', 'chart', 'insights', 'posts', 'section', 'period', 'refresh', 'compare', 'posts_page'],
@@ -222,9 +232,10 @@ const uiEventLabels: Partial<Record<ActivityEventType, string[]>> = {
   placement_open: ['vk', 'contact', 'message', 'vk_match', 'contact_match', 'message_match'],
   placement_price: ['entered'],
   placement_filter: ['small', 'medium', 'large', 'sells'],
-  placement_paywall_click: ['rows', 'limit']
+  placement_paywall_click: ['rows', 'limit'],
+  day_plan_offer_shown: ['account', 'telegram', 'competitors']
 };
-accountRouter.post('/ui-event', requireUser, (req, res) => {
+accountRouter.post('/ui-event', requireUser, async (req, res, next) => {
   const event = req.body?.event;
   const label = req.body?.label;
   // Object.hasOwn: «constructor» и прочие ключи прототипа не должны проходить проверку.
@@ -232,8 +243,19 @@ accountRouter.post('/ui-event', requireUser, (req, res) => {
     res.status(400).json({ success: false, error: 'INVALID_UI_EVENT' });
     return;
   }
-  trackActivity(req, event as ActivityEventType, { label });
-  res.json({ success: true });
+  try {
+    if (event === 'day_plan_offer_shown') {
+      // Показ предложения не продлевает визит и не считается действием пользователя.
+      if (!req.user!.isAdmin) {
+        await ActivityEventModel.create({ userId: req.user!.id, type: event, label });
+      }
+    } else {
+      trackActivity(req, event as ActivityEventType, { label });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
 });
 
 accountRouter.get('/events', requireUser, (req, res) => {

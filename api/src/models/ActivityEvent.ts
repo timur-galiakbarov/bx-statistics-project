@@ -42,7 +42,8 @@ export const activityEventTypes = [
   'placement_filter',
   'placement_paywall_click',
   // Нажали «Подключить» отчёт во VK; label — где: banner / dashboard / competitors / profile.
-  'vk_report_connect'
+  'vk_report_connect',
+  'day_plan_offer_shown'
 ] as const;
 
 export type ActivityEventType = (typeof activityEventTypes)[number];

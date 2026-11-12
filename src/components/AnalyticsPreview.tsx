@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { CommunityAnalytics, ReportPassState } from '../api/types';
 import { trackPreviewUnlock, type PreviewUnlockTarget } from '../utils/visit';
-import { DAY_PLAN_LINK, useDayOffer } from './DayPlanOffer';
+import { DAY_PLAN_LINK, useDayOffer, useDayOfferImpression } from './DayPlanOffer';
 import { PostCard } from './PostCard';
 import { formatPassDay, formatPassMoment, highlightReportPassOffer, REPORT_PASS_OFFER_ID, reportPassLink, tariffLabel, useMonthPrice } from './ReportPass';
 
@@ -86,6 +86,7 @@ export function AnalyticsPreviewView({ analytics, section, reportPass, isActivat
   const navigate = useNavigate();
   const price = useMonthPrice();
   const dayOffer = useDayOffer(section === 'competitors' ? 'competitors' : undefined);
+  const dayOfferRef = useDayOfferImpression<HTMLButtonElement>(dayOffer ? 'competitors' : undefined);
   const preview = analytics.preview!;
   const unlock = (target: PreviewUnlockTarget) => {
     trackPreviewUnlock(target);
@@ -114,7 +115,7 @@ export function AnalyticsPreviewView({ analytics, section, reportPass, isActivat
         <LockKeyhole size={26} />
         <h2>{content.title} — в полном отчёте</h2>
         <ul>{content.items.map((item) => <li key={item}>{item}</li>)}</ul>
-        <button className="primary-button" type="button" onClick={() => {
+        <button className="primary-button" ref={dayOfferRef} type="button" onClick={() => {
           if (section !== 'competitors') {
             unlock('section');
             return;

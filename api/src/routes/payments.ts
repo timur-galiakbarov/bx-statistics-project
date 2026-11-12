@@ -30,7 +30,7 @@ export const plans: PaymentPlan[] = [
   { id: 'quarter', title: '3 месяца', months: 3, priceRub: 1490, monthlyPriceRub: 497 },
   { id: 'year', title: '1 год', months: 12, priceRub: 3990, monthlyPriceRub: 333 }
 ];
-// Старые цены сохраняются за теми, кто уже хотя бы раз платил.
+// Старые цены для тех, кто зарегистрировался до повышения и уже платил.
 export const returningCustomerPlans: PaymentPlan[] = [
   { id: 'month', title: '1 месяц', months: 1, priceRub: 499, monthlyPriceRub: 499 },
   { id: 'quarter', title: '3 месяца', months: 3, priceRub: 899, monthlyPriceRub: 300 },

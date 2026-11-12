@@ -1,0 +1,98 @@
+/* Compact variants: benefits above / below prices. Uses the shell, plans,
+   payment and history styles from mock.css. */
+
+.plan { min-height: 174px; }
+.plan-price { margin-top: 14px; }
+.plan-monthly { margin-top: 5px; }
+
+.plan-note {
+  color: #8a968f;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 10px 0 0;
+}
+
+.included {
+  border-bottom: 1px solid #e7ece8;
+  border-top: 1px solid #e7ece8;
+  margin: 18px 0 0;
+  padding: 14px 0 13px;
+}
+
+.included-head {
+  color: #7d8a82;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.included-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.included-item { align-items: flex-start; display: flex; gap: 8px; min-width: 0; }
+.included-item > svg { color: var(--green); flex: none; margin-top: 1px; }
+.included-item span { display: grid; gap: 2px; min-width: 0; }
+.included-item strong { color: #35423a; font-size: 13px; font-weight: 700; line-height: 1.25; }
+.included-item small { color: #77847c; font-size: 11px; line-height: 1.35; }
+
+.sample-line {
+  align-items: center;
+  border-top: 1px dashed #e2e9e3;
+  color: #68766d;
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 11px;
+}
+
+.sample-line-label {
+  color: #8a968f;
+  flex: none;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sample-line-group { align-items: center; display: flex; gap: 6px; min-width: 0; }
+.mini-avatar {
+  align-items: center;
+  background: linear-gradient(145deg, #f0c36a, #d99b38);
+  border-radius: 6px;
+  color: #4d3308;
+  display: inline-flex;
+  flex: none;
+  font-size: 8px;
+  font-weight: 800;
+  height: 20px;
+  justify-content: center;
+  width: 20px;
+}
+.sample-line-group strong { color: #435048; font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sample-line-group span { color: #8a968f; font-size: 11px; }
+.sample-line-value { color: var(--green-dark); font-size: 14px; font-weight: 800; margin-left: auto; white-space: nowrap; }
+.sample-line-value small { color: #7d8a82; font-size: 10px; font-weight: 400; margin-left: 2px; }
+.sample-line-spark { color: var(--green); flex: none; height: 20px; width: 82px; }
+
+.included-panel { padding: 18px 24px; }
+.included-panel .included { border: 0; margin: 0; padding: 0; }
+
+/* Below variant: the block moves into a separate panel after the price panel. */
+body.layout-below .included-panel { display: block; }
+
+@media (max-width: 900px) {
+  .included-grid { grid-template-columns: 1fr; gap: 10px; }
+  .included { padding: 13px 0 12px; }
+  .sample-line { align-items: flex-start; display: grid; gap: 5px 8px; grid-template-columns: auto minmax(0, 1fr) auto; }
+  .sample-line-label { grid-column: 1 / -1; }
+  .sample-line-group { grid-column: 1 / 3; }
+  .sample-line-value { grid-column: 3; margin-left: 0; }
+  .sample-line-spark { display: none; }
+  .included-panel { padding: 16px 18px; }
+  .plan { min-height: 0; }
+}

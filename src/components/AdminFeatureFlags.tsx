@@ -30,6 +30,8 @@ const featureTexts: Record<FeatureFlag['key'], { title: string; description: str
   }
 };
 
+type DayPlanOfferStats = { days: number; users: number; impressions: number };
+
 type TestResult = { text: string | null; sent: boolean; reason?: string };
 
 /** Переключатели фич на вкладке «Настройки». */
@@ -38,12 +40,17 @@ export function AdminFeatureFlags({ onAccountChanged }: { onAccountChanged: () =
   const [error, setError] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [dayPlanStats, setDayPlanStats] = useState<DayPlanOfferStats | null>(null);
+  const [dayPlanStatsError, setDayPlanStatsError] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
   useEffect(() => {
     apiGet<FeatureFlag[]>('/api/account/admin/features')
       .then(setFlags)
       .catch((reason) => setError(reason instanceof Error ? reason.message : 'Не удалось загрузить настройки фич.'));
+    apiGet<DayPlanOfferStats>('/api/account/admin/day-plan-offer-stats')
+      .then(setDayPlanStats)
+      .catch(() => setDayPlanStatsError(true));
   }, []);
 
   const changeMode = async (key: FeatureFlag['key'], mode: FeatureMode) => {
@@ -97,6 +104,21 @@ export function AdminFeatureFlags({ onAccountChanged }: { onAccountChanged: () =
               <option key={mode} value={mode}>{flag.key === 'dayPlan' && mode === 'all' ? 'Эксперимент' : modeLabels[mode]}</option>
             ))}
           </select>
+          {flag.key === 'dayPlan' && (
+            <div className="admin-day-plan-stats">
+              {dayPlanStats ? (
+                <>
+                  <span>Показы за последние {dayPlanStats.days} дней</span>
+                  <dl>
+                    <div><dt>Увидели предложение</dt><dd>{dayPlanStats.users.toLocaleString('ru-RU')}</dd></div>
+                    <div><dt>Всего показов</dt><dd>{dayPlanStats.impressions.toLocaleString('ru-RU')}</dd></div>
+                  </dl>
+                </>
+              ) : (
+                <span role="status">{dayPlanStatsError ? 'Не удалось загрузить показы.' : 'Загружаем показы…'}</span>
+              )}
+            </div>
+          )}
           {flag.key === 'vkReports' && (
             <div className="admin-feature-flag-test">
               <button className="secondary-button inline" type="button" onClick={sendTestReport} disabled={isTesting}>

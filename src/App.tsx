@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
   { to: '/placements', label: 'Площадки для рекламы', icon: MapPin, description: 'AI подберёт площадки ВК', feature: 'placements' },
   { to: '/compare', label: 'Сравнение', icon: GitCompare, description: 'Метрики до 10 сообществ рядом' },
   { to: '/posts', label: 'Идеи для постов', icon: Newspaper, description: 'Лучшие посты в вашей нише' },
-  { to: '/content', label: 'Контент', icon: Sparkles, description: 'Проекты, идеи и черновики с ИИ' },
+  { to: '/content', label: 'Контент', icon: Sparkles, description: 'Проекты, идеи и черновики с ИИ', adminOnly: true },
   { to: '/ad-check', label: 'Проверка канала', icon: ClipboardCheck, adminOnly: true },
   { to: '/account', label: 'Профиль и оплата', icon: CreditCard }
 ];
@@ -366,7 +366,7 @@ export function App() {
           <Route path="/placements" element={user?.placementsEnabled ? <PlacementsPage groups={groups} /> : <Navigate to="/dashboard" replace />} />
           <Route path="/compare" element={hasPaidAccess ? <ComparePage groups={groups} user={user} /> : <CompareShowcase />} />
           <Route path="/posts" element={hasPaidAccess ? <PostsPage groups={groups} /> : <PostsShowcase />} />
-          <Route path="/content" element={<ContentPage hasAccess={Boolean(hasPaidAccess)} />} />
+          <Route path="/content" element={user?.isAdmin ? <ContentPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/telegram" element={<TelegramAnalyticsRedirect />} />
           <Route
             path="/admin"

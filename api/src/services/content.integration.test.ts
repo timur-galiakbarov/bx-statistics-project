@@ -10,7 +10,7 @@ import { VkTokenModel } from '../models/VkToken.js';
 import { DomainError } from '../errors/domainError.js';
 
 // Запускайте только с отдельной тестовой базой. Внешние ВК и DeepSeek заменены ответами.
-test('контент: весь сценарий, изоляция пользователей, повторы, блокировки и сохранение черновика', { skip: !process.env.CONTENT_TEST_MONGO_URI }, async () => {
+test('контент: доступ администраторов, изоляция проектов, повторы, блокировки и сохранение черновика', { skip: !process.env.CONTENT_TEST_MONGO_URI }, async () => {
   const uri = process.env.CONTENT_TEST_MONGO_URI!;
   assert.match(uri, /socstat_content_test(?:[/?]|$)/, 'Нужна отдельная база socstat_content_test');
   await mongoose.connect(uri);
@@ -42,7 +42,17 @@ test('контент: весь сценарий, изоляция пользов
     return originalFetch(input, init);
   };
   const app = express(); app.use(express.json());
-  app.use((req, _res, next) => { if (req.header('test-user')) req.user = { id: req.header('test-user'), isAdmin: req.header('test-user') !== 'expired', activeTo: '2000-01-01' } as Express.Request['user']; next(); });
+  app.use((req, _res, next) => {
+    const actor = req.header('test-user');
+    if (actor) {
+      req.user = {
+        id: actor,
+        isAdmin: actor === user || actor === other,
+        activeTo: actor === 'paid' ? '2099-01-01' : '2000-01-01'
+      } as Express.Request['user'];
+    }
+    next();
+  });
   app.use('/api/content', contentRouter);
   app.use((error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => res.status(error instanceof DomainError ? error.status : 500).json({ message: error.message }));
   const server = app.listen(0, '127.0.0.1');
@@ -54,7 +64,10 @@ test('контент: весь сценарий, изоляция пользов
   };
   try {
     assert.equal((await call('/projects', 'GET', undefined, '')).status, 401);
-    assert.equal((await call('/projects', 'GET', undefined, 'expired')).status, 402);
+    assert.equal((await call('/projects', 'GET', undefined, 'expired')).status, 403);
+    assert.equal((await call('/projects', 'GET', undefined, 'paid')).status, 403);
+    assert.equal((await call('/projects', 'POST', { name: 'Чужой проект', brief: 'Проверка доступа' }, 'paid')).status, 403);
+    assert.equal((await call('/projects')).status, 200);
     assert.equal((await call('/projects', 'POST', { name: 'Без задачи' })).status, 400);
     const created = await call('/projects', 'POST', { name: 'Тест контента', brief: 'Финансовые кейсы' });
     assert.equal(created.status, 200); const id = created.data.id, base = `/projects/${id}`;

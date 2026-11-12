@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Bookmark, Check, ChevronRight, ExternalLink, FileText, FolderPlus, Lightbulb, Loader2, Plus, Search, Sparkles, X } from 'lucide-react';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
 import './content.css';
@@ -43,7 +43,7 @@ function IdeaCard({ idea, busy, edits, onEdit, onUpdate, onDraft }: { idea: Idea
   </article>;
 }
 
-export function ContentPage({ hasAccess }: { hasAccess: boolean }) {
+export function ContentPage() {
   const [params, setParams] = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [project, setProject] = useState<Project>(clone(empty));
@@ -78,7 +78,6 @@ export function ContentPage({ hasAccess }: { hasAccess: boolean }) {
     setProjects((current) => [next, ...current.filter((p) => p.id !== next.id)]);
   };
   useEffect(() => {
-    if (!hasAccess) { setLoading(false); return; }
     const current = ++request.current;
     setLoading(true);
     void apiGet<Project[]>('/api/content/projects').then(async (list) => {
@@ -91,7 +90,7 @@ export function ContentPage({ hasAccess }: { hasAccess: boolean }) {
       setProject(chosen); setForm(clone(chosen)); setIdeas(loadedIdeas); setTab(chosen.rubrics.length ? 'ideas' : 'settings');
     }).catch((e: Error) => { if (current === request.current) setError(e.message); }).finally(() => { if (current === request.current) setLoading(false); });
     return () => { request.current++; };
-  }, [hasAccess]);
+  }, []);
   const run = async (label: string, work: () => Promise<void>) => {
     if (busy) return;
     setBusy(label); setError(''); setNotice('');
@@ -118,7 +117,6 @@ export function ContentPage({ hasAccess }: { hasAccess: boolean }) {
   const patchForm = (key: 'name' | 'brief' | 'targetUrl' | 'audience' | 'style' | 'exclusions', value: string) => setForm((current) => ({ ...current, [key]: value }));
   const selected = project.sources.filter((s) => s.status === 'selected');
   const shownIdeas = ideas.filter((i) => i.status === filter && (!rubricFilter || i.rubric === rubricFilter));
-  if (!hasAccess) return <section className="panel content-page"><h2>Контент для вашей группы</h2><p>Проекты, подбор источников, идеи по рубрикам и подготовка черновиков доступны на активном тарифе.</p><Link className="primary-button" to="/account">Перейти к оплате</Link></section>;
   if (loading) return <section className="panel content-page" aria-busy="true">Загружаем проекты…</section>;
   return <section className="content-page">
     <header className="content-hero"><div><span className="content-eyebrow"><Sparkles size={14} /> Помощник редактора</span><h2>От хорошей идеи к своему посту</h2><p>Соберите источники, находите полезные сюжеты и готовьте публикации для своей аудитории.</p></div><div className="content-hero-icon"><FileText size={34} /></div></header>

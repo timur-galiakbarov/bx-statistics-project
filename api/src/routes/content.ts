@@ -1,11 +1,10 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { requireUser } from '../middleware/auth.js';
-import { requireActiveAccess } from '../middleware/access.js';
+import { requireAdmin, requireUser } from '../middleware/auth.js';
 import { addSource, contentOperation, deleteProject, discoverSources, editIdea, generateDraft, getIdeas, listProjects, ownProject, publicProject, removeSource, saveProject, scanIdeas, setSource, suggestProfile } from '../services/contentService.js';
 import { invalid } from '../services/contentUtils.js';
 
 export const contentRouter = Router();
-contentRouter.use(requireUser, requireActiveAccess);
+contentRouter.use(requireUser, requireAdmin);
 const route = (fn: (req: Request) => Promise<unknown>) => async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (req.method === 'POST' || req.method === 'PATCH') {

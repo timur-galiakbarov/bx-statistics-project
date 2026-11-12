@@ -327,7 +327,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
       });
       setManualStats(data);
     } catch (nextError) {
-      setManualError(nextError instanceof Error ? nextError.message : 'Не удалось проверить stats.get');
+      setManualError(nextError instanceof Error ? nextError.message : 'Не удалось проверить partnerStats');
     } finally {
       setIsManualStatsLoading(false);
     }
@@ -1245,7 +1245,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             />
           </label>
           <label>
-            ID сообщества для stats.get
+            ID сообщества для partnerStats
             <input
               value={manualGroupId}
               onChange={(event) => setManualGroupId(event.target.value)}
@@ -1269,7 +1269,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
               disabled={isManualStatsLoading}
             >
               {isManualStatsLoading ? <RefreshCw className="spin" size={18} /> : <Info size={18} />}
-              Проверить stats.get
+              Проверить partnerStats
             </button>
           </div>
         </div>
@@ -1292,7 +1292,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
         {manualStats !== null && (
           <div className="debug-grid">
             <div className="debug-summary">
-              <strong>Manual stats.get</strong>
+              <strong>Manual partnerStats</strong>
               <span>Сырой ответ VK для указанного сообщества.</span>
             </div>
             <pre className="debug-json">{JSON.stringify(manualStats, null, 2)}</pre>

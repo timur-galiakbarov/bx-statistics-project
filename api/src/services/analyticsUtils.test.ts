@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildReachSeries, buildDailySeries, getAnalyticsPeriod, getPreviousAnalyticsPeriod, getWallCompleteness } from './analyticsUtils.js';
+import { buildReachSeries, buildDailySeries, getAnalyticsPeriod, getPreviousAnalyticsPeriod, getWallCompleteness, sumPartnerStatsDays } from './analyticsUtils.js';
 
 const at = (value: string) => Math.floor(new Date(`${value}T12:00:00`).getTime() / 1000);
 const localDate = (year: number, month: number, day: number) => new Date(year, month - 1, day, 12);
@@ -64,4 +64,14 @@ test('дневной охват сопоставляет даты, сохран�
     { date: '2026-08-03', dayIndex: 3, reach: null },
     { date: '2026-08-04', dayIndex: 4, reach: null }
   ]);
+});
+
+test('суммы partnerStats складывают подписки, отписки, просмотры и охват', () => {
+  const sums = sumPartnerStatsDays([
+    { period_from: 1, owner: { reach: { all: 10, subscribers: 4 }, views: { all: 100 }, subscribe_action: 2, unsubscribe_action: 1 } },
+    { period_from: 2, owner: { reach: { all: 5, subscribers: 1 }, views: { all: 50 }, subscribe_action: 0, unsubscribe_action: 3 } },
+    { period_from: 3 }
+  ]);
+
+  assert.deepEqual(sums, { subscribed: 2, unsubscribed: 4, views: 150, reach: 15, reachSubscribers: 5 });
 });

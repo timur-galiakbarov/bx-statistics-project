@@ -114,6 +114,30 @@ export function buildDailySeries<T extends { date: number }>(
   return result;
 }
 
+export type PartnerStatsDay = {
+  period_from?: number;
+  owner?: {
+    reach?: { all?: number; subscribers?: number };
+    views?: { all?: number };
+    subscribe_action?: number;
+    unsubscribe_action?: number;
+  };
+};
+
+/** Суммы по интервалам partnerStats: подписки, отписки, просмотры, охват и охват подписчиков. */
+export function sumPartnerStatsDays(days: PartnerStatsDay[]) {
+  return days.reduce(
+    (acc, day) => ({
+      subscribed: acc.subscribed + (day.owner?.subscribe_action ?? 0),
+      unsubscribed: acc.unsubscribed + (day.owner?.unsubscribe_action ?? 0),
+      views: acc.views + (day.owner?.views?.all ?? 0),
+      reach: acc.reach + (day.owner?.reach?.all ?? 0),
+      reachSubscribers: acc.reachSubscribers + (day.owner?.reach?.subscribers ?? 0)
+    }),
+    { subscribed: 0, unsubscribed: 0, views: 0, reach: 0, reachSubscribers: 0 }
+  );
+}
+
 export function buildReachSeries(
   period: AnalyticsPeriodRange,
   stats: Array<{ period_from?: number; reach?: { reach?: number } }>

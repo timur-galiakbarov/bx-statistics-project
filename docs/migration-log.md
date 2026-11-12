@@ -3561,3 +3561,132 @@
 Проверка:
 
 - `npm run build`
+
+## 2026-11-12 - Спайк partnerStats перед отключением stats.get
+
+Запрос пользователя:
+
+- Проверить, использует ли Socstat методы `stats.get` и `stats.getPostReach`, и подготовить переход на `partnerStats` до 7 декабря.
+
+Результат:
+
+- Подтверждено: `stats.get` вызывается в аналитике, дашборде и отладочных ручках; `partnerStats` не использовался.
+- Написан скрипт проверки новых методов `api/src/scripts/checkPartnerStats.ts` и отчёт `docs/partner-stats-spike.md`.
+- Проверено на реальном сообществе: partnerStats работают на текущей версии API 5.131, окно `interval=day` — до 31 дня по московским суткам, охват за период дедуплицируется, поля `visitors` нет, демография приходит в `views_demographic`/`views_geographic`, сервисный ключ методам недоступен (код 28), ключ сообщества и токен пользователя работают, профили поддерживаются.
+
+Изменённые файлы:
+
+- `api/src/scripts/checkPartnerStats.ts`
+- `api/package.json`
+- `docs/partner-stats-spike.md`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `npm run spike:partner-stats --workspace @socstat/api` (26 проверок, 25 ok; единственный fail — сервисный ключ, это ожидаемый вывод)
+- `tsc -p api/tsconfig.json --noEmit`
+
+## 2026-11-12 - Этап 1: клиент partnerStats и отказ от «Посещений»
+
+Запрос пользователя:
+
+- Начать этап 1 миграции на `partnerStats` и убрать KPI «Посещения» (решение: убирать, просмотрами не заменять).
+
+Результат:
+
+- Добавлен клиент `api/src/services/partnerStatsClient.ts`: нарезка периода на окна по московским суткам (день/неделя/месяц), дедупликация интервалов на стыке окон, чанки `content_ids` через POST, нормализация `owner_id` сообщества и профиля.
+- «Посещения» убраны из «Главного за период» на аналитике, из колонки дашборда, из ответов API и типов; на дашборде осталась колонка «Просмотры».
+- Обновлены описания: `docs/features/dashboard.md`, новый `docs/features/analytics.md`, ссылка в `docs/features/README.md`.
+
+Изменённые файлы:
+
+- `api/src/services/partnerStatsClient.ts`
+- `api/src/services/partnerStatsClient.test.ts`
+- `api/src/services/analyticsService.ts`
+- `api/src/services/dashboardService.ts`
+- `api/src/services/analyticsPreview.ts`
+- `api/src/services/compareService.ts`
+- `api/src/services/youtubeAnalyticsService.ts`
+- `api/src/services/analyticsPreview.test.ts`
+- `src/api/types.ts`
+- `src/pages/AnalyticsPage.tsx`
+- `src/pages/DashboardPage.tsx`
+- `docs/features/analytics.md`
+- `docs/features/dashboard.md`
+- `docs/features/README.md`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `npm run test --workspace @socstat/api` (121 тест, 2 пропущено)
+- `npm run test:frontend`
+- `npm run build:frontend`
+
+## 2026-11-12 - Этап 2: сервисы переведены на partnerStats
+
+Запрос пользователя:
+
+- Переключить прод-вызовы на `partnerStats` и расширить обработку отказов VK.
+
+Результат:
+
+- Аналитика (`analyticsService`) собирает дни через `partnerStats.getGeneralStatsByPeriod`, а охват за период — через `getGeneralStatsTotal` (дедуплицированный: сумма дневных завышает).
+- Дашборд (`dashboardService`) получает цифры одним `partnerStats.getGeneralStatsTotal`; бесплатному тарифу охват не запрашивается.
+- Отладочные ручки `api/src/routes/vk.ts` переведены на partnerStats, включая статистику по постам через `getContentStatsByPeriod`; подписи в админке и на странице каналов обновлены.
+- `isVkStatsUnavailableError` дополнительно считает недоступной статистику при коде 3 (неизвестный или отключённый метод VK).
+- Клиент понимает обе формы ответа VK: голый массив интервалов и объект с `items` — это выяснилось на живом прогоне, когда дневные интервалы молча читались как пустые.
+- Проверено на реальных сообществах: 125792332 (данные за неделю: 142 просмотра, охват 11, подписка 1), 132120663 (нулевая активность), 69537711 (чужая группа — `statsAvailable: false`, страница не падает).
+
+Изменённые файлы:
+
+- `api/src/services/analyticsService.ts`
+- `api/src/services/dashboardService.ts`
+- `api/src/services/partnerStatsClient.ts`
+- `api/src/services/vkClient.ts`
+- `api/src/services/vkClient.test.ts`
+- `api/src/services/analyticsUtils.ts`
+- `api/src/services/analyticsUtils.test.ts`
+- `api/src/services/partnerStatsClient.test.ts`
+- `api/src/routes/vk.ts`
+- `src/pages/AdminPage.tsx`
+- `src/pages/ChannelsPage.tsx`
+- `docs/features/analytics.md`
+- `docs/features/dashboard.md`
+- `docs/partner-stats-spike.md`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `npm run test --workspace @socstat/api`
+- `npm run test:frontend`
+- `npm run build:frontend`
+
+## 2026-11-12 - Инцидент после релиза partnerStats и фикс
+
+Запрос пользователя:
+
+- После релиза на проде видна ошибка VK «One of the parameters specified was missing or invalid»: откатить релиз, разобраться и починить.
+
+Результат:
+
+- Релиз `f3c6bca` откачен коммитом `a93bf58` и выкачен на прод; миграция сохранена в ветке `partner-stats-migration`.
+- Причина: `partnerStats.getGeneralStatsByPeriod` и `getGeneralStatsTotal` отвергают `timestamp_to` в будущем (код 100). Конец «сегодня» считался в локальной таймзоне, а прод-контейнер работает в UTC: 23:59 UTC — это 02:59 МСК следующих суток. `stats.get` такие запросы терпел, partnerStats — нет. Локальные проверки шли в UTC+5, поэтому ошибка не воспроизводилась.
+- Фикс: `clampUnixToNow` в `partnerStatsClient` обрезает конец периода до текущего момента для периодов, итогов и статистики по постам; период целиком в будущем не уходит в VK. Тесты на обрезку добавлены.
+- Добавлен `check:partner-stats-periods`: прогоняет все периоды аналитики и дашборда (с тарифом и без) и обязателен к запуску под `TZ=UTC`.
+
+Изменённые файлы:
+
+- `api/src/services/partnerStatsClient.ts`
+- `api/src/services/partnerStatsClient.test.ts`
+- `api/src/scripts/checkPartnerStatsPeriods.ts`
+- `api/package.json`
+- `docs/partner-stats-spike.md`
+- `docs/features/analytics.md`
+- `docs/features/dashboard.md`
+- `docs/migration-log.md`
+
+Проверка:
+
+- `npm run test --workspace @socstat/api` (128 тестов) под локальной TZ и под `TZ=UTC`
+- `TZ=UTC npm run check:partner-stats-periods --workspace @socstat/api` — все периоды прошли
+- `TZ=Asia/Yekaterinburg npm run check:partner-stats-periods --workspace @socstat/api` — все периоды прошли

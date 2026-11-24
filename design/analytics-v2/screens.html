@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Socstat · Аналитика v2 — экраны VK, Telegram, YouTube</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="board-head">
+    <div class="eyebrow">Socstat · дизайн-макеты</div>
+    <h1>Три экрана аналитики целиком</h1>
+    <p>Новые блоки стоят на своих местах в реальной вёрстке отчёта. Зелёные метки — номера задач с доски: <b>T1–T7</b> — спринт 1, <b>T8–T13</b> — спринт 2. Данные демонстрационные.</p>
+  </header>
+
+  <!-- ═══════════════════ VK ═══════════════════ -->
+  <div class="frame">
+    <div class="frame-bar"><i></i><i></i><i></i><span class="url">socstat.ru/analytics?groupId=…&amp;platform=vk&amp;section=summary</span></div>
+    <div class="app">
+      <div class="app-head">
+        <div class="title">Аналитика<span>Разбор одного источника за период и сравнение с прошлым</span></div>
+        <div class="app-tabs"><span class="t active">Аналитика</span><span class="t">Дашборд</span><span class="t">Площадки</span><span class="t">Сравнение</span><span class="t">Посты</span></div>
+      </div>
+
+      <div class="hero">
+        <div class="ava">МВ</div>
+        <div>
+          <h2>Мой и твой Воронеж</h2>
+          <p><span class="badge vk">ВКонтакте</span> &nbsp;12 400 подписчиков · за период 27 окт — 23 ноя</p>
+        </div>
+        <div class="actions"><span class="btn ghost">Сменить</span><span class="btn ghost">Обновить</span><span class="btn ghost">Открыть VK</span></div>
+      </div>
+
+      <div class="gap-12">
+        <div style="align-items:center;display:flex;gap:10px;justify-content:space-between">
+          <div class="tabs"><span class="tab active">Сводная</span><span class="tab">Аудитория</span><span class="tab">Посты</span><span class="tab">Конкуренты</span></div>
+          <div class="seg"><span class="opt">7 дней</span><span class="opt active">30 дней</span><span class="opt">Текущий месяц</span><span class="opt">Другой период</span></div>
+        </div>
+
+        <div class="alert"><span class="ico">!</span><span><b>3 дня без публикаций</b> и <b>отписки выше нормы на 18%</b>. Подробнее — в блоке «План» внизу. <span class="callout">13</span></span></div>
+
+        <!-- KPI -->
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Главное за период</h2><p>27 октября — 23 ноября · сравнение с 30 сентября — 26 октября</p></div>
+            <div class="right"><span class="callout">3</span><span class="callout">6</span></div>
+          </div>
+          <p class="headline">Вышло 42 публикации, в среднем 15 200 просмотров и ER 4,8% на пост. К прошлому периоду: просмотры +9,2%, ER +0,4 п.п.</p>
+          <div class="kpi-grid">
+            <div class="kpi">
+              <span class="label">Охват сообщества</span><span class="value">84 300</span>
+              <div class="delta-row"><span class="delta up">↑ 9,2%</span></div>
+              <div class="stack-bar" style="margin-top:2px"><span style="background:#4caf50;width:73%"></span><span style="background:#a5d6a7;width:27%"></span></div>
+              <span class="sub">свои 61 400 · виральный 22 900</span>
+            </div>
+            <div class="kpi"><span class="label">Реакции</span><span class="value">1 268</span><div class="delta-row"><span class="delta up">↑ 6,1%</span></div><span class="sub">лайки, репосты, комментарии</span></div>
+            <div class="kpi"><span class="label">ER</span><span class="value">4,8%</span><div class="delta-row"><span class="delta up">↑ 0,4 п.п.</span></div><span class="sub">реакции к подписчикам</span></div>
+            <div class="kpi"><span class="label">Средние просмотры поста</span><span class="value">15 200</span><div class="delta-row"><span class="delta up">↑ 9,2%</span><span class="delta-note">через 7 дней</span></div><span class="sub">посты одинакового возраста</span></div>
+          </div>
+        </div>
+
+        <!-- Охват по дням -->
+        <div class="panel">
+          <div class="panel-head"><div><h2>Охват по дням</h2><p>Вы управляете сообществом — показываем охват из статистики VK</p></div><div class="right"><span class="badge gray">пунктир — прошлый период</span></div></div>
+          <div class="chart">
+            <svg height="140" viewBox="0 0 900 140" width="100%" preserveAspectRatio="none">
+              <polyline fill="none" stroke="#4caf50" stroke-width="2.5" points="0,96 60,88 120,92 180,74 240,80 300,66 360,70 420,58 480,62 540,48 600,54 660,42 720,46 780,36 840,40 900,30"/>
+              <polyline fill="none" stroke="#b9cbbd" stroke-dasharray="5 4" stroke-width="2" points="0,104 60,98 120,100 180,90 240,94 300,84 360,88 420,80 480,82 540,72 600,76 660,68 720,70 780,62 840,66 900,58"/>
+            </svg>
+            <div class="legend"><span><i style="background:#4caf50"></i>этот период</span><span><i style="background:#b9cbbd"></i>прошлый период</span></div>
+          </div>
+        </div>
+
+        <!-- T2 подписки/отписки -->
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Подписки и отписки <span class="callout">2</span></h2><p>Официальная статистика VK · по дням</p></div>
+            <div class="right"><span class="badge vk">VK</span></div>
+          </div>
+          <div style="display:grid;gap:14px;grid-template-columns:220px minmax(0,1fr)">
+            <div class="kpi-grid" style="grid-template-columns:1fr">
+              <div class="kpi" style="min-height:0"><span class="label">Чистый прирост</span><span class="value">+37</span><span class="sub"><span style="color:#287d30">+124 пришло</span> · <span style="color:#c62828">−87 ушло</span></span></div>
+            </div>
+            <div class="chart">
+              <div style="background:linear-gradient(#dfe5e0,#dfe5e0) center/100% 1px no-repeat;align-items:stretch;display:flex;gap:5px;height:104px">
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:38%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:20%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:54%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:26%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:30%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:18%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:66%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:44%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:22%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:30%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:72%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:28%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:46%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:34%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:58%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:22%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:34%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:40%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:70%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:24%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:42%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:32%"></div></div>
+                <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:28%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:46%"></div></div>
+              </div>
+              <div class="legend"><span><i style="background:#4caf50"></i>подписки</span><span><i style="background:#ef9a9a"></i>отписки</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- T5 контент -->
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Контент <span class="callout">5</span></h2><p>Посты, клипы и истории в одном месте</p></div>
+            <div class="right"><span class="badge vk">VK</span></div>
+          </div>
+          <div class="tabs" style="margin-bottom:12px"><span class="tab active">Посты · 42</span><span class="tab">Клипы · 3</span><span class="tab">Истории · 5</span></div>
+          <div class="kpi-grid three" style="margin-bottom:12px">
+            <div class="kpi"><span class="label">Клипы</span><span class="value">3</span><span class="sub">охват 41 200</span></div>
+            <div class="kpi"><span class="label">Истории</span><span class="value">5</span><span class="sub">охват 9 800</span></div>
+            <div class="kpi"><span class="label">Клипы против постов</span><span class="value">×1,6</span><span class="sub">по среднему охвату</span></div>
+          </div>
+          <div class="table">
+            <div class="tr th" style="grid-template-columns:minmax(0,1fr) 78px 78px 66px 66px 74px">
+              <div>Публикация</div><div style="text-align:right">Охват</div><div style="text-align:right">Сохр.</div><div style="text-align:right">Скрыт.</div><div style="text-align:right">Клики</div><div style="text-align:right">ER</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 78px 78px 66px 66px 74px">
+              <div class="name">Зимние шины: чек-лист</div><div class="num">12 400</div><div class="num">84</div><div class="num">6</div><div class="num">132</div><div class="num">5,1%</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 78px 78px 66px 66px 74px">
+              <div class="name">Афиша выходных</div><div class="num">9 800</div><div class="num">21</div><div class="num">2</div><div class="num">24</div><div class="num">2,8%</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 78px 78px 66px 66px 74px">
+              <div class="name">Подслушано: пробки</div><div class="num">18 700</div><div class="num">12</div><div class="num">31</div><div class="num">8</div><div class="num">1,4%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Инсайты + бенчмарк -->
+        <div style="display:grid;gap:12px;grid-template-columns:1.35fr 1fr">
+          <div class="panel">
+            <div class="panel-head"><div><h2>Инсайты</h2></div></div>
+            <div class="gap-12">
+              <div class="alert ok"><span class="ico">✓</span><span><b>Видео — сильный формат:</b> 6 публикаций, медианный ER 6,1%. Добавьте 1–2 видео в план на неделю.</span></div>
+              <div class="alert"><span class="ico">!</span><span><b>Виральный охват падает:</b> 34% → 29% → 27% за три месяца. Проверьте, какие темы репостили раньше.</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div><h2>Вы среди похожих <span class="callout">12</span></h2><p>2 400 сообществ · 5–20 тыс. подписчиков</p></div></div>
+            <div class="bar-list">
+              <div class="bar-row" style="grid-template-columns:86px minmax(0,1fr) 66px"><span class="cap">Вы</span><div class="bar-track"><div class="bar-fill" style="background:#4caf50;width:75%"></div></div><span class="val">4,8%</span></div>
+              <div class="bar-row" style="grid-template-columns:86px minmax(0,1fr) 66px"><span class="cap">Медиана</span><div class="bar-track"><div class="bar-fill" style="background:#b9cbbd;width:48%"></div></div><span class="val">3,1%</span></div>
+              <div class="bar-row" style="grid-template-columns:86px minmax(0,1fr) 66px"><span class="cap">Топ-25%</span><div class="bar-track"><div class="bar-fill" style="background:#a5d6a7;width:100%"></div></div><span class="val">6,4%</span></div>
+            </div>
+            <p class="note">Вы в топ-18% по ER среди сообществ своего размера.</p>
+          </div>
+        </div>
+
+        <!-- T13 план -->
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>План на ноябрь <span class="callout">13</span></h2><p>Прогресс месяца 68%</p></div>
+            <div class="right"><span class="badge vk">95% плана</span><span class="btn ghost">Изменить цель</span></div>
+          </div>
+          <div style="align-items:flex-end;display:flex;gap:10px;margin-bottom:8px">
+            <span style="color:#26362c;font-size:24px">12 400</span><span style="color:#77837b;font-size:12px;padding-bottom:4px">из 13 000 подписчиков</span>
+          </div>
+          <div class="plan-track"><div class="plan-fill" style="width:95%"></div></div>
+          <p class="note">При текущем темпе будет 12 900 к 30 ноября. Отчёт с планом и алертами приходит во VK по понедельникам.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ TELEGRAM ═══════════════════ -->
+  <div class="frame">
+    <div class="frame-bar"><i></i><i></i><i></i><span class="url">socstat.ru/analytics?platform=telegram&amp;channel=…&amp;section=summary</span></div>
+    <div class="app">
+      <div class="app-head">
+        <div class="title">Аналитика Telegram<span>Канал за период · дельты к прошлому периоду</span></div>
+        <div class="app-tabs"><span class="t active">Аналитика</span><span class="t">Дашборд</span><span class="t">Сравнение</span></div>
+      </div>
+
+      <div class="hero">
+        <div class="ava" style="background:linear-gradient(140deg,#dceefb,#bfe0f7);color:#20689b">ТГ</div>
+        <div>
+          <h2>Воронеж сегодня</h2>
+          <p><span class="badge tg">Telegram</span> &nbsp;8 900 подписчиков · @vrn_today · за период 27 окт — 23 ноя</p>
+        </div>
+        <div class="actions"><span class="btn ghost">Сменить</span><span class="btn ghost">Обновить</span><span class="btn ghost">Открыть Telegram</span></div>
+      </div>
+
+      <div class="gap-12">
+        <div style="align-items:center;display:flex;gap:10px;justify-content:space-between">
+          <div class="tabs"><span class="tab active">Сводная</span><span class="tab">Аудитория</span><span class="tab">Посты</span><span class="tab">Конкуренты</span></div>
+          <div class="seg"><span class="opt">7 дней</span><span class="opt active">30 дней</span><span class="opt">Текущий месяц</span><span class="opt">Другой период</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Главное за период <span class="callout">1</span></h2><p>30 дней · сравнение с 25 октября — 23 ноября</p></div>
+            <div class="right"><span class="badge tg">Telegram</span></div>
+          </div>
+          <p class="headline">42 публикации, в среднем 1 240 просмотров и ER 4,8% от просмотров. Просмотры выросли на 12,4%, ER немного просел — постов стало больше.</p>
+          <div class="kpi-grid">
+            <div class="kpi"><span class="label">Публикации</span><span class="value">42</span><div class="delta-row"><span class="delta up">↑ 8,1%</span><span class="delta-note">39 было</span></div><span class="sub">1,0 в неделю</span></div>
+            <div class="kpi"><span class="label">Средние просмотры поста</span><span class="value">1 240</span><div class="delta-row"><span class="delta up">↑ 12,4%</span><span class="delta-note">1 103 было</span></div></div>
+            <div class="kpi"><span class="label">ER по просмотрам</span><span class="value">4,8%</span><div class="delta-row"><span class="delta down">↓ 0,4 п.п.</span><span class="delta-note">5,2% было</span></div><span class="sub">реакции, комменты, пересылки</span></div>
+            <div class="kpi"><span class="label">Подписчики</span><span class="value">8 900</span><div class="delta-row"><span class="delta up">↑ 312</span></div><span class="sub">за период, по срезам</span></div>
+          </div>
+        </div>
+
+        <div style="display:grid;gap:12px;grid-template-columns:1.1fr 1fr">
+          <div class="panel">
+            <div class="panel-head"><div><h2>Динамика подписчиков</h2><p>Срезы Socstat · с 5 октября</p></div></div>
+            <div class="chart">
+              <svg height="110" viewBox="0 0 560 110" width="100%" preserveAspectRatio="none">
+                <polyline fill="none" stroke="#258cda" stroke-width="2.5" points="0,88 56,84 112,86 168,76 224,72 280,66 336,62 392,54 448,58 504,46 560,40"/>
+              </svg>
+              <div class="legend"><span><i style="background:#258cda"></i>подписчики на утро дня</span></div>
+            </div>
+            <p class="note">Telegram не отдаёт историю задним числом — срезы начинаются с момента добавления канала.</p>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div><h2>Лучшее время <span class="callout">8</span></h2><p>ER по дню и часу · 90 дней</p></div></div>
+            <div class="heat" style="grid-template-columns:28px repeat(8,minmax(0,1fr))">
+              <div></div><div class="hh">8–10</div><div class="hh">10–12</div><div class="hh">12–14</div><div class="hh">14–16</div><div class="hh">16–18</div><div class="hh">18–20</div><div class="hh">20–22</div><div class="hh">22–24</div>
+              <div class="hl">пн</div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#7cc47f"></div><div class="cell" style="background:#66bb6a"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#e8f2ea"></div>
+              <div class="hl">вт</div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#7cc47f"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#66bb6a"></div><div class="cell best" style="background:#4caf50"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#e8f2ea"></div>
+              <div class="hl">ср</div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#7cc47f"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#edf6ee"></div>
+              <div class="hl">чт</div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell best" style="background:#4caf50"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#7cc47f"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#edf6ee"></div>
+              <div class="hl">пт</div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#f4f9f4"></div>
+            </div>
+            <p class="note">Лучшее окно: вторник 18:00–20:00 — ER 6,4% при 11 постах.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div><h2>Публикации</h2><p>Самые просматриваемые посты периода</p></div><div class="right"><span class="badge gray">сортировка: просмотры</span></div></div>
+          <div class="table">
+            <div class="tr th" style="grid-template-columns:minmax(0,1fr) 90px 90px 80px 70px">
+              <div>Пост</div><div style="text-align:right">Просмотры</div><div style="text-align:right">Пересылки</div><div style="text-align:right">Реакции</div><div style="text-align:right">ER</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 90px 90px 80px 70px">
+              <div class="name">Что закрыть в ноябре: 7 мест</div><div class="num">4 120</div><div class="num">86</div><div class="num">241</div><div class="num">7,9%</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 90px 90px 80px 70px">
+              <div class="name">Маршрут на выходные</div><div class="num">3 480</div><div class="num">64</div><div class="num">188</div><div class="num">7,2%</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 90px 90px 80px 70px">
+              <div class="name">Пробки утром</div><div class="num">2 910</div><div class="num">31</div><div class="num">94</div><div class="num">4,3%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ YOUTUBE ═══════════════════ -->
+  <div class="frame">
+    <div class="frame-bar"><i></i><i></i><i></i><span class="url">socstat.ru/analytics?platform=youtube&amp;groupId=…&amp;section=summary</span></div>
+    <div class="app">
+      <div class="app-head">
+        <div class="title">Аналитика YouTube<span>Обзор канала · дельты к прошлому периоду</span></div>
+        <div class="app-tabs"><span class="t active">Аналитика</span><span class="t">Дашборд</span><span class="t">Сравнение</span></div>
+      </div>
+
+      <div class="hero">
+        <div class="ava" style="background:linear-gradient(140deg,#fde3e1,#f8c9c5);color:#a8170f">YT</div>
+        <div>
+          <h2>Воронеж на колёсах</h2>
+          <p><span class="badge yt">YouTube</span> &nbsp;48 200 подписчиков · канал об авто и городе · за период 27 окт — 23 ноя</p>
+        </div>
+        <div class="actions"><span class="btn ghost">Сменить</span><span class="btn ghost">Обновить</span><span class="btn ghost">Открыть YouTube</span></div>
+      </div>
+
+      <div class="gap-12">
+        <div style="align-items:center;display:flex;gap:10px;justify-content:space-between">
+          <div class="tabs"><span class="tab active">Обзор</span><span class="tab">Видео</span><span class="tab">Конкуренты</span></div>
+          <div class="seg"><span class="opt">7 дней</span><span class="opt active">30 дней</span><span class="opt">Текущий месяц</span><span class="opt">Другой период</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Главное за период <span class="callout">1</span> <span class="callout">7</span></h2><p>Видео и метрики канала · сравнение с 25 октября — 23 ноября</p></div>
+            <div class="right"><span class="badge yt">YouTube</span></div>
+          </div>
+          <p class="headline">Вышло 9 видео, канал набрал 1,26 тыс. подписчиков и 1,24 млн просмотров. Вовлечённость выросла до 6,2%.</p>
+          <div class="kpi-grid six">
+            <div class="kpi new"><span class="label">Подписчики</span><span class="value">48 200</span><div class="delta-row"><span class="delta up">↑ 1 260</span></div><span class="sub">за период</span></div>
+            <div class="kpi new"><span class="label">Просмотры канала</span><span class="value">1,24 млн</span><div class="delta-row"><span class="delta up">↑ 6,4%</span></div><span class="sub">включая старые видео</span></div>
+            <div class="kpi"><span class="label">Опубликовано</span><span class="value">9</span><div class="delta-row"><span class="delta flat">= 0</span></div><span class="sub">0,7 в неделю</span></div>
+            <div class="kpi"><span class="label">Медиана в день</span><span class="value">340</span><div class="delta-row"><span class="delta up">↑ 18,0%</span></div><span class="sub">с поправкой на возраст</span></div>
+            <div class="kpi"><span class="label">Лайки на 1 000</span><span class="value">42</span><div class="delta-row"><span class="delta up">↑ 3</span></div><span class="sub">просмотров</span></div>
+            <div class="kpi"><span class="label">Вовлечённость</span><span class="value">6,2%</span><div class="delta-row"><span class="delta up">↑ 0,9 п.п.</span></div><span class="sub">лайки и комментарии</span></div>
+          </div>
+        </div>
+
+        <div style="display:grid;gap:12px;grid-template-columns:1fr 1.15fr">
+          <div class="panel">
+            <div class="panel-head"><div><h2>Динамика подписчиков</h2><p>Срезы Socstat · 365 дней</p></div></div>
+            <div class="chart">
+              <svg height="120" viewBox="0 0 520 120" width="100%" preserveAspectRatio="none">
+                <polyline fill="none" stroke="#e62117" stroke-width="2.5" points="0,96 52,92 104,90 156,84 208,80 260,74 312,70 364,62 416,58 468,50 520,44"/>
+              </svg>
+              <div class="legend"><span><i style="background:#e62117"></i>подписчики</span></div>
+            </div>
+            <p class="note">Публичные счётчики YouTube не дают историю — только срезы с момента добавления канала.</p>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div><h2>Результативность видео</h2><p>Просмотры с поправкой на возраст</p></div></div>
+            <div class="bar-list">
+              <div class="bar-row" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) 62px"><span class="cap" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Тест-драйв зимней резины</span><div class="bar-track"><div class="bar-fill" style="background:#e62117;width:100%"></div></div><span class="val">18 400</span></div>
+              <div class="bar-row" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) 62px"><span class="cap" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Дороги Воронежа зимой</span><div class="bar-track"><div class="bar-fill" style="background:#e62117;width:74%"></div></div><span class="val">13 700</span></div>
+              <div class="bar-row" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) 62px"><span class="cap" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">5 ошибок при прогреве</span><div class="bar-track"><div class="bar-fill" style="background:#e62117;width:52%"></div></div><span class="val">9 600</span></div>
+              <div class="bar-row" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) 62px"><span class="cap" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Разбор: что гремит в салоне</span><div class="bar-track"><div class="bar-fill" style="background:#e62117;width:31%"></div></div><span class="val">5 700</span></div>
+            </div>
+            <p class="note">Следующий шаг: удержание, CTR и время просмотра — появятся после подключения канала владельцем.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <b>Что дальше:</b> на доске <span class="src">board.html</span> каждая из 13 задач разобрана отдельно: назначение, источник данных и состояния. Этот файл — проверка, что блоки не конфликтуют между собой на одном экране.
+  </footer>
+
+</div>
+</body>
+</html>

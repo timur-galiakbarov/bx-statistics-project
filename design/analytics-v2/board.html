@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Socstat · Аналитика v2 — макеты спринтов 1–2</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="board-head">
+    <div class="eyebrow">Socstat · дизайн-макеты</div>
+    <h1>Аналитика v2: 13 задач двух спринтов</h1>
+    <p>Слева — макет блока в интерфейсе отчёта, справа — что он показывает, откуда данные и в каких состояниях работает. Демо-данные: сообщество «Мой и твой Воронеж» (12 400 подписчиков), Telegram-канал и YouTube-канал. Цифры вымышленные, структура — настоящая.</p>
+    <div class="board-meta">
+      <span class="pill"><b>Спринт 1</b> · 7 задач · данные уже есть в API</span>
+      <span class="pill"><b>Спринт 2</b> · 6 задач · расчёты на своих данных</span>
+      <span class="pill">Палитра: <b>#4caf50</b> · <b>#3c4858</b> · <b>#77837b</b></span>
+      <span class="pill">Шрифт: Roboto</span>
+    </div>
+  </header>
+
+  <!-- ══════════════════ СПРИНТ 1 ══════════════════ -->
+
+  <!-- T1 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Telegram · Главное за период</h2><p>30 дней · сравнение с 25 октября — 23 ноября</p></div>
+            <div class="right"><span class="badge tg">Telegram</span></div>
+          </div>
+          <div class="kpi-grid three">
+            <div class="kpi"><span class="label">Публикации</span><span class="value">42</span><div class="delta-row"><span class="delta up">↑ 8,1%</span><span class="delta-note">к 30 дням до</span></div></div>
+            <div class="kpi"><span class="label">Средние просмотры поста</span><span class="value">1 240</span><div class="delta-row"><span class="delta up">↑ 12,4%</span><span class="delta-note">1 103 было</span></div></div>
+            <div class="kpi"><span class="label">ER по просмотрам</span><span class="value">4,8%</span><div class="delta-row"><span class="delta down">↓ 0,4 п.п.</span><span class="delta-note">5,2% было</span></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>YouTube · Обзор</h2><p>30 дней · сравнение с предыдущим периодом</p></div>
+            <div class="right"><span class="badge yt">YouTube</span></div>
+          </div>
+          <div class="kpi-grid three">
+            <div class="kpi"><span class="label">Опубликовано</span><span class="value">9</span><div class="delta-row"><span class="delta flat">= 0</span></div></div>
+            <div class="kpi"><span class="label">Медиана просмотров в день</span><span class="value">340</span><div class="delta-row"><span class="delta up">↑ 18,0%</span><span class="delta-note">288 было</span></div></div>
+            <div class="kpi"><span class="label">Вовлечённость</span><span class="value">6,2%</span><div class="delta-row"><span class="delta up">↑ 0,9 п.п.</span><span class="delta-note">5,3% было</span></div></div>
+          </div>
+        </div>
+        <div class="alert info"><span class="ico">i</span><span>Если у канала нет истории за прошлый период, вместо дельты — «нет базы для сравнения» и подсказка, с какого числа появятся данные.</span></div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T1</span><span class="sprint-badge sprint-1">Спринт 1</span></div>
+      <h2>Сравнение с прошлым периодом на Telegram и YouTube</h2>
+      <div class="where"><span class="badge tg">Telegram</span><span class="badge yt">YouTube</span><span class="badge gray">Сводная · Обзор</span></div>
+      <h3>Зачем</h3>
+      <p>Сейчас дельты есть только на VK. Пользователь не может ответить «стало лучше или хуже» на двух из трёх площадок.</p>
+      <h3>Данные</h3>
+      <p><span class="src">previous</span> уже считается в <span class="src">summarizeTelegramAnalytics</span> и <span class="src">youtubeAnalyticsService</span> — нужно только вывести.</p>
+      <h3>Состояния</h3>
+      <ul><li>нет прошлого периода → «—» с подсказкой;</li><li>нулевая база → «новое», без процентов;</li><li>сравнение по неполным данным → пометка «неполные данные».</li></ul>
+    </aside>
+  </section>
+
+  <!-- T2 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Подписки и отписки по дням</h2><p>Официальная статистика VK · 1–14 ноября</p></div>
+            <div class="right"><span class="badge vk">VK</span></div>
+          </div>
+          <div class="kpi-grid three" style="margin-bottom:14px">
+            <div class="kpi"><span class="label">Пришло</span><span class="value" style="color:#287d30">124</span><span class="sub">подписки за период</span></div>
+            <div class="kpi"><span class="label">Ушло</span><span class="value" style="color:#c62828">87</span><span class="sub">отписки за период</span></div>
+            <div class="kpi"><span class="label">Чистый прирост</span><span class="value">+37</span><div class="delta-row"><span class="delta up">↑ 0,3%</span><span class="delta-note">к базе</span></div></div>
+          </div>
+          <div class="chart">
+            <div style="background:linear-gradient(#dfe5e0,#dfe5e0) center/100% 1px no-repeat;align-items:stretch;display:flex;gap:6px;height:120px">
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:38%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:20%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:54%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:26%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:30%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:18%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:66%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:44%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:22%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:30%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:72%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:28%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:46%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:34%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:58%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:22%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:34%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:40%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:70%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:24%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:42%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:32%"></div></div>
+              <div style="display:grid;flex:1;gap:1px;grid-template-rows:1fr 1fr"><div style="align-self:end;background:#4caf50;border-radius:3px 3px 0 0;height:28%"></div><div style="align-self:start;background:#ef9a9a;border-radius:0 0 3px 3px;height:46%"></div></div>
+            </div>
+            <div class="legend"><span><i style="background:#4caf50"></i>подписки</span><span><i style="background:#ef9a9a"></i>отписки</span><span>по вертикали — вверх от середины подписки, вниз отписки</span></div>
+          </div>
+          <p class="note">Для сообществ без доступа к статистике VK график строится по ночным срезам Socstat: показываем изменение числа подписчиков, без деления на приход и уход.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T2</span><span class="sprint-badge sprint-1">Спринт 1</span></div>
+      <h2>Подписки и отписки по дням + чистый прирост</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge gray">Динамика подписчиков</span></div>
+      <h3>Зачем</h3>
+      <p>Сейчас виден только итог за период. При падении админ первым делом смотрит, в какой день ушли люди и сколько пришло взамен.</p>
+      <h3>Данные</h3>
+      <p><span class="src">partnerStats.getGeneralStatsByPeriod</span> → <span class="src">subscribe_action</span> / <span class="src">unsubscribe_action</span> по дням. Для чужих сообществ — дельта срезов.</p>
+      <h3>Состояния</h3>
+      <ul><li>нет прав → график по срезам, без деления на +/−;</li><li>день без данных → пропуск, не ноль;</li><li>период &gt; 90 дней → агрегация по неделям.</li></ul>
+    </aside>
+  </section>
+
+  <!-- T3 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Охват сообщества</h2><p>Сколько уникальных людей видели записи · статистика VK</p></div>
+            <div class="right"><span class="badge vk">VK</span></div>
+          </div>
+          <div style="align-items:baseline;display:flex;gap:12px;margin-bottom:10px">
+            <span style="color:#26362c;font-size:38px;font-weight:400">84 300</span>
+            <span class="delta up">↑ 9,2%</span>
+            <span class="delta-note">к прошлому периоду</span>
+          </div>
+          <div class="stack-bar" style="margin-bottom:8px">
+            <span style="background:#4caf50;width:73%"></span>
+            <span style="background:#a5d6a7;width:27%"></span>
+          </div>
+          <div class="legend" style="margin-bottom:16px"><span><i style="background:#4caf50"></i>свои подписчики — 61 400 (73%)</span><span><i style="background:#a5d6a7"></i>виральный — 22 900 (27%)</span></div>
+          <div class="kpi-grid three">
+            <div class="kpi"><span class="label">Охват всего</span><span class="value">84 300</span><span class="sub">дедуплицированный за период</span></div>
+            <div class="kpi"><span class="label">Охват подписчиков</span><span class="value">61 400</span><span class="sub">73% от всего</span></div>
+            <div class="kpi new"><span class="label">Виральный охват</span><span class="value">22 900</span><span class="sub">новое · за счёт репостов и рекомендаций</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T3</span><span class="sprint-badge sprint-1">Спринт 1</span></div>
+      <h2>Охват: всего / подписчики / виральный</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge gray">Сводная</span></div>
+      <h3>Зачем</h3>
+      <p>Главный вопрос админа: охват вырос за счёт своей аудитории или за счёт репостов? Сейчас видно только общее число.</p>
+      <h3>Данные</h3>
+      <p><span class="src">partnerStats</span> отдаёт <span class="src">reach.all</span>, <span class="src">reach.subscribers</span>, <span class="src">reach.viral</span>. Сейчас забирается только <span class="src">all</span>; <span class="src">subscribers</span> считается в <span class="src">analyticsUtils</span>, но не показывается, <span class="src">viral</span> не запрашивается.</p>
+      <h3>Состояния</h3>
+      <ul><li>нет прав → блок «Почему нет охвата»;</li><li>виральный недоступен → полоса из одного сегмента;</li><li>сумма долей всегда 100%, округление в подписи.</li></ul>
+    </aside>
+  </section>
+
+  <!-- T4 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Публикация</h2><p>Что дал конкретный пост · кроме лайков и просмотров</p></div>
+            <div class="right"><span class="badge vk">VK</span><span class="badge gray">Посты</span></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-bottom:14px">
+            <div style="background:#f2f6f3;border-radius:8px;height:74px;width:74px;flex-shrink:0"></div>
+            <div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:5px">Как выбрать зимние шины и не переплатить</div>
+              <div class="muted" style="font-size:12px;color:#77837b">12 ноября, 18:40 · фото + текст · органический</div>
+              <div class="chips" style="margin-top:9px">
+                <span class="chip">Охват <b>12 400</b></span>
+                <span class="chip">Просмотры <b>15 200</b></span>
+                <span class="chip">Сохранения <b>84</b></span>
+                <span class="chip">Клики <b>132</b></span>
+                <span class="chip">Подписки <b>9</b></span>
+                <span class="chip warn">Скрытия <b>6</b></span>
+              </div>
+            </div>
+          </div>
+          <div class="table">
+            <div class="tr th" style="grid-template-columns:minmax(0,1fr) 78px 78px 62px 62px 78px">
+              <div>Публикация</div><div style="text-align:right">Охват</div><div style="text-align:right">Сохр.</div><div style="text-align:right">Скрыт.</div><div style="text-align:right">Клики</div><div style="text-align:right">ER</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 78px 78px 62px 62px 78px">
+              <div class="name">Зимние шины: чек-лист</div><div class="num">12 400</div><div class="num">84</div><div class="num">6</div><div class="num">132</div><div class="num">5,1%</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 78px 78px 62px 62px 78px">
+              <div class="name">Афиша выходных</div><div class="num">9 800</div><div class="num">21</div><div class="num">2</div><div class="num">24</div><div class="num">2,8%</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 78px 78px 62px 62px 78px">
+              <div class="name">Подслушано: пробки</div><div class="num">18 700</div><div class="num">12</div><div class="num">31</div><div class="num">8</div><div class="num">1,4%</div>
+            </div>
+          </div>
+          <p class="note">Для постов, опубликованных до включения сбора статистики VK, колонок охвата, сохранений и кликов нет — остаются просмотры и реакции.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T4</span><span class="sprint-badge sprint-1">Спринт 1</span></div>
+      <h2>Охват, сохранения, скрытия, клики и подписки у поста</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge gray">Посты · карточка</span></div>
+      <h3>Зачем</h3>
+      <p>Сейчас пост измеряется только просмотрами и реакциями. Сохранения и клики показывают пользу, скрытия — раздражение. Это разница между «много посмотрели» и «пост сработал».</p>
+      <h3>Данные</h3>
+      <p><span class="src">partnerStats.getContentStatsByPeriod</span>: <span class="src">reach</span>, <span class="src">bookmarks</span>, <span class="src">hides</span>, <span class="src">link_clicks</span>, <span class="src">subscriptions</span>. Сейчас используется только отладочный скрипт.</p>
+      <h3>Состояния</h3>
+      <ul><li>старый пост → «—» вместо нуля;</li><li>скрытия = 0 → чип не подсвечивается;</li><li>сортировка по новым колонкам в тулбаре.</li></ul>
+    </aside>
+  </section>
+
+  <!-- T5 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Контент</h2><p>Посты, клипы и истории в одном месте</p></div>
+            <div class="right"><span class="badge vk">VK</span></div>
+          </div>
+          <div class="tabs" style="margin-bottom:14px"><span class="tab active">Посты · 42</span><span class="tab">Клипы · 3</span><span class="tab">Истории · 5</span></div>
+          <div class="kpi-grid three" style="margin-bottom:14px">
+            <div class="kpi"><span class="label">Клипы</span><span class="value">3</span><span class="sub">за период</span></div>
+            <div class="kpi"><span class="label">Охват клипов</span><span class="value">41 200</span><span class="sub">в 1,6 раза выше постов</span></div>
+            <div class="kpi"><span class="label">ER клипов</span><span class="value">5,1%</span><span class="sub">медиана</span></div>
+          </div>
+          <div class="table">
+            <div class="tr th" style="grid-template-columns:minmax(0,1fr) 84px 84px 62px 62px">
+              <div>Клип</div><div style="text-align:right">Охват</div><div style="text-align:right">Просмотры</div><div style="text-align:right">Лайки</div><div style="text-align:right">ER</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 84px 84px 62px 62px">
+              <div class="name">5 мест в Воронеже, где...</div><div class="num">18 600</div><div class="num">24 100</div><div class="num">912</div><div class="num">5,8%</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 84px 84px 62px 62px">
+              <div class="name">Утренний город</div><div class="num">13 900</div><div class="num">17 800</div><div class="num">641</div><div class="num">4,6%</div>
+            </div>
+          </div>
+          <p class="note">Вкладка «Истории»: 5 историй, охват 9 800, дочитывания 71%. Если клипов за период нет — вкладка неактивна с подсказкой.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T5</span><span class="sprint-badge sprint-1">Спринт 1</span></div>
+      <h2>Клипы и истории</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge gray">Сводная · новая вкладка «Контент»</span></div>
+      <h3>Зачем</h3>
+      <p>Клипы — главный драйвер охвата во VK, но в отчёте их нет вообще. Админ видит посты, а самый результативный формат — нет.</p>
+      <h3>Данные</h3>
+      <p><span class="src">partnerStats.getContentStatsByPeriod</span> с <span class="src">content_type: clip | story</span> — метод и типы в коде уже есть, запросов нет.</p>
+      <h3>Состояния</h3>
+      <ul><li>клипов нет → вкладка неактивна с объяснением;</li><li>истории без просмотров → скрываем ER, оставляем охват;</li><li>больше 30 единиц → «Показать ещё».</li></ul>
+    </aside>
+  </section>
+
+  <!-- T6 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Просмотры поста</h2><p>Сравнение постов одного возраста, а не «на момент загрузки»</p></div>
+            <div class="right"><span class="seg"><span class="opt">Сейчас</span><span class="opt active">Через 7 дней</span></span></div>
+          </div>
+          <div class="kpi-grid three" style="margin-bottom:12px">
+            <div class="kpi new"><span class="label">Просмотры через 7 дней</span><span class="value">1 180</span><div class="delta-row"><span class="delta up">↑ 6,3%</span><span class="delta-note">к прошлому периоду</span></div></div>
+            <div class="kpi"><span class="label">Просмотры сейчас</span><span class="value">1 240</span><span class="sub">посты периода ещё набирают</span></div>
+            <div class="kpi"><span class="label">Доля за первые 24 ч</span><span class="value">62%</span><span class="sub">от просмотров за 7 дней</span></div>
+          </div>
+          <div class="chart">
+            <svg height="120" viewBox="0 0 640 120" width="100%" preserveAspectRatio="none">
+              <polyline fill="none" stroke="#4caf50" stroke-width="2.5" points="0,92 64,84 128,70 192,66 256,58 320,60 384,48 448,44 512,40 576,36 640,34"/>
+              <polyline fill="none" stroke="#b9cbbd" stroke-dasharray="5 4" stroke-width="2" points="0,100 64,96 128,88 192,84 256,80 320,78 384,72 448,70 512,66 576,62 640,60"/>
+            </svg>
+            <div class="legend"><span><i style="background:#4caf50"></i>этот период, через 7 дней</span><span><i style="background:#b9cbbd"></i>прошлый период, через 7 дней</span></div>
+          </div>
+          <p class="note">Свежие посты ещё не добрали просмотры, поэтому «сейчас» занижает последнюю неделю. Режим «Через 7 дней» показывает посты на одинаковом возрасте.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T6</span><span class="sprint-badge sprint-1">Спринт 1</span></div>
+      <h2>Метрики поста на одинаковом возрасте (7 дней)</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge gray">Сводная · Аудитория · Посты</span></div>
+      <h3>Зачем</h3>
+      <p>Сейчас неделя сравнивается с неделей, но посты текущей недели моложе и всегда проигрывают. Выводы «стало хуже» могут быть ошибкой измерения.</p>
+      <h3>Данные</h3>
+      <p>Снимки постов <span class="src">PostSnapshot</span> (24/48/72 ч и далее) + панель <span class="src">PostViewsCurvePanel</span>. Для постов старше 7 дней берём значение «через 7 дней», для свежих — режим «сейчас» с пометкой.</p>
+      <h3>Состояния</h3>
+      <ul><li>нет снимка на 7-й день → «—» и пояснение;</li><li>переключатель запоминается в адресе;</li><li>подпись под графиком меняется вместе с режимом.</li></ul>
+    </aside>
+  </section>
+
+  <!-- T7 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>YouTube · Обзор</h2><p>Канал живёт не только новыми видео</p></div>
+            <div class="right"><span class="badge yt">YouTube</span></div>
+          </div>
+          <div class="kpi-grid six">
+            <div class="kpi new"><span class="label">Подписчики</span><span class="value">48 200</span><div class="delta-row"><span class="delta up">↑ 1 260</span></div><span class="sub">за период</span></div>
+            <div class="kpi new"><span class="label">Просмотры канала</span><span class="value">1,24 млн</span><div class="delta-row"><span class="delta up">↑ 6,4%</span></div><span class="sub">за период</span></div>
+            <div class="kpi"><span class="label">Опубликовано</span><span class="value">9</span><span class="sub">0,7 в неделю</span></div>
+            <div class="kpi"><span class="label">Медиана в день</span><span class="value">340</span><span class="sub">с поправкой на возраст</span></div>
+            <div class="kpi"><span class="label">Лайки на 1 000</span><span class="value">42</span><span class="sub">просмотров</span></div>
+            <div class="kpi"><span class="label">Вовлечённость</span><span class="value">6,2%</span><span class="sub">лайки и комментарии</span></div>
+          </div>
+          <p class="note">«Просмотры канала за период» считаются по приросту счётчика канала между срезами, а не только по видео, опубликованным в периоде.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T7</span><span class="sprint-badge sprint-1">Спринт 1</span></div>
+      <h2>YouTube: подписчики и просмотры канала в KPI</h2>
+      <div class="where"><span class="badge yt">YouTube</span><span class="badge gray">Обзор</span></div>
+      <h3>Зачем</h3>
+      <p>Сейчас «Просмотры» считают только видео, опубликованные в периоде. Канал, который живёт старыми видео, выглядит мёртвым, а роста подписчиков в KPI нет вовсе.</p>
+      <h3>Данные</h3>
+      <p><span class="src">ChannelSnapshot</span> (подписчики + добавить просмотры канала, задача 1 плана) и <span class="src">channelViewCount</span> из публичных данных.</p>
+      <h3>Состояния</h3>
+      <ul><li>меньше двух срезов → «нужно 2 дня истории»;</li><li>скрытые подписчики → «Недоступно»;</li><li>старые видео → отдельная строка «просмотры прошлых видео».</li></ul>
+    </aside>
+  </section>
+
+  <!-- ══════════════════ СПРИНТ 2 ══════════════════ -->
+
+  <!-- T8 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Лучшее время публикации</h2><p>Вовлечённость по дню недели и времени · 90 дней · МСК</p></div>
+            <div class="right"><span class="badge vk">VK</span></div>
+          </div>
+          <div class="heat" style="margin-bottom:8px">
+            <div></div><div class="hh">0–2</div><div class="hh">2–4</div><div class="hh">4–6</div><div class="hh">6–8</div><div class="hh">8–10</div><div class="hh">10–12</div><div class="hh">12–14</div><div class="hh">14–16</div><div class="hh">16–18</div><div class="hh">18–20</div><div class="hh">20–22</div><div class="hh">22–24</div>
+            <div class="hl">пн</div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#edf6ee"></div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#b7d9bb"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#f4f9f4"></div>
+            <div class="hl">вт</div><div class="cell" style="background:#edf6ee"></div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#7cc47f"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#7cc47f"></div><div class="cell" style="background:#66bb6a"></div><div class="cell best" style="background:#4caf50"></div><div class="cell" style="background:#66bb6a"></div><div class="cell" style="background:#cfe6d2"></div>
+            <div class="hl">ср</div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#edf6ee"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#66bb6a"></div><div class="cell" style="background:#7cc47f"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#f4f9f4"></div>
+            <div class="hl">чт</div><div class="cell" style="background:#edf6ee"></div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell best" style="background:#4caf50"></div><div class="cell" style="background:#66bb6a"></div><div class="cell" style="background:#7cc47f"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#f4f9f4"></div>
+            <div class="hl">пт</div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#edf6ee"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#8fcb93"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#f4f9f4"></div>
+            <div class="hl">сб</div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#edf6ee"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#a5d6a7"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#f4f9f4"></div>
+            <div class="hl">вс</div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#edf6ee"></div><div class="cell" style="background:#edf6ee"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#cfe6d2"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#e8f2ea"></div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#edf6ee"></div><div class="cell" style="background:#f4f9f4"></div><div class="cell" style="background:#f4f9f4"></div>
+          </div>
+          <div class="legend" style="margin-bottom:12px"><span><i style="background:#4caf50"></i>ER выше среднего</span><span><i style="background:#a5d6a7"></i>средний</span><span><i style="background:#f4f9f4"></i>ниже среднего</span></div>
+          <div class="alert ok"><span class="ico">✓</span><span><b>Лучшие окна:</b> вторник 18:00–20:00 (ER 6,4%, 11 постов) и четверг 12:00–14:00 (6,1%, 9 постов). Хуже всего — выходные утром.</span></div>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T8</span><span class="sprint-badge sprint-2">Спринт 2</span></div>
+      <h2>Лучшее время публикации</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge tg">Telegram</span><span class="badge gray">Посты · новая панель</span></div>
+      <h3>Зачем</h3>
+      <p>Самый частый вопрос админа после «какой пост сработал» — «когда публиковать». Данные для ответа уже есть в постах за 90 дней.</p>
+      <h3>Данные</h3>
+      <p><span class="src">wall.get</span> / посты Telegram: дата, время, ER, просмотры. Время — МСК, как в остальном отчёте.</p>
+      <h3>Состояния</h3>
+      <ul><li>ячейка с &lt; 3 постами → приглушена, в подсказке «мало данных»;</li><li>меньше 20 постов всего → блок скрыт;</li><li>клик по ячейке → список постов этого окна.</li></ul>
+    </aside>
+  </section>
+
+  <!-- T9 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Частота публикаций и результат</h2><p>Средний охват поста при разном числе постов в неделю · 90 дней</p></div>
+            <div class="right"><span class="badge vk">VK</span></div>
+          </div>
+          <div class="bar-list" style="margin-bottom:12px">
+            <div class="bar-row"><span class="cap">1–2 поста</span><div class="bar-track"><div class="bar-fill" style="background:#a5d6a7;width:72%"></div></div><span class="val">9 800</span></div>
+            <div class="bar-row"><span class="cap">3–4 поста</span><div class="bar-track"><div class="bar-fill" style="background:#8fcb93;width:85%"></div></div><span class="val">11 600</span></div>
+            <div class="bar-row"><span class="cap">5–6 постов</span><div class="bar-track"><div class="bar-fill" style="background:#4caf50;width:100%"></div></div><span class="val">12 400</span></div>
+            <div class="bar-row"><span class="cap">7–9 постов</span><div class="bar-track"><div class="bar-fill" style="background:#a5d6a7;width:90%"></div></div><span class="val">11 100</span></div>
+            <div class="bar-row"><span class="cap">10+ постов</span><div class="bar-track"><div class="bar-fill" style="background:#ef9a9a;width:70%"></div></div><span class="val">8 700</span></div>
+          </div>
+          <div class="alert info"><span class="ico">i</span><span>У вас лучший результат при <b>5–6 постах в неделю</b>. Дальше охват поста падает — вероятно, аудитория не успевает смотреть всё.</span></div>
+          <p class="note">Недели с рекламными постами и без постов не учитываются. Нужно минимум 8 недель наблюдений.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T9</span><span class="sprint-badge sprint-2">Спринт 2</span></div>
+      <h2>Частота публикаций против охвата</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge tg">Telegram</span></div>
+      <h3>Зачем</h3>
+      <p>Помогает ответить «сколько публиковать»: чаще — не значит лучше, но без расчёта это спор о вкусах.</p>
+      <h3>Данные</h3>
+      <p>Недельные корзины по постам за 90 дней: средний охват и ER на пост, недели без публикаций исключены.</p>
+      <h3>Состояния</h3>
+      <ul><li>&lt; 8 недель → «накапливаем данные»;</li><li>в корзине &lt; 3 недель → серый столбец;</li><li>вывод без «лучшей» корзины, если разница &lt; 10%.</li></ul>
+    </aside>
+  </section>
+
+  <!-- T10 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Форматы контента</h2><p>Медианы за 90 дней · без рекламных публикаций</p></div>
+            <div class="right"><span class="badge vk">VK</span><span class="badge tg">Telegram</span></div>
+          </div>
+          <div class="table">
+            <div class="tr th" style="grid-template-columns:minmax(0,1fr) 62px 90px 74px 90px">
+              <div>Формат</div><div style="text-align:right">Постов</div><div style="text-align:right">Медиана охвата</div><div style="text-align:right">ER</div><div style="text-align:right">Δ к среднему</div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 62px 90px 74px 90px">
+              <div class="name">Видео</div><div class="num">6</div><div class="num">14 800</div><div class="num">6,1%</div><div class="num"><span class="delta up">+41%</span></div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 62px 90px 74px 90px">
+              <div class="name">Фото + текст</div><div class="num">18</div><div class="num">9 400</div><div class="num">4,2%</div><div class="num"><span class="delta flat">−2%</span></div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 62px 90px 74px 90px">
+              <div class="name">Клип</div><div class="num">3</div><div class="num">13 700</div><div class="num">5,1%</div><div class="num"><span class="delta up">+31%</span></div>
+            </div>
+            <div class="tr" style="grid-template-columns:minmax(0,1fr) 62px 90px 74px 90px">
+              <div class="name">Только текст</div><div class="num">11</div><div class="num">6 200</div><div class="num">3,1%</div><div class="num"><span class="delta down">−46%</span></div>
+            </div>
+          </div>
+          <p class="note">Форматы с выборкой меньше 5 постов помечены «мало данных» и не участвуют в рекомендациях.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T10</span><span class="sprint-badge sprint-2">Спринт 2</span></div>
+      <h2>Рейтинг форматов с медианами</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge tg">Telegram</span><span class="badge gray">Посты</span></div>
+      <h3>Зачем</h3>
+      <p>На VK формат уже упоминается в инсайтах, но без таблицы и объёма выборки. Нужен явный ответ «что публиковать».</p>
+      <h3>Данные</h3>
+      <p><span class="src">wall.get</span> → <span class="src">contentType</span> + <span class="src">partnerStats</span> охват по постам. Медиана, а не среднее — выбросы не искажают.</p>
+      <h3>Состояния</h3>
+      <ul><li>мало постов → бейдж «мало данных»;</li><li>реклама исключена, но есть сноска;</li><li>сортировка по охвату/ER.</li></ul>
+    </aside>
+  </section>
+
+  <!-- T11 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Виральность</h2><p>Насколько контент выходит за пределы подписчиков</p></div>
+            <div class="right"><span class="badge vk">VK</span></div>
+          </div>
+          <div class="kpi-grid three" style="margin-bottom:14px">
+            <div class="kpi new"><span class="label">Репосты на 1 000 охвата</span><span class="value">3,2</span><span class="sub">из 84 300 охвата</span></div>
+            <div class="kpi new"><span class="label">Подписки с постов</span><span class="value">9</span><span class="sub">пришли из публикаций</span></div>
+            <div class="kpi"><span class="label">Просмотры за 24 часа</span><span class="value">62%</span><span class="sub">от просмотров за неделю</span></div>
+          </div>
+          <div class="bar-list">
+            <div class="bar-row"><span class="cap">Свои подписчики</span><div class="bar-track"><div class="bar-fill" style="background:#4caf50;width:73%"></div></div><span class="val">61 400</span></div>
+            <div class="bar-row"><span class="cap">Виральный охват</span><div class="bar-track"><div class="bar-fill" style="background:#a5d6a7;width:27%"></div></div><span class="val">22 900</span></div>
+          </div>
+          <p class="note">Виральность падает третий месяц: 34% → 29% → 27%. Стоит проверить, какие темы репостили раньше.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T11</span><span class="sprint-badge sprint-2">Спринт 2</span></div>
+      <h2>Виральность и качество распространения</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge gray">Сводная · Аудитория</span></div>
+      <h3>Зачем</h3>
+      <p>Отвечает на «растём своими или за счёт репостов» и «какой пост выходит за пределы базы». Сейчас это не видно.</p>
+      <h3>Данные</h3>
+      <p><span class="src">reach.viral</span>, <span class="src">shares</span>, <span class="src">subscriptions</span> из partnerStats + кривые просмотров из снимков (доля за 24 ч).</p>
+      <h3>Состояния</h3>
+      <ul><li>нет вирального охвата → блок не показываем;</li><li>мало данных за 24 ч → «—»;</li><li>тренд за 3 месяца — только при полной истории.</li></ul>
+    </aside>
+  </section>
+
+  <!-- T12 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>Вы на фоне похожих сообществ</h2><p>2 400 сообществ VK · 5–20 тыс. подписчиков · ноябрь</p></div>
+            <div class="right"><span class="badge gold">топ-18%</span></div>
+          </div>
+          <div class="bar-list" style="margin-bottom:10px">
+            <div class="bar-row"><span class="cap">Вы</span><div class="bar-track"><div class="bar-fill" style="background:#4caf50;width:75%"></div></div><span class="val">4,8% ER</span></div>
+            <div class="bar-row"><span class="cap">Медиана похожих</span><div class="bar-track"><div class="bar-fill" style="background:#b9cbbd;width:48%"></div></div><span class="val">3,1%</span></div>
+            <div class="bar-row"><span class="cap">Топ-25%</span><div class="bar-track"><div class="bar-fill" style="background:#a5d6a7;width:100%"></div></div><span class="val">6,4%</span></div>
+          </div>
+          <div class="chips">
+            <span class="chip">Охват на подписчика <b>6,8</b> · медиана 4,9</span>
+            <span class="chip">Постов в неделю <b>5,4</b> · медиана 6,1</span>
+          </div>
+          <p class="note">Сравнение по размерной группе, без имён и чужих цифр. Показываем только медианы и ваш перцентиль.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T12</span><span class="sprint-badge sprint-2">Спринт 2</span></div>
+      <h2>Бенчмарк с похожими сообществами</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge tg">Telegram</span><span class="badge yt">YouTube</span></div>
+      <h3>Зачем</h3>
+      <p>Главный дифференциатор: VK-статистика не говорит, «хорошо это или плохо». Своя база снимков позволяет сравнить с похожими по размеру и нише.</p>
+      <h3>Данные</h3>
+      <p><span class="src">SnapshotSource</span> + <span class="src">ChannelSnapshot</span> по всем отслеживаемым источникам; размерная группа и тематика.</p>
+      <h3>Состояния</h3>
+      <ul><li>&lt; 50 источников в группе → бенчмарк скрыт;</li><li>чужие данные только агрегированно, без имён;</li><li>перцентиль округляется до 5%.</li></ul>
+    </aside>
+  </section>
+
+  <!-- T13 -->
+  <section class="task">
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>План на ноябрь</h2><p>Цель по подписчикам и охвату · прогресс месяца 68%</p></div>
+            <div class="right"><span class="btn ghost">Изменить цель</span></div>
+          </div>
+          <div style="align-items:flex-end;display:flex;gap:12px;margin-bottom:8px">
+            <span style="color:#26362c;font-size:26px">12 400</span>
+            <span style="color:#77837b;font-size:13px;padding-bottom:4px">из 13 000 подписчиков</span>
+            <span class="badge vk" style="margin-left:auto">95% плана</span>
+          </div>
+          <div class="plan-track" style="margin-bottom:6px"><div class="plan-fill" style="width:95%"></div></div>
+          <p class="note" style="margin-bottom:14px">Идёте с опережением: при текущем темпе будет 12 900 к 30 ноября.</p>
+          <div class="gap-12">
+            <div class="alert"><span class="ico">!</span><span><b>3 дня без публикаций.</b> Обычно вы публикуете 4–5 раз в неделю — последний пост 21 ноября.</span></div>
+            <div class="alert"><span class="ico">!</span><span><b>Отписки выше нормы на 18%.</b> Норма — 24 в неделю, сейчас 28. Совпало с серией рекламных постов.</span></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px"><span class="btn primary">Понятно</span><span class="btn link">Настроить алерты</span></div>
+        </div>
+      </div>
+    </div>
+    <aside class="annot">
+      <div class="annot-head"><span class="task-no">T13</span><span class="sprint-badge sprint-2">Спринт 2</span></div>
+      <h2>План, цель и алерты отклонений</h2>
+      <div class="where"><span class="badge vk">VK</span><span class="badge tg">Telegram</span><span class="badge yt">YouTube</span></div>
+      <h3>Зачем</h3>
+      <p>Отчёт — снимок, к которому нет повода вернуться. Цель и алерты превращают его в регулярный ритуал и дают материал для VK-дайджеста.</p>
+      <h3>Данные</h3>
+      <p>Цель — новое поле у источника; норма — медиана за 30 дней по снимкам; алерты считаются на бэкенде и отдаются в выгрузке для агента.</p>
+      <h3>Состояния</h3>
+      <ul><li>цель не задана → мягкое предложение;</li><li>нет нормы → алерты не показываем;</li><li>доставка: отчёт и weekly-дайджест.</li></ul>
+    </aside>
+  </section>
+
+  <footer class="foot">
+    <b>Как пользоваться:</b> откройте <span class="src">design/analytics-v2/screens.html</span> — там три экрана целиком (VK, Telegram, YouTube), где новые блоки стоят на своих местах. Задачи T1–T13 здесь разобраны по отдельности, чтобы обсуждать каждую метрику без прокрутки длинной страницы.
+  </footer>
+
+</div>
+</body>
+</html>

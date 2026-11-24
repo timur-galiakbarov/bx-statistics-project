@@ -80,6 +80,17 @@ test('без среза до отметки кривая начинается с
   assert.equal(viewsAtHour([{ hoursSincePublished: 10, views: null }, { hoursSincePublished: 30, views: 600 }], 24), 480);
 });
 
+test('допуск закрывает разницу между суточным срезом и целевым возрастом', () => {
+  const points = [
+    { hoursSincePublished: 24, views: 500 },
+    { hoursSincePublished: 144, views: 1_900 },
+    { hoursSincePublished: 167.8, views: 2_050 }
+  ];
+  assert.equal(viewsAtHour(points, 168), null);
+  assert.equal(viewsAtHour(points, 168, 12), 2_050);
+  assert.equal(viewsAtHour([{ hoursSincePublished: 144, views: 1_900 }], 168, 12), null);
+});
+
 test('медиана устойчива к одному вирусному посту', () => {
   assert.equal(median([100, 120, 90, 5_000]), 110);
   assert.equal(median([3, 1, 2]), 2);

@@ -10,7 +10,7 @@ import { SnapshotSourceModel } from '../models/SnapshotSource.js';
 import { UserModel } from '../models/User.js';
 import { VkTokenModel } from '../models/VkToken.js';
 import { redis } from './redis.js';
-import { buildSubscriberHistory, chainedMedians, hoursSince, snapshotDateKey, snapshotGrowthForPeriod, VIEW_MILESTONE_HOURS, viewsAtHour, snapshotHour, secondsUntilNextSnapshotDate, telegramUsernameFromSource } from './snapshotUtils.js';
+import { buildSubscriberHistory, chainedMedians, hoursSince, MATURED_POST_AGE_HOURS, MATURED_POST_TOLERANCE_HOURS, snapshotDateKey, snapshotGrowthForPeriod, VIEW_MILESTONE_HOURS, viewsAtHour, snapshotHour, secondsUntilNextSnapshotDate, telegramUsernameFromSource } from './snapshotUtils.js';
 import { getTelegramChannelSnapshot, TelegramApiError } from './telegramClient.js';
 import { VkApiError, vkApiRequest } from './vkClient.js';
 import { getYoutubeVideos, resolveYoutubeChannel } from './youtubeClient.js';
@@ -572,6 +572,39 @@ const MIN_POSTS_FOR_MEDIAN = 3;
  * How posts of a source gain views: per-post views at 24/48/72 hours and channel medians,
  * from the nightly post snapshots of the last `days` days of publications.
  */
+/** С какого дня для источника собираются снимки: раньше этого дня 7-дневной истории постов нет. */
+export async function getSnapshotSourceSince(platform: SnapshotPlatform, externalId: string): Promise<string | null> {
+  const source = await SnapshotSourceModel.findOne({ platform, externalId }, { createdAt: 1 }).lean();
+  return source?.createdAt ? new Date(source.createdAt).toISOString() : null;
+}
+
+/**
+ * Просмотры постов на одном возрасте (7 суток) — чтобы свежие публикации не проигрывали
+ * только потому, что они младше. Посты без нужных снимков в результат не попадают.
+ */
+export async function getMaturedPostViews(platform: SnapshotPlatform, externalId: string, postIds: string[]): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+  const unique = [...new Set(postIds.filter(Boolean))];
+  if (!unique.length) return result;
+
+  for (let index = 0; index < unique.length; index += 500) {
+    const chunk = unique.slice(index, index + 500);
+    const snapshots = await PostSnapshotModel.find(
+      { platform, externalId, postId: { $in: chunk } },
+      { _id: 0, postId: 1, hoursSincePublished: 1, views: 1 }
+    ).lean();
+    const byPost = new Map<string, Array<{ hoursSincePublished: number; views: number | null }>>();
+    for (const snapshot of snapshots) {
+      byPost.set(snapshot.postId, [...(byPost.get(snapshot.postId) ?? []), { hoursSincePublished: snapshot.hoursSincePublished, views: snapshot.views ?? null }]);
+    }
+    for (const [postId, points] of byPost) {
+      const views = viewsAtHour(points, MATURED_POST_AGE_HOURS, MATURED_POST_TOLERANCE_HOURS);
+      if (views !== null) result.set(postId, views);
+    }
+  }
+  return result;
+}
+
 export async function getPostViewCurves(platform: SnapshotPlatform, externalId: string, days: number) {
   const publishedAfter = new Date(Date.now() - days * 86_400_000);
   const snapshots = await PostSnapshotModel.find(

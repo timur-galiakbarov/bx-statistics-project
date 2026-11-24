@@ -131,6 +131,10 @@ export function summarizeChannelGrowth(points: ChannelGrowthPoint[]) {
   };
 }
 
+/** Возраст, на котором сравниваем посты: неделя. */
+export const MATURED_POST_AGE_HOURS = 7 * 24;
+export const MATURED_POST_TOLERANCE_HOURS = 12;
+
 export const VIEW_MILESTONE_HOURS = [24, 48, 72] as const;
 // Without a snapshot before the milestone the curve starts from zero views at publication;
 // a linear guess is only acceptable while the next snapshot is close to the milestone.
@@ -140,12 +144,17 @@ const MAX_ANCHOR_STRETCH = 1.5;
  * Views a post had `targetHours` after publication, interpolated between the daily snapshots
  * around that moment. Null when snapshots do not cover it (the post is too young or was missed).
  */
-export function viewsAtHour(points: PostViewPoint[], targetHours: number): number | null {
+export function viewsAtHour(points: PostViewPoint[], targetHours: number, toleranceHours = 0): number | null {
   const known = points
     .filter((point): point is { hoursSincePublished: number; views: number } => point.views !== null)
     .sort((left, right) => left.hoursSincePublished - right.hoursSincePublished);
   const upper = known.find((point) => point.hoursSincePublished >= targetHours);
-  if (!upper) return null;
+  // Снимки суточные: последняя точка может быть чуть раньше цели. Для 7 суток это нормально,
+  // если она в пределах допуска — интерполировать между «почти 7 дней» и ничем нечем.
+  if (!upper) {
+    const last = known.at(-1);
+    return last && toleranceHours > 0 && last.hoursSincePublished >= targetHours - toleranceHours ? last.views : null;
+  }
   if (upper.hoursSincePublished === targetHours) return upper.views;
   const lower = known.filter((point) => point.hoursSincePublished < targetHours).at(-1);
   if (!lower && upper.hoursSincePublished > targetHours * MAX_ANCHOR_STRETCH) return null;

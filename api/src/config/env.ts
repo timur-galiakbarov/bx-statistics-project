@@ -73,7 +73,9 @@ export const env = {
   // Ежедневные срезы подписчиков и публикаций. По умолчанию включены только в production.
   snapshotsEnabled: (process.env.SNAPSHOTS_ENABLED ?? (process.env.NODE_ENV === 'production' ? '1' : '0')) === '1',
   snapshotStartHour: Number(process.env.SNAPSHOT_START_HOUR ?? 3),
-  snapshotPostWindowDays: Number(process.env.SNAPSHOT_POST_WINDOW_DAYS ?? 7),
+  // 8 дней, а не 7: суточный срез иначе всегда попадает чуть раньше 168 часов,
+  // и «просмотры через 7 суток» посчитать не из чего.
+  snapshotPostWindowDays: Number(process.env.SNAPSHOT_POST_WINDOW_DAYS ?? 8),
   snapshotPostMaxAttempts: Number(process.env.SNAPSHOT_POST_MAX_ATTEMPTS ?? 5),
   snapshotTelegramDelayMs: Number(process.env.SNAPSHOT_TELEGRAM_DELAY_MS ?? 3_000),
   // Служебные VK-аккаунты (через запятую), чьи токены подхватывают срезы после сервисного ключа и админов.

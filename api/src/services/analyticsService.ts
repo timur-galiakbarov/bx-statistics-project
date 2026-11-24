@@ -1,6 +1,7 @@
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { isVkStatsUnavailableError, VkApiError, vkApiRequest } from './vkClient.js';
 import { fetchContentStatsAllTime, fetchContentStatsByPeriod, fetchGeneralStatsByPeriod, fetchGeneralStatsTotal } from './partnerStatsClient.js';
+import { getMaturedPostViews, getSnapshotSourceSince } from './snapshotService.js';
 import { TtlCache } from './ttlCache.js';
 import {
   CUSTOM_PERIOD_TOO_LONG_MESSAGE,
@@ -492,6 +493,19 @@ async function loadCommunityAnalytics(
     ...currentWallSummary,
     topPosts: mergePostContentStats(currentWallSummary.topPosts, periodContentStats, allTimeContentStats)
   };
+  // Просмотры на одном возрасте: снимки постов обоих периодов, чтобы сравнение не смещалось
+  // в пользу прошлого периода из-за того, что свежие посты просто младше.
+  const [maturedViews, maturedSince] = await Promise.all([
+    getMaturedPostViews('vk', String(groupInfo.id), [
+      ...wallWithContentStats.topPosts.map((post) => String(post.id)),
+      ...previousWallSummary.topPosts.map((post) => String(post.id))
+    ]),
+    getSnapshotSourceSince('vk', String(groupInfo.id))
+  ]);
+  const withMaturedViews = <T extends { id: number | string }>(posts: T[]): Array<T & { viewsAt7d?: number | null }> => posts.map((post) => ({
+    ...post,
+    viewsAt7d: maturedViews.get(String(post.id)) ?? null
+  }));
   if (!currentWallAvailable || !previousWallAvailable) {
     warnings.push('Для выбранного сравнения VK не отдал достаточно публикаций из истории стены. Метрики неполной выборки не используются в сравнениях и выводах.');
   }
@@ -559,6 +573,8 @@ async function loadCommunityAnalytics(
     },
     wall: {
       ...wallWithContentStats,
+      topPosts: withMaturedViews(wallWithContentStats.topPosts),
+      maturedSince,
       isComplete: currentWallAvailable
     },
     previous: {
@@ -575,6 +591,8 @@ async function loadCommunityAnalytics(
           },
       wall: {
         ...previousWallSummary,
+        topPosts: withMaturedViews(previousWallSummary.topPosts),
+        maturedSince,
         isComplete: previousWallAvailable,
         available: previousWallAvailable
       }

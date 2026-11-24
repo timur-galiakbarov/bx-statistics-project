@@ -366,6 +366,8 @@ export type CommunityAnalytics = {
       er: boolean;
     };
     isComplete: boolean;
+    /** С какого дня собираются снимки постов: раньше него 7-дневных просмотров нет. */
+    maturedSince?: string | null;
     dayGroups: Array<{
       date: string;
       dayIndex: number;
@@ -403,6 +405,8 @@ export type CommunityAnalytics = {
       subscriptions?: number | null;
       /** Клики по ссылкам есть только у историй, у постов обычно null. */
       linkClicks?: number | null;
+      /** Просмотры через 7 суток по снимкам; null — снимков нужного возраста нет. */
+      viewsAt7d?: number | null;
     }>;
   };
   previous: {

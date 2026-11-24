@@ -89,8 +89,19 @@ function hideWallMetrics<T extends Wall>(wall: T): T {
  * the single best post) plus insight headlines. Closed metrics never leave the server — the client
  * blurs placeholders, so nothing can be read from DevTools.
  */
+// Краткий отчёт не должен отдавать клиенту закрытые метрики поста: убираем их до сериализации.
+function stripPostContentStats(post: Post): Post {
+  const copy = { ...post };
+  delete copy.reach;
+  delete copy.bookmarks;
+  delete copy.hides;
+  delete copy.subscriptions;
+  delete copy.linkClicks;
+  return copy;
+}
+
 export function toAnalyticsPreview(analytics: CommunityAnalyticsResult, snapshotGrowth: SnapshotGrowth | null = null): CommunityAnalyticsResult & { preview: AnalyticsPreview } {
-  const bestPost = analytics.wall.topPosts[0];
+  const bestPost = analytics.wall.topPosts[0] ? stripPostContentStats(analytics.wall.topPosts[0]) : undefined;
 
   return {
     ...analytics,

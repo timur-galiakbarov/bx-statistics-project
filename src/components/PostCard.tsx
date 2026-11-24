@@ -8,9 +8,14 @@ import {
   Heart,
   Image,
   MessageCircle,
+  Bookmark,
+  EyeOff,
+  MousePointerClick,
+  UserPlus,
   Play,
   Repeat2,
-  SmilePlus
+  SmilePlus,
+  Users
 } from 'lucide-react';
 import type { CommunityAnalytics } from '../api/types';
 
@@ -36,6 +41,12 @@ export type PostCardData = {
   contentType?: string;
   resultBadge?: string;
   resultReason?: string;
+  /** Есть только у VK-сообществ с доступом к статистике. */
+  reach?: number | null;
+  bookmarks?: number | null;
+  hides?: number | null;
+  subscriptions?: number | null;
+  linkClicks?: number | null;
 };
 
 type Props = {
@@ -52,6 +63,15 @@ function getPostPreview(post: PostCardData) {
 
 export function PostCard({ post }: Props) {
   const preview = getPostPreview(post);
+  const extraMetrics = [
+    { key: 'reach', label: 'Охват', value: post.reach, icon: Users },
+    { key: 'bookmarks', label: 'Сохранения', value: post.bookmarks, icon: Bookmark },
+    { key: 'hides', label: 'Скрытия', value: post.hides, icon: EyeOff },
+    { key: 'linkClicks', label: 'Клики по ссылке', value: post.linkClicks, icon: MousePointerClick },
+    { key: 'subscriptions', label: 'Подписки с поста', value: post.subscriptions, icon: UserPlus }
+  // Охват показываем всегда, когда он есть; сохранения, скрытия, клики и подписки — только если они не нулевые:
+  // ряд из пяти нулей на каждой карточке читается хуже, чем отсутствие события.
+  ].filter((metric): metric is { key: string; label: string; value: number; icon: typeof Eye } => typeof metric.value === 'number' && (metric.key === 'reach' ? metric.value >= 0 : metric.value > 0));
   const isTelegram = post.group.platform === 'telegram';
   const PreviewIcon = preview?.type === 'video' ? Play : preview?.type === 'document' ? FileText : Image;
 
@@ -124,6 +144,15 @@ export function PostCard({ post }: Props) {
             {post.er === null ? 'Недоступно' : formatEr(post.er)}
           </span>
         </div>
+        {extraMetrics.length > 0 && <div className="post-card-extra">
+          {extraMetrics.map(({ key, label, value, icon: Icon }) => (
+            <span key={key} title={label} aria-label={`${label}: ${formatNumber(value)}`}>
+              <Icon size={13} />
+              <small>{label}</small>
+              <b>{formatNumber(value)}</b>
+            </span>
+          ))}
+        </div>}
       </div>
     </article>
   );

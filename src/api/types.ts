@@ -392,6 +392,13 @@ export type CommunityAnalytics = {
       er: number;
       isAd: boolean;
       contentType: string;
+      /** partnerStats: охват поста. */
+      reach?: number | null;
+      bookmarks?: number | null;
+      hides?: number | null;
+      subscriptions?: number | null;
+      /** Клики по ссылкам есть только у историй, у постов обычно null. */
+      linkClicks?: number | null;
     }>;
   };
   previous: {

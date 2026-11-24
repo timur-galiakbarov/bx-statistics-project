@@ -175,3 +175,49 @@ export function buildStatsSeries(period: AnalyticsPeriodRange, stats: PartnerSta
   }
   return result;
 }
+
+/** Статистика поста, которой нет в wall.get: охват, сохранения, скрытия, подписки. */
+export type PostContentStats = {
+  reach?: number | null;
+  bookmarks?: number | null;
+  hides?: number | null;
+  subscriptions?: number | null;
+  linkClicks?: number | null;
+};
+
+export type PartnerPostContentStats = {
+  id?: number;
+  reach?: { all?: number };
+  bookmarks?: number;
+  hides?: number;
+  subscriptions?: number;
+  link_clicks?: number;
+  group_visits?: number;
+};
+
+/**
+ * Дополняет посты статистикой partnerStats. Пост без данных получает null, а не ноль:
+ * у старых публикаций и у сообществ без доступа к статистике этих полей просто нет.
+ * Источников два — за период (охват, сохранения, скрытия) и за всё время (подписки, клики),
+ * поэтому поля одного поста склеиваются из обоих ответов.
+ */
+export function mergePostContentStats<T extends { id: number | string }>(posts: T[], ...collections: PartnerPostContentStats[][]): Array<T & PostContentStats> {
+  const byId = new Map<number, PartnerPostContentStats>();
+  for (const items of collections) {
+    for (const item of items) {
+      if (typeof item.id !== 'number' || !Number.isFinite(item.id)) continue;
+      byId.set(item.id, { ...byId.get(item.id), ...item });
+    }
+  }
+  return posts.map((post) => {
+    const stats = byId.get(Number(post.id));
+    return {
+      ...post,
+      reach: stats?.reach?.all ?? null,
+      bookmarks: stats?.bookmarks ?? null,
+      hides: stats?.hides ?? null,
+      subscriptions: stats?.subscriptions ?? null,
+      linkClicks: stats?.link_clicks ?? null
+    };
+  });
+}

@@ -57,6 +57,20 @@ test('preview keeps only the best post', () => {
   assert.equal(preview.preview.hiddenPosts, 3);
 });
 
+test('preview не отдаёт закрытые метрики поста из partnerStats', () => {
+  const rich = {
+    ...analytics,
+    wall: wall({ topPosts: [{ ...post(1, 'Фото', 3), reach: 987_654, bookmarks: 4_321, hides: 77, subscriptions: 55, linkClicks: 66 }] })
+  } as unknown as CommunityAnalyticsResult;
+  const preview = toAnalyticsPreview(rich);
+  const best = preview.wall.topPosts[0];
+  assert.equal('reach' in best, false);
+  assert.equal('bookmarks' in best, false);
+  assert.equal('linkClicks' in best, false);
+  const json = JSON.stringify(preview);
+  assert.ok(!json.includes('987654') && !json.includes('4321'));
+});
+
 test('preview keeps official VK growth but hides snapshot numbers', () => {
   const preview = toAnalyticsPreview(analytics, { total: 42, since: '2026-10-01', historySince: '2026-09-01' });
   assert.equal(preview.stats.growth, 5);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildDailySeries, buildStatsSeries, getAnalyticsPeriod, getPreviousAnalyticsPeriod, getWallCompleteness, sumPartnerStatsDays } from './analyticsUtils.js';
+import { buildDailySeries, buildStatsSeries, mergePostContentStats, getAnalyticsPeriod, getPreviousAnalyticsPeriod, getWallCompleteness, sumPartnerStatsDays } from './analyticsUtils.js';
 
 const at = (value: string) => Math.floor(new Date(`${value}T12:00:00`).getTime() / 1000);
 const localDate = (year: number, month: number, day: number) => new Date(year, month - 1, day, 12);
@@ -74,4 +74,29 @@ test('суммы partnerStats складывают подписки, отпис�
   ]);
 
   assert.deepEqual(sums, { subscribed: 2, unsubscribed: 4, views: 150, reach: 15, reachSubscribers: 5 });
+});
+
+test('статистика постов дополняет публикации по id, а без данных оставляет null', () => {
+  const posts = [
+    { id: 101, views: 500 },
+    { id: '102', views: 300 },
+    { id: 103, views: 100 }
+  ];
+  const merged = mergePostContentStats(posts, [
+    { id: 101, reach: { all: 1_200 }, bookmarks: 12, hides: 3, subscriptions: 5 },
+    { id: 102, reach: { all: 800 }, bookmarks: 0, hides: 0, subscriptions: 0, link_clicks: 0 },
+    { reach: { all: 999 } }
+  ]);
+  assert.deepEqual(merged[0], { id: 101, views: 500, reach: 1_200, bookmarks: 12, hides: 3, subscriptions: 5, linkClicks: null });
+  assert.deepEqual(merged[1], { id: '102', views: 300, reach: 800, bookmarks: 0, hides: 0, subscriptions: 0, linkClicks: 0 });
+  assert.deepEqual(merged[2], { id: 103, views: 100, reach: null, bookmarks: null, hides: null, subscriptions: null, linkClicks: null });
+});
+
+test('поля поста склеиваются из статистики за период и за всё время', () => {
+  const merged = mergePostContentStats(
+    [{ id: 7 }],
+    [{ id: 7, reach: { all: 2_420 }, bookmarks: 0, hides: 2 }],
+    [{ id: 7, subscriptions: 4, link_clicks: 8 }]
+  );
+  assert.deepEqual(merged[0], { id: 7, reach: 2_420, bookmarks: 0, hides: 2, subscriptions: 4, linkClicks: 8 });
 });

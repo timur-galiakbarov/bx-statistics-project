@@ -2934,6 +2934,13 @@ a {
   padding: 6px 8px;
 }
 
+/* Метрики поста из partnerStats: охват, сохранения, скрытия, клики, подписки. */
+.post-card-extra { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.post-card-extra span { align-items: center; background: #f7f9fb; border: 1px solid #eee; border-radius: 3px; color: #555; display: inline-flex; font-size: 12px; gap: 5px; padding: 5px 8px; }
+.post-card-extra span svg { color: #8a97a9; flex-shrink: 0; }
+.post-card-extra small { color: #8a97a9; font-size: 11px; }
+.post-card-extra b { font-size: 12px; font-weight: 700; }
+
 .load-more-button {
   justify-content: center;
   justify-self: center;

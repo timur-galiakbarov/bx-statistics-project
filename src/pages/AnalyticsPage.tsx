@@ -45,7 +45,7 @@ import { trackPreviewUnlock, type PreviewUnlockTarget } from '../utils/visit';
 
 type ChartMetric = 'views' | 'activity' | 'comments' | 'engagement';
 type AnalyticsSection = 'summary' | 'audience' | 'posts' | 'competitors';
-type AnalyticsPostSort = 'likes' | 'reposts' | 'comments' | 'actions' | 'views' | 'er' | 'date';
+type AnalyticsPostSort = 'likes' | 'reposts' | 'comments' | 'actions' | 'views' | 'er' | 'reach' | 'bookmarks' | 'date';
 type AnalyticsPostListFilter = 'all' | 'media' | 'photo' | 'video' | 'gif' | 'text';
 type AnalyticsPost = CommunityAnalytics['wall']['topPosts'][number];
 
@@ -82,6 +82,8 @@ const analyticsPostSortOptions: Array<{ key: AnalyticsPostSort; label: string }>
   { key: 'comments', label: 'Комментарии' },
   { key: 'actions', label: 'Все реакции' },
   { key: 'views', label: 'Просмотры' },
+  { key: 'reach', label: 'Охват поста' },
+  { key: 'bookmarks', label: 'Сохранения' },
   { key: 'er', label: 'ER' },
   { key: 'date', label: 'Дата' }
 ];
@@ -149,7 +151,7 @@ function getPostActions(post: AnalyticsPost) {
 function getAnalyticsPostSortValue(post: AnalyticsPost, sort: AnalyticsPostSort) {
   if (sort === 'date') return new Date(post.date).getTime();
   if (sort === 'actions') return getPostActions(post);
-  return post[sort];
+  return post[sort] ?? 0;
 }
 
 function matchesAnalyticsPostFilter(post: AnalyticsPost, filter: AnalyticsPostListFilter) {

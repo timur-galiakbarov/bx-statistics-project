@@ -1,11 +1,12 @@
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { isVkStatsUnavailableError, VkApiError, vkApiRequest } from './vkClient.js';
-import { fetchGeneralStatsByPeriod, fetchGeneralStatsTotal } from './partnerStatsClient.js';
+import { fetchContentStatsAllTime, fetchContentStatsByPeriod, fetchGeneralStatsByPeriod, fetchGeneralStatsTotal } from './partnerStatsClient.js';
 import { TtlCache } from './ttlCache.js';
 import {
   CUSTOM_PERIOD_TOO_LONG_MESSAGE,
   buildDailySeries,
   buildStatsSeries,
+  mergePostContentStats,
   getAnalyticsPeriod,
   getPreviousAnalyticsPeriod,
   getWallCompleteness,
@@ -465,6 +466,32 @@ async function loadCommunityAnalytics(
   const wall = { count: wallCount, items: wallPosts };
   const currentWallAvailable = getWallCompleteness(wall.count, wall.items, period);
   const previousWallAvailable = getWallCompleteness(wall.count, wall.items, previousPeriod);
+  const currentWallSummary = summarizeWall(wall, period.unixFrom, period.unixTo, groupInfo.members_count ?? 0, groupInfo.id);
+  const previousWallSummary = summarizeWall(wall, previousPeriod.unixFrom, previousPeriod.unixTo, groupInfo.members_count ?? 0, groupInfo.id);
+  // Охват, сохранения и скрытия поста есть только в partnerStats. Доступ проверяем по тому,
+  // что общая статистика уже ответила: is_admin у VK не всегда отражает права на статистику.
+  // Период даёт охват, сохранения и скрытия, а подписки и клики — только накопительная статистика.
+  const postIds = currentWallSummary.topPosts.map((post) => Number(post.id));
+  const [periodContentStats, allTimeContentStats] = !statsUnavailable && postIds.length
+    ? await Promise.all([
+        optionalVkRequest(warnings, 'Статистика по постам', fetchContentStatsByPeriod(accessToken, {
+          ownerId: groupInfo.id,
+          contentType: 'post',
+          contentIds: postIds,
+          unixFrom: period.unixFrom,
+          unixTo: period.unixTo
+        }), []),
+        optionalVkRequest(warnings, 'Подписки и клики с постов', fetchContentStatsAllTime(accessToken, {
+          ownerId: groupInfo.id,
+          contentType: 'post',
+          contentIds: postIds
+        }), [])
+      ])
+    : [[], []];
+  const wallWithContentStats = {
+    ...currentWallSummary,
+    topPosts: mergePostContentStats(currentWallSummary.topPosts, periodContentStats, allTimeContentStats)
+  };
   if (!currentWallAvailable || !previousWallAvailable) {
     warnings.push('Для выбранного сравнения VK не отдал достаточно публикаций из истории стены. Метрики неполной выборки не используются в сравнениях и выводах.');
   }
@@ -531,7 +558,7 @@ async function loadCommunityAnalytics(
       dayGroups: stats.dayGroups
     },
     wall: {
-      ...summarizeWall(wall, period.unixFrom, period.unixTo, groupInfo.members_count ?? 0, groupInfo.id),
+      ...wallWithContentStats,
       isComplete: currentWallAvailable
     },
     previous: {
@@ -547,7 +574,7 @@ async function loadCommunityAnalytics(
             dayGroups: previousStats.dayGroups
           },
       wall: {
-        ...summarizeWall(wall, previousPeriod.unixFrom, previousPeriod.unixTo, groupInfo.members_count ?? 0, groupInfo.id),
+        ...previousWallSummary,
         isComplete: previousWallAvailable,
         available: previousWallAvailable
       }

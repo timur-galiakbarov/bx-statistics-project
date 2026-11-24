@@ -4,6 +4,8 @@ import { Select } from '@alfalab/core-components-select';
 import { Tooltip } from '@alfalab/core-components-tooltip';
 import { useMemo, useState } from 'react';
 import type { CommunityAnalytics } from '../api/types';
+import { getChange, type MetricChange } from '../utils/change';
+import { AnalyticsKpi } from './AnalyticsKpi';
 import { PostCard } from './PostCard';
 import { SubscriberHistoryPanel } from './SubscriberHistoryPanel';
 import { PostViewsCurvePanel } from './PostViewsCurvePanel';
@@ -67,8 +69,24 @@ function sortValue(post: YoutubePost, sort: YoutubeSort) {
   return post[sort];
 }
 
-function YoutubeMetric({ label, value, caption }: { label: string; value: string; caption: string }) {
-  return <article className="analytics-kpi steady youtube-kpi"><div className="analytics-kpi-heading"><span>{label}</span></div><strong>{value}</strong><em>{caption}</em></article>;
+function YoutubeMetric({
+  label,
+  value,
+  caption,
+  change = null,
+  comparisonUnavailable = false,
+  tooltip,
+  isEr = false
+}: {
+  label: string;
+  value: string;
+  caption: string;
+  change?: MetricChange | null;
+  comparisonUnavailable?: boolean;
+  tooltip?: string;
+  isEr?: boolean;
+}) {
+  return <AnalyticsKpi caption={caption} change={change} className="youtube-kpi" comparisonUnavailable={comparisonUnavailable} isEr={isEr} label={label} tooltip={tooltip} value={value} />;
 }
 
 function YoutubePerformance({ posts }: { posts: YoutubePost[] }) {
@@ -98,6 +116,10 @@ export function YoutubeAnalyticsView({ analytics, section }: { analytics: Commun
   const viewsPerDay = median(posts.map(viewVelocity));
   const sortedPosts = useMemo(() => [...posts].sort((left, right) => sortValue(right, sort) - sortValue(left, sort)), [posts, sort]);
   const visiblePosts = sortedPosts.slice(0, visibleCount);
+  const previousWall = analytics.previous.wall;
+  // Пустой прошлый период: показываем «нет сравнения», а не проценты от нуля.
+  const hasPreviousVideos = previousWall.available && previousWall.periodPosts > 0;
+  const previousPeriodLabel = `${new Date(`${analytics.previous.period.dateFrom}T00:00:00`).toLocaleDateString('ru-RU')} — ${new Date(`${analytics.previous.period.dateTo}T00:00:00`).toLocaleDateString('ru-RU')}`;
   const headline = posts.length
     ? `Вышло ${number(posts.length)} видео — ${number(posts.length / periodDays * 7, 1)} в неделю. Типичное видео набирает ${number(viewsPerDay)} ${plural(Math.round(viewsPerDay), 'просмотр', 'просмотра', 'просмотров')} в день${views ? `, вовлечённость ${percent((likes + comments) / views * 100)} от просмотров` : ''}.`
     : null;
@@ -124,15 +146,15 @@ export function YoutubeAnalyticsView({ analytics, section }: { analytics: Commun
 
   return <>
     <div className="panel span-2 analytics-section">
-      <div className="section-title"><div><h2>Главное за период</h2><p>Видео, опубликованные с {new Date(`${analytics.period.dateFrom}T00:00:00`).toLocaleDateString('ru-RU')} по {new Date(`${analytics.period.dateTo}T00:00:00`).toLocaleDateString('ru-RU')}.</p></div><Tooltip content="Период отбирает видео по дате публикации. Метрики показывают их значения на момент обновления." position="left" targetTag="span" view="hint"><button className="youtube-data-info" type="button"><CircleHelp size={18} /> О данных</button></Tooltip></div>
+      <div className="section-title"><div><h2>Главное за период</h2><p>Видео, опубликованные с {new Date(`${analytics.period.dateFrom}T00:00:00`).toLocaleDateString('ru-RU')} по {new Date(`${analytics.period.dateTo}T00:00:00`).toLocaleDateString('ru-RU')}. Сравниваем с {previousPeriodLabel}.</p></div><Tooltip content="Период отбирает видео по дате публикации. Метрики показывают их значения на момент обновления." position="left" targetTag="span" view="hint"><button className="youtube-data-info" type="button"><CircleHelp size={18} /> О данных</button></Tooltip></div>
       {headline && <p className="analytics-headline">{headline}</p>}
       <div className="youtube-period-kpis">
-        <YoutubeMetric label="Опубликовано" value={number(posts.length)} caption={`${number(posts.length / periodDays * 7, 1)} видео в неделю`} />
-        <YoutubeMetric label="Просмотры" value={number(views)} caption={`Медиана — ${number(analytics.wall.medianViewsPerPost ?? 0)}`} />
+        <YoutubeMetric label="Опубликовано" value={number(posts.length)} caption={`${number(posts.length / periodDays * 7, 1)} видео в неделю`} change={getChange(posts.length, previousWall.periodPosts)} comparisonUnavailable={!hasPreviousVideos} tooltip="Сколько видео вышло за период. Сравнение с прошлым периодом той же длины." />
+        <YoutubeMetric label="Просмотры" value={number(views)} caption={`Медиана — ${number(analytics.wall.medianViewsPerPost ?? 0)}`} change={getChange(views, previousWall.views)} comparisonUnavailable={!hasPreviousVideos} tooltip="Просмотры видео, опубликованных в периоде, на момент загрузки. Свежие видео ещё набирают просмотры — сравнение смещено в пользу прошлого периода." />
         <YoutubeMetric label="Медиана просмотров в день" value={number(viewsPerDay, 1)} caption="С учётом возраста каждого видео" />
         <YoutubeMetric label="Лайки на 1 000 просмотров" value={views ? number(likes / views * 1000, 1) : '—'} caption={`${number(likes)} лайков всего`} />
         <YoutubeMetric label="Комментарии на 1 000 просмотров" value={views ? number(comments / views * 1000, 1) : '—'} caption={`${number(comments)} комментариев всего`} />
-        <YoutubeMetric label="Вовлечённость по просмотрам" value={views ? percent((likes + comments) / views * 100) : '—'} caption="Лайки и комментарии / просмотры" />
+        <YoutubeMetric label="Вовлечённость по просмотрам" value={views ? percent((likes + comments) / views * 100) : '—'} caption="Лайки и комментарии / просмотры" change={getChange(views ? (likes + comments) / views * 100 : null, previousWall.erAverage)} comparisonUnavailable={!hasPreviousVideos} isEr tooltip="Лайки и комментарии к просмотрам. Сравнение с прошлым периодом той же длины." />
       </div>
     </div>
     <div className="panel span-2 analytics-section youtube-channel-summary">

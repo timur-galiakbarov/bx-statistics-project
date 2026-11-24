@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { summarizeYoutubeVideos } from './youtubeAnalyticsService.js';
+import { hasYoutubeComparisonBase, summarizeYoutubeVideos } from './youtubeAnalyticsService.js';
 
 const period = {
   key: 'week' as const,
@@ -42,4 +42,12 @@ test('hidden subscriber and video counters remain unavailable instead of fabrica
   assert.equal(summary.availability.er, false);
   assert.equal(summary.topPosts[0].likes, null);
   assert.equal(summary.topPosts[0].er, null);
+});
+
+test('прошлый период без видео не даёт базы для сравнения', () => {
+  const empty = summarizeYoutubeVideos(channel, [], period);
+  assert.equal(empty.periodPosts, 0);
+  assert.equal(empty.erAverage, null);
+  assert.equal(hasYoutubeComparisonBase(empty), false);
+  assert.equal(hasYoutubeComparisonBase({ periodPosts: 3 }), true);
 });

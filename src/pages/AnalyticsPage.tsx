@@ -28,6 +28,7 @@ import { PlatformAccessLock } from '../components/AccessLock';
 import { AnalyticsPreviewView } from '../components/AnalyticsPreview';
 import { highlightReportPassOffer, isReportPassFor, ReportPassNotice } from '../components/ReportPass';
 import { AnalyticsLanding, type AnalyticsChannel, type AnalyticsPlatform, analyticsExamples } from '../components/AnalyticsLanding';
+import { AnalyticsKpi as KpiCard } from '../components/AnalyticsKpi';
 import { PlatformSegmentTitle } from '../components/PlatformSegmentTitle';
 import { PostCard } from '../components/PostCard';
 import { Tooltip } from '@alfalab/core-components-tooltip';
@@ -35,6 +36,7 @@ import { YoutubeAnalyticsView } from '../components/YoutubeAnalyticsView';
 import { SubscriberHistoryPanel } from '../components/SubscriberHistoryPanel';
 import { PostViewsCurvePanel } from '../components/PostViewsCurvePanel';
 import { TelegramPage } from './TelegramPage';
+import { getChange } from '../utils/change';
 import { formatDate, MAX_CUSTOM_PERIOD_DAYS } from '../utils/date';
 import { detectPlatform, normalizeVkQuery } from '../utils/sourceQuery';
 import { trackPreviewUnlock, type PreviewUnlockTarget } from '../utils/visit';
@@ -155,25 +157,6 @@ function matchesAnalyticsPostFilter(post: AnalyticsPost, filter: AnalyticsPostLi
   return post.media.some((item) => item.type === filter);
 }
 
-function getChange(current: number, previous: number | null) {
-  if (previous === null) return null;
-  const absolute = current - previous;
-  const percent = previous === 0 ? null : (absolute / Math.abs(previous)) * 100;
-  const state = absolute === 0 ? 'steady' : absolute > 0 ? 'up' : 'down';
-  return { absolute, percent, state };
-}
-
-function formatChange(change: ReturnType<typeof getChange>, unit = '', isEr = false) {
-  if (!change) return 'Нет сравнения';
-  if (change.absolute === 0) return 'Без изменений';
-  const relative = change.percent === null ? null : `${change.percent > 0 ? '+' : ''}${formatPercent(change.percent)}`;
-  // Абсолютное изменение ER в долях процента мало что говорит и округляется до «-0», поэтому для ER — только относительное.
-  if (isEr && relative) return `${relative} к прошлому периоду`;
-  const digits = Math.abs(change.absolute) < 10 && !Number.isInteger(change.absolute) ? 1 : 0;
-  const absolute = `${change.absolute > 0 ? '+' : ''}${formatNumber(change.absolute, isEr ? 3 : digits)}${isEr ? ' п. п.' : unit ? ` ${unit}` : ''}`;
-  return relative === null ? absolute : `${absolute} · ${relative}`;
-}
-
 function plural(value: number, one: string, few: string, many: string) {
   const mod10 = Math.abs(value) % 10;
   const mod100 = Math.abs(value) % 100;
@@ -189,42 +172,6 @@ function parseDayLabel(value: string) {
 
 function periodLabel(dateFrom: string, dateTo: string) {
   return `${formatDate(dateFrom)} — ${formatDate(dateTo)}`;
-}
-
-function KpiCard({
-  label,
-  value,
-  change,
-  tooltip,
-  unavailable = false,
-  comparisonUnavailable = false,
-  unit = '',
-  isEr = false
-}: {
-  label: string;
-  value: string;
-  change: ReturnType<typeof getChange>;
-  tooltip: string;
-  unavailable?: boolean;
-  comparisonUnavailable?: boolean;
-  unit?: string;
-  isEr?: boolean;
-}) {
-  const isUnavailable = unavailable || value === 'Недоступно';
-  const state = isUnavailable ? 'unavailable' : change?.state ?? 'steady';
-  const hasComparison = !isUnavailable && !comparisonUnavailable && change !== null;
-  const TrendIcon = state === 'up' ? TrendingUp : state === 'down' ? TrendingDown : null;
-
-  return (
-    <article className={`analytics-kpi ${hasComparison ? state : isUnavailable ? 'unavailable' : 'steady'}`}>
-      <div className="analytics-kpi-heading">
-        <span>{label}</span>
-        <Tooltip content={<div className="growth-help-content"><p>{tooltip}</p></div>} position="top" targetTag="span" view="hint"><button aria-label={`Что такое «${label}»`} className="growth-help-button kpi-help-button" type="button"><CircleHelp size={14} /></button></Tooltip>
-      </div>
-      <strong>{isUnavailable ? '—' : value}</strong>
-      <em>{hasComparison && TrendIcon && <TrendIcon size={14} aria-hidden="true" />}{isUnavailable ? 'Недоступно для этого источника' : comparisonUnavailable ? 'Нет достоверного сравнения' : formatChange(change, unit, isEr)}</em>
-    </article>
-  );
 }
 
 type AnalyticsPageProps = {

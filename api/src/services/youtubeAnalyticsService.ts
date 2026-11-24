@@ -95,6 +95,11 @@ export function summarizeYoutubeVideos(channel: YoutubeChannel, videos: YoutubeV
   };
 }
 
+/** Прошлый период пригоден для сравнения, только если в нём были видео: иначе дельта считалась бы от нуля. */
+export function hasYoutubeComparisonBase(wall: { periodPosts: number }): boolean {
+  return wall.periodPosts > 0;
+}
+
 export async function getYoutubeChannelAnalytics(
   channelId: string,
   periodValue: unknown,
@@ -146,7 +151,8 @@ export async function getYoutubeChannelAnalytics(
     previous: {
       period: { dateFrom: formatDate(previousPeriod.dateFrom), dateTo: formatDate(previousPeriod.dateTo) },
       stats: null,
-      wall: { ...previousWall, available: true }
+      // Нет видео в прошлом периоде — сравнивать не с чем: клиент покажет «нет сравнения», а не нули.
+      wall: { ...previousWall, available: hasYoutubeComparisonBase(previousWall) }
     },
     photos: { total: 0, period: 0, likes: 0, reposts: 0, comments: 0, views: 0 },
     videos: { total: channel.videoCount, period: wall.periodPosts, likes: wall.likes, reposts: 0, comments: wall.comments, views: wall.views },

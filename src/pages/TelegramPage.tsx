@@ -13,9 +13,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ApiError, apiGet } from '../api/client';
 import type { AnalyticsPeriod, ReportPassState, TelegramAnalytics } from '../api/types';
 import { PlatformAccessLock } from '../components/AccessLock';
+import { AnalyticsKpi } from '../components/AnalyticsKpi';
 import { TelegramAvatar, TelegramLogo } from '../components/TelegramLogo';
 import { SubscriberHistoryPanel } from '../components/SubscriberHistoryPanel';
 import { PostViewsCurvePanel } from '../components/PostViewsCurvePanel';
+import { getChange, type MetricChange } from '../utils/change';
 import { formatDate } from '../utils/date';
 
 type TelegramSection = 'summary' | 'audience' | 'posts' | 'competitors';
@@ -85,8 +87,24 @@ function postMediaIcon(type: TelegramPost['mediaType']) {
   return Send;
 }
 
-function TelegramKpi({ label, value, caption }: { label: string; value: string; caption: string }) {
-  return <article className="analytics-kpi steady telegram-analytics-kpi"><div className="analytics-kpi-heading"><span>{label}</span></div><strong>{value}</strong><em>{caption}</em></article>;
+function TelegramKpi({
+  label,
+  value,
+  caption,
+  change = null,
+  comparisonUnavailable = false,
+  tooltip,
+  isEr = false
+}: {
+  label: string;
+  value: string;
+  caption?: string;
+  change?: MetricChange | null;
+  comparisonUnavailable?: boolean;
+  tooltip?: string;
+  isEr?: boolean;
+}) {
+  return <AnalyticsKpi caption={caption} change={change} className="telegram-analytics-kpi" comparisonUnavailable={comparisonUnavailable} isEr={isEr} label={label} tooltip={tooltip} value={value} />;
 }
 
 function TelegramPostCard({ channel, post }: { channel: TelegramAnalytics['channel']; post: TelegramPost }) {
@@ -200,6 +218,11 @@ export function TelegramPage({ hasPaidAccess, activeTo, isAdmin = false, reportP
   }, [analytics]);
 
   const selectedPeriodLabel = analytics ? periodLabel(analytics) : '';
+  const previousSummary = analytics?.previous.summary ?? null;
+  const previousPeriod = analytics?.previous.period ?? null;
+  // Нет публикаций в прошлом периоде — сравнивать не с чем, показываем «нет сравнения», а не нули.
+  const hasPreviousPeriod = Boolean(previousSummary && previousSummary.posts > 0);
+  const previousPeriodLabel = previousPeriod ? `${formatDate(previousPeriod.dateFrom)} — ${formatDate(previousPeriod.dateTo)}` : null;
   const summaryHeadline = analytics?.summary.posts
     ? `Вышло ${number(analytics.summary.posts)} ${plural(analytics.summary.posts, 'публикация', 'публикации', 'публикаций')} — ${number(analytics.summary.postsPerWeek, 1)} в неделю. В среднем ${number(analytics.summary.averageViews)} ${plural(Math.round(analytics.summary.averageViews), 'просмотр', 'просмотра', 'просмотров')} на пост, ER ${percent(analytics.summary.engagementRate)} от просмотров.`
     : null;
@@ -241,7 +264,7 @@ export function TelegramPage({ hasPaidAccess, activeTo, isAdmin = false, reportP
     {analytics && !isLoading && <>
       {section === 'competitors' && <CompetitorsPanel platform="telegram" sourceId={analytics.channel.username} sourceName={analytics.channel.title} />}
       {section === 'summary' && <>
-        <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Главное за период</h2><p>{selectedPeriodLabel}. Telegram показывает текущие публичные счётчики без сравнения с предыдущим периодом.</p></div></div>{summaryHeadline && <p className="analytics-headline">{summaryHeadline}</p>}<div className="analytics-kpi-grid telegram-summary-kpis"><TelegramKpi label="Публикации" value={number(analytics.summary.posts)} caption={`${number(analytics.summary.postsPerWeek, 1)} в неделю`} /><TelegramKpi label="Просмотры" value={number(analytics.summary.views)} caption="Сумма просмотров публикаций" /><TelegramKpi label="Средние просмотры поста" value={number(analytics.summary.averageViews)} caption="На момент обновления" /><TelegramKpi label="Действия" value={number(analytics.summary.actions)} caption="Реакции, комментарии и пересылки" /><TelegramKpi label="ER по просмотрам" value={percent(analytics.summary.engagementRate)} caption="Доля действий от просмотров" /><TelegramKpi label="Реакции" value={number(analytics.summary.reactions)} caption="На публикациях периода" /><TelegramKpi label="Пересылки" value={number(analytics.summary.forwards)} caption="Публичный счётчик Telegram" /></div></div>
+        <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Главное за период</h2><p>{selectedPeriodLabel}. Сравниваем с прошлым периодом: {previousPeriodLabel ?? 'данных за прошлый период нет'}.</p></div></div>{summaryHeadline && <p className="analytics-headline">{summaryHeadline}</p>}<div className="analytics-kpi-grid telegram-summary-kpis"><TelegramKpi label="Публикации" value={number(analytics.summary.posts)} caption={`${number(analytics.summary.postsPerWeek, 1)} в неделю`} change={getChange(analytics.summary.posts, previousSummary?.posts ?? null)} comparisonUnavailable={!hasPreviousPeriod} tooltip="Публикации, вышедшие за период. Сравнение с прошлым периодом той же длины." /><TelegramKpi label="Просмотры" value={number(analytics.summary.views)} caption="Сумма просмотров публикаций" /><TelegramKpi label="Средние просмотры поста" value={number(analytics.summary.averageViews)} caption="На момент обновления" change={getChange(analytics.summary.averageViews, previousSummary?.averageViews ?? null)} comparisonUnavailable={!hasPreviousPeriod} tooltip="Просмотры на момент загрузки: свежие публикации ещё набирают аудиторию, поэтому сравнение с прошлым периодом смещено в его пользу." /><TelegramKpi label="Действия" value={number(analytics.summary.actions)} caption="Реакции, комментарии и пересылки" /><TelegramKpi label="ER по просмотрам" value={percent(analytics.summary.engagementRate)} caption="Доля действий от просмотров" change={getChange(analytics.summary.engagementRate, previousSummary?.engagementRate ?? null)} comparisonUnavailable={!hasPreviousPeriod} isEr tooltip="Реакции, комментарии и пересылки к просмотрам. Сравнение с прошлым периодом той же длины." /><TelegramKpi label="Реакции" value={number(analytics.summary.reactions)} caption="На публикациях периода" /><TelegramKpi label="Пересылки" value={number(analytics.summary.forwards)} caption="Публичный счётчик Telegram" /></div></div>
         <SubscriberHistoryPanel platform="telegram" sourceId={analytics.channel.username} period={analytics.period} currentSubscribers={analytics.channel.subscribers} />
         <PostViewsCurvePanel platform="telegram" sourceId={analytics.channel.username} subscribers={analytics.channel.subscribers} knownPosts={analytics.posts} />
         <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Динамика видимости</h2><p>Средние просмотры публикации по дате выхода.</p></div></div>{daily.some((day) => day.views !== null) ? <Suspense fallback={<div className="empty-state">Загружаем график...</div>}><AnalyticsChart kind="views" title="Средние просмотры поста по дате публикации" data={daily.map((day) => ({ date: day.date, current: day.views }))} currentPeriodLabel={selectedPeriodLabel} connectNulls={false} /></Suspense> : <div className="empty-state">Нет публикаций для графика. Выберите другой период.</div>}<p className="visibility-chart-note">Просмотры накопительные и показаны на момент загрузки данных. Свежие публикации ещё набирают аудиторию.</p></div>
@@ -254,7 +277,7 @@ export function TelegramPage({ hasPaidAccess, activeTo, isAdmin = false, reportP
         <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Комментарии</h2><p>Комментарии в привязанных обсуждениях Telegram.</p></div></div><div className="analytics-chart-item"><div className="analytics-chart-kpis"><TelegramKpi label="Всего комментариев" value={number(analytics.summary.comments)} caption="На публикациях периода" /><TelegramKpi label="Комментариев на пост" value={number(averageComments, 1)} caption="Среднее значение периода" /></div>{daily.some((day) => day.comments !== null) && <Suspense fallback={<div className="empty-state">Загружаем график...</div>}><AnalyticsChart kind="comments" title="Комментарии на публикацию по дням" data={daily.map((day) => ({ date: day.date, current: day.comments }))} currentPeriodLabel={selectedPeriodLabel} /></Suspense>}</div></div>
       </>}
       {section === 'posts' && <>
-        <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Показатели публикаций</h2><p>Публичные данные Telegram за выбранный период.</p></div></div><div className="analytics-kpi-grid posts-kpi-grid"><TelegramKpi label="Публикации" value={number(analytics.summary.posts)} caption={`${number(analytics.summary.postsPerWeek, 1)} в неделю`} /><TelegramKpi label="Просмотры постов" value={number(analytics.summary.views)} caption="Сумма по публикациям периода" /><TelegramKpi label="Средние просмотры" value={number(analytics.summary.averageViews)} caption="На одну публикацию" /></div></div>
+        <div className="panel span-2 analytics-section"><div className="section-title"><div><h2>Показатели публикаций</h2><p>Публичные данные Telegram за выбранный период.</p></div></div><div className="analytics-kpi-grid posts-kpi-grid"><TelegramKpi label="Публикации" value={number(analytics.summary.posts)} caption={`${number(analytics.summary.postsPerWeek, 1)} в неделю`} change={getChange(analytics.summary.posts, previousSummary?.posts ?? null)} comparisonUnavailable={!hasPreviousPeriod} tooltip="Публикации, вышедшие за период. Сравнение с прошлым периодом той же длины." /><TelegramKpi label="Просмотры постов" value={number(analytics.summary.views)} caption="Сумма по публикациям периода" /><TelegramKpi label="Средние просмотры" value={number(analytics.summary.averageViews)} caption="На одну публикацию" /></div></div>
         <div className="panel span-2 posts-section"><div className="section-title"><div><h2>Все публикации</h2><p>Показано {number(visiblePosts.length)} из {number(posts.length)}.</p></div></div><div className="posts-toolbar"><ArrowDownUp size={16} /><span>Сортировка</span><Select className="analytics-post-sort-select" client="desktop" options={sortOptions} optionsListWidth="content" selected={sort} size={40} onChange={({ selected }) => selected && setSort(selected.key as TelegramSort)} /></div><div className="post-filter-tabs">{filters.map((item) => <Button className={filter === item.key ? 'post-filter-button active' : 'post-filter-button'} client="desktop" key={item.key} size={40} type="button" view="secondary" onClick={() => setFilter(item.key)}>{item.label}</Button>)}</div>{posts.length ? <><div className="posts-list">{visiblePosts.map((post) => <TelegramPostCard channel={analytics.channel} key={post.id} post={post} />)}</div>{hiddenPosts > 0 && <Button className="load-more-button" client="desktop" size={40} type="button" view="secondary" onClick={() => setVisibleCount((count) => count + POSTS_PAGE_SIZE)}>Показать ещё {number(Math.min(hiddenPosts, POSTS_PAGE_SIZE))}</Button>}</> : <div className="empty-state">За выбранный период публикаций не найдено.</div>}</div>
       </>}
     </>}

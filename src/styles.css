@@ -2934,6 +2934,25 @@ a {
   padding: 6px 8px;
 }
 
+/* Рейтинг форматов: медианы по форматам, без рекламы. */
+.format-ranking-total { color: #77837b; font-size: 12px; white-space: nowrap; }
+.format-ranking-table { border: 1px solid #edf0ee; border-radius: 8px; margin-top: 14px; overflow: hidden; }
+.format-ranking-head, .format-ranking-row { align-items: center; display: grid; gap: 12px; grid-template-columns: minmax(0, 1.4fr) 80px 140px 90px 100px; padding: 9px 12px; }
+.format-ranking-head { background: #fafbfa; color: #77837b; font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+.format-ranking-head span:not(:first-child), .format-ranking-row span:not(.format-ranking-format) { text-align: right; }
+.format-ranking-row + .format-ranking-row { border-top: 1px solid #edf0ee; }
+.format-ranking-row.best { background: #f4faf4; }
+.format-ranking-row.best .format-ranking-format { color: #287d30; font-weight: 600; }
+.format-ranking-row.low { opacity: .65; }
+.format-ranking-format { color: #3c4858; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.format-ranking-format small { background: #eef0ef; border-radius: 999px; color: #77837b; font-size: 10px; font-weight: 400; margin-left: 8px; padding: 1px 7px; }
+.format-ranking-posts { color: #3c4858; font-size: 13px; }
+.format-ranking-posts small { color: #98a19b; display: block; font-size: 11px; }
+.format-ranking-views, .format-ranking-er { color: #3c4858; font-size: 13px; font-variant-numeric: tabular-nums; }
+.format-ranking-delta { color: #77837b; font-size: 12px; font-weight: 600; }
+.format-ranking-delta.up { color: #287d30; }
+.format-ranking-delta.down { color: #c62828; }
+
 /* Теплокарта «когда публиковать»: день недели × двухчасовое окно. */
 .posting-times-grid { display: grid; gap: 3px; grid-template-columns: 34px repeat(12, minmax(0, 1fr)); margin: 14px 0 10px; }
 .posting-times-corner { height: 18px; }

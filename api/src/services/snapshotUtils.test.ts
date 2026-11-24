@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildSubscriberHistory, chainedMedians, hoursSince, lockSnapshotGrowth, median, snapshotGrowthForPeriod, viewsAtHour, snapshotDateKey, snapshotHour, secondsUntilNextSnapshotDate, telegramUsernameFromSource } from './snapshotUtils.js';
+import { buildSubscriberHistory, summarizeChannelGrowth, chainedMedians, hoursSince, lockSnapshotGrowth, median, snapshotGrowthForPeriod, viewsAtHour, snapshotDateKey, snapshotHour, secondsUntilNextSnapshotDate, telegramUsernameFromSource } from './snapshotUtils.js';
 
 test('дата и час среза считаются по Москве', () => {
   assert.equal(snapshotDateKey(new Date('2026-10-02T21:30:00Z')), '2026-10-03');
@@ -110,4 +110,20 @@ test('пауза Telegram длится до полуночи по Москве',
   assert.equal(secondsUntilNextSnapshotDate(new Date('2026-10-10T20:00:00Z')), 3600);
   assert.equal(secondsUntilNextSnapshotDate(new Date('2026-10-10T21:00:00Z')), 86_400);
   assert.equal(secondsUntilNextSnapshotDate(new Date('2026-10-11T00:30:00Z')), 73_800);
+});
+
+test('прирост канала считается только по двум и более снимкам', () => {
+  assert.deepEqual(
+    summarizeChannelGrowth([
+      { date: '2026-10-04', subscribers: 149_000, totalViews: 67_744_912 },
+      { date: '2026-10-27', subscribers: 149_500, totalViews: 68_387_903 },
+      { date: '2026-11-24', subscribers: 150_100, totalViews: null }
+    ]),
+    { subscriberGrowth: 1_100, channelViewsGrowth: 642_991, snapshots: 3 }
+  );
+  assert.deepEqual(
+    summarizeChannelGrowth([{ date: '2026-10-04', subscribers: 100, totalViews: 5_000 }]),
+    { subscriberGrowth: null, channelViewsGrowth: null, snapshots: 1 }
+  );
+  assert.deepEqual(summarizeChannelGrowth([]), { subscriberGrowth: null, channelViewsGrowth: null, snapshots: 0 });
 });

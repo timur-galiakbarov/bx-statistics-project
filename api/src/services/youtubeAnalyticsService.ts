@@ -1,4 +1,6 @@
 import { CUSTOM_PERIOD_TOO_LONG_MESSAGE, getAnalyticsPeriod, getPreviousAnalyticsPeriod, buildDailySeries, type AnalyticsPeriodRange } from './analyticsUtils.js';
+import { ChannelSnapshotModel } from '../models/ChannelSnapshot.js';
+import { summarizeChannelGrowth } from './snapshotUtils.js';
 import { getYoutubeVideos, resolveYoutubeChannel, YoutubeApiError, type YoutubeChannel, type YoutubeVideo } from './youtubeClient.js';
 
 function formatDate(date: Date) {
@@ -116,6 +118,12 @@ export async function getYoutubeChannelAnalytics(
   }
   const previousPeriod = getPreviousAnalyticsPeriod(period);
   const channel = await resolveYoutubeChannel(channelId, forceRefresh);
+  // Прирост подписчиков и просмотров канала — только по снимкам: YouTube не даёт историю.
+  const snapshots = await ChannelSnapshotModel.find(
+    { platform: 'youtube', externalId: channel.id, date: { $gte: formatDate(period.dateFrom), $lte: formatDate(period.dateTo) } },
+    { _id: 0, date: 1, subscribers: 1, totalViews: 1 }
+  ).sort({ date: 1 }).lean();
+  const channelGrowth = summarizeChannelGrowth(snapshots);
   const videos = await getYoutubeVideos(channel, previousPeriod.dateFrom, period.dateTo, forceRefresh);
   const wall = summarizeYoutubeVideos(channel, videos, period);
   const previousWall = summarizeYoutubeVideos(channel, videos, previousPeriod);
@@ -146,7 +154,18 @@ export async function getYoutubeChannelAnalytics(
       publicVideoCount: channel.videoCount,
       isManagedByCurrentUser: false
     },
-    stats: { unavailable: true, growth: 0, subscribed: 0, unsubscribed: 0, views: 0, reach: 0, reachSubscribers: 0, dayGroups: [] },
+    stats: {
+      unavailable: true,
+      growth: 0,
+      subscribed: 0,
+      unsubscribed: 0,
+      views: 0,
+      reach: 0,
+      reachSubscribers: 0,
+      dayGroups: [],
+      subscriberGrowth: channelGrowth.subscriberGrowth,
+      channelViewsGrowth: channelGrowth.channelViewsGrowth
+    },
     wall,
     previous: {
       period: { dateFrom: formatDate(previousPeriod.dateFrom), dateTo: formatDate(previousPeriod.dateTo) },

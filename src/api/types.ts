@@ -333,6 +333,10 @@ export type CommunityAnalytics = {
     views: number;
     reach: number;
     reachSubscribers: number;
+    /** YouTube: прирост подписчиков за период по снимкам; null — снимков не хватает. */
+    subscriberGrowth?: number | null;
+    /** YouTube: прирост просмотров канала за период по снимкам. */
+    channelViewsGrowth?: number | null;
     dayGroups?: Array<{ date: string; dayIndex: number; reach: number | null; subscribed: number | null; unsubscribed: number | null }>;
   };
   wall: {

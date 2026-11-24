@@ -39,6 +39,18 @@ function percent(value: number) {
   return `${number(value, value > 0 && value < 0.1 ? 2 : 1)}%`;
 }
 
+function compactNumber(value: number) {
+  if (value >= 1_000_000) return `${number(value / 1_000_000, 1)} млн`;
+  if (value >= 10_000) return `${number(value / 1_000, 0)} тыс.`;
+  return number(value);
+}
+
+/** Прирост из снимков: известен только абсолют, процента от базы YouTube не даёт. */
+function growthChange(value: number | null | undefined): MetricChange | null {
+  if (typeof value !== 'number') return null;
+  return { absolute: value, percent: null, state: value === 0 ? 'steady' : value > 0 ? 'up' : 'down' };
+}
+
 function median(values: number[]) {
   if (!values.length) return 0;
   const sorted = [...values].sort((left, right) => left - right);
@@ -158,10 +170,28 @@ export function YoutubeAnalyticsView({ analytics, section }: { analytics: Commun
       </div>
     </div>
     <div className="panel span-2 analytics-section youtube-channel-summary">
-      <div className="section-title"><div><h2>Канал сейчас</h2><p>Основные публичные показатели канала.</p></div></div>
+      <div className="section-title"><div><h2>Канал сейчас</h2><p>Публичные показатели канала и прирост за период по снимкам Socstat.</p></div></div>
       <div className="youtube-channel-kpis">
-        <YoutubeMetric label="Просмотры канала" value={number(analytics.group.channelViewCount ?? 0)} caption="За всё время" />
+        <YoutubeMetric
+          caption={typeof analytics.stats.subscriberGrowth === 'number' ? 'сейчас' : 'снимков за период нет'}
+          change={growthChange(analytics.stats.subscriberGrowth)}
+          label="Подписчики"
+          tooltip="Сколько подписчиков у канала сейчас и на сколько их стало больше за выбранный период — по ночным снимкам Socstat."
+          value={analytics.group.membersCount === null ? 'Недоступно' : number(analytics.group.membersCount)}
+        />
+        <YoutubeMetric
+          caption={`${number(analytics.group.channelViewCount ?? 0)} за всё время`}
+          change={growthChange(analytics.stats.channelViewsGrowth)}
+          label="Просмотры канала"
+          tooltip="Накопительные просмотры канала: справа — сколько добавилось за выбранный период по снимкам."
+          value={compactNumber(analytics.group.channelViewCount ?? 0)}
+        />
         <YoutubeMetric label="Публичные видео" value={number(analytics.group.publicVideoCount ?? 0)} caption="Всего на канале" />
+        <YoutubeMetric
+          label="Средние просмотры на видео"
+          value={analytics.group.publicVideoCount ? compactNumber(Math.round((analytics.group.channelViewCount ?? 0) / analytics.group.publicVideoCount)) : '—'}
+          caption="За всё время"
+        />
       </div>
     </div>
     <SubscriberHistoryPanel platform="youtube" sourceId={analytics.group.id} period={analytics.period} currentSubscribers={analytics.group.membersCount} />

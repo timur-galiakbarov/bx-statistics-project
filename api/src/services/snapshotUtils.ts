@@ -105,6 +105,32 @@ export function telegramUsernameFromSource(source: { handle?: string | null; ext
 export type PostViewPoint = { hoursSincePublished: number; views: number | null };
 
 /** Hours for which the dashboard reports how many views a post gained. */
+export type ChannelGrowthPoint = {
+  date: string;
+  subscribers?: number | null;
+  totalViews?: number | null;
+};
+
+/**
+ * Прирост подписчиков и просмотров канала за период по снимкам. Нужны хотя бы две точки
+ * с известным значением: одна точка не даёт прироста, а неполные не подменяем нулём.
+ */
+export function summarizeChannelGrowth(points: ChannelGrowthPoint[]) {
+  const subscribers = points.filter((point) => typeof point.subscribers === 'number');
+  const views = points.filter((point) => typeof point.totalViews === 'number');
+  const growth = (list: ChannelGrowthPoint[], key: 'subscribers' | 'totalViews') => {
+    if (list.length < 2) return null;
+    const first = list[0][key] as number;
+    const last = list[list.length - 1][key] as number;
+    return last - first;
+  };
+  return {
+    subscriberGrowth: growth(subscribers, 'subscribers'),
+    channelViewsGrowth: growth(views, 'totalViews'),
+    snapshots: points.length
+  };
+}
+
 export const VIEW_MILESTONE_HOURS = [24, 48, 72] as const;
 // Without a snapshot before the milestone the curve starts from zero views at publication;
 // a linear guess is only acceptable while the next snapshot is close to the milestone.

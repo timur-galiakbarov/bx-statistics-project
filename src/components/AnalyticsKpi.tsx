@@ -1,6 +1,11 @@
 import { CircleHelp, TrendingDown, TrendingUp } from 'lucide-react';
 import { Tooltip } from '@alfalab/core-components-tooltip';
 import { formatChange, type MetricChange } from '../utils/change';
+import type { ReachBreakdown } from '../utils/reachBreakdown';
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('ru-RU').format(value);
+}
 
 type AnalyticsKpiProps = {
   label: string;
@@ -14,6 +19,8 @@ type AnalyticsKpiProps = {
   unit?: string;
   isEr?: boolean;
   className?: string;
+  /** Разбивка охвата VK на своих подписчиков и виральный. */
+  breakdown?: ReachBreakdown | null;
 };
 
 /**
@@ -30,7 +37,8 @@ export function AnalyticsKpi({
   comparisonUnavailable = false,
   unit = '',
   isEr = false,
-  className = ''
+  className = '',
+  breakdown = null
 }: AnalyticsKpiProps) {
   const isUnavailable = unavailable || value === 'Недоступно';
   const state = isUnavailable ? 'unavailable' : change?.state ?? 'steady';
@@ -54,6 +62,15 @@ export function AnalyticsKpi({
         )}
       </div>
       <strong>{isUnavailable ? '—' : value}</strong>
+      {breakdown && (
+        <>
+          <div aria-hidden="true" className="analytics-kpi-meter">
+            <span className="analytics-kpi-meter-subscribers" style={{ width: `${breakdown.subscribersShare * 100}%` }} />
+            <span className="analytics-kpi-meter-viral" style={{ width: `${breakdown.viralShare * 100}%` }} />
+          </div>
+          <div className="analytics-kpi-breakdown">свои {formatNumber(breakdown.subscribers)} · виральный {formatNumber(breakdown.viral)}</div>
+        </>
+      )}
       <em>{hasComparison && TrendIcon && <TrendIcon size={14} aria-hidden="true" />}{footer}</em>
     </article>
   );

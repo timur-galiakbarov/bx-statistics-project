@@ -2122,6 +2122,12 @@ a {
   line-height: 1.35;
 }
 
+/* Разбивка охвата VK: свои подписчики и виральный охват. */
+.analytics-kpi-meter { background: #eef2ee; border-radius: 999px; display: flex; height: 6px; overflow: hidden; }
+.analytics-kpi-meter-subscribers { background: #4caf50; }
+.analytics-kpi-meter-viral { background: #a5d6a7; }
+.analytics-kpi-breakdown { color: #77837b; font-size: 11px; font-weight: 400; line-height: 1.35; text-transform: none; }
+
 .insight-grid {
   display: grid;
   gap: 10px;

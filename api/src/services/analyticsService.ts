@@ -371,6 +371,8 @@ async function getStatsForPeriod(
     return {
       ...sums,
       reach: total.owner?.reach?.all ?? sums.reach,
+      // Дедуплицированный охват подписчиков точнее суммы дневных значений — она завышает.
+      reachSubscribers: total.owner?.reach?.subscribers ?? sums.reachSubscribers,
       dayGroups: buildStatsSeries(
         period,
         intervals.map((interval) => ({

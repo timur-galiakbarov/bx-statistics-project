@@ -1,4 +1,4 @@
-import type { Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { ActivityEventModel, type ActivityEventType } from '../models/ActivityEvent.js';
 import { PaymentModel } from '../models/Payment.js';
 import { SavedGroupModel } from '../models/SavedGroup.js';
@@ -14,6 +14,11 @@ const FEED_LIMIT = 180;
 const USER_FEED_LIMIT = 300;
 // В статистике и выгрузке для агента лента короче, чтобы не раздувать файл.
 const STATS_FEED_LIMIT = 60;
+// Карточка одного пользователя: списки ограничены, чтобы не тянуть всю историю.
+const USER_ACTIVITY_VISIT_LIMIT = 300;
+// Действий у активного пользователя заметно больше, чем визитов: 1000 хватает на несколько месяцев.
+const USER_ACTIVITY_EVENT_LIMIT = 1000;
+const USER_ACTIVITY_PAYMENT_LIMIT = 100;
 
 export type AdminActivitySummary = {
   users: number;
@@ -102,6 +107,62 @@ export type AdminActivityStats = {
 };
 
 export type AdminPaymentGroup = { payments: number; revenue: number };
+
+export type AdminUserActivityVisit = {
+  id: string;
+  startedAt: string;
+  lastSeenAt: string;
+  seconds: number;
+  pageViews: number;
+  actions: number;
+  entryPath?: string;
+  paths: string[];
+  device?: string;
+};
+
+/**
+ * Всё, что нужно, чтобы понять, пользуется человек сервисом или нет:
+ * визиты с просмотренными страницами, действия и оплаты.
+ */
+export type AdminUserActivity = {
+  user: {
+    id: string;
+    name: string;
+    vkId?: string;
+    bitrixId?: number;
+    registeredAt: string;
+    lastLoginAt: string | null;
+    lastActivityAt: string | null;
+    activeTo: string;
+    hasPaidPayment: boolean;
+  };
+  days: number;
+  /** Начало трекинга визитов: за более раннее время данных о поведении нет. */
+  trackingSince: string | null;
+  summary: {
+    period: { visits: number; pageViews: number; actions: number; activeDays: number };
+    allTime: {
+      visits: number;
+      pageViews: number;
+      actions: number;
+      activeDays: number;
+      firstVisitAt: string | null;
+      lastVisitAt: string | null;
+      lastActionAt: string | null;
+    };
+    payments: { count: number; revenue: number };
+  };
+  visits: AdminUserActivityVisit[];
+  events: Array<{ id: string; at: string; type: ActivityEventType; platform?: string; label?: string }>;
+  payments: Array<{
+    id: string;
+    amount: number;
+    period: string;
+    status: string;
+    createdAt: string;
+    paidAt: string | null;
+  }>;
+};
 
 type VisitRow = {
   userId: Types.ObjectId;
@@ -206,6 +267,171 @@ export async function getAdminActivityFeed(
       amount: payment.amount
     }))
   ].sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
+}
+
+/**
+ * Карточка пользователя для админки: визиты, действия и оплаты.
+ * Возвращает null, если пользователя нет.
+ */
+export async function getAdminUserActivity(
+  userId: string,
+  requestedDays: unknown,
+  now = new Date()
+): Promise<AdminUserActivity | null> {
+  const parsedDays = Number(requestedDays);
+  const days = Number.isFinite(parsedDays) ? Math.min(90, Math.max(7, Math.round(parsedDays))) : 30;
+  const periodStart = mskDayStart(now, -(days - 1));
+
+  const user = await UserModel.findById(userId)
+    .select({ legacy: 1, vkId: 1, firstName: 1, lastName: 1, createdAt: 1, lastLoginAt: 1, lastActivityAt: 1, activeTo: 1 })
+    .lean<{
+      _id: Types.ObjectId;
+      legacy?: { bitrixId?: number };
+      vkId?: string;
+      firstName?: string;
+      lastName?: string;
+      createdAt: Date;
+      lastLoginAt?: Date;
+      lastActivityAt?: Date;
+      activeTo: Date;
+    }>();
+
+  if (!user) return null;
+
+  const userObjectId = new Types.ObjectId(userId);
+  const noDayPlanOffer = { $ne: 'day_plan_offer_shown' } as const;
+
+  const [visits, periodVisitStats, allTimeVisitStats, events, periodActions, allTimeActions, payments, paidTotals, firstVisit] = await Promise.all([
+    VisitModel.find({ userId: userObjectId })
+      .sort({ startedAt: -1 })
+      .limit(USER_ACTIVITY_VISIT_LIMIT)
+      .select({ visitId: 1, startedAt: 1, lastSeenAt: 1, pageViews: 1, actions: 1, entryPath: 1, paths: 1, device: 1 })
+      .lean<Array<VisitRow & { visitId: string }>>(),
+    VisitModel.aggregate<{ visits: number; pageViews: number; activeDays: number }>([
+      { $match: { userId: userObjectId, startedAt: { $gte: periodStart } } },
+      {
+        $group: {
+          _id: null,
+          visits: { $sum: 1 },
+          pageViews: { $sum: '$pageViews' },
+          days: { $addToSet: { $dateToString: { format: '%Y-%m-%d', date: '$startedAt', timezone: 'Europe/Moscow' } } }
+        }
+      },
+      { $project: { _id: 0, visits: 1, pageViews: 1, activeDays: { $size: '$days' } } }
+    ]),
+    VisitModel.aggregate<{
+      visits: number;
+      pageViews: number;
+      activeDays: number;
+      firstVisitAt: Date;
+      lastVisitAt: Date;
+    }>([
+      { $match: { userId: userObjectId } },
+      {
+        $group: {
+          _id: null,
+          visits: { $sum: 1 },
+          pageViews: { $sum: '$pageViews' },
+          days: { $addToSet: { $dateToString: { format: '%Y-%m-%d', date: '$startedAt', timezone: 'Europe/Moscow' } } },
+          firstVisitAt: { $min: '$startedAt' },
+          lastVisitAt: { $max: '$startedAt' }
+        }
+      },
+      { $project: { _id: 0, visits: 1, pageViews: 1, activeDays: { $size: '$days' }, firstVisitAt: 1, lastVisitAt: 1 } }
+    ]),
+    ActivityEventModel.find({ userId: userObjectId, type: noDayPlanOffer })
+      .sort({ createdAt: -1 })
+      .limit(USER_ACTIVITY_EVENT_LIMIT)
+      .select({ userId: 1, type: 1, platform: 1, label: 1, createdAt: 1 })
+      .lean<EventRow[]>(),
+    ActivityEventModel.countDocuments({ userId: userObjectId, type: noDayPlanOffer, createdAt: { $gte: periodStart } }),
+    ActivityEventModel.aggregate<{ count: number; lastActionAt: Date | null }>([
+      { $match: { userId: userObjectId, type: noDayPlanOffer } },
+      { $group: { _id: null, count: { $sum: 1 }, lastActionAt: { $max: '$createdAt' } } }
+    ]),
+    PaymentModel.find({ userId: userObjectId })
+      .sort({ createdAt: -1 })
+      .limit(USER_ACTIVITY_PAYMENT_LIMIT)
+      .select({ amount: 1, period: 1, status: 1, createdAt: 1, paidAt: 1 })
+      .lean<Array<{
+        _id: Types.ObjectId;
+        amount: number;
+        period: string;
+        status: string;
+        createdAt: Date;
+        paidAt?: Date;
+      }>>(),
+    PaymentModel.aggregate<{ count: number; revenue: number }>([
+      { $match: { userId: userObjectId, status: 'paid', amount: { $gt: 0 } } },
+      { $group: { _id: null, count: { $sum: 1 }, revenue: { $sum: '$amount' } } }
+    ]),
+    VisitModel.findOne().sort({ startedAt: 1 }).select({ startedAt: 1 }).lean<{ startedAt: Date } | null>()
+  ]);
+
+  const period = periodVisitStats[0];
+  const allTimeVisits = allTimeVisitStats[0];
+  const actions = allTimeActions[0];
+  const paid = paidTotals[0] ?? { count: 0, revenue: 0 };
+
+  return {
+    user: {
+      id: user._id.toString(),
+      name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени',
+      vkId: user.vkId,
+      bitrixId: user.legacy?.bitrixId,
+      registeredAt: user.createdAt.toISOString(),
+      lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+      lastActivityAt: user.lastActivityAt?.toISOString() ?? null,
+      activeTo: user.activeTo.toISOString().slice(0, 10),
+      hasPaidPayment: paid.count > 0
+    },
+    days,
+    trackingSince: firstVisit?.startedAt.toISOString() ?? null,
+    summary: {
+      period: {
+        visits: period?.visits ?? 0,
+        pageViews: period?.pageViews ?? 0,
+        actions: periodActions,
+        activeDays: period?.activeDays ?? 0
+      },
+      allTime: {
+        visits: allTimeVisits?.visits ?? 0,
+        pageViews: allTimeVisits?.pageViews ?? 0,
+        actions: actions?.count ?? 0,
+        activeDays: allTimeVisits?.activeDays ?? 0,
+        firstVisitAt: allTimeVisits?.firstVisitAt?.toISOString() ?? null,
+        lastVisitAt: allTimeVisits?.lastVisitAt?.toISOString() ?? null,
+        lastActionAt: actions?.lastActionAt?.toISOString() ?? null
+      },
+      payments: { count: paid.count, revenue: paid.revenue }
+    },
+    visits: visits.map((visit) => ({
+      id: visit.visitId,
+      startedAt: visit.startedAt.toISOString(),
+      lastSeenAt: visit.lastSeenAt.toISOString(),
+      seconds: Math.max(0, Math.round((visit.lastSeenAt.getTime() - visit.startedAt.getTime()) / 1000)),
+      pageViews: visit.pageViews ?? 0,
+      actions: visit.actions ?? 0,
+      entryPath: visit.entryPath,
+      paths: visit.paths ?? [],
+      device: visit.device
+    })),
+    events: events.map((event) => ({
+      id: event._id.toString(),
+      at: event.createdAt.toISOString(),
+      type: event.type,
+      platform: event.platform,
+      label: event.label
+    })),
+    payments: payments.map((payment) => ({
+      id: payment._id.toString(),
+      amount: payment.amount,
+      period: payment.period,
+      status: payment.status,
+      createdAt: payment.createdAt.toISOString(),
+      paidAt: payment.paidAt?.toISOString() ?? null
+    }))
+  };
 }
 
 export async function getAdminActivityStats(requestedDays: unknown, now = new Date()): Promise<AdminActivityStats> {

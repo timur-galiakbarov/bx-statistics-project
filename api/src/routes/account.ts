@@ -30,7 +30,7 @@ import { VkApiError, vkApiRequest } from '../services/vkClient.js';
 import { DomainError } from '../errors/domainError.js';
 import { ComparisonCollectionModel } from '../models/ComparisonCollection.js';
 import { parseVisitId, recordVisitHit, trackActivity } from '../services/activityTracking.js';
-import { getAdminActivityFeed, getAdminActivityStats, mskDayKey } from '../services/activityStatsService.js';
+import { getAdminActivityFeed, getAdminActivityStats, getAdminUserActivity, mskDayKey } from '../services/activityStatsService.js';
 import { getAdminDayPlanOfferStats } from '../services/dayPlanOfferStatsService.js';
 import { getAdminExport } from '../services/adminExportService.js';
 import { SurveyResponseModel, surveyOutcomes, surveyPlaces } from '../models/SurveyResponse.js';
@@ -659,6 +659,24 @@ accountRouter.get('/admin/users/active', requireUser, async (req, res, next) => 
 
   try {
     res.json({ success: true, data: await getActiveAdminUsers(300) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+accountRouter.get('/admin/users/:userId/activity', requireUser, requireAdmin, async (req, res, next) => {
+  if (!isValidObjectId(req.params.userId)) {
+    res.status(400).json({ success: false, error: 'INVALID_USER_ID' });
+    return;
+  }
+
+  try {
+    const activity = await getAdminUserActivity(req.params.userId, req.query.days);
+    if (!activity) {
+      res.status(404).json({ success: false, error: 'USER_NOT_FOUND' });
+      return;
+    }
+    res.json({ success: true, data: activity });
   } catch (error) {
     next(error);
   }

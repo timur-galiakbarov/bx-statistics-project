@@ -702,6 +702,57 @@ export type AdminActiveUsers = {
   users: Array<RecentAdminUser & { hasPaidPayment: boolean }>;
 };
 
+export type AdminUserActivityVisit = {
+  id: string;
+  startedAt: string;
+  lastSeenAt: string;
+  seconds: number;
+  pageViews: number;
+  actions: number;
+  entryPath?: string;
+  paths: string[];
+  device?: string;
+};
+
+export type AdminUserActivity = {
+  user: {
+    id: string;
+    name: string;
+    vkId?: string;
+    bitrixId?: number;
+    registeredAt: string;
+    lastLoginAt: string | null;
+    lastActivityAt: string | null;
+    activeTo: string;
+    hasPaidPayment: boolean;
+  };
+  days: number;
+  trackingSince: string | null;
+  summary: {
+    period: { visits: number; pageViews: number; actions: number; activeDays: number };
+    allTime: {
+      visits: number;
+      pageViews: number;
+      actions: number;
+      activeDays: number;
+      firstVisitAt: string | null;
+      lastVisitAt: string | null;
+      lastActionAt: string | null;
+    };
+    payments: { count: number; revenue: number };
+  };
+  visits: AdminUserActivityVisit[];
+  events: Array<{ id: string; at: string; type: string; platform?: string; label?: string }>;
+  payments: Array<{
+    id: string;
+    amount: number;
+    period: string;
+    status: string;
+    createdAt: string;
+    paidAt: string | null;
+  }>;
+};
+
 export type PostViewCurves = {
   days: number;
   /** Сколько постов попало в ночные срезы за период. */

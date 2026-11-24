@@ -60,12 +60,14 @@ export const actionLabels: Record<string, string> = {
   payment: 'Оплатил'
 };
 
-const pageLabels: Record<string, string> = {
+export const pageLabels: Record<string, string> = {
   '/dashboard': 'Главная',
   '/analytics': 'Аналитика',
   '/compare': 'Сравнение',
   '/posts': 'Публикации',
   '/placements': 'Подбор площадок',
+  '/ad-check': 'Проверка канала',
+  '/content': 'Контент',
   '/account': 'Профиль и оплата',
   '/admin': 'Админка'
 };

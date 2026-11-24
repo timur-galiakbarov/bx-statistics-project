@@ -25,6 +25,7 @@ import { AdminActivityFeed } from '../components/AdminActivityFeed';
 import { AdminActivityStats } from '../components/AdminActivityStats';
 import { AdminFeatureFlags } from '../components/AdminFeatureFlags';
 import { AdminServerMetrics } from '../components/AdminServerMetrics';
+import { AdminUserActivityModal } from '../components/AdminUserActivityModal';
 
 type Props = {
   user: User;
@@ -158,6 +159,7 @@ export function AdminPage({ user, onAccountChanged }: Props) {
   const [accessDates, setAccessDates] = useState<Record<string, string>>({});
   const [accessModalUser, setAccessModalUser] = useState<RecentAdminUser | null>(null);
   const [paymentsModalUser, setPaymentsModalUser] = useState<RecentAdminUser | null>(null);
+  const [activityModalUser, setActivityModalUser] = useState<{ id: string; name: string } | null>(null);
   const [userPayments, setUserPayments] = useState<AdminUserPaymentItem[]>([]);
   const [userPaymentsError, setUserPaymentsError] = useState<string | null>(null);
   const [isUserPaymentsLoading, setIsUserPaymentsLoading] = useState(false);
@@ -726,7 +728,17 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             </div>
             {displayedActiveUsers.map((activeUser) => (
               <div className="table-row admin-active-users-row" key={activeUser.id}>
-                <span className="admin-user-name" data-label="Пользователь"><strong>{activeUser.name}</strong>{activeUser.hasLegacyPricing && <span className="admin-pricing-badge" title="Платил раньше: на странице оплаты видит 499 / 899 / 1 999 ₽">Старые цены</span>}</span>
+                <span className="admin-user-name" data-label="Пользователь">
+                  <button
+                    className="admin-user-name-button"
+                    title="Показать действия пользователя"
+                    type="button"
+                    onClick={() => setActivityModalUser({ id: activeUser.id, name: activeUser.name })}
+                  >
+                    <strong>{activeUser.name}</strong>
+                  </button>
+                  {activeUser.hasLegacyPricing && <span className="admin-pricing-badge" title="Платил раньше: на странице оплаты видит 499 / 899 / 1 999 ₽">Старые цены</span>}
+                </span>
                 <span data-label="VK ID">{activeUser.vkId ?? '—'}</span>
                 <VkManagementCell user={activeUser} />
                 <span data-label="Последняя активность">{formatAdminDateTime(activeUser.lastActivityAt)}</span>
@@ -782,7 +794,14 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             {recentUsers.map((user) => (
               <div className="table-row admin-recent-users-row" key={user.id}>
                 <span className="admin-user-name" data-label="Пользователь">
-                  <strong>{user.name}</strong>
+                  <button
+                    className="admin-user-name-button"
+                    title="Показать действия пользователя"
+                    type="button"
+                    onClick={() => setActivityModalUser({ id: user.id, name: user.name })}
+                  >
+                    <strong>{user.name}</strong>
+                  </button>
                   {user.hasLegacyPricing && <span className="admin-pricing-badge" title="Платил раньше: на странице оплаты видит 499 / 899 / 1 999 ₽">Старые цены</span>}
                 </span>
                 <VkManagementCell user={user} />
@@ -815,6 +834,9 @@ export function AdminPage({ user, onAccountChanged }: Props) {
                     </button>
                     {openActionMenuUserId === user.id && (
                       <span className="admin-user-actions-menu" role="menu">
+                        <button type="button" role="menuitem" onClick={() => { setOpenActionMenuUserId(null); setActivityModalUser({ id: user.id, name: user.name }); }}>
+                          Действия
+                        </button>
                         <button type="button" role="menuitem" onClick={() => { setOpenActionMenuUserId(null); openAccessModal(user); }}>
                           Изменить доступ
                         </button>
@@ -943,7 +965,18 @@ export function AdminPage({ user, onAccountChanged }: Props) {
               <div className="table-row admin-payment-row" key={payment.id}>
                 <span>{formatAdminDate(payment.createdAt)}</span>
                 <span>
-                  <strong>{payment.user?.name ?? 'Пользователь не найден'}</strong>
+                  {payment.user ? (
+                    <button
+                      className="admin-user-name-button"
+                      title="Показать действия пользователя"
+                      type="button"
+                      onClick={() => setActivityModalUser({ id: payment.user!.id, name: payment.user!.name })}
+                    >
+                      <strong>{payment.user.name}</strong>
+                    </button>
+                  ) : (
+                    <strong>Пользователь не найден</strong>
+                  )}
                   {payment.user ? (
                     <>
                       <small>id: {payment.user.id}</small>
@@ -1095,6 +1128,14 @@ export function AdminPage({ user, onAccountChanged }: Props) {
             )}
           </section>
         </div>
+      )}
+
+      {activityModalUser && (
+        <AdminUserActivityModal
+          fallbackName={activityModalUser.name}
+          userId={activityModalUser.id}
+          onClose={() => setActivityModalUser(null)}
+        />
       )}
 
       {isCreateUserModalOpen && (

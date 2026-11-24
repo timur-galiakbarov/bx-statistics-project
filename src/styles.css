@@ -1514,6 +1514,33 @@ a {
 .admin-payment-origin.granted { background: #fff3dc; color: #946200; }
 
 .admin-user-name { align-items: flex-start; display: flex; flex-direction: column; gap: 4px; }
+
+.admin-user-name-button {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.admin-user-name-button strong {
+  border-bottom: 1px dashed #a9cdb0;
+}
+
+.admin-user-name-button:hover strong,
+.admin-user-name-button:focus-visible strong {
+  border-bottom-color: currentColor;
+  color: #2f7d36;
+  text-decoration: underline;
+}
+
+.admin-user-name-button:focus-visible {
+  outline: 2px solid #4caf50;
+  outline-offset: 2px;
+}
+
 .admin-pricing-badge {
   background: #eef0ff;
   border-radius: 999px;
@@ -3368,6 +3395,162 @@ a {
 
 .admin-access-modal p.admin-user-payments-total {
   margin-top: 14px;
+}
+
+.admin-user-activity-modal {
+  max-height: calc(100dvh - 40px);
+  max-width: 920px;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.admin-user-activity-user {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-user-activity-modal .debug-error .secondary-button {
+  margin-top: 10px;
+}
+
+.admin-user-activity-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.admin-user-activity-toolbar .admin-active-users-filters {
+  margin-bottom: 0;
+}
+
+.admin-user-activity-facts {
+  border-top: 1px solid #e5ebe7;
+  display: grid;
+  gap: 12px 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.admin-user-activity-facts div {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-user-activity-facts span {
+  color: #687684;
+  font-size: 12px;
+}
+
+.admin-user-activity-facts strong {
+  color: #3c4858;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.admin-access-modal h3.admin-user-activity-heading {
+  color: #3c4858;
+  font-size: 15px;
+  margin: 20px 0 8px;
+}
+
+.admin-user-activity-summary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-user-activity-summary div {
+  background: #f7f9f8;
+  border: 1px solid #e5ebe7;
+  border-radius: 6px;
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+}
+
+.admin-user-activity-summary span {
+  color: #687684;
+  font-size: 12px;
+}
+
+.admin-user-activity-summary strong {
+  color: #3c4858;
+  font-size: 20px;
+}
+
+.admin-access-modal p.admin-user-activity-alltime,
+.admin-access-modal p.admin-user-activity-payments-total {
+  margin-top: 10px;
+}
+
+.admin-access-modal p.admin-user-activity-note {
+  color: #946200;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.admin-user-activity-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-user-activity-list {
+  border-top: 1px solid #e5ebe7;
+  list-style: none;
+  margin: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.admin-user-activity-list li {
+  border-bottom: 1px solid #e5ebe7;
+  display: grid;
+  gap: 3px;
+  padding: 10px 0;
+}
+
+.admin-user-activity-list time {
+  color: #687684;
+  font-size: 12px;
+}
+
+.admin-user-activity-list strong {
+  color: #3c4858;
+  font-size: 13px;
+}
+
+.admin-user-activity-list small {
+  color: #687684;
+  display: block;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.admin-user-activity-payments {
+  margin-top: 4px;
+}
+
+.admin-user-activity-payments .empty-state {
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .admin-user-activity-facts,
+  .admin-user-activity-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-activity-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .admin-create-user-form {

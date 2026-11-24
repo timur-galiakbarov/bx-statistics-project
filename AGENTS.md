@@ -5,4 +5,5 @@
 - @.agents/rules/approve-before-code.md — не начинать изменение кода без явного аппрува пользователя.
 - @.agents/rules/feature-docs.md — описывать каждую фичу в `docs/features/`.
 - @.agents/rules/push-to-master.md — никогда не пушить в `master` без согласия: пуш сразу уходит на прод.
+- @.agents/rules/server-access.md — не заходить на сервер (SSH, `docker exec`) без явного согласия.
 - @.agents/rules/socstat-status.md — на вопросы о состоянии сервиса отвечать по свежей выгрузке аналитики.

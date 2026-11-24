@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Socstat — growth-cockpit · интерактивный макет</title>
+<style>
+  :root{
+    --bg:#eef1ee; --panel:#fff; --ink:#20332f; --text:#334155; --muted:#6b7770; --muted-2:#8b978f;
+    --line:#e0e6e1; --line-soft:#edf1ee;
+    --green:#21815f; --green-dark:#1a6a4d; --green-soft:#eaf4ee; --green-line:#cfe4d8;
+    --vk:#0077ff; --tg:#2aabee; --mp:#6b5bd2; --mp-soft:#f1efff;
+    --amber:#b7791f; --amber-soft:#fff4df; --blue:#2563eb; --blue-soft:#e8f0ff;
+    --red:#b42318; --red-soft:#fff0ef;
+    --shadow:0 10px 30px rgba(35,71,44,.06);
+    font-family:Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--text);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);min-height:100vh}
+  button,input,select,textarea{font:inherit}
+  button{cursor:pointer}
+  a{color:inherit}
+  .app{display:grid;grid-template-columns:264px minmax(0,1fr);min-height:100vh}
+  /* sidebar */
+  .sidebar{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh;padding:16px 13px 14px;position:sticky;top:0;overflow:auto}
+  .brand{display:flex;align-items:center;gap:10px;padding:2px 6px 15px;border-bottom:1px solid var(--line-soft)}
+  .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(140deg,#2a9d74,#186a4c);color:#fff;display:grid;place-items:center;font-weight:700;font-size:17px;box-shadow:0 6px 14px -6px rgba(33,129,95,.5)}
+  .brand-name{font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--ink)}
+  .brand-sub{font-size:11px;color:var(--muted)}
+  .project-wrap{position:relative;margin-top:14px}
+  .project-btn{width:100%;display:flex;align-items:center;gap:9px;background:#f7faf8;border:1px solid var(--line);border-radius:11px;padding:9px 10px;text-align:left}
+  .project-btn:hover{background:#f1f7f3}
+  .project-avatar{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:700;flex:none}
+  .project-meta{display:grid;gap:1px;min-width:0}
+  .project-meta strong{font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .project-meta small{font-size:10.5px;color:var(--muted)}
+  .project-btn .chev{margin-left:auto;color:var(--muted-2);flex:none}
+  .project-menu{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px rgba(20,40,30,.14);padding:5px;z-index:20}
+  .project-option{display:flex;align-items:center;gap:9px;width:100%;border:0;background:none;padding:8px;border-radius:8px;text-align:left}
+  .project-option:hover{background:#f5f8f6}
+  .project-option .project-avatar{width:26px;height:26px;border-radius:7px;font-size:10px}
+  .project-option span{display:grid;gap:1px}
+  .project-option strong{font-size:12px;color:var(--ink)}
+  .project-option small{font-size:10px;color:var(--muted)}
+  .nav{display:grid;gap:2px;margin-top:14px}
+  .nav button{display:flex;align-items:center;gap:10px;border:0;background:none;border-radius:9px;padding:9px 10px;color:var(--text);font-size:13px;text-align:left;min-height:38px}
+  .nav button:hover{background:#f5f8f6}
+  .nav button.active{background:var(--green-soft);color:var(--green-dark);font-weight:600}
+  .nav .nav-icon{color:#93a29a;display:flex;flex:none}
+  .nav button.active .nav-icon{color:var(--green)}
+  .nav-badge{margin-left:auto;background:#eef2ef;color:#5d6b63;border-radius:999px;font-size:10px;padding:1px 7px;font-weight:600}
+  .nav button.active .nav-badge{background:#d5e9dd;color:var(--green-dark)}
+  .side-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft)}
+  .side-user{display:flex;align-items:center;gap:9px;padding:6px}
+  .side-user .avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(145deg,#dfeee2,#c8e2cd);color:#2f6c38;display:grid;place-items:center;font-size:11px;font-weight:700}
+  .side-user span{display:grid;gap:1px}
+  .side-user strong{font-size:12px;color:var(--ink)}
+  .side-user small{font-size:10px;color:var(--muted)}
+  /* main */
+  .main{min-width:0}
+  .topbar{height:60px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 26px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.72);backdrop-filter:blur(8px);position:sticky;top:0;z-index:10}
+  .topbar-left{display:flex;align-items:center;gap:10px;min-width:0}
+  .crumb{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .crumb b{color:var(--ink);font-weight:600}
+  .demo-pill{display:inline-flex;align-items:center;gap:6px;background:var(--amber-soft);color:#8a5a00;border:1px solid #f2dfb6;border-radius:999px;font-size:10.5px;font-weight:600;padding:3px 9px;white-space:nowrap}
+  .demo-dot{width:6px;height:6px;border-radius:50%;background:#d79a2b}
+  .topbar-right{display:flex;align-items:center;gap:10px}
+  .date-chip{font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 10px;white-space:nowrap}
+  .avatar-sm{width:30px;height:30px;border-radius:50%;background:linear-gradient(145deg,#dfeee2,#c8e2cd);color:#2f6c38;display:grid;place-items:center;font-size:11px;font-weight:700}
+  .view{max-width:1280px;margin:0 auto;padding:24px 26px 52px}
+  /* page head */
+  .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:22px;margin-bottom:18px}
+  .eyebrow{display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--green-dark);margin-bottom:6px}
+  h1{margin:0;font-size:27px;line-height:1.18;letter-spacing:-.6px;color:var(--ink);font-weight:600}
+  .sub{margin:7px 0 0;color:var(--muted);font-size:13.5px;line-height:1.55;max-width:760px}
+  .head-actions{display:flex;gap:8px;align-items:center;flex:none;padding-top:4px}
+  /* buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:9px;padding:9px 13px;font-size:13px;font-weight:500;border:1px solid transparent;min-height:36px;white-space:nowrap}
+  .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .btn.primary:hover{background:var(--green-dark)}
+  .btn.ghost{background:#fff;border-color:var(--line);color:var(--text)}
+  .btn.ghost:hover{background:#f7faf8}
+  .btn.soft{background:var(--green-soft);border-color:var(--green-line);color:var(--green-dark)}
+  .btn.soft:hover{background:#e0f0e7}
+  .btn.small{padding:6px 10px;font-size:12px;min-height:30px;border-radius:8px}
+  .btn:disabled{opacity:.55;cursor:default}
+  /* cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px 20px;box-shadow:var(--shadow)}
+  .card h3{margin:0;font-size:15px;color:var(--ink);font-weight:600}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
+  .card-head .hint{font-size:11.5px;color:var(--muted)}
+  .grid{display:grid;gap:14px}
+  .two-col{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px}
+  .three-col{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  /* hero */
+  .hero{border:1px solid var(--green-line);border-radius:16px;background:radial-gradient(circle at 92% 0%,rgba(191,227,198,.5),transparent 38%),linear-gradient(135deg,#fbfdfb,#f2f9f4);padding:20px 22px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:20px;align-items:center;margin-bottom:14px}
+  .hero h2{margin:0;font-size:21px;letter-spacing:-.35px;color:var(--ink);font-weight:600}
+  .hero p{margin:7px 0 0;color:#5f7068;font-size:13px;line-height:1.5}
+  .hero-side{background:rgba(255,255,255,.8);border:1px solid #dcebe1;border-radius:13px;padding:13px 15px}
+  .hero-side small{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;font-weight:700}
+  .hero-side strong{display:block;font-size:24px;color:var(--ink);letter-spacing:-.5px;margin:3px 0 1px}
+  .hero-side span{font-size:11.5px;color:var(--muted)}
+  .hero-side a{display:inline-block;margin-top:8px;font-size:12px;color:var(--green-dark);text-decoration:none;font-weight:600}
+  .hero-side a:hover{text-decoration:underline}
+  /* loop */
+  .loop-wrap{margin:4px 0 16px}
+  .loop-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin:0 0 9px}
+  .loop{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:26px}
+  .loop-step{position:relative;background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 14px;text-align:left;min-height:98px;display:flex;flex-direction:column;gap:4px}
+  .loop-step:hover{border-color:#c9ded2;box-shadow:var(--shadow)}
+  .loop-step:not(:last-child)::after{content:"→";position:absolute;right:-20px;top:50%;transform:translateY(-50%);color:#b7c4bc;font-size:15px}
+  .loop-step .num{position:absolute;top:11px;right:12px;font-size:10px;color:#aab6ae;font-weight:700}
+  .loop-step .loop-icon{color:var(--green);display:flex;margin-bottom:3px}
+  .loop-step strong{font-size:12.5px;color:var(--ink)}
+  .loop-step small{font-size:10.5px;color:var(--muted);line-height:1.35}
+  .loop-note{margin:9px 0 0;font-size:11.5px;color:var(--muted)}
+  .loop-note a{color:var(--green-dark);font-weight:600;text-decoration:none}
+  /* kpi */
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .kpi small{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-2);font-weight:700}
+  .kpi strong{display:block;font-size:26px;letter-spacing:-.7px;color:var(--ink);margin:4px 0 2px;font-weight:600}
+  .kpi span{font-size:11.5px;color:var(--muted)}
+  .delta{color:var(--green-dark);font-weight:600}
+  /* tasks */
+  .task{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--line-soft)}
+  .task:first-of-type{border-top:0;padding-top:2px}
+  .task-icon{width:30px;height:30px;border-radius:9px;background:var(--green-soft);color:var(--green-dark);display:grid;place-items:center;flex:none}
+  .task-main{min-width:0;flex:1}
+  .task-main strong{display:block;font-size:12.5px;color:var(--ink);line-height:1.35}
+  .task-main p{margin:3px 0 0;font-size:11.5px;color:var(--muted);line-height:1.4}
+  .task-action{flex:none}
+  /* table */
+  table{width:100%;border-collapse:collapse}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted-2);font-weight:700;text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+  td{font-size:12.5px;padding:9px 8px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  .num-cell{text-align:right;white-space:nowrap}
+  th.num-cell{text-align:right}
+  .pos{color:var(--green-dark);font-weight:600}
+  .muted{color:var(--muted)}
+  /* pills */
+  .pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:600;white-space:nowrap}
+  .pill.st-idea{background:#f1f4f6;color:#6b7785}
+  .pill.st-draft{background:var(--amber-soft);color:var(--amber)}
+  .pill.st-scheduled{background:var(--blue-soft);color:var(--blue)}
+  .pill.st-published{background:#e6f4ec;color:var(--green-dark)}
+  .pill.st-failed{background:var(--red-soft);color:var(--red)}
+  .plat{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--muted);white-space:nowrap}
+  .plat i{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .plat i.vk{background:var(--vk)}
+  .plat i.tg{background:var(--tg)}
+  .plat b{font-weight:600;color:#4e5d55}
+  /* upcoming */
+  .upcoming{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .up{display:flex;gap:10px;align-items:flex-start;background:#fbfcfb;border:1px solid var(--line-soft);border-radius:11px;padding:11px 12px}
+  .up-date{width:38px;flex:none;text-align:center;background:#fff;border:1px solid var(--line);border-radius:9px;padding:4px 0}
+  .up-date strong{display:block;font-size:15px;color:var(--ink);line-height:1.1}
+  .up-date small{font-size:9.5px;color:var(--muted);text-transform:uppercase}
+  .up-main{min-width:0;display:grid;gap:3px}
+  .up-main strong{font-size:12px;color:var(--ink);line-height:1.35;font-weight:600}
+  .up-main .meta{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--muted)}
+  /* calendar */
+  .cal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .cal-nav{display:flex;align-items:center;gap:7px}
+  .cal-title{font-size:17px;font-weight:600;color:var(--ink);min-width:150px;letter-spacing:-.2px}
+  .icon-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--muted)}
+  .icon-btn:hover{background:#f7faf8;color:var(--ink)}
+  .seg{display:flex;background:#e7ebe8;border-radius:9px;padding:3px;gap:2px}
+  .seg button{border:0;background:none;border-radius:7px;padding:5px 11px;font-size:11.5px;color:#66746c}
+  .seg button.active{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .filters{display:flex;gap:6px;flex-wrap:wrap}
+  .chip-filter{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 10px;font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+  .chip-filter.active{border-color:#bcd9c8;background:var(--green-soft);color:var(--green-dark);font-weight:600}
+  .chip-filter i{width:7px;height:7px;border-radius:50%}
+  .cal-legend{display:flex;gap:11px;align-items:center;font-size:10.5px;color:var(--muted);flex-wrap:wrap}
+  .cal-legend span{display:inline-flex;align-items:center;gap:5px}
+  .cal-legend i{width:8px;height:8px;border-radius:2px}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
+  .cal-dow{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-2);font-weight:700;padding:9px 9px;background:#fafcfb;border-bottom:1px solid var(--line)}
+  .cal-day{min-height:128px;border-right:1px solid var(--line-soft);border-top:1px solid var(--line-soft);padding:6px 7px 7px;display:flex;flex-direction:column;gap:4px;position:relative;min-width:0}
+  .cal-day:nth-child(7n){border-right:0}
+  .cal-day.weekend{background:#fafbfa}
+  .cal-day.other{background:#f7f8f7}
+  .cal-day.other .cal-num{color:#c3cac5}
+  .cal-day.today{background:#f4faf6;box-shadow:inset 0 0 0 2px #bfe0cd}
+  .cal-num{font-size:11.5px;color:var(--muted);font-weight:600;width:22px;height:22px;display:grid;place-items:center;flex:none}
+  .cal-day.today .cal-num{background:var(--green);color:#fff;border-radius:50%}
+  .cal-chip{border:0;border-left:3px solid #aab6ae;background:#f3f6f4;border-radius:5px;padding:4px 5px;font-size:10.5px;line-height:1.2;color:#3f4d46;text-align:left;display:flex;align-items:flex-start;gap:4px;min-width:0;overflow:hidden}
+  .cal-chip:hover{filter:brightness(.97)}
+  .cal-chip .ct{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.2}
+  .cal-chip .dot{width:5px;height:5px;border-radius:50%;flex:none}
+  .cal-chip .dot.vk{background:var(--vk)}
+  .cal-chip .dot.tg{background:var(--tg)}
+  .cal-chip.st-idea{border-left-color:#95a1ab;background:#f3f6f8}
+  .cal-chip.st-draft{border-left-color:#d9a441;background:#fff7e8}
+  .cal-chip.st-scheduled{border-left-color:#5b8def;background:#edf3ff}
+  .cal-chip.st-published{border-left-color:#3fa87b;background:#eaf6f0}
+  .cal-more{border:0;background:none;color:var(--muted);font-size:10px;padding:1px 3px;text-align:left}
+  .cal-more:hover{color:var(--green-dark)}
+  .cal-grid.week .cal-day{min-height:290px}
+  .cal-grid.week .cal-chip{font-size:11.5px;padding:5px 6px}
+  .cal-hint{font-size:11.5px;color:var(--muted);margin:9px 0 0}
+  /* competitors */
+  .comp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:14px}
+  .comp-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 14px;display:grid;gap:8px}
+  .comp-top{display:flex;align-items:center;gap:9px;min-width:0}
+  .comp-logo{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;flex:none}
+  .comp-top strong{font-size:12px;color:var(--ink);line-height:1.3;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .comp-top small{font-size:10px;color:var(--muted)}
+  .comp-stats{display:flex;gap:12px;font-size:10.5px;color:var(--muted);border-top:1px solid var(--line-soft);padding-top:8px}
+  .comp-stats b{display:block;font-size:12px;color:var(--ink);font-weight:600}
+  .feed{display:grid;gap:9px}
+  .feed-item{display:flex;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;align-items:flex-start}
+  .feed-main{min-width:0;flex:1}
+  .feed-meta{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--muted);flex-wrap:wrap}
+  .feed-meta strong{color:var(--ink);font-size:11.5px}
+  .feed-text{margin:5px 0 0;font-size:12.5px;color:#46544c;line-height:1.45}
+  .feed-side{flex:none;display:grid;gap:6px;justify-items:end}
+  .mult{display:inline-flex;align-items:center;gap:4px;background:#eaf6f0;color:var(--green-dark);border:1px solid #cfe8da;border-radius:999px;padding:3px 8px;font-size:10.5px;font-weight:700}
+  .feed-side small{font-size:10.5px;color:var(--muted)}
+  /* ideas */
+  .tabs{display:flex;gap:4px;background:#e7ebe8;padding:4px;border-radius:10px;width:max-content}
+  .tabs button{border:0;background:none;border-radius:7px;padding:7px 13px;font-size:12px;color:#66746c}
+  .tabs button.active{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .idea-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:14px}
+  .idea{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 17px;display:flex;flex-direction:column;gap:10px}
+  .idea-src{font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .idea h3{margin:0;font-size:15.5px;color:var(--ink);letter-spacing:-.2px}
+  .angle{border-left:3px solid #8cc4a5;background:#f5faf7;border-radius:0 7px 7px 0;padding:9px 11px;font-size:12px;color:#3d5248;line-height:1.45}
+  .why{font-size:11.5px;color:var(--muted);line-height:1.45;margin:0}
+  .why b{color:#4e5d55}
+  .idea-foot{display:flex;gap:7px;margin-top:auto;padding-top:4px;flex-wrap:wrap}
+  /* draft */
+  .draft-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;align-items:start}
+  .draft-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px 20px;box-shadow:var(--shadow)}
+  .ch-tabs{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap}
+  .ch-tab{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 11px;font-size:11.5px;color:var(--muted)}
+  .ch-tab.active{border-color:#bcd9c8;background:var(--green-soft);color:var(--green-dark);font-weight:600}
+  .ch-tab i{width:7px;height:7px;border-radius:50%}
+  .ch-tab i.vk{background:var(--vk)}
+  .ch-tab i.tg{background:var(--tg)}
+  .field{display:grid;gap:6px;margin-bottom:13px}
+  .field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .input,textarea.input{width:100%;border:1px solid #dbe1df;border-radius:9px;background:#fff;padding:10px 11px;font-size:13px;color:var(--text);outline:none}
+  .input:focus,textarea.input:focus{border-color:#8fbfa8;box-shadow:0 0 0 3px rgba(143,191,168,.18)}
+  textarea.input{min-height:210px;resize:vertical;line-height:1.55}
+  .editor-actions{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:4px;flex-wrap:wrap}
+  .editor-actions .left{display:flex;gap:8px;flex-wrap:wrap}
+  .cover{position:relative;border-radius:14px;padding:18px 18px 15px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;color:#fff}
+  .cover::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-70px;top:-80px;background:rgba(255,255,255,.14)}
+  .cover .kick{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;opacity:.85;font-weight:700}
+  .cover .ttl{font-size:21px;line-height:1.15;letter-spacing:-.4px;font-weight:700;max-width:80%;margin-top:10px}
+  .cover .foot{font-size:10.5px;opacity:.85;margin-top:14px}
+  .previews{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
+  .post-preview{background:#fff;border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  .pp-head{display:flex;align-items:center;gap:8px;padding:10px 12px}
+  .pp-ava{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:700}
+  .pp-head strong{font-size:11.5px;color:var(--ink);display:block}
+  .pp-head small{font-size:10px;color:var(--muted)}
+  .pp-body{padding:0 12px 10px;font-size:11.5px;color:#46544c;line-height:1.45;max-height:78px;overflow:hidden}
+  .pp-img{height:98px;margin:0 12px;border-radius:9px;display:flex;align-items:flex-end;padding:10px 12px;color:#fff;font-size:12.5px;font-weight:600;line-height:1.2;overflow:hidden;letter-spacing:-.1px}
+  .pp-foot{display:flex;gap:14px;padding:8px 12px 11px;font-size:10px;color:var(--muted)}
+  .pp-foot span{display:inline-flex;gap:4px;align-items:center}
+  .side-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:12px}
+  .side-card h4{margin:0 0 9px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-2)}
+  .rule-list{display:grid;gap:7px;font-size:11.5px;color:#4b5a51;line-height:1.4}
+  .rule-list b{color:var(--ink);font-weight:600}
+  .swatches{display:flex;gap:6px;margin:4px 0 9px}
+  .sw{width:26px;height:26px;border-radius:7px;border:1px solid rgba(0,0,0,.06)}
+  .brand-line{font-size:11.5px;color:var(--muted);line-height:1.5}
+  .select{width:100%;border:1px solid #dbe1df;border-radius:9px;padding:9px 10px;font-size:12px;background:#fff;color:var(--text)}
+  .quota{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin:8px 0 5px}
+  .bar{height:6px;border-radius:999px;background:#edf1ee;overflow:hidden}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#2a9d74,#66c39a);border-radius:999px}
+  .publish-box{display:grid;gap:8px}
+  .publish-when{display:flex;align-items:center;gap:8px;background:#f7faf8;border:1px solid var(--line-soft);border-radius:9px;padding:8px 10px;font-size:11.5px;color:#4b5a51}
+  /* analytics */
+  .an-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:14px}
+  .chart-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px 18px 8px;margin-bottom:14px}
+  .chart-card .card-head{margin-bottom:4px}
+  .bars{width:100%;height:190px;display:block}
+  .bar-rect{fill:#8fc7ac}
+  .bar-rect:hover{fill:#5aa985}
+  .axis{stroke:#e7ece8;stroke-width:1}
+  .axis-label{fill:#97a39b;font-size:9px;font-family:Roboto,Arial,sans-serif}
+  .posts-list{display:grid;gap:8px}
+  .post-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line-soft)}
+  .post-row:first-child{border-top:0}
+  .post-row .pr-main{min-width:0;flex:1}
+  .post-row strong{display:block;font-size:12.5px;color:var(--ink);line-height:1.3}
+  .post-row .pr-meta{display:flex;gap:8px;align-items:center;font-size:10.5px;color:var(--muted);margin-top:3px;flex-wrap:wrap}
+  .pr-stats{display:flex;gap:16px;flex:none}
+  .pr-stat{text-align:right}
+  .pr-stat b{display:block;font-size:13px;color:var(--ink);font-weight:600}
+  .pr-stat small{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .est{font-size:9px;background:#f1f4f6;color:#7b8794;border-radius:4px;padding:1px 4px;margin-left:3px;vertical-align:1px}
+  /* placements */
+  .search-row{display:flex;gap:9px;margin:2px 0 14px}
+  .search-row .input{flex:1}
+  .cp{font-weight:700;color:var(--green-dark)}
+  .place-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(120deg,#f3f9f5,#fbfdfb);border:1px solid var(--green-line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+  .place-banner strong{font-size:15px;color:var(--ink)}
+  .place-banner p{margin:4px 0 0;font-size:12px;color:var(--muted)}
+  /* settings */
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line-soft);font-size:12.5px}
+  .set-row:first-of-type{border-top:0;padding-top:0}
+  .set-row .l{display:grid;gap:2px}
+  .set-row .l strong{font-size:12.5px;color:var(--ink);font-weight:600}
+  .set-row .l small{font-size:10.5px;color:var(--muted)}
+  .ok{font-size:10.5px;color:var(--green-dark);background:#e6f4ec;border-radius:999px;padding:2px 8px;font-weight:600}
+  .warn{font-size:10.5px;color:#8a5a00;background:var(--amber-soft);border-radius:999px;padding:2px 8px;font-weight:600}
+  /* drawer/modal/toast */
+  .overlay{position:fixed;inset:0;background:rgba(20,35,28,.3);z-index:40}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:392px;max-width:92vw;background:#fff;z-index:41;box-shadow:-24px 0 60px rgba(20,40,30,.18);padding:20px 22px;overflow:auto;animation:slide .18s ease-out}
+  @keyframes slide{from{transform:translateX(18px);opacity:.6}to{transform:none;opacity:1}}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+  .drawer h2{margin:0 0 6px;font-size:19px;letter-spacing:-.3px;color:var(--ink);line-height:1.25}
+  .drawer .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-bottom:14px}
+  .drawer-text{font-size:12.5px;line-height:1.55;color:#46544c;background:#fafcfa;border:1px solid var(--line-soft);border-radius:10px;padding:12px 13px;margin:0 0 14px}
+  .drawer-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .drawer-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px}
+  .drawer-stats div{background:#fbfcfb;border:1px solid var(--line-soft);border-radius:10px;padding:9px 10px}
+  .drawer-stats b{display:block;font-size:15px;color:var(--ink)}
+  .drawer-stats small{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:430px;max-width:92vw;background:#fff;border-radius:16px;z-index:42;padding:20px 22px;box-shadow:0 30px 80px rgba(20,40,30,.25)}
+  .modal h2{margin:0 0 4px;font-size:18px;color:var(--ink);letter-spacing:-.3px}
+  .modal p{margin:0 0 14px;font-size:12px;color:var(--muted)}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#20332f;color:#fff;border-radius:10px;padding:10px 15px;font-size:12.5px;z-index:60;box-shadow:0 16px 40px rgba(0,0,0,.22);animation:pop .16s ease-out}
+  @keyframes pop{from{transform:translate(-50%,8px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+  .empty{padding:40px;text-align:center;color:var(--muted);font-size:13px}
+  @media(max-width:1180px){
+    .loop{grid-template-columns:repeat(2,1fr);gap:12px}
+    .loop-step:nth-child(2n)::after{display:none}
+    .comp-grid{grid-template-columns:repeat(2,1fr)}
+    .kpis,.an-kpis{grid-template-columns:repeat(2,1fr)}
+    .draft-grid{grid-template-columns:1fr}
+    .settings-grid{grid-template-columns:1fr}
+    .hero{grid-template-columns:1fr}
+    .two-col{grid-template-columns:1fr}
+  }
+  @media(max-width:860px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}
+    .brand{border:0;padding:0}
+    .project-wrap{width:210px;margin:0}
+    .nav{grid-template-columns:repeat(4,1fr);width:100%;margin-top:6px}
+    .nav button{font-size:11px;padding:7px 6px;gap:6px}
+    .nav .nav-icon{display:none}
+    .side-foot{display:none}
+    .view{padding:16px}
+    .upcoming{grid-template-columns:1fr}
+    .idea-grid{grid-template-columns:1fr}
+    .previews{grid-template-columns:1fr}
+    .cal-day{min-height:96px}
+    .cal-chip{font-size:9.5px}
+    .feed-item{flex-wrap:wrap}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <div class="brand-name">Socstat</div>
+        <div class="brand-sub">рост через контент</div>
+      </div>
+    </div>
+    <div class="project-wrap" id="project-wrap"></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <div class="side-user">
+        <div class="avatar">А</div>
+        <span><strong>Александр</strong><small>владелец проектов</small></span>
+      </div>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="demo-pill"><span class="demo-dot"></span>Демо-макет · данные вымышленные</span>
+        <span class="crumb" id="crumb">Money Planner / Обзор</span>
+      </div>
+      <div class="topbar-right">
+        <span class="date-chip">среда, 18 ноября 2026</span>
+        <div class="avatar-sm">А</div>
+      </div>
+    </header>
+    <main class="view" id="view"></main>
+  </div>
+</div>
+<div id="drawer-root"></div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+<script>
+  "use strict";
+
+  /* ---------- icons ---------- */
+  const ICONS = {
+    home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+    calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
+    users:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.5a3 3 0 0 1 0 5.6"/><path d="M17.5 15.2c1.8.6 3 2.3 3 4.8"/>',
+    bulb:'<path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3Z"/>',
+    pen:'<path d="m4 20 4-.8L20 7.2a2.1 2.1 0 0 0-3-3L5 16.2 4 20Z"/><path d="m14.5 5.5 3 3"/>',
+    chart:'<path d="M4 20v-6M10 20V8M16 20v-9M22 20V5"/><path d="M2 21h20"/>',
+    pin:'<path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
+    sliders:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    chevL:'<path d="m15 6-6 6 6 6"/>',
+    chevR:'<path d="m9 6 6 6-6 6"/>',
+    chevD:'<path d="m6 9 6 6 6-6"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    check:'<path d="m5 12 5 5L20 7"/>',
+    x:'<path d="M6 6l12 12M18 6 6 18"/>',
+    search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+    spark:'<path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/>',
+    send:'<path d="m4 12 16-8-6 16-2.5-6.5L4 12Z"/>',
+    eye:'<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/>',
+    heart:'<path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9Z"/>',
+    userplus:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 2.5-5 6-5"/><path d="M18 8v6M15 11h6"/>',
+    repeat:'<path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
+    arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+    image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="m21 16-5-5-4 4-3-3-6 6"/>'
+  };
+  function icon(name, size){
+    const s = size || 17;
+    return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||'')+'</svg>';
+  }
+
+  /* ---------- data ---------- */
+  const DB = {
+    mp: {
+      name:'Money Planner', short:'MP', tagline:'планировщик личных финансов',
+      color:'#6b5bd2', soft:'#f1efff', avatarText:'MP',
+      channels:[
+        {id:'mp-vk', platform:'vk', name:'ВК · Money Planner', handle:'vk.com/moneyplanner', subs:4820},
+        {id:'mp-tg', platform:'tg', name:'Telegram · Money Planner', handle:'@money_planner', subs:2140}
+      ],
+      kpi:{ subs:'+128', subsNote:'ВК +74 · TG +54', reach:'4 210', reachNote:'средний охват поста', posts:'9', postsNote:'вышло за 30 дней', best:'×3,2', bestNote:'пост про бюджет недели' },
+      plan:[
+        {id:'p1', date:'2026-11-03', time:'10:00', ch:'mp-vk', title:'5 ошибок в бюджете на месяц', status:'published', src:'Ручная', text:'Разбор ошибок: считать доход до налогов, не оставлять буфер, копить «остаток», путать цели и категории, не пересматривать план.', metrics:{views:4100, subs:9, er:'3,6%'}},
+        {id:'p2', date:'2026-11-05', time:'12:30', ch:'mp-tg', title:'Шаблон конвертов: скачать', status:'published', src:'Идея ИИ', text:'Готовый шаблон на 4 конверта. Цель — не идеальный бюджет, а решение, принятое до траты.', metrics:{views:4600, subs:14, er:'5,4%', est:true}},
+        {id:'p3', date:'2026-11-10', time:'10:00', ch:'mp-vk', title:'Как копить 10% без боли', status:'published', src:'Ручная', text:'Автоперевод в день зарплаты, отдельная карта, правило «не трогаем 30 дней».', metrics:{views:5200, subs:11, er:'3,9%'}},
+        {id:'p4', date:'2026-11-12', time:'18:00', ch:'mp-tg', title:'Разбор: почему бюджет срывается', status:'published', src:'Конкурент «Бюджет без стресса»', text:'Три причины срыва: слишком жёсткие рамки, нет «радости», план не пересматривается.', metrics:{views:3300, subs:9, er:'7,1%', est:true}},
+        {id:'p5', date:'2026-11-17', time:'09:30', ch:'mp-vk', title:'Неделя: чек-лист расходов', status:'published', src:'Идея ИИ', text:'Чек-лист на 7 дней: одна трата в день, запись вечером, итог в воскресенье.', metrics:{views:5200, subs:18, er:'4,8%'}},
+        {id:'p6', date:'2026-11-18', time:'12:00', ch:'mp-tg', title:'3 вопроса перед покупкой', status:'published', src:'Ручная', text:'«Это нужно или хочется?», «Сколько часов работы это стоит?», «Что не куплю вместо?»', metrics:{views:2900, subs:12, er:'6,2%', est:true}},
+        {id:'p7', date:'2026-11-19', time:'10:00', ch:'mp-vk', title:'Карусель: 4 конверта', status:'scheduled', src:'Конкурент «Бюджет без стресса»', text:'Карусель из 4 слайдов: обязательное, бытовое, радость, подушка. На каждом — один шаг.', metrics:null},
+        {id:'p8', date:'2026-11-20', time:'18:30', ch:'mp-tg', title:'Опрос: что мешает копить', status:'scheduled', src:'Идея ИИ', text:'Опрос на 2 варианта: «не хватает дохода» / «не хватает привычки». Ответы — в следующий пост.', metrics:null},
+        {id:'p9', date:'2026-11-24', time:'11:00', ch:'mp-vk', title:'Разбор: приложение вместо таблицы', status:'draft', src:'Конкурент «Финансовая привычка»', text:'Черновик не дописан: не хватает личного опыта и скриншота приложения.', metrics:null},
+        {id:'p10', date:'2026-11-26', time:'12:00', ch:'mp-tg', title:'Новогодний бюджет: 6 недель', status:'idea', src:'Идея ИИ', text:'Идея: обратный отсчёт до праздников, план на 6 недель, шаблон подарков.', metrics:null},
+        {id:'p11', date:'2026-11-27', time:'10:00', ch:'mp-vk', title:'Итоги ноября: что зашло', status:'scheduled', src:'Ручная', text:'Сводка: лучшие темы, посты, подписки. Ссылки на лучшие посты.', metrics:null},
+        {id:'p12', date:'2026-12-02', time:'10:00', ch:'mp-vk', title:'План на декабрь', status:'idea', src:'Идея ИИ', text:'Идея: план публикаций на декабрь с рубриками и дедлайнами.', metrics:null},
+        {id:'p13', date:'2026-11-04', time:'12:00', ch:'mp-tg', title:'Опрос: таблица или приложение', status:'published', src:'Идея ИИ', text:'Опрос на 2 варианта: таблица или приложение. Что оказалось удобнее.', metrics:{views:2400, subs:7, er:'5,9%', est:true}},
+        {id:'p14', date:'2026-11-11', time:'10:00', ch:'mp-vk', title:'Карусель: куда уходит зарплата', status:'published', src:'Ручная', text:'5 слайдов: доход, обязательное, быт, радость, подушка.', metrics:{views:4700, subs:13, er:'4,4%'}},
+        {id:'p15', date:'2026-11-13', time:'18:00', ch:'mp-tg', title:'История: как я бросил таблицу', status:'published', src:'Конкурент «Бюджет без стресса»', text:'Личная история перехода на конверты и что не получилось.', metrics:{views:3800, subs:10, er:'6,8%', est:true}},
+        {id:'p16', date:'2026-11-23', time:'12:00', ch:'mp-tg', title:'Разбор: 3 приложения для бюджета', status:'scheduled', src:'Идея ИИ', text:'Честный разбор трёх приложений: что умеют, чего не хватает.', metrics:null},
+        {id:'p17', date:'2026-11-25', time:'10:00', ch:'mp-vk', title:'Чек-лист: декабрь без долгов', status:'scheduled', src:'Идея ИИ', text:'7 пунктов, которые стоит сделать до декабря.', metrics:null}
+      ],
+      competitors:[
+        {id:'c1', name:'Бюджет без стресса', platform:'tg', handle:'@budget_calm', subs:18400, reach:9800, er:6.1, best:'×4,3', color:'#e08a3c'},
+        {id:'c2', name:'Кошелёк на каждый день', platform:'vk', handle:'vk.com/wallet_daily', subs:12100, reach:3400, er:3.2, best:'×1,3', color:'#0077ff'},
+        {id:'c3', name:'Финансовая привычка', platform:'tg', handle:'@money_habit', subs:7600, reach:4100, er:7.4, best:'×2,4', color:'#2aabee'},
+        {id:'c4', name:'Про деньги просто', platform:'vk', handle:'vk.com/pro_money', subs:31000, reach:5200, er:2.1, best:'×1,6', color:'#5588cc'}
+      ],
+      feed:[
+        {id:'f1', comp:'Бюджет без стресса', platform:'tg', ago:'2 дня назад', views:38400, mult:'×4,3', text:'Мы перестали вести бюджет в таблице и начали в конвертах. Через 30 дней поняли: дело не в приложении, а в том, что деньги разложены до траты.', idea:{title:'Конверты против таблиц', angle:'История за 30 дней: как перейти от таблицы к конвертам и что изменилось.', why:'Личная история + практика. Охват ×4,3 к медиане канала.'}},
+        {id:'f2', comp:'Финансовая привычка', platform:'tg', ago:'3 дня назад', views:11200, mult:'×2,4', text:'Правило 24 часов: положите покупку в корзину и вернитесь через день. В 7 из 10 случаев желание пропадает.', idea:{title:'Правило 24 часов', angle:'Чек-лист импульсивных покупок: 5 вопросов и одно правило.', why:'Простое действие, которое можно повторить сегодня. ×2,4.'}},
+        {id:'f3', comp:'Про деньги просто', platform:'vk', ago:'4 дня назад', views:9800, mult:'×1,6', text:'Почему вы тратите больше, когда устали. Мозг выбирает быстрый дофамин, а не долгую выгоду.', idea:{title:'Усталость и траты', angle:'Три вечерних триггера и один способ их обойти.', why:'Вовлекает в комментарии, близко аудитории. ×1,6.'}},
+        {id:'f4', comp:'Кошелёк на каждый день', platform:'vk', ago:'5 дней назад', views:4900, mult:'×1,3', text:'Карусель: 7 категорий расходов, которые чаще всего выходят из бюджета.', idea:{title:'7 категорий-ловушек', angle:'Карусель: категория, почему выходит из бюджета, что делать.', why:'Формат карусели хорошо смотрят в ВК. ×1,3.'}}
+      ],
+      ideas:[
+        {id:'i1', title:'Конверты против таблиц', status:'new', source:'Бюджет без стресса', mult:'×4,3', angle:'История за 30 дней: как перейти от таблицы к конвертам и что изменилось.', why:'Личная история + практика', checks:'Не обещать доходность, не сравнивать с банками'},
+        {id:'i2', title:'Правило 24 часов', status:'new', source:'Финансовая привычка', mult:'×2,4', angle:'Чек-лист импульсивных покупок: 5 вопросов и одно правило.', why:'Простое действие на сегодня', checks:'Не давать медицинских советов'},
+        {id:'i3', title:'Усталость и траты', status:'new', source:'Про деньги просто', mult:'×1,6', angle:'Три вечерних триггера и один способ их обойти.', why:'Вовлекает в комментарии', checks:'Проверить формулировки про психологию'},
+        {id:'i4', title:'Новогодний бюджет', status:'work', source:'Идея ИИ', mult:'сезон', angle:'Обратный отсчёт: 6 недель до праздников, шаблон подарков.', why:'Сезонный спрос, можно переиспользовать', checks:'Актуальные цены не выдумывать'},
+        {id:'i5', title:'Итоги месяца как пост', status:'rejected', source:'Идея ИИ', mult:'—', angle:'Скучная сводка цифр без вывода.', why:'Низкий охват у подобных постов', checks:'—'}
+      ],
+      posts:[
+        {id:'a1', date:'17 ноя', ch:'mp-vk', title:'Неделя: чек-лист расходов', views:5200, er:'4,8%', subs:18, visits:44},
+        {id:'a2', date:'18 ноя', ch:'mp-tg', title:'3 вопроса перед покупкой', views:2900, er:'6,2%', subs:12, visits:31, est:true},
+        {id:'a3', date:'10 ноя', ch:'mp-vk', title:'Как копить 10% без боли', views:5200, er:'3,9%', subs:11, visits:26},
+        {id:'a4', date:'12 ноя', ch:'mp-tg', title:'Разбор: почему бюджет срывается', views:3300, er:'7,1%', subs:9, visits:22, est:true},
+        {id:'a5', date:'5 ноя', ch:'mp-tg', title:'Шаблон конвертов: скачать', views:4600, er:'5,4%', subs:14, visits:58, est:true}
+      ],
+      themes:[
+        {name:'Практика и шаблоны', posts:4, subs:'14,0', er:'5,6%'},
+        {name:'Личные истории', posts:3, subs:'11,3', er:'6,2%'},
+        {name:'Разборы и объяснения', posts:2, subs:'8,5', er:'4,1%'},
+        {name:'Новости и анонсы', posts:2, subs:'2,0', er:'2,4%'}
+      ],
+      chart:[3200,4100,3800,5200,4600,6100,5400,4800,5900,5200,6400,5600],
+      chartLabels:['3','5','7','9','11','13','15','17','19','21','23','25'],
+      hero:{title:'На этой неделе выходит 3 поста', text:'2 в ВК и 1 в Telegram. Один черновик ждёт правки, один пост на согласовании. Лучшая тема недели — практика и шаблоны: 14 подписок на пост.', pills:[['scheduled','19 ноя · ВК · Карусель'],['scheduled','20 ноя · TG · Опрос'],['draft','24 ноя · ВК · Черновик']], best:'×3,2', bestNote:'к медиане канала · 18 подписок'},
+      loopNotes:['4 канала, 8 постов в неделю','3 новые, 1 в работе','3 поста на неделе','ВК + TG, по расписанию','подписки по постам'],
+      conclusion:'Вывод: практика и шаблоны дают подписки, новости — почти нет. Следующая неделя — две практики и один разбор.',
+      insight:'Практика и шаблоны дают в 7 раз больше подписок на пост, чем новости. Две практики и один разбор — рабочая неделя. Лучший пост недели — чек-лист расходов: 18 подписок, 44 перехода в группу.',
+      avgEr:'5,4%',
+      promote:{title:'«Чек-лист расходов»', text:'18 подписок и 44 перехода в группу. Можно усилить рекламой в сообществах про личные финансы.'},
+      placements:{query:'планирование бюджета, 25–45 лет, Россия, до 3 000 ₽ за размещение', rows:[['Бюджет без стресса',18400,9800,'161 ₽','2 900 ₽'],['Финансовая привычка',7600,4100,'211 ₽','1 700 ₽'],['Про деньги просто',31000,5200,'227 ₽','2 400 ₽'],['Семейный бюджет',12400,3600,'248 ₽','1 800 ₽'],['Копить просто',5400,2100,'276 ₽','1 100 ₽']]},
+      rules:'Тон: спокойный, без давления. Структура: крючок → 3 шага → вывод. CTA: вопрос в конце. Запрещено: обещать доходность, сравнивать с банками. Примеры: «Чек-лист расходов», «3 вопроса перед покупкой».',
+      ruleList:[['Тон','спокойный, без давления и «заработайте миллион»'],['Структура','крючок → 3 шага → вывод'],['CTA','вопрос в конце, без «купите»'],['Запрещено','обещать доходность, сравнивать с банками'],['Примеры','2 лучших поста проекта']]
+    },
+    socstat: {
+      name:'Socstat', short:'S', tagline:'аналитика сообществ и каналов',
+      color:'#21815f', soft:'#eaf4ee', avatarText:'S',
+      channels:[
+        {id:'soc-vk', platform:'vk', name:'ВК · Socstat', handle:'vk.com/socstat_ru', subs:1250}
+      ],
+      kpi:{ subs:'+41', subsNote:'только ВК', reach:'1 240', reachNote:'средний охват поста', posts:'4', postsNote:'вышло за 30 дней', best:'×2,1', bestNote:'пост про охват' },
+      plan:[
+        {id:'s1', date:'2026-11-06', time:'11:00', ch:'soc-vk', title:'Как читать охват в ВК', status:'published', src:'Ручная', text:'Охват подписчиков, виральный и полный: чем отличаются и что смотреть в отчёте.', metrics:{views:1600, subs:6, er:'4,1%'}},
+        {id:'s2', date:'2026-11-13', time:'11:00', ch:'soc-vk', title:'ER: что считается нормой', status:'published', src:'Идея ИИ', text:'ER по реакциям и по охвату, почему цифры расходятся.', metrics:{views:2100, subs:9, er:'5,3%'}},
+        {id:'s3', date:'2026-11-20', time:'11:00', ch:'soc-vk', title:'Новое в partnerStats', status:'scheduled', src:'Ручная', text:'Что изменилось после отключения stats.get и как это влияет на отчёты.', metrics:null},
+        {id:'s4', date:'2026-11-25', time:'11:00', ch:'soc-vk', title:'Чек-лист перед рекламой', status:'idea', src:'Идея ИИ', text:'Идея: 7 проверок канала перед закупкой рекламы.', metrics:null}
+      ],
+      competitors:[
+        {id:'sc1', name:'Аналитика каналов', platform:'tg', handle:'@chan_stats', subs:24000, reach:8600, er:4.2, best:'×2,1', color:'#2aabee'},
+        {id:'sc2', name:'SMM-сервис', platform:'vk', handle:'vk.com/smm_tool', subs:15600, reach:2900, er:2.8, best:'×1,4', color:'#0077ff'}
+      ],
+      feed:[
+        {id:'sf1', comp:'Аналитика каналов', platform:'tg', ago:'1 день назад', views:14600, mult:'×2,1', text:'Подписки по постам: как понять, какой контент приводит людей, а какой просто собирает просмотры.', idea:{title:'Подписки по постам', angle:'Разбор: просмотры ≠ подписки. Как считать вклад поста.', why:'Прямо про боль аудитории. ×2,1.'}},
+        {id:'sf2', comp:'SMM-сервис', platform:'vk', ago:'4 дня назад', views:3200, mult:'×1,4', text:'Календарь публикаций: почему без него контент выходит хаотично.', idea:{title:'Календарь без хаоса', angle:'Три правила планирования на неделю вперёд.', why:'Практика, близкая аудитории. ×1,4.'}}
+      ],
+      ideas:[
+        {id:'si1', title:'Подписки по постам', status:'new', source:'Аналитика каналов', mult:'×2,1', angle:'Разбор: просмотры ≠ подписки. Как считать вклад поста.', why:'Прямо про боль аудитории', checks:'Не обещать данных, которых нет в API'},
+        {id:'si2', title:'Календарь без хаоса', status:'new', source:'SMM-сервис', mult:'×1,4', angle:'Три правила планирования на неделю вперёд.', why:'Практика, близкая аудитории', checks:'—'},
+        {id:'si3', title:'Разбор отчёта конкурента', status:'rejected', source:'Идея ИИ', mult:'—', angle:'Просто скриншот чужого отчёта.', why:'Мало пользы, риск копирования', checks:'—'}
+      ],
+      posts:[
+        {id:'sa1', date:'13 ноя', ch:'soc-vk', title:'ER: что считается нормой', views:2100, er:'5,3%', subs:9, visits:21},
+        {id:'sa2', date:'6 ноя', ch:'soc-vk', title:'Как читать охват в ВК', views:1600, er:'4,1%', subs:6, visits:14}
+      ],
+      themes:[
+        {name:'Разборы метрик', posts:2, subs:'9,0', er:'5,3%'},
+        {name:'Новости продукта', posts:1, subs:'3,0', er:'2,8%'}
+      ],
+      chart:[900,1100,1000,1400,1200,1600,1500,1300,1700,1500,1800,1600],
+      chartLabels:['3','5','7','9','11','13','15','17','19','21','23','25'],
+      hero:{title:'На этой неделе выходит 1 пост', text:'20 ноября — разбор partnerStats. Один черновик в работе, одна идея ждёт решения. Лучшая тема месяца — разборы метрик: 9 подписок на пост.', pills:[['scheduled','20 ноя · ВК · partnerStats'],['idea','25 ноя · ВК · Идея']], best:'×2,1', bestNote:'к медиане канала · 9 подписок'},
+      loopNotes:['2 канала, 2 поста','2 новые','1 пост на неделе','ВК, по расписанию','подписки по постам'],
+      conclusion:'Вывод: разборы метрик дают подписки, новости продукта — почти нет. Следующая неделя — один разбор и один чек-лист.',
+      insight:'Разборы метрик дают 9 подписок на пост, новости продукта — 3. Один разбор и один чек-лист — рабочая неделя. Лучший пост — «ER: что считается нормой»: 9 подписок, 21 переход.',
+      avgEr:'4,7%',
+      promote:{title:'«ER: что считается нормой»', text:'9 подписок и 21 переход в группу. Можно усилить рекламой в сообществах про SMM.'},
+      placements:{query:'аналитика сообществ, SMM, 25–45 лет, Россия, до 3 000 ₽ за размещение', rows:[['Аналитика каналов',24000,8600,'152 ₽','3 100 ₽'],['SMM-сервис',15600,2900,'198 ₽','1 400 ₽'],['Посты и метрики',9200,3100,'221 ₽','1 200 ₽'],['Маркетинг в ВК',18000,4200,'236 ₽','1 900 ₽'],['Контент-план',6400,1900,'264 ₽','900 ₽']]},
+      rules:'Тон: экспертный, без снисходительности. Структура: цифра → объяснение → что делать. CTA: вопрос в конце. Запрещено: обещать данные, которых нет в API. Примеры: «ER: что считается нормой», «Как читать охват».',
+      ruleList:[['Тон','экспертный, без снисходительности'],['Структура','цифра → объяснение → что делать'],['CTA','вопрос в конце'],['Запрещено','обещать данные, которых нет в API'],['Примеры','«ER: что считается нормой»']]
+    }
+  };
+
+  const NAV = [
+    {id:'overview', label:'Обзор', icon:'home'},
+    {id:'plan', label:'Контент-план', icon:'calendar'},
+    {id:'competitors', label:'Конкуренты', icon:'users'},
+    {id:'ideas', label:'Идеи', icon:'bulb', badge:true},
+    {id:'draft', label:'Черновик', icon:'pen'},
+    {id:'analytics', label:'Аналитика', icon:'chart'},
+    {id:'placements', label:'Площадки', icon:'pin'},
+    {id:'settings', label:'Настройки', icon:'sliders'}
+  ];
+  const TITLES = {overview:'Обзор', plan:'Контент-план', competitors:'Конкуренты', ideas:'Идеи', draft:'Черновик', analytics:'Аналитика', placements:'Площадки для рекламы', settings:'Настройки проекта'};
+  const STATUS = {idea:{label:'Идея'}, draft:{label:'Черновик'}, scheduled:{label:'Запланировано'}, published:{label:'Вышло'}, failed:{label:'Не вышло'}};
+  const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const DOW = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+  const state = {
+    project:'mp',
+    screen:'overview',
+    month:new Date(2026,10,1),
+    calView:'month',
+    weekStart:new Date(2026,10,16),
+    channelFilter:'all',
+    ideasTab:'new',
+    afilter:'all',
+    projectMenu:false,
+    draft:{
+      mp:{title:'Карусель: 4 конверта', body:'Таблица — это про контроль. Конверты — про решение, принятое заранее.\n\nМы перестали вести бюджет в таблице и попробовали 4 конверта: обязательное, бытовое, радость и подушка. Через 30 дней оказалось, что дело не в приложении, а в том, что деньги разложены до того, как вы их потратите.\n\nЧто дало больше всего:\n• «радость» перестала быть запретом;\n• подушка пополнялась сама, без силы воли;\n• в конце месяца не было вопроса «куда ушло».\n\nПопробуйте неделю: разложите одну зарплату на 4 конверта и напишите, что оказалось сложнее всего.', channel:'mp-vk', provider:'chatgpt'},
+      socstat:{title:'Подписки по постам: как считать', body:'Просмотры отвечают на вопрос «увидели ли», подписки — «остались ли».\n\nВ ВК подписки по посту отдаются напрямую: partnerStats.getContentStatsAllTime возвращает subscriptions, group_visits и link_clicks. В Telegram такой цифры нет — считаем оценку по дельте подписчиков в окне 24 часа.\n\nЧто важно: подписка — это результат поста и канала одновременно. Сравнивайте посты внутри одного канала, а не между площадками.', channel:'soc-vk', provider:'chatgpt'}
+    }
+  };
+
+  /* ---------- helpers ---------- */
+  function cur(){ return DB[state.project]; }
+  function chById(id){ return cur().channels.find(function(c){return c.id===id;}) || cur().channels[0]; }
+  function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
+  function pad(n){ return n<10?'0'+n:String(n); }
+  function iso(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function parseIso(s){ const p=s.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function todayIso(){ return '2026-11-18'; }
+  function statusPill(s){ return '<span class="pill st-'+s+'">'+STATUS[s].label+'</span>'; }
+  function platTag(platform){ return '<span class="plat"><i class="'+platform+'"></i><b>'+(platform==='vk'?'ВК':'TG')+'</b></span>'; }
+  function chTag(chId){ const c=chById(chId); return '<span class="plat"><i class="'+c.platform+'"></i><b>'+c.name+'</b></span>'; }
+  function newIdeas(){ return cur().ideas.filter(function(i){return i.status==='new';}).length; }
+
+  function showToast(msg){
+    const root = document.getElementById('toast-root');
+    root.innerHTML = '<div class="toast">'+msg+'</div>';
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function(){ root.innerHTML=''; }, 2800);
+  }
+
+  function openDrawer(html){
+    const root = document.getElementById('drawer-root');
+    root.innerHTML = '<div class="overlay" data-action="close-drawer"></div><aside class="drawer">'+html+'</aside>';
+  }
+  function closeDrawer(){ document.getElementById('drawer-root').innerHTML=''; }
+  function openModal(html){
+    const root = document.getElementById('modal-root');
+    root.innerHTML = '<div class="overlay" data-action="close-modal"></div><div class="modal">'+html+'</div>';
+  }
+  function closeModal(){ document.getElementById('modal-root').innerHTML=''; }
+
+  function go(screen){
+    state.screen = screen;
+    state.projectMenu = false;
+    if(location.hash !== '#'+screen) location.hash = screen;
+    render();
+  }
+
+  /* ---------- sidebar ---------- */
+  function renderSidebar(){
+    const p = cur();
+    const menu = state.projectMenu ? '<div class="project-menu">'+Object.keys(DB).map(function(k){
+      const pr = DB[k];
+      return '<button class="project-option" data-project="'+k+'"><span class="project-avatar" style="background:'+pr.color+'">'+pr.avatarText+'</span><span><strong>'+pr.name+'</strong><small>'+pr.tagline+'</small></span>'+(k===state.project?'<span style="margin-left:auto;color:#21815f">'+icon('check',14)+'</span>':'')+'</button>';
+    }).join('')+'</div>' : '';
+    document.getElementById('project-wrap').innerHTML =
+      '<button class="project-btn" data-action="toggle-project"><span class="project-avatar" style="background:'+p.color+'">'+p.avatarText+'</span><span class="project-meta"><strong>'+p.name+'</strong><small>'+p.channels.length+' '+(p.channels.length===1?'канал':'канала')+'</small></span><span class="chev">'+icon('chevD',14)+'</span></button>'+menu;
+    document.getElementById('nav').innerHTML = NAV.map(function(item){
+      const badge = item.badge && newIdeas()>0 ? '<span class="nav-badge">'+newIdeas()+'</span>' : '';
+      return '<button class="'+(state.screen===item.id?'active':'')+'" data-nav="'+item.id+'"><span class="nav-icon">'+icon(item.icon)+'</span><span>'+item.label+'</span>'+badge+'</button>';
+    }).join('');
+    document.getElementById('crumb').innerHTML = p.name + ' / ' + TITLES[state.screen];
+  }
+
+  /* ---------- overview ---------- */
+  function screenOverview(){
+    const p = cur();
+    const upcoming = p.plan.filter(function(i){return i.date>='2026-11-18' && i.status!=='published';}).slice(0,3);
+    const tasks = state.project==='mp' ? [
+      {icon:'users', title:'Взять идею у «Бюджет без стресса»', note:'Охват ×4,3 к медиане — тема конвертов', action:'К конкурентам', nav:'competitors'},
+      {icon:'pen', title:'Дописать черновик на 24 ноября', note:'«Приложение вместо таблицы» — нет личного опыта', action:'Открыть', nav:'draft'},
+      {icon:'send', title:'Подтвердить пост на 19 ноября, 10:00', note:'Карусель: 4 конверта, ВК', action:'В календарь', nav:'plan'}
+    ] : [
+      {icon:'chart', title:'Проверить охват после partnerStats', note:'Сравнить с августом: изменилась ли метрика', action:'В аналитику', nav:'analytics'},
+      {icon:'pen', title:'Дописать пост про подписки по постам', note:'Черновик ждёт пример из ВК', action:'Открыть', nav:'draft'},
+      {icon:'calendar', title:'Запланировать чек-лист перед рекламой', note:'Идея на 25 ноября', action:'В календарь', nav:'plan'}
+    ];
+    const steps = [
+      {icon:'users', label:'Конкуренты', note:'4 канала, 8 постов в неделю', screen:'competitors'},
+      {icon:'bulb', label:'Идеи', note:'3 новые, 1 в работе', screen:'ideas'},
+      {icon:'calendar', label:'План', note:'3 поста на неделе', screen:'plan'},
+      {icon:'send', label:'Публикация', note:'ВК + TG, по расписанию', screen:'draft'},
+      {icon:'chart', label:'Аналитика', note:'подписки по постам', screen:'analytics'}
+    ];
+    return '<div class="page-head">'+
+      '<div><span class="eyebrow">'+p.name+'</span><h1>Обзор</h1><p class="sub">Всё, что происходит с проектом: что выходит, что работает и что делать на этой неделе.</p></div>'+
+      '<div class="head-actions"><button class="btn ghost" data-nav="plan">'+icon('calendar',15)+' Календарь</button><button class="btn primary" data-action="new-post">'+icon('plus',15)+' Новый пост</button></div></div>'+
+      '<div class="hero"><div><h2>'+p.hero.title+'</h2><p>'+p.hero.text+'</p>'+
+      '<div style="display:flex;gap:6px;margin-top:11px;flex-wrap:wrap">'+
+        p.hero.pills.map(function(x){ return '<span class="pill st-'+x[0]+'">'+x[1]+'</span>'; }).join('')+
+      '</div></div>'+
+      '<div class="hero-side"><small>Лучший пост недели</small><strong>'+p.hero.best+'</strong><span>'+p.hero.bestNote+'</span><a href="#" data-nav="analytics">Смотреть разбор →</a></div></div>'+
+      '<div class="loop-wrap"><p class="loop-label">Один цикл: от конкурента до подписчика</p><div class="loop">'+
+        steps.map(function(s,i){ return '<button class="loop-step" data-nav="'+s.screen+'"><span class="num">'+(i+1)+'</span><span class="loop-icon">'+icon(s.icon,18)+'</span><strong>'+s.label+'</strong><small>'+p.loopNotes[i]+'</small></button>'; }).join('')+
+      '</div><p class="loop-note">Когда цикл работает, реклама усиливает лучшие посты — <a href="#" data-nav="placements">подобрать площадки →</a></p></div>'+
+      '<div class="kpis">'+
+        '<div class="kpi"><small>Подписчики</small><strong>'+p.kpi.subs+'</strong><span>'+p.kpi.subsNote+'</span></div>'+
+        '<div class="kpi"><small>Средний охват</small><strong>'+p.kpi.reach+'</strong><span>'+p.kpi.reachNote+'</span></div>'+
+        '<div class="kpi"><small>Постов за 30 дней</small><strong>'+p.kpi.posts+'</strong><span>'+p.kpi.postsNote+'</span></div>'+
+        '<div class="kpi"><small>Лучший пост</small><strong>'+p.kpi.best+'</strong><span>'+p.kpi.bestNote+'</span></div>'+
+      '</div>'+
+      '<div class="two-col" style="margin-bottom:14px">'+
+        '<section class="card"><div class="card-head"><h3>Что делать сегодня</h3><span class="hint">3 задачи</span></div>'+
+          tasks.map(function(t){ return '<div class="task"><span class="task-icon">'+icon(t.icon,15)+'</span><div class="task-main"><strong>'+t.title+'</strong><p>'+t.note+'</p></div><button class="btn small ghost task-action" data-nav="'+t.nav+'">'+t.action+'</button></div>'; }).join('')+
+        '<p class="hint" style="margin:2px 0 0;padding-top:10px;border-top:1px solid var(--line-soft);font-size:11.5px;color:var(--muted)">Ещё '+newIdeas()+' '+(newIdeas()===1?'идея ждёт':'идеи ждут')+' решения — <a href="#ideas" data-nav="ideas" style="color:var(--green-dark);font-weight:600;text-decoration:none">открыть «Идеи» →</a></p>'+
+        '</section>'+
+        '<section class="card"><div class="card-head"><h3>Что работает</h3><span class="hint">30 дней</span></div>'+
+          '<table><thead><tr><th>Тема</th><th class="num-cell">Постов</th><th class="num-cell">Подписок/пост</th><th class="num-cell">ER</th></tr></thead><tbody>'+
+          p.themes.map(function(t){ return '<tr><td>'+t.name+'</td><td class="num-cell muted">'+t.posts+'</td><td class="num-cell pos">'+t.subs+'</td><td class="num-cell">'+t.er+'</td></tr>'; }).join('')+
+          '</tbody></table>'+
+          '<p class="hint" style="margin:10px 0 0">'+p.conclusion+'</p>'+
+        '</section>'+
+      '</div>'+
+      '<section class="card"><div class="card-head"><h3>Ближайшие публикации</h3><span class="hint">'+p.channels.length+' '+(p.channels.length===1?'канал':'канала')+'</span></div><div class="upcoming">'+
+        upcoming.map(function(i){ const d=parseIso(i.date); const c=chById(i.ch); return '<div class="up"><div class="up-date"><strong>'+d.getDate()+'</strong><small>'+MONTHS_GEN[d.getMonth()].slice(0,3)+'</small></div><div class="up-main"><strong>'+i.title+'</strong><div class="meta">'+platTag(c.platform)+'<span>'+i.time+'</span>'+statusPill(i.status)+'</div></div></div>'; }).join('')+
+      '</div></section>';
+  }
+
+  /* ---------- calendar ---------- */
+  function planChips(dateStr){
+    const items = cur().plan.filter(function(i){ return i.date===dateStr && (state.channelFilter==='all' || i.ch===state.channelFilter); });
+    return items;
+  }
+  function chipHtml(i){
+    const c = chById(i.ch);
+    const t = state.calView==='week' && i.status!=='idea' ? i.time+' · ' : '';
+    return '<button class="cal-chip st-'+i.status+'" data-item="'+i.id+'" title="'+i.title+'"><span class="dot '+c.platform+'"></span><span class="ct">'+t+i.title+'</span></button>';
+  }
+  function monthGrid(){
+    const y=state.month.getFullYear(), m=state.month.getMonth();
+    const first=new Date(y,m,1);
+    const offset=(first.getDay()+6)%7;
+    const days=new Date(y,m+1,0).getDate();
+    const rows=Math.max(5, Math.ceil((offset+days)/7));
+    const cells=[];
+    for(let i=0;i<rows*7;i++){
+      const dayNum=i-offset+1;
+      const d=new Date(y,m,dayNum);
+      const inMonth=dayNum>=1 && dayNum<=days;
+      const dIso=iso(d);
+      cells.push({d:d, inMonth:inMonth, iso:dIso});
+    }
+    return cells;
+  }
+  function weekGrid(){
+    const cells=[];
+    for(let i=0;i<7;i++){
+      const d=new Date(state.weekStart.getFullYear(),state.weekStart.getMonth(),state.weekStart.getDate()+i);
+      cells.push({d:d, inMonth:true, iso:iso(d)});
+    }
+    return cells;
+  }
+  function screenPlan(){
+    const p=cur();
+    const isWeek = state.calView==='week';
+    const cells = isWeek ? weekGrid() : monthGrid();
+    const title = isWeek
+      ? (function(){ const a=cells[0].d, b=cells[6].d; return a.getDate()+'–'+b.getDate()+' '+MONTHS_GEN[b.getMonth()]; })()
+      : MONTHS[state.month.getMonth()]+' '+state.month.getFullYear();
+    const filters = '<button class="chip-filter '+(state.channelFilter==='all'?'active':'')+'" data-channel="all">Все каналы</button>'+
+      p.channels.map(function(c){ return '<button class="chip-filter '+(state.channelFilter===c.id?'active':'')+'" data-channel="'+c.id+'"><i style="background:'+(c.platform==='vk'?'#0077ff':'#2aabee')+'"></i>'+c.name+'</button>'; }).join('');
+    return '<div class="page-head"><div><span class="eyebrow">'+p.name+'</span><h1>Контент-план</h1><p class="sub">Что и когда выходит в каждом канале. Нажмите на публикацию, чтобы открыть карточку.</p></div>'+
+      '<div class="head-actions"><button class="btn ghost" data-action="schedule">'+icon('plus',15)+' Запланировать</button></div></div>'+
+      '<div class="cal-toolbar"><div class="cal-nav">'+
+        '<button class="icon-btn" data-cal="prev" aria-label="Назад">'+icon('chevL',15)+'</button>'+
+        '<span class="cal-title">'+title+'</span>'+
+        '<button class="icon-btn" data-cal="next" aria-label="Вперёд">'+icon('chevR',15)+'</button>'+
+        '<button class="btn small ghost" data-cal="today">Сегодня</button>'+
+      '</div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
+        '<div class="seg"><button class="'+(isWeek?'':'active')+'" data-calview="month">Месяц</button><button class="'+(isWeek?'active':'')+'" data-calview="week">Неделя</button></div>'+
+        '<div class="filters">'+filters+'</div>'+
+      '</div></div>'+
+      '<div class="cal-legend" style="margin-bottom:8px"><span><i style="background:#95a1ab"></i>Идея</span><span><i style="background:#d9a441"></i>Черновик</span><span><i style="background:#5b8def"></i>Запланировано</span><span><i style="background:#3fa87b"></i>Вышло</span></div>'+
+      '<div class="cal-grid '+(isWeek?'week':'')+'">'+
+        DOW.map(function(x){return '<div class="cal-dow">'+x+'</div>';}).join('')+
+        cells.map(function(cell){
+          const items=planChips(cell.iso);
+          const isToday=cell.iso===todayIso();
+          const wd=(cell.d.getDay()+6)%7;
+          const show=isWeek?items:items.slice(0,3);
+          return '<div class="cal-day '+(cell.inMonth?'':'other')+' '+(wd>=5?'weekend':'')+' '+(isToday?'today':'')+'">'+
+            '<span class="cal-num">'+cell.d.getDate()+'</span>'+
+            show.map(chipHtml).join('')+
+            (!isWeek && items.length>3 ? '<button class="cal-more" data-day="'+cell.iso+'">+ещё '+(items.length-3)+'</button>' : '')+
+            (isWeek && items.length===0 ? '<span class="hint" style="font-size:10.5px">—</span>' : '')+
+          '</div>';
+        }).join('')+
+      '</div><p class="cal-hint">Подсказка: чип — карточка публикации; «+ещё» — все публикации дня. В демо можно перенести месяц и переключить вид.</p>';
+  }
+
+  /* ---------- competitors ---------- */
+  function screenCompetitors(){
+    const p=cur();
+    return '<div class="page-head"><div><span class="eyebrow">'+p.name+'</span><h1>Конкуренты</h1><p class="sub">За кем следим и что у них сработало. Охват сравнивается с медианой канала, а не между площадками.</p></div>'+
+      '<div class="head-actions"><button class="btn ghost" data-action="add-competitor">'+icon('userplus',15)+' Добавить канал</button></div></div>'+
+      '<div class="comp-grid">'+p.competitors.map(function(c){
+        return '<div class="comp-card"><div class="comp-top"><span class="comp-logo" style="background:'+c.color+'">'+c.name.slice(0,2)+'</span><span style="min-width:0"><strong>'+c.name+'</strong><small>'+c.handle+'</small></span></div>'+
+        '<div class="comp-stats"><span>подписчики<b>'+fmt(c.subs)+'</b></span><span>средний охват<b>'+fmt(c.reach)+'</b></span><span>ER<b>'+String(c.er).replace('.',',')+'%</b></span></div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center"><span class="plat">'+platTag(c.platform)+'</span><span class="mult">лучший '+c.best+'</span></div></div>';
+      }).join('')+'</div>'+
+      '<section class="card"><div class="card-head"><h3>Посты за неделю</h3><span class="hint">отсортировано по охвату</span></div><div class="feed">'+
+        p.feed.map(function(f){
+          return '<div class="feed-item"><div class="feed-main"><div class="feed-meta"><strong>'+f.comp+'</strong>'+platTag(f.platform)+'<span>'+f.ago+'</span></div>'+
+            '<p class="feed-text">'+f.text+'</p></div>'+
+            '<div class="feed-side"><span class="mult">'+f.mult+' к медиане</span><small>'+fmt(f.views)+' просмотров</small><button class="btn small soft" data-take="'+f.id+'">'+icon('bulb',13)+' Взять идею</button></div></div>';
+        }).join('')+
+      '</div></section>';
+  }
+
+  /* ---------- ideas ---------- */
+  function screenIdeas(){
+    const p=cur();
+    const tabs=[{id:'new',label:'Новые'},{id:'work',label:'В работе'},{id:'rejected',label:'Отклонённые'}];
+    const items=p.ideas.filter(function(i){return i.status===state.ideasTab;});
+    return '<div class="page-head"><div><span class="eyebrow">'+p.name+'</span><h1>Идеи</h1><p class="sub">Предложения ИИ на основе конкурентов и ваших лучших постов. Источник и причина видны у каждой идеи.</p></div>'+
+      '<div class="head-actions"><button class="btn primary" data-action="scan">'+icon('spark',15)+' Подобрать ещё</button></div></div>'+
+      '<div class="tabs">'+tabs.map(function(t){ const n=p.ideas.filter(function(i){return i.status===t.id;}).length; return '<button class="'+(state.ideasTab===t.id?'active':'')+'" data-tab="'+t.id+'">'+t.label+' '+n+'</button>'; }).join('')+'</div>'+
+      '<div class="idea-grid">'+items.map(function(i){
+        return '<article class="idea"><div class="idea-src">'+icon('users',12)+' '+i.source+' <span class="mult" style="margin-left:auto">'+i.mult+'</span></div>'+
+          '<h3>'+i.title+'</h3><div class="angle">'+i.angle+'</div>'+
+          '<p class="why"><b>Почему:</b> '+i.why+'<br><b>Проверить:</b> '+i.checks+'</p>'+
+          '<div class="idea-foot">'+(i.status==='new'?'<button class="btn small primary" data-idea-draft="'+i.id+'">'+icon('pen',13)+' В черновик</button><button class="btn small ghost" data-idea-reject="'+i.id+'">Отклонить</button>':'<span class="hint" style="font-size:11px;color:var(--muted)">'+(i.status==='work'?'В работе — черновик создан':'Отклонена')+'</span>')+'</div></article>';
+      }).join('')+'</div>'+
+      (items.length===0?'<div class="empty">Здесь пока пусто. Возьмите идею у конкурентов.</div>':'');
+  }
+
+  /* ---------- draft ---------- */
+  function nextWhen(p, chId){
+    const next=p.plan.filter(function(i){return i.status==='scheduled' && (!chId || i.ch===chId);}).sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time);})[0];
+    if(!next) return 'Не запланировано';
+    const d=parseIso(next.date);
+    const ch=chById(next.ch);
+    return d.getDate()+' '+MONTHS_GEN[d.getMonth()]+', '+next.time+' · '+(ch.platform==='vk'?'ВК':'Telegram');
+  }
+  function screenDraft(){
+    const p=cur();
+    const d=state.draft[state.project];
+    const pvColor = p.color;
+    const previews = p.channels.map(function(ch){
+      const isTg = ch.platform==='tg';
+      const ava = isTg ? 'TG' : p.avatarText;
+      const avaBg = isTg ? '#2aabee' : pvColor;
+      const grad = isTg ? 'linear-gradient(135deg,#2aabee,#1b6f9e)' : 'linear-gradient(135deg,'+pvColor+',#2f3b7a)';
+      const sub = isTg ? 'Telegram · только что' : 'ВК · только что';
+      const foot = isTg
+        ? '<span>'+icon('eye',12)+' 980</span><span>'+icon('repeat',12)+' 12</span>'
+        : '<span>'+icon('heart',12)+' 24</span><span>'+icon('repeat',12)+' 6</span><span>'+icon('eye',12)+' 1 240</span>';
+      return '<div class="post-preview"><div class="pp-head"><span class="pp-ava" style="background:'+avaBg+'">'+ava+'</span><span><strong>'+p.name+'</strong><small>'+sub+'</small></span></div><div class="pp-body" data-preview-body></div><div class="pp-img" data-cover style="background:'+grad+'"></div><div class="pp-foot">'+foot+'</div></div>';
+    }).join('');
+    return '<div class="page-head"><div><span class="eyebrow">'+p.name+'</span><h1>Черновик</h1><p class="sub">Текст, правила проекта и дизайн-код в одном месте. Сначала проверьте, потом планируйте.</p></div>'+
+      '<div class="head-actions"><span class="pill st-draft" id="draft-status-pill">Черновик</span></div></div>'+
+      '<div class="draft-grid"><div>'+
+        '<div class="draft-card">'+
+          '<div class="ch-tabs">'+p.channels.map(function(x){ return '<button class="ch-tab '+(d.channel===x.id?'active':'')+'" data-draft-ch="'+x.id+'"><i class="'+x.platform+'"></i>'+x.name+'</button>'; }).join('')+'</div>'+
+          '<div class="field"><label>Заголовок</label><input class="input" id="draft-title" value="'+d.title.replace(/"/g,'&quot;')+'"></div>'+
+          '<div class="field"><label>Текст</label><textarea class="input" id="draft-body">'+d.body+'</textarea></div>'+
+          '<div class="editor-actions"><div class="left"><button class="btn soft" data-action="generate">'+icon('spark',15)+' Сгенерировать</button><button class="btn ghost" data-action="save-draft">Сохранить</button></div>'+
+          '<span class="hint" id="provider-hint" style="font-size:11px;color:var(--muted)">'+(d.provider==='chatgpt'?'ChatGPT · gpt-5':'DeepSeek · chat')+'</span></div>'+
+          '<div class="previews">'+previews+'</div>'+
+        '</div>'+
+      '</div><aside>'+
+        '<div class="side-card"><h4>Правила проекта</h4><div class="rule-list">'+
+          p.ruleList.map(function(r){ return '<div><b>'+r[0]+':</b> '+r[1]+'</div>'; }).join('')+
+        '</div><button class="btn small ghost" style="width:100%;margin-top:10px" data-nav="settings">Изменить правила</button></div>'+
+        '<div class="side-card"><h4>Дизайн-код</h4><div class="swatches">'+
+          '<span class="sw" style="background:'+pvColor+'"></span><span class="sw" style="background:'+p.soft+'"></span><span class="sw" style="background:#20332f"></span><span class="sw" style="background:#f6f3ea"></span>'+
+        '</div><div class="brand-line">Шрифт Inter, заголовок 28/1.1<br>Сетка 4 колонки, лого слева<br>Шаблон: «карусель · 4 слайда»</div>'+
+        '<button class="btn small ghost" style="width:100%;margin-top:10px" data-nav="settings">Открыть brand kit</button></div>'+
+        '<div class="side-card"><h4>Генерация</h4><select class="select" id="provider-select"><option value="chatgpt" '+(d.provider==='chatgpt'?'selected':'')+'>ChatGPT · gpt-5</option><option value="deepseek" '+(d.provider==='deepseek'?'selected':'')+'>DeepSeek · chat</option></select>'+
+          '<div class="quota"><span>Генераций сегодня</span><span>7 из 30</span></div><div class="bar"><i style="width:23%"></i></div>'+
+          '<p class="brand-line" style="margin:9px 0 0;font-size:10.5px">ChatGPT идёт через прокси. Если недоступен — DeepSeek автоматически.</p></div>'+
+        '<div class="side-card"><h4>Публикация</h4><div class="publish-box"><div class="publish-when">'+icon('clock',14)+' '+nextWhen(p, d.channel)+'</div>'+
+          '<button class="btn primary" data-action="schedule">'+icon('calendar',15)+' Запланировать</button>'+
+          '<button class="btn ghost" data-action="publish-now">Опубликовать сейчас</button></div></div>'+
+      '</aside></div>';
+  }
+
+  /* ---------- analytics ---------- */
+  function screenAnalytics(){
+    const p=cur();
+    const posts=p.posts.filter(function(x){return state.afilter==='all' || x.ch===state.afilter;});
+    const max=Math.max.apply(null,p.chart);
+    const bars=p.chart.map(function(v,i){
+      const h=Math.round(v/max*118);
+      const x=14+i*52;
+      return '<rect class="bar-rect" x="'+x+'" y="'+(150-h)+'" width="30" height="'+h+'" rx="5"><title>'+fmt(v)+' просмотров</title></rect>';
+    }).join('');
+    const labels=p.chartLabels.map(function(l,i){ return '<text class="axis-label" x="'+(14+i*52+15)+'" y="170" text-anchor="middle">'+l+'</text>'; }).join('');
+    const hasTg = p.channels.some(function(c){return c.platform==='tg';});
+    const note = hasTg ? 'Какие посты приводят подписчиков, а какие просто собирают просмотры. Для ВК подписки — точная цифра, для TG — оценка.' : 'Какие посты приводят подписчиков, а какие просто собирают просмотры. Подписки по постам — точная цифра из ВК.';
+    return '<div class="page-head"><div><span class="eyebrow">'+p.name+'</span><h1>Аналитика</h1><p class="sub">'+note+'</p></div>'+
+      '<div class="head-actions"><div class="filters"><button class="chip-filter '+(state.afilter==='all'?'active':'')+'" data-afilter="all">Все каналы</button>'+p.channels.map(function(c){ return '<button class="chip-filter '+(state.afilter===c.id?'active':'')+'" data-afilter="'+c.id+'"><i style="background:'+(c.platform==='vk'?'#0077ff':'#2aabee')+'"></i>'+c.name+'</button>'; }).join('')+'</div></div></div>'+
+      '<div class="an-kpis"><div class="kpi"><small>Просмотры</small><strong>'+fmt(p.chart.reduce(function(a,b){return a+b;},0))+'</strong><span>за 30 дней</span></div>'+
+      '<div class="kpi"><small>Подписки</small><strong>'+p.posts.reduce(function(a,b){return a+b.subs;},0)+'</strong><span>по постам</span></div>'+
+      '<div class="kpi"><small>Средний ER</small><strong>'+p.avgEr+'</strong><span>по реакциям</span></div>'+
+      '<div class="kpi"><small>Лучший пост</small><strong>'+p.kpi.best+'</strong><span>'+p.kpi.bestNote+'</span></div></div>'+
+      '<div class="chart-card"><div class="card-head"><h3>Просмотры по дням</h3><span class="hint">ноябрь</span></div><svg class="bars" viewBox="0 0 640 180" preserveAspectRatio="none"><line class="axis" x1="0" y1="150" x2="640" y2="150"></line>'+bars+labels+'</svg></div>'+
+      '<div class="two-col" style="margin-bottom:14px">'+
+        '<section class="card"><div class="card-head"><h3>Что работает</h3><span class="hint">тема → подписки</span></div><table><thead><tr><th>Тема</th><th class="num-cell">Постов</th><th class="num-cell">Подписок/пост</th><th class="num-cell">ER</th></tr></thead><tbody>'+
+          p.themes.map(function(t){ return '<tr><td>'+t.name+'</td><td class="num-cell muted">'+t.posts+'</td><td class="num-cell pos">'+t.subs+'</td><td class="num-cell">'+t.er+'</td></tr>'; }).join('')+
+        '</tbody></table></section>'+
+        '<section class="card"><div class="card-head"><h3>Вывод</h3><span class="hint">для следующей недели</span></div><p class="sub" style="margin-top:0">'+p.insight+'</p><button class="btn small soft" data-nav="draft">'+icon('spark',13)+' Сделать продолжение</button></section>'+
+      '</div>'+
+      '<section class="card"><div class="card-head"><h3>Посты</h3><span class="hint">по подпискам</span></div><div class="posts-list">'+
+        posts.slice().sort(function(a,b){return b.subs-a.subs;}).map(function(x){
+          return '<div class="post-row"><div class="pr-main"><strong>'+x.title+'</strong><div class="pr-meta">'+chTag(x.ch)+'<span>'+x.date+'</span></div></div>'+
+          '<div class="pr-stats"><div class="pr-stat"><b>'+fmt(x.views)+'</b><small>просмотры</small></div><div class="pr-stat"><b>'+x.er+'</b><small>ER</small></div><div class="pr-stat"><b>+'+x.subs+(x.est?'<span class="est">оценка</span>':'')+'</b><small>подписки</small></div><div class="pr-stat"><b>'+x.visits+'</b><small>переходы</small></div></div></div>';
+        }).join('')+
+      '</div></section>';
+  }
+
+  /* ---------- placements ---------- */
+  function screenPlacements(){
+    const p=cur();
+    return '<div class="page-head"><div><span class="eyebrow">'+p.name+'</span><h1>Площадки для рекламы</h1><p class="sub">Куда поставить рекламу поста: сообщества ВК под задачу, с охватом, ценой и CPM.</p></div>'+
+      '<div class="head-actions"><button class="btn ghost" data-nav="analytics">Вернуться в аналитику</button></div></div>'+
+      '<div class="place-banner"><div><strong>Лучший пост недели — '+p.promote.title+'</strong><p>'+p.promote.text+'</p></div><button class="btn primary" data-action="promote">'+icon('send',15)+' Продвинуть пост</button></div>'+
+      '<section class="card"><div class="search-row"><input class="input" value="'+p.placements.query.replace(/"/g,'&quot;')+'"><button class="btn primary" data-action="search">'+icon('search',15)+' Подобрать</button></div>'+
+      '<div class="card-head" style="margin-top:6px"><h3>Найдено 12 сообществ</h3><span class="hint">3 в шортлисте</span></div>'+
+      '<table><thead><tr><th>Сообщество</th><th class="num-cell">Подписчики</th><th class="num-cell">Средний охват</th><th class="num-cell">CPM</th><th class="num-cell">Размещение</th><th></th></tr></thead><tbody>'+
+      p.placements.rows.map(function(r){
+        return '<tr><td><strong>'+r[0]+'</strong></td><td class="num-cell">'+fmt(r[1])+'</td><td class="num-cell">'+fmt(r[2])+'</td><td class="num-cell cp">'+r[3]+'</td><td class="num-cell">'+r[4]+'</td><td class="num-cell"><button class="btn small ghost" data-action="shortlist">В шортлист</button></td></tr>';
+      }).join('')+'</tbody></table></section>';
+  }
+
+  /* ---------- settings ---------- */
+  function screenSettings(){
+    const p=cur();
+    return '<div class="page-head"><div><span class="eyebrow">'+p.name+'</span><h1>Настройки проекта</h1><p class="sub">Каналы, конкуренты, дизайн-код и правила генерации. Всё, что делает контент вашим.</p></div>'+
+      '<div class="head-actions"><button class="btn primary" data-action="save-settings">Сохранить</button></div></div>'+
+      '<div class="settings-grid">'+
+        '<section class="card"><div class="card-head"><h3>Каналы</h3><span class="hint">публикация</span></div>'+
+          p.channels.map(function(c){ return '<div class="set-row"><div class="l"><strong>'+c.name+'</strong><small>'+c.handle+' · '+fmt(c.subs)+' подписчиков</small></div><span class="ok">подключён</span></div>'; }).join('')+
+          '<div class="set-row"><div class="l"><strong>Добавить канал</strong><small>ВК-сообщество или Telegram-канал</small></div><button class="btn small ghost" data-action="add-channel">'+icon('plus',13)+'</button></div>'+
+        '</section>'+
+        '<section class="card"><div class="card-head"><h3>Конкуренты</h3><span class="hint">источники идей</span></div>'+
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+p.competitors.map(function(c){ return '<span class="chip-filter active">'+c.name+'</span>'; }).join('')+'</div>'+
+          '<p class="hint" style="margin:0;font-size:11px;color:var(--muted)">ВК читается через wall.get, Telegram — через существующий клиент публичных каналов. Посты старше 30 дней не берём.</p>'+
+        '</section>'+
+        '<section class="card"><div class="card-head"><h3>Дизайн-код</h3><span class="hint">brand kit</span></div>'+
+          '<div class="swatches"><span class="sw" style="background:'+p.color+'"></span><span class="sw" style="background:'+p.soft+'"></span><span class="sw" style="background:#20332f"></span><span class="sw" style="background:#f6f3ea"></span></div>'+
+          '<div class="brand-line">Шрифт: Inter · заголовки 28/1.1, текст 15/1.5<br>Логотип: слева вверху, отступ 24 px<br>Шаблоны: «карусель 4 слайда», «обложка-цитата», «чек-лист»</div>'+
+          '<button class="btn small ghost" style="margin-top:10px" data-action="edit-brand">Редактировать</button>'+
+        '</section>'+
+        '<section class="card"><div class="card-head"><h3>Правила генерации</h3><span class="hint">для ИИ</span></div>'+
+          '<textarea class="input" style="min-height:120px;font-size:12px">'+p.rules+'</textarea>'+
+          '<p class="hint" style="margin:8px 0 0;font-size:10.5px;color:var(--muted)">Правила применяются к каждой генерации. Изменения версионируются.</p>'+
+        '</section>'+
+        '<section class="card"><div class="card-head"><h3>Провайдер</h3><span class="hint">генерация</span></div>'+
+          '<select class="select" id="settings-provider"><option>ChatGPT · gpt-5 (через прокси)</option><option>DeepSeek · chat (фолбэк)</option></select>'+
+          '<div class="quota"><span>Лимит на проект</span><span>30 генераций / сутки</span></div><div class="bar"><i style="width:23%"></i></div>'+
+          '<p class="hint" style="margin:8px 0 0;font-size:10.5px;color:var(--muted)">Если ChatGPT недоступен, запрос уходит в DeepSeek. Квота общая на проект.</p>'+
+        '</section>'+
+        '<section class="card"><div class="card-head"><h3>Доступ</h3><span class="hint">пока только я</span></div>'+
+          '<div class="set-row"><div class="l"><strong>Открыть проект другим</strong><small>Бета для 5–10 владельцев каналов</small></div><span class="warn">выключено</span></div>'+
+          '<div class="set-row"><div class="l"><strong>Роль</strong><small>Владелец</small></div><span class="muted">Александр</span></div>'+
+        '</section>'+
+      '</div>';
+  }
+
+  /* ---------- drawer ---------- */
+  function openItemDrawer(id){
+    const p=cur();
+    const item=p.plan.find(function(i){return i.id===id;});
+    if(!item) return;
+    const c=chById(item.ch);
+    const stats = item.metrics ? '<div class="drawer-stats"><div><b>'+fmt(item.metrics.views)+'</b><small>просмотры</small></div><div><b>+'+item.metrics.subs+'</b><small>подписки</small></div><div><b>'+item.metrics.er+'</b><small>ER</small></div></div>' : '';
+    const actions = item.status==='published'
+      ? '<button class="btn ghost" data-action="close-drawer">Закрыть</button>'
+      : item.status==='idea'
+        ? '<button class="btn primary" data-to-draft="'+item.id+'">'+icon('pen',15)+' В черновик</button><button class="btn ghost" data-action="close-drawer">Закрыть</button>'
+        : '<button class="btn primary" data-publish="'+item.id+'">'+icon('send',15)+' Опубликовать</button><button class="btn ghost" data-to-draft="'+item.id+'">'+icon('pen',15)+' Открыть черновик</button>';
+    openDrawer('<div class="drawer-head">'+statusPill(item.status)+'<button class="icon-btn" data-action="close-drawer">'+icon('x',15)+'</button></div>'+
+      '<h2>'+item.title+'</h2>'+
+      '<div class="meta">'+chTag(item.ch)+'<span>'+item.time+'</span><span>'+new Date(item.date+'T00:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long'})+'</span></div>'+
+      stats+
+      '<p class="drawer-text">'+item.text+'</p>'+
+      '<div class="meta" style="margin-bottom:12px"><span>Источник:</span><strong style="color:#4e5d55">'+item.src+'</strong></div>'+
+      '<div class="drawer-actions">'+actions+'</div>');
+  }
+  function openDayDrawer(dateStr){
+    const items=planChips(dateStr);
+    const d=parseIso(dateStr);
+    openDrawer('<div class="drawer-head"><span class="pill st-idea">'+d.getDate()+' '+MONTHS_GEN[d.getMonth()]+'</span><button class="icon-btn" data-action="close-drawer">'+icon('x',15)+'</button></div>'+
+      '<h2>Публикации дня</h2>'+
+      (items.length? '<div class="feed" style="margin-top:10px">'+items.map(function(i){ const c=chById(i.ch); return '<button class="feed-item" style="text-align:left;width:100%" data-item="'+i.id+'"><div class="feed-main"><div class="feed-meta">'+platTag(c.platform)+'<span>'+i.time+'</span>'+statusPill(i.status)+'</div><strong style="font-size:13px">'+i.title+'</strong></div></button>'; }).join('')+'</div>' : '<p class="sub">На этот день ничего не запланировано.</p>')+
+      '<button class="btn primary" style="width:100%;margin-top:14px" data-action="schedule-day" data-date="'+dateStr+'">'+icon('plus',15)+' Запланировать пост</button>');
+  }
+
+  /* ---------- modal ---------- */
+  function openSchedule(dateStr){
+    const p=cur();
+    const d=state.draft[state.project];
+    const next=p.plan.filter(function(i){return i.status==='scheduled' && i.ch===d.channel;}).sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time);})[0];
+    const date = dateStr || (next ? next.date : '2026-11-19');
+    const time = next ? next.time : '10:00';
+    openModal('<h2>Запланировать публикацию</h2><p>Пост появится в календаре и уйдёт в выбранный канал.</p>'+
+      '<form id="schedule-form">'+
+      '<div class="field"><label>Канал</label><select class="select" name="ch">'+p.channels.map(function(c){ return '<option value="'+c.id+'" '+(c.id===d.channel?'selected':'')+'>'+c.name+'</option>'; }).join('')+'</select></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="field"><label>Дата</label><input class="input" type="date" name="date" value="'+date+'"></div><div class="field"><label>Время</label><input class="input" type="time" name="time" value="'+time+'"></div></div>'+
+      '<div class="field"><label>Заголовок</label><input class="input" name="title" value="'+d.title.replace(/"/g,'&quot;')+'"></div>'+
+      '<div class="modal-actions"><button type="button" class="btn ghost" data-action="close-modal">Отмена</button><button type="submit" class="btn primary">Запланировать</button></div></form>');
+  }
+
+  /* ---------- render ---------- */
+  function render(){
+    renderSidebar();
+    const screens={overview:screenOverview, plan:screenPlan, competitors:screenCompetitors, ideas:screenIdeas, draft:screenDraft, analytics:screenAnalytics, placements:screenPlacements, settings:screenSettings};
+    document.getElementById('view').innerHTML = (screens[state.screen]||screenOverview)();
+    if(state.screen==='draft') syncPreview();
+  }
+
+  function syncPreview(){
+    const d=state.draft[state.project];
+    const titleEl=document.getElementById('draft-title');
+    const bodyEl=document.getElementById('draft-body');
+    if(titleEl) d.title=titleEl.value;
+    if(bodyEl) d.body=bodyEl.value;
+    const short = d.body.split('\n')[0].slice(0,120) + (d.body.length>120?'…':'');
+    document.querySelectorAll('[data-preview-body]').forEach(function(el){ el.textContent=short; });
+    document.querySelectorAll('[data-cover]').forEach(function(el){ el.textContent=d.title; });
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener('click', function(e){
+    if(state.projectMenu && !e.target.closest('.project-wrap')){
+      state.projectMenu=false;
+      renderSidebar();
+    }
+    const nav=e.target.closest('[data-nav]');
+    if(nav){ e.preventDefault(); go(nav.getAttribute('data-nav')); return; }
+    const proj=e.target.closest('[data-project]');
+    if(proj){ state.project=proj.getAttribute('data-project'); state.projectMenu=false; state.channelFilter='all'; state.afilter='all'; state.ideasTab='new'; render(); showToast('Проект: '+cur().name); return; }
+    const toggle=e.target.closest('[data-action="toggle-project"]');
+    if(toggle){ state.projectMenu=!state.projectMenu; renderSidebar(); return; }
+    if(e.target.closest('[data-action="close-project"]')){ state.projectMenu=false; renderSidebar(); return; }
+
+    const cal=e.target.closest('[data-cal]');
+    if(cal){
+      const a=cal.getAttribute('data-cal');
+      if(a==='prev'){ if(state.calView==='week') state.weekStart=new Date(state.weekStart.getFullYear(),state.weekStart.getMonth(),state.weekStart.getDate()-7); else state.month=new Date(state.month.getFullYear(),state.month.getMonth()-1,1); }
+      if(a==='next'){ if(state.calView==='week') state.weekStart=new Date(state.weekStart.getFullYear(),state.weekStart.getMonth(),state.weekStart.getDate()+7); else state.month=new Date(state.month.getFullYear(),state.month.getMonth()+1,1); }
+      if(a==='today'){ state.month=new Date(2026,10,1); state.weekStart=new Date(2026,10,16); }
+      render(); return;
+    }
+    const cv=e.target.closest('[data-calview]');
+    if(cv){ state.calView=cv.getAttribute('data-calview'); render(); return; }
+    const chf=e.target.closest('[data-channel]');
+    if(chf){ state.channelFilter=chf.getAttribute('data-channel'); render(); return; }
+    const af=e.target.closest('[data-afilter]');
+    if(af){ state.afilter=af.getAttribute('data-afilter'); render(); return; }
+    const tab=e.target.closest('[data-tab]');
+    if(tab){ state.ideasTab=tab.getAttribute('data-tab'); render(); return; }
+
+    const chip=e.target.closest('[data-item]');
+    if(chip){ openItemDrawer(chip.getAttribute('data-item')); return; }
+    const day=e.target.closest('[data-day]');
+    if(day){ openDayDrawer(day.getAttribute('data-day')); return; }
+
+    if(e.target.closest('[data-action="close-drawer"]')){ closeDrawer(); return; }
+    if(e.target.closest('[data-action="close-modal"]')){ closeModal(); return; }
+
+    const pub=e.target.closest('[data-publish]');
+    if(pub){
+      const id=pub.getAttribute('data-publish');
+      const item=cur().plan.find(function(i){return i.id===id;});
+      if(item){ item.status='published'; item.metrics=item.metrics||{views:0,subs:0,er:'—'}; }
+      closeDrawer(); render(); showToast('Пост отмечен как опубликованный · в демо без реальной отправки'); return;
+    }
+    const toDraft=e.target.closest('[data-to-draft]');
+    if(toDraft){
+      const item=cur().plan.find(function(i){return i.id===toDraft.getAttribute('data-to-draft');});
+      if(item){ state.draft[state.project]={title:item.title, body:item.text+'\n\n(черновик открыт из календаря — допишите текст)', channel:item.ch, provider:'chatgpt'}; }
+      closeDrawer(); go('draft'); showToast('Черновик открыт'); return;
+    }
+    const take=e.target.closest('[data-take]');
+    if(take){
+      const f=cur().feed.find(function(x){return x.id===take.getAttribute('data-take');});
+      if(f){
+        cur().ideas.unshift({id:'n'+Date.now(), title:f.idea.title, status:'new', source:f.comp, mult:f.mult, angle:f.idea.angle, why:f.idea.why, checks:'Проверить факты перед публикацией'});
+        render(); showToast('Идея добавлена: '+f.idea.title);
+      }
+      return;
+    }
+    const ideaDraft=e.target.closest('[data-idea-draft]');
+    if(ideaDraft){
+      const i=cur().ideas.find(function(x){return x.id===ideaDraft.getAttribute('data-idea-draft');});
+      if(i){ i.status='work'; state.draft[state.project]={title:i.title, body:'Крючок: '+i.angle+'\n\n1. …\n\n2. …\n\n3. …\n\nВывод: …\n\nВопрос к читателю: …', channel:cur().channels[0].id, provider:'chatgpt'}; }
+      go('draft'); showToast('Черновик создан из идеи'); return;
+    }
+    const ideaReject=e.target.closest('[data-idea-reject]');
+    if(ideaReject){
+      const i=cur().ideas.find(function(x){return x.id===ideaReject.getAttribute('data-idea-reject');});
+      if(i) i.status='rejected';
+      render(); showToast('Идея отклонена'); return;
+    }
+    const draftCh=e.target.closest('[data-draft-ch]');
+    if(draftCh){ state.draft[state.project].channel=draftCh.getAttribute('data-draft-ch'); render(); return; }
+
+    const act=e.target.closest('[data-action]');
+    if(act){
+      const a=act.getAttribute('data-action');
+      if(a==='new-post'){ state.draft[state.project]={title:'Новый пост', body:'', channel:cur().channels[0].id, provider:'chatgpt'}; go('draft'); return; }
+      if(a==='generate'){
+        const d=state.draft[state.project];
+        act.disabled=true; act.innerHTML='Генерирую…';
+        const ta=document.getElementById('draft-body');
+        if(ta) ta.value='Генерирую через '+(d.provider==='chatgpt'?'ChatGPT':'DeepSeek')+'…';
+        setTimeout(function(){
+          const body = state.project==='mp'
+            ? 'Таблица — это про контроль. Конверты — про решение, принятое заранее.\n\nМы перестали вести бюджет в таблице и попробовали 4 конверта: обязательное, бытовое, радость и подушка. Через 30 дней оказалось, что дело не в приложении, а в том, что деньги разложены до того, как вы их потратите.\n\nЧто дало больше всего:\n• «радость» перестала быть запретом;\n• подушка пополнялась сама, без силы воли;\n• в конце месяца не было вопроса «куда ушло».\n\nПопробуйте неделю: разложите одну зарплату на 4 конверта и напишите, что оказалось сложнее всего.'
+            : 'Просмотры отвечают на вопрос «увидели ли», подписки — «остались ли».\n\nВ ВК подписки по посту отдаются напрямую: partnerStats.getContentStatsAllTime возвращает subscriptions, group_visits и link_clicks. В Telegram такой цифры нет — считаем оценку по дельте подписчиков в окне 24 часа.\n\nЧто важно: подписка — это результат поста и канала одновременно. Сравнивайте посты внутри одного канала, а не между площадками.';
+          if(ta){ ta.value=body; ta.dispatchEvent(new Event('input',{bubbles:true})); }
+          act.disabled=false; act.innerHTML=icon('spark',15)+' Сгенерировать заново';
+          showToast('Черновик готов — проверьте факты перед публикацией');
+        }, 900);
+        return;
+      }
+      if(a==='schedule'){ openSchedule(); return; }
+      if(a==='schedule-day'){ openSchedule(act.getAttribute('data-date')); closeDrawer(); return; }
+      if(a==='publish-now'){ showToast('В демо публикация не выполняется'); return; }
+      if(a==='save-draft'||a==='save-settings'||a==='edit-brand'){ showToast('Сохранено (демо)'); return; }
+      if(a==='scan'){ showToast('В демо новые идеи не подбираются'); return; }
+      if(a==='add-competitor'||a==='add-channel'||a==='shortlist'||a==='promote'||a==='search'){ showToast('Демо: действие без реального запроса'); return; }
+    }
+    if(e.target.closest('#provider-select, #settings-provider')) return;
+  });
+
+  document.addEventListener('change', function(e){
+    if(e.target.id==='provider-select'){
+      const d=state.draft[state.project];
+      d.provider=e.target.value;
+      const hint=document.getElementById('provider-hint');
+      if(hint) hint.textContent=d.provider==='chatgpt'?'ChatGPT · gpt-5':'DeepSeek · chat';
+      showToast('Провайдер: '+(d.provider==='chatgpt'?'ChatGPT':'DeepSeek'));
+    }
+  });
+
+  document.addEventListener('input', function(e){
+    if(e.target.id==='draft-title' || e.target.id==='draft-body'){
+      const d=state.draft[state.project];
+      if(e.target.id==='draft-title') d.title=e.target.value; else d.body=e.target.value;
+      syncPreview();
+    }
+  });
+
+  document.addEventListener('submit', function(e){
+    if(e.target.id==='schedule-form'){
+      e.preventDefault();
+      const f=new FormData(e.target);
+      const item={id:'n'+Date.now(), date:f.get('date'), time:f.get('time'), ch:f.get('ch'), title:f.get('title'), status:'scheduled', src:'Черновик', text:state.draft[state.project].body || 'Текст черновика.', metrics:null};
+      cur().plan.push(item);
+      closeModal();
+      state.month=parseIso(item.date); state.month.setDate(1);
+      go('plan');
+      showToast('Запланировано: '+item.title);
+    }
+  });
+
+  window.addEventListener('hashchange', function(){
+    const h=location.hash.replace('#','');
+    if(TITLES[h] && h!==state.screen){ state.screen=h; render(); }
+  });
+
+  /* init */
+  (function(){
+    const qp=new URLSearchParams(location.search);
+    if(qp.get('project')==='socstat') state.project='socstat';
+    if(qp.get('view')==='week') state.calView='week';
+    const start=location.hash.replace('#','');
+    if(TITLES[start]) state.screen=start;
+    render();
+    setTimeout(function(){
+      if(state.screen==='draft') syncPreview();
+      if(qp.get('item')) openItemDrawer(qp.get('item'));
+      if(qp.get('schedule')) openSchedule();
+    }, 120);
+  })();
+</script>
+</body>
+</html>

@@ -9,6 +9,29 @@ Workflow `.github/workflows/deploy.yml` запускается после каж
 Нужны Docker Engine, Docker Compose plugin, Nginx, Certbot и пользователь с правом
 запускать `docker` без `sudo`.
 
+Ограничьте кэш сборок, иначе каждый деплой оставляет на диске сотни мегабайт
+(подробности — [deploy.md](features/deploy.md#кэш-сборок-и-место-на-диске)).
+Создайте `/etc/docker/daemon.json`:
+
+```json
+{
+  "builder": {
+    "gc": {
+      "enabled": true,
+      "defaultKeepStorage": "5GB"
+    }
+  }
+}
+```
+
+Проверьте конфигурацию и перезапустите Docker (контейнеры с `restart: unless-stopped`
+поднимутся сами, сайт будет недоступен несколько секунд):
+
+```bash
+sudo dockerd --validate --config-file=/etc/docker/daemon.json
+sudo systemctl restart docker
+```
+
 Создайте каталог приложения. Значения секретов вводятся только на сервере, не в
 репозитории:
 

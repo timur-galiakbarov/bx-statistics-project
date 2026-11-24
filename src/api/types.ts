@@ -333,7 +333,7 @@ export type CommunityAnalytics = {
     views: number;
     reach: number;
     reachSubscribers: number;
-    dayGroups?: Array<{ date: string; dayIndex: number; reach: number | null }>;
+    dayGroups?: Array<{ date: string; dayIndex: number; reach: number | null; subscribed: number | null; unsubscribed: number | null }>;
   };
   wall: {
     totalPosts: number;
@@ -402,7 +402,7 @@ export type CommunityAnalytics = {
     stats: null | {
       growth: number;
       reach: number;
-      dayGroups?: Array<{ date: string; dayIndex: number; reach: number | null }>;
+      dayGroups?: Array<{ date: string; dayIndex: number; reach: number | null; subscribed: number | null; unsubscribed: number | null }>;
     };
     wall: CommunityAnalytics['wall'] & { available: boolean };
   };

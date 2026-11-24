@@ -138,22 +138,39 @@ export function sumPartnerStatsDays(days: PartnerStatsDay[]) {
   );
 }
 
-export function buildReachSeries(
-  period: AnalyticsPeriodRange,
-  stats: Array<{ period_from?: number; reach?: { reach?: number } }>
-) {
-  const byDate = new Map<string, number | null>();
+export type PartnerStatsSeriesInput = {
+  period_from?: number;
+  owner?: {
+    reach?: { all?: number };
+    subscribe_action?: number;
+    unsubscribe_action?: number;
+  };
+};
+
+function dayKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Дневной ряд статистики VK: охват, подписки и отписки. Пропуск в ответе VK остаётся null,
+ * а ноль — честный ноль: на графике это разные вещи.
+ */
+export function buildStatsSeries(period: AnalyticsPeriodRange, stats: PartnerStatsSeriesInput[]) {
+  const byDate = new Map<string, { reach: number | null; subscribed: number | null; unsubscribed: number | null }>();
   for (const day of stats) {
     if (day.period_from === undefined || !Number.isFinite(day.period_from)) continue;
-    const date = new Date(day.period_from * 1000);
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    byDate.set(key, day.reach?.reach ?? null);
+    byDate.set(dayKey(new Date(day.period_from * 1000)), {
+      reach: day.owner?.reach?.all ?? null,
+      subscribed: day.owner?.subscribe_action ?? null,
+      unsubscribed: day.owner?.unsubscribe_action ?? null
+    });
   }
-  const result: Array<{ date: string; dayIndex: number; reach: number | null }> = [];
+  const result: Array<{ date: string; dayIndex: number; reach: number | null; subscribed: number | null; unsubscribed: number | null }> = [];
   const date = new Date(period.dateFrom);
   while (date <= period.dateTo) {
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    result.push({ date: key, dayIndex: result.length + 1, reach: byDate.get(key) ?? null });
+    const key = dayKey(date);
+    const values = byDate.get(key);
+    result.push({ date: key, dayIndex: result.length + 1, reach: values?.reach ?? null, subscribed: values?.subscribed ?? null, unsubscribed: values?.unsubscribed ?? null });
     date.setDate(date.getDate() + 1);
   }
   return result;

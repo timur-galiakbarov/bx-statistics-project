@@ -3896,6 +3896,26 @@ a {
 .subscriber-history-stats span { color: #687684; font-size: 12px; }
 .subscriber-history-stats strong { color: #3c4858; font-size: 20px; font-variant-numeric: tabular-nums; font-weight: 500; }
 
+/* Подписки и отписки VK по дням: столбики вверх/вниз от общей середины. */
+.subscription-flow-legend { align-items: center; color: #77837b; display: flex; font-size: 12px; gap: 14px; }
+.subscription-flow-legend i { border-radius: 2px; display: inline-block; height: 8px; margin-right: 5px; width: 8px; }
+.subscription-flow-legend i.up { background: #4caf50; }
+.subscription-flow-legend i.down { background: #ef9a9a; }
+.subscription-flow-stats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 14px 0 12px; }
+.subscription-flow-stats > div { border: 1px solid #edf0ee; border-radius: 6px; display: grid; gap: 4px; padding: 12px 14px; }
+.subscription-flow-stats span { color: #687684; font-size: 12px; }
+.subscription-flow-stats strong { color: #3c4858; font-size: 20px; font-variant-numeric: tabular-nums; font-weight: 500; }
+.subscription-flow-stats strong.up { color: #287d30; }
+.subscription-flow-stats strong.down { color: #c62828; }
+.subscription-flow-stats small { color: #98a19b; font-size: 11px; }
+.subscription-flow-chart { align-items: stretch; border-bottom: 1px solid #e3e9e4; display: flex; gap: 2px; height: 120px; overflow-x: auto; padding: 4px 2px; position: relative; }
+.subscription-flow-chart::before { border-top: 1px solid #e3e9e4; content: ''; left: 0; position: absolute; right: 0; top: 50%; }
+.subscription-flow-day { display: grid; flex: 1 1 0; gap: 2px; grid-template-rows: 1fr 1fr; min-width: 3px; position: relative; z-index: 1; }
+.subscription-flow-day::before { background: #dfe5e0; content: ''; height: 1px; left: 0; position: absolute; right: 0; top: 50%; }
+.subscription-flow-up { align-self: end; background: #4caf50; border-radius: 3px 3px 0 0; }
+.subscription-flow-down { align-self: start; background: #ef9a9a; border-radius: 0 0 3px 3px; }
+.subscription-flow-axis { color: #98a19b; display: flex; font-size: 11px; justify-content: space-between; margin-top: 4px; }
+
 .communities-table-head-help { align-items: center; display: inline-flex; gap: 4px; }
 .growth-help-button { align-items: center; background: none; border: 0; color: #9aa59e; cursor: help; display: inline-flex; padding: 0; }
 .growth-help-button:hover, .growth-help-button:focus-visible { color: #4caf50; }

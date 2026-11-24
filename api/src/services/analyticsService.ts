@@ -5,7 +5,7 @@ import { TtlCache } from './ttlCache.js';
 import {
   CUSTOM_PERIOD_TOO_LONG_MESSAGE,
   buildDailySeries,
-  buildReachSeries,
+  buildStatsSeries,
   getAnalyticsPeriod,
   getPreviousAnalyticsPeriod,
   getWallCompleteness,
@@ -371,18 +371,22 @@ async function getStatsForPeriod(
     return {
       ...sums,
       reach: total.owner?.reach?.all ?? sums.reach,
-      dayGroups: buildReachSeries(
+      dayGroups: buildStatsSeries(
         period,
         intervals.map((interval) => ({
           period_from: interval.period_from,
-          reach: { reach: interval.owner?.reach?.all }
+          owner: {
+            reach: { all: interval.owner?.reach?.all },
+            subscribe_action: interval.owner?.subscribe_action,
+            unsubscribe_action: interval.owner?.unsubscribe_action
+          }
         }))
       )
     };
   } catch (error) {
     if (isVkStatsUnavailableError(error)) {
       onUnavailable();
-      return { subscribed: 0, unsubscribed: 0, views: 0, reach: 0, reachSubscribers: 0, dayGroups: buildReachSeries(period, []) };
+      return { subscribed: 0, unsubscribed: 0, views: 0, reach: 0, reachSubscribers: 0, dayGroups: buildStatsSeries(period, []) };
     }
 
     throw error;

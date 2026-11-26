@@ -88,7 +88,8 @@ accountRouter.get('/me', requireUser, async (req, res, next) => {
           enforceAccessRestrictions: user.enforceAccessRestrictions,
           reportPass: getUserReportPassState(user),
           vkReports: await getNotificationSettings(user),
-          placementsEnabled: await isFeatureEnabledFor('placements', user)
+          placementsEnabled: await isFeatureEnabledFor('placements', user),
+          contentPlanEnabled: await isFeatureEnabledFor('contentPlan', user)
         }
       }
     });

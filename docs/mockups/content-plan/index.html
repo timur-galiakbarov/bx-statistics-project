@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Socstat — Контент-план · макет</title>
+<style>
+  :root {
+    --bg: #eeeeee;
+    --panel: #ffffff;
+    --ink: #20332f;
+    --text: #334155;
+    --muted: #777f7b;
+    --muted-2: #8b978f;
+    --line: #e0e5e2;
+    --line-soft: #edf1ee;
+    --green: #21815f;
+    --green-dark: #1a6a4d;
+    --green-nav: #4caf50;
+    --green-soft: #eaf4ee;
+    --green-line: #cfe4d8;
+    --vk: #0077ff;
+    --tg: #2aabee;
+    --amber: #b7791f;
+    --amber-soft: #fff4df;
+    --blue: #2563eb;
+    --blue-soft: #e8f0ff;
+    --red: #b42318;
+    --red-soft: #fff0ef;
+    --radius: 12px;
+    --shadow: 0 10px 30px rgba(35, 71, 44, .05);
+    font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); min-height: 100vh; }
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  a { color: inherit; }
+  .app-shell { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: 100vh; }
+
+  /* sidebar */
+  .sidebar {
+    background: linear-gradient(rgba(255,255,255,.92), rgba(255,255,255,.96)), #f5f7f8;
+    box-shadow: 0 10px 30px -12px rgba(0,0,0,.38), 0 4px 25px 0 rgba(0,0,0,.1);
+    height: 100vh; left: 0; overflow-y: auto; padding: 15px 0; position: fixed; top: 0; width: 290px; z-index: 20;
+  }
+  .brand { border-bottom: 1px solid rgba(180,180,180,.3); display: grid; gap: 2px; margin: 0 15px 15px; padding: 0 0 15px; text-align: center; }
+  .brand strong { color: #3c4858; font-size: 18px; font-weight: 400; line-height: 30px; text-transform: uppercase; }
+  .brand span { color: #777; font-size: 13px; line-height: 1.35; }
+  .nav { display: grid; padding: 0 15px; }
+  .nav button {
+    align-items: center; background: none; border: 0; border-radius: 3px; color: #3c4858;
+    display: flex; gap: 10px; margin-top: 10px; min-height: 50px; padding: 10px; text-align: left; width: 100%;
+  }
+  .nav button:hover { background: var(--green-nav); color: #fff; box-shadow: 0 12px 20px -10px rgba(76,175,80,.28); }
+  .nav button:hover .nav-icon, .nav button:hover small { color: #fff; }
+  .nav button.active { background: var(--green-nav); color: #fff; box-shadow: 0 12px 20px -10px rgba(76,175,80,.28); }
+  .nav button.active .nav-icon, .nav button.active small { color: rgba(255,255,255,.9); }
+  .nav-icon { color: #a9afbb; display: flex; flex: none; }
+  .nav-text { display: grid; gap: 1px; min-width: 0; }
+  .nav-text > span { font-size: 14px; line-height: 1.25; }
+  .nav-text small { color: #8a96a1; font-size: 11px; line-height: 1.3; }
+  .nav-new { background: #e8f5e9; border-radius: 999px; color: #2e7d32; font-size: 9px; font-weight: 700; letter-spacing: .06em; margin-left: auto; padding: 2px 6px; text-transform: uppercase; }
+  .nav button.active .nav-new { background: rgba(255,255,255,.22); color: #fff; }
+  .nav-shield { color: #a9afbb; display: flex; margin-left: auto; }
+
+  /* main */
+  .main { grid-column: 2; min-width: 0; }
+  .topbar { align-items: center; display: flex; justify-content: space-between; min-height: 70px; padding: 0 30px; }
+  .topbar h1 { color: #555; font-size: 20px; font-weight: 300; margin: 0; }
+  .topbar-actions { align-items: center; display: flex; gap: 10px; }
+  .demo-pill { background: var(--amber-soft); border: 1px solid #f0dcb6; border-radius: 999px; color: #8a5a00; font-size: 10.5px; font-weight: 600; padding: 4px 9px; white-space: nowrap; }
+  .date-chip { color: var(--muted); font-size: 12px; }
+  .profile-pill { align-items: center; background: transparent; border: 0; border-radius: 3px; display: flex; gap: 8px; padding: 4px 0; }
+  .profile-avatar { background: linear-gradient(145deg,#dfeee2,#c8e2cd); border-radius: 50%; color: #2f6c38; display: grid; font-size: 11px; font-weight: 700; height: 30px; place-items: center; width: 30px; }
+  .profile-text { display: grid; gap: 1px; text-align: left; }
+  .profile-text strong { color: var(--ink); font-size: 12px; font-weight: 600; }
+  .profile-text small { color: var(--muted); font-size: 10px; }
+  .profile-status { background: #e8f5e9; border-radius: 999px; color: #2e7d32; font-size: 10px; font-weight: 600; padding: 2px 7px; }
+
+  .page { margin: 0 auto; max-width: 1500px; padding: 0 30px 34px; }
+  .page-head { align-items: flex-start; display: flex; gap: 20px; justify-content: space-between; margin: 2px 0 16px; }
+  .page-head h2 { color: #182c28; font-size: 27px; letter-spacing: -.6px; line-height: 1.2; margin: 0; }
+  .sub { color: #61756d; font-size: 13.5px; line-height: 1.5; margin: 7px 0 0; max-width: 720px; }
+  .stats { color: var(--muted); display: flex; flex-wrap: wrap; font-size: 12px; gap: 6px 14px; margin-top: 10px; }
+  .stats b { color: var(--green-dark); font-weight: 600; }
+  .stats span { align-items: center; display: inline-flex; gap: 5px; }
+  .stats i { border-radius: 50%; display: inline-block; height: 7px; width: 7px; }
+  .head-actions { align-items: center; display: flex; flex-shrink: 0; gap: 8px; padding-top: 2px; }
+
+  .btn { align-items: center; border: 1px solid transparent; border-radius: 8px; display: inline-flex; font-size: 13px; font-weight: 500; gap: 7px; justify-content: center; min-height: 38px; padding: 9px 14px; white-space: nowrap; }
+  .btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+  .btn.primary:hover { background: var(--green-dark); }
+  .btn.ghost { background: #fff; border-color: var(--line); color: var(--text); }
+  .btn.ghost:hover { background: #f7faf8; }
+  .btn.small { font-size: 12px; min-height: 30px; padding: 5px 10px; border-radius: 7px; }
+  .btn:disabled { cursor: default; opacity: .5; }
+  .icon-btn { align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); display: grid; height: 34px; justify-content: center; padding: 0; place-items: center; width: 34px; }
+  .icon-btn:hover { background: #f7faf8; color: var(--ink); }
+
+  .toolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 12px 18px; justify-content: space-between; margin-bottom: 12px; }
+  .month-nav { align-items: center; display: flex; gap: 7px; }
+  .month-title { color: var(--ink); font-size: 18px; font-weight: 600; letter-spacing: -.2px; min-width: 150px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); display: inline-flex; font-size: 11.5px; gap: 6px; padding: 6px 11px; }
+  .chip:hover { border-color: #c9d9cf; color: var(--ink); }
+  .chip.active { background: var(--green-soft); border-color: #bcd9c8; color: var(--green-dark); font-weight: 600; }
+  .chip i { border-radius: 50%; display: inline-block; height: 7px; width: 7px; }
+  .chip i.vk { background: var(--vk); }
+  .chip i.tg { background: var(--tg); }
+  .legend { align-items: center; color: var(--muted); display: flex; flex-basis: 100%; flex-wrap: wrap; font-size: 10.5px; gap: 12px; justify-content: flex-end; margin-top: -4px; }
+  .legend span { align-items: center; display: inline-flex; gap: 5px; }
+  .legend i { border-radius: 2px; display: inline-block; height: 8px; width: 8px; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+  /* calendar */
+  .calendar { overflow: hidden; }
+  .cal-dow-row { background: #fafcfb; border-bottom: 1px solid #e7ece9; display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); }
+  .cal-dow { color: var(--muted-2); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; padding: 9px 10px; text-transform: uppercase; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); }
+  .cal-day { border-bottom: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft); cursor: pointer; display: flex; flex-direction: column; gap: 4px; min-height: 100px; min-width: 0; padding: 6px 7px 7px; position: relative; }
+  .cal-day:nth-child(7n) { border-right: 0; }
+  .cal-day:hover { background: #f6fbf8; }
+  .cal-day.weekend { background: #fafbfa; }
+  .cal-day.weekend:hover { background: #f4f9f6; }
+  .cal-day.other { background: #f7f8f7; }
+  .cal-day.other .cal-num { color: #c3cac5; }
+  .cal-day.today { background: #f4faf6; box-shadow: inset 0 0 0 2px #bfe0cd; }
+  .cal-num { align-items: center; color: var(--muted); display: flex; font-size: 11.5px; font-weight: 600; height: 22px; justify-content: center; width: 22px; }
+  .cal-day.today .cal-num { background: var(--green); border-radius: 50%; color: #fff; }
+  .cal-chip { align-items: flex-start; background: #f3f6f4; border: 0; border-left: 3px solid #aab6ae; border-radius: 5px; color: #3f4d46; display: flex; font-size: 10.5px; gap: 4px; line-height: 1.2; min-width: 0; padding: 4px 5px; text-align: left; width: 100%; }
+  .cal-chip:hover { filter: brightness(.97); }
+  .cal-chip .dot { border-radius: 50%; flex: none; height: 5px; width: 5px; }
+  .cal-chip .dot.vk { background: var(--vk); }
+  .cal-chip .dot.tg { background: var(--tg); }
+  .cal-chip .time { color: #6b7770; flex: none; }
+  .cal-chip .title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; flex: 1; line-height: 1.2; overflow: hidden; white-space: normal; }
+  .cal-chip .title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; flex: 1; line-height: 1.2; overflow: hidden; white-space: normal; }
+  .cal-chip.st-draft { background: #fff7e8; border-left-color: #d9a441; }
+  .cal-chip.st-scheduled { background: #edf3ff; border-left-color: #5b8def; }
+  .cal-chip.st-published { background: #eaf6f0; border-left-color: #3fa87b; }
+  .cal-more { background: none; border: 0; color: var(--muted); font-size: 10px; padding: 1px 3px; text-align: left; }
+  .cal-more:hover { color: var(--green-dark); }
+  .cal-hint { color: var(--muted-2); font-size: 11px; margin: 8px 0 0; }
+
+  /* plan layout */
+  .plan-grid { align-items: start; display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr) 300px; }
+  .plan-rail { display: grid; gap: 14px; }
+  .card-head { align-items: center; display: flex; gap: 10px; justify-content: space-between; margin-bottom: 10px; }
+  .card-head h3 { color: var(--ink); font-size: 15px; margin: 0; }
+  .count { background: #eef2ef; border-radius: 999px; color: #5d6b63; font-size: 10px; font-weight: 700; margin-left: 5px; padding: 2px 7px; }
+  .hint { color: var(--muted); font-size: 11px; }
+  .drafts { padding: 16px 18px; }
+  .draft-list { display: grid; }
+  .draft-row { align-items: center; background: none; border: 0; border-top: 1px solid var(--line-soft); display: flex; gap: 10px; padding: 10px 0; text-align: left; width: 100%; }
+  .draft-row:first-child { border-top: 0; padding-top: 0; }
+  .draft-row:hover .draft-title { color: var(--green-dark); }
+  .draft-dot { border-radius: 50%; flex: none; height: 7px; width: 7px; }
+  .draft-dot.vk { background: var(--vk); }
+  .draft-dot.tg { background: var(--tg); }
+  .draft-main { display: grid; flex: 1; gap: 2px; min-width: 0; }
+  .draft-title { color: var(--ink); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 12.5px; font-weight: 600; line-height: 1.3; overflow: hidden; }
+  .draft-meta { color: var(--muted); font-size: 10.5px; }
+  .pill { border-radius: 999px; font-size: 10px; font-weight: 600; padding: 3px 8px; white-space: nowrap; }
+  .pill.st-draft { background: var(--amber-soft); color: var(--amber); }
+  .pill.st-scheduled { background: var(--blue-soft); color: var(--blue); }
+  .pill.st-published { background: #e6f4ec; color: var(--green-dark); }
+
+  .idea { background: #fbfcfb; border: 1px solid #e7ece9; border-radius: 10px; display: flex; flex-direction: column; gap: 6px; padding: 10px 11px; }
+  .idea-src { color: var(--muted); font-size: 10px; line-height: 1.3; }
+  .idea-src b { color: var(--green-dark); font-weight: 700; }
+  .idea h4 { color: var(--ink); font-size: 12.5px; line-height: 1.3; margin: 0; }
+  .idea p { color: #5e6c64; font-size: 10.5px; line-height: 1.4; margin: 0; }
+  .idea-actions { display: flex; gap: 5px; margin-top: auto; padding-top: 3px; }
+
+  /* connected channels */
+  .pub-channels { padding: 14px 16px; }
+  .pub-group { color: var(--muted-2); font-size: 9.5px; font-weight: 700; letter-spacing: .08em; margin: 9px 0 2px; text-transform: uppercase; }
+  .pub-group:first-of-type { margin-top: 0; }
+  .pub-row { align-items: center; display: flex; gap: 8px; padding: 6px 0; }
+  .pub-row + .pub-row { border-top: 1px solid var(--line-soft); }
+  .pub-row .dot { border-radius: 50%; flex: none; height: 7px; width: 7px; }
+  .pub-row .dot.vk { background: var(--vk); }
+  .pub-row .dot.tg { background: var(--tg); }
+  .pub-main { display: grid; flex: 1; gap: 1px; min-width: 0; }
+  .pub-main strong { color: var(--ink); font-size: 11.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pub-main small { color: var(--muted); font-size: 10px; }
+  .pub-status { align-items: center; background: #e6f4ec; border-radius: 999px; color: var(--green-dark); display: inline-flex; flex: none; font-size: 9.5px; gap: 3px; padding: 2px 6px; white-space: nowrap; }
+
+  /* autopublish */
+  .autopub { padding: 14px 16px; }
+  .auto-line { align-items: center; color: #4b5a51; display: flex; font-size: 11.5px; gap: 6px; line-height: 1.4; margin: 0 0 6px; }
+  .ok-dot { background: #3fa87b; border-radius: 50%; display: inline-block; flex: none; height: 7px; width: 7px; }
+  .auto-next { background: #fafcfb; border: 1px solid #eef2ef; border-radius: 8px; display: grid; gap: 2px; margin: 9px 0; padding: 8px 10px; }
+  .auto-next span { color: var(--muted); font-size: 10px; }
+  .auto-next strong { color: var(--ink); font-size: 11.5px; font-weight: 600; line-height: 1.3; }
+  .switch { display: inline-block; flex: none; height: 20px; position: relative; width: 36px; }
+  .switch input { height: 0; opacity: 0; width: 0; }
+  .slider { background: #cfd9d3; border-radius: 999px; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .15s; }
+  .slider::before { background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.2); content: ''; height: 16px; left: 2px; position: absolute; top: 2px; transition: .15s; width: 16px; }
+  .switch input:checked + .slider { background: #4caf50; }
+  .switch input:checked + .slider::before { transform: translateX(16px); }
+  .auto-note { align-items: center; background: #f5faf7; border: 1px solid var(--green-line); border-radius: 8px; color: #3d5248; display: flex; font-size: 11px; gap: 7px; line-height: 1.4; margin: 0 0 11px; padding: 8px 10px; }
+  .auto-note.off { background: #fff; border-color: var(--line); color: var(--muted); }
+  .field-note { align-items: center; display: flex; gap: 5px; }
+
+  /* drawer */
+  .overlay { background: rgba(20,35,28,.3); inset: 0; position: fixed; z-index: 40; }
+  .drawer { background: #fff; bottom: 0; box-shadow: -24px 0 60px rgba(20,40,30,.18); display: flex; flex-direction: column; position: fixed; right: 0; top: 0; width: 520px; z-index: 41; }
+  .drawer-head { align-items: flex-start; border-bottom: 1px solid var(--line-soft); display: flex; gap: 12px; justify-content: space-between; padding: 16px 20px 13px; }
+  .drawer-head h2 { color: var(--ink); font-size: 19px; letter-spacing: -.3px; line-height: 1.25; margin: 0; }
+  .eyebrow { color: var(--green-dark); display: block; font-size: 10px; font-weight: 700; letter-spacing: .1em; margin-bottom: 4px; text-transform: uppercase; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 14px 20px 18px; }
+  .drawer-foot { align-items: center; background: #fff; border-top: 1px solid var(--line-soft); display: flex; gap: 8px; justify-content: space-between; padding: 11px 20px; }
+  .drawer-foot .right { display: flex; gap: 8px; }
+
+  .day-list { background: #fafcfb; border: 1px solid var(--line-soft); border-radius: 10px; margin-bottom: 14px; padding: 10px 12px; }
+  .day-list h4 { color: var(--muted); font-size: 10px; letter-spacing: .06em; margin: 0 0 7px; text-transform: uppercase; }
+  .day-row { align-items: center; background: none; border: 0; border-radius: 6px; display: flex; gap: 7px; padding: 5px 6px; text-align: left; width: 100%; }
+  .day-row:hover, .day-row.active { background: #fff; }
+  .day-row .dot { border-radius: 50%; flex: none; height: 6px; width: 6px; }
+  .day-row .dot.vk { background: var(--vk); }
+  .day-row .dot.tg { background: var(--tg); }
+  .day-row .time { color: var(--muted); flex: none; font-size: 10.5px; }
+  .day-row .name { color: var(--ink); flex: 1; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .field { display: grid; gap: 5px; margin-bottom: 11px; }
+  .field label { color: var(--muted); font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .input, select.input, textarea.input { background: #fff; border: 1px solid #dbe1df; border-radius: 8px; color: var(--text); font-size: 13px; outline: none; padding: 9px 10px; width: 100%; }
+  .input:focus, textarea.input:focus, select.input:focus { border-color: #8fbfa8; box-shadow: 0 0 0 3px rgba(143,191,168,.16); }
+  .row { display: grid; gap: 10px; grid-template-columns: 1fr 110px; }
+  .idea-note { background: #f5faf7; border: 1px solid var(--green-line); border-radius: 8px; color: #3d5248; font-size: 11px; line-height: 1.45; margin-bottom: 12px; padding: 8px 10px; }
+
+  .editor-head { align-items: center; display: flex; justify-content: space-between; margin: 4px 0 7px; }
+  .tabs { background: #eef1ee; border-radius: 7px; display: flex; gap: 2px; padding: 3px; }
+  .tabs button { background: none; border: 0; border-radius: 5px; color: #66746c; font-size: 11.5px; padding: 5px 11px; }
+  .tabs button.active { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.06); color: var(--ink); font-weight: 600; }
+  .counter { color: var(--muted); font-size: 10.5px; }
+  .counter.over { color: var(--red); font-weight: 600; }
+  .toolbar-md { align-items: center; background: #fafcfb; border: 1px solid #dbe1df; border-bottom: 0; border-radius: 8px 8px 0 0; display: flex; flex-wrap: wrap; gap: 2px; padding: 5px 6px; }
+  .toolbar-md button { background: none; border: 0; border-radius: 5px; color: #53645b; font-size: 12px; height: 26px; min-width: 28px; padding: 0 6px; }
+  .toolbar-md button:hover { background: #edf4ef; color: var(--ink); }
+  .toolbar-md button:disabled { color: #c3cac5; cursor: default; }
+  .toolbar-md .sep { background: #e4eae6; height: 16px; margin: 0 3px; width: 1px; }
+  .post-text { border-radius: 0 0 8px 8px !important; line-height: 1.55; min-height: 190px; resize: vertical; }
+  .md-hint { color: var(--muted); font-size: 10.5px; line-height: 1.45; margin: 6px 0 0; }
+  .attach { background: #fff; border: 1px dashed #cfd9d3; border-radius: 8px; color: var(--muted); font-size: 11.5px; margin-top: 9px; padding: 8px 10px; width: 100%; }
+  .attach:hover { border-color: #9fc4b0; color: var(--green-dark); }
+  .hidden { display: none !important; }
+
+  /* social preview */
+  .social-card { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .sc-head { align-items: center; display: flex; gap: 9px; padding: 11px 12px 0; }
+  .sc-ava { align-items: center; border-radius: 50%; color: #fff; display: grid; flex: none; font-size: 10px; font-weight: 700; height: 32px; place-items: center; width: 32px; }
+  .sc-ava.vk { background: var(--vk); }
+  .sc-ava.tg { background: var(--tg); }
+  .sc-head strong { color: var(--ink); display: block; font-size: 12px; }
+  .sc-head small { color: var(--muted); font-size: 10px; }
+  .sc-text { color: #334155; font-size: 12.5px; line-height: 1.55; padding: 10px 12px 12px; }
+  .sc-text a { color: #267355; }
+  .sc-text blockquote { border-left: 2px solid #cfdcd4; color: #5e6c64; margin: 4px 0; padding-left: 8px; }
+  .sc-text ul { margin: 4px 0; padding-left: 18px; }
+  .sc-text code { background: #f1f4f2; border-radius: 3px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; padding: 1px 3px; }
+  .sc-text .empty-line { height: 6px; }
+  .sc-media { align-items: center; background: #f4f7f5; border: 1px dashed #d6e0da; border-radius: 8px; color: var(--muted-2); display: flex; font-size: 10.5px; height: 74px; justify-content: center; margin: 0 12px 10px; }
+  .sc-actions { border-top: 1px solid var(--line-soft); color: var(--muted); display: flex; font-size: 10px; gap: 16px; padding: 8px 12px; }
+  .sc-actions span { align-items: center; display: inline-flex; gap: 4px; }
+  .sc-foot { border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 10px; padding: 7px 12px; }
+  .preview-wrap { padding-top: 2px; }
+  .preview-note { color: var(--muted); font-size: 10.5px; margin: 7px 0 0; }
+
+  /* ideas modal */
+  .modal { background: #fff; border-radius: 14px; box-shadow: 0 30px 80px rgba(20,40,30,.25); display: flex; flex-direction: column; left: 50%; max-height: 86vh; max-width: 94vw; position: fixed; top: 50%; transform: translate(-50%,-50%); width: 780px; z-index: 42; }
+  .modal-head { align-items: flex-start; border-bottom: 1px solid var(--line-soft); display: flex; gap: 12px; justify-content: space-between; padding: 16px 20px 12px; }
+  .modal-head h2 { color: var(--ink); font-size: 19px; letter-spacing: -.3px; margin: 0; }
+  .modal-head p { color: var(--muted); font-size: 11.5px; margin: 4px 0 0; }
+  .modal-body { overflow-y: auto; padding: 14px 20px; }
+  .modal-foot { border-top: 1px solid var(--line-soft); display: flex; gap: 8px; justify-content: flex-end; padding: 11px 20px; }
+  .idea-modal-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+  .idea-modal-grid .idea { padding: 12px 13px; }
+  .idea-modal-grid .idea h4 { font-size: 13.5px; }
+  .idea-modal-grid .idea p { font-size: 11px; }
+
+  /* placeholder */
+  .placeholder { margin: 10px 0 0; padding: 46px 30px; text-align: center; }
+  .placeholder h2 { color: var(--ink); font-size: 24px; margin: 0 0 8px; }
+  .placeholder p { color: var(--muted); font-size: 13px; line-height: 1.55; margin: 0 auto 16px; max-width: 520px; }
+
+  .toast { background: #20332f; border-radius: 9px; bottom: 24px; box-shadow: 0 16px 40px rgba(0,0,0,.22); color: #fff; font-size: 12.5px; left: 50%; padding: 10px 15px; position: fixed; transform: translateX(-50%); z-index: 60; }
+
+
+  /* section tabs */
+  .section-tabs { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin: 0 0 16px; }
+  .tabs-left { background: #e7ebe8; border-radius: 10px; display: flex; gap: 4px; padding: 4px; }
+  .tabs-left button { background: none; border: 0; border-radius: 7px; color: #66746c; font-size: 12.5px; padding: 7px 14px; }
+  .tabs-left button.active { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.06); color: var(--ink); font-weight: 600; }
+  .access-pill { align-items: center; border: 1px solid #f0dcb6; border-radius: 999px; background: #fff7e8; color: #8a5a00; display: inline-flex; font-size: 11px; font-weight: 600; gap: 6px; padding: 6px 10px; }
+  .access-pill.all { background: #e8f5e9; border-color: #cfe6d3; color: #2e7d32; }
+  .access-pill.off { background: #f1f4f2; border-color: var(--line); color: #6b7770; }
+  .access-pill:hover { filter: brightness(.98); }
+  .nav-note { border-top: 1px solid rgba(180,180,180,.25); color: #8a96a1; font-size: 10.5px; line-height: 1.45; margin: 14px 15px 0; padding-top: 12px; }
+
+  /* ideas page */
+  .ideas-page-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .idea-full { padding: 14px 15px; }
+  .idea-full h4 { font-size: 14px; }
+  .idea-text { color: #6b7770; font-size: 11px; line-height: 1.45; margin: 0; }
+  .source-filters { margin: 0 0 12px; }
+  .best { margin-top: 14px; padding: 16px 18px; }
+  .best-list { display: grid; }
+  .best-row { align-items: center; border-top: 1px solid var(--line-soft); display: flex; gap: 10px; padding: 10px 0; }
+  .best-row:first-child { border-top: 0; padding-top: 0; }
+  .best-main { display: grid; flex: 1; gap: 2px; min-width: 0; }
+  .best-main strong { color: var(--ink); font-size: 12px; }
+  .best-main p { color: #5e6c64; font-size: 11px; line-height: 1.4; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .best-metric { color: var(--green-dark); flex: none; font-size: 10.5px; font-weight: 700; }
+  .best-row .dot { border-radius: 50%; flex: none; height: 6px; width: 6px; }
+  .best-row .dot.vk { background: var(--vk); }
+  .best-row .dot.tg { background: var(--tg); }
+  .project-foot .hint { max-width: 68%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* drawer note */
+  .field-note { color: var(--muted); font-size: 10.5px; line-height: 1.4; margin: -5px 0 10px; }
+
+  /* access modal */
+  .access-modal { width: 520px; }
+  .access-options { display: grid; gap: 8px; }
+  .access-option { align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 10px; display: flex; gap: 10px; padding: 11px 12px; text-align: left; width: 100%; }
+  .access-option:hover { background: #f9fbfa; }
+  .access-option.active { background: #f5faf7; border-color: #9fc9b2; box-shadow: 0 0 0 2px rgba(33,129,95,.08); }
+  .access-option .radio { border: 2px solid #cfd9d3; border-radius: 50%; flex: none; height: 16px; width: 16px; }
+  .access-option.active .radio { background: radial-gradient(circle, var(--green) 0 4px, #fff 5px); border-color: var(--green); }
+  .access-option .text { display: grid; gap: 2px; }
+  .access-option strong { color: var(--ink); font-size: 12.5px; }
+  .access-option small { color: var(--muted); font-size: 10.5px; }
+  .access-modal .hint { margin: 12px 0 0; }
+
+  @media (max-width: 1200px) {
+    .plan-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 980px) {
+    .app-shell { display: block; }
+    .sidebar { height: auto; position: static; width: auto; padding: 10px 0; }
+    .brand { margin-bottom: 8px; padding-bottom: 8px; }
+    .nav { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .nav button { margin-top: 4px; min-height: 42px; }
+    .nav-text small { display: none; }
+    .main { grid-column: auto; }
+    .topbar { padding: 0 16px; min-height: 56px; }
+    .page { padding: 0 16px 24px; }
+    .page-head { flex-direction: column; gap: 10px; }
+    .topbar-actions .date-chip, .demo-pill { display: none; }
+  }
+  @media (max-width: 760px) {
+    .calendar { overflow-x: auto; }
+    .cal-dow-row, .cal-grid { min-width: 720px; }
+    .drawer { width: 100%; }
+    .row { grid-template-columns: 1fr; }
+    .nav { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><strong>socstat.ru</strong><span>Аналитика соцсетей</span></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="nav-note">«Идеи для постов» теперь внутри «Контент-плана». «Контент» пока остаётся отдельным разделом.</div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <h1 id="topbar-title">Контент-план</h1>
+      <div class="topbar-actions">
+        <span class="demo-pill">Демо-макет</span>
+        <span class="date-chip">26 ноября 2026</span>
+        <span class="profile-pill">
+          <span class="profile-avatar">А</span>
+          <span class="profile-text"><strong>Александр</strong><small>Владелец</small></span>
+          <span class="profile-status">Активен до 12 декабря</span>
+        </span>
+      </div>
+    </header>
+    <div class="page" id="view"></div>
+  </main>
+</div>
+<div id="drawer-root"></div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+<script>
+  "use strict";
+
+  /* ---------- icons ---------- */
+  const ICONS = {
+    home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+    chart: '<path d="M4 20v-6M10 20V8M16 20v-9M22 20V5"/><path d="M2 21h20"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
+    pin: '<path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
+    compare: '<path d="M7 4 3 8l4 4"/><path d="M3 8h13a4 4 0 0 1 4 4"/><path d="m17 20 4-4-4-4"/><path d="M21 16H8a4 4 0 0 1-4-4"/>',
+    news: '<path d="M4 4h13a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2V4Z"/><path d="M8 8h7M8 12h7M8 16h4"/>',
+    spark: '<path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/>',
+    shield: '<path d="M12 3 5 6v5c0 4.5 3 7.8 7 9 4-1.2 7-4.5 7-9V6l-7-3Z"/><path d="m9 12 2 2 4-4"/>',
+    clipboard: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 12 2 2 4-4"/>',
+    card: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>',
+    chevL: '<path d="m15 6-6 6 6 6"/>',
+    chevR: '<path d="m9 6 6 6-6 6"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    x: '<path d="M6 6l12 12M18 6 6 18"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    heart: '<path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9Z"/>',
+    comment: '<path d="M21 12a8 8 0 0 1-8 8H4l3-3a8 8 0 1 1 14-5Z"/>',
+    share: '<path d="m4 12 16-8-6 16-2.5-6.5L4 12Z"/>',
+    eye: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/>',
+    refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/>',
+    edit: '<path d="m4 20 4-.8L20 7.2a2.1 2.1 0 0 0-3-3L5 16.2 4 20Z"/>',
+    trash: '<path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/>',
+    image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="m21 16-5-5-4 4-3-3-6 6"/>'
+  };
+  function icon(name, size) {
+    const s = size || 18;
+    return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || '') + '</svg>';
+  }
+
+  /* ---------- data ---------- */
+  const CHANNELS = [
+    { id: 'vk-mp', platform: 'vk', name: 'ВК · Money Planner', short: 'Money Planner', handle: 'vk.com/moneyplanner', subs: 4820 },
+    { id: 'vk-soc', platform: 'vk', name: 'ВК · Socstat', short: 'Socstat', handle: 'vk.com/socstat_ru', subs: 1250 },
+    { id: 'tg-mp', platform: 'tg', name: 'Telegram · Money Planner', short: 'Money Planner', handle: '@money_planner', subs: 2140 }
+  ];
+
+  const TODAY = '2026-11-26';
+
+  const INITIAL_POSTS = [
+    { id: 'p1', date: '2026-11-03', time: '10:00', ch: 'vk-mp', status: 'published', edited: '3 нед назад', text: 'Бюджет срывается не из-за математики, а из-за решений, которые принимаются до зарплаты.\n\nПять ошибок:\n— считать доход до налогов;\n— не оставлять буфер на непредвиденное;\n— копить только остаток;\n— смешивать цели и категории;\n— не пересматривать план в середине месяца.\n\nКакой пункт ближе всего?' },
+    { id: 'p2', date: '2026-11-05', time: '12:30', ch: 'tg-mp', status: 'published', edited: '3 нед назад', text: 'Готовый шаблон на 4 конверта: обязательное, бытовое, радость и подушка.\n\nСкачайте и разложите одну зарплату — это упражнение на 20 минут. Напишите, что оказалось сложнее.' },
+    { id: 'p3', date: '2026-11-10', time: '10:00', ch: 'vk-mp', status: 'published', edited: '2 нед назад', text: 'Три правила: автоперевод в день зарплаты, отдельная карта и «не трогаем 30 дней».\n\nНачните с 1% — важна не сумма, а привычка. К концу года 10% уже не будут казаться подвигом.' },
+    { id: 'p4', date: '2026-11-12', time: '18:00', ch: 'tg-mp', status: 'published', edited: '2 нед назад', text: 'Три причины срыва: слишком жёсткие рамки, нет «радости» и план не пересматривается.\n\nЧто помогает: один свободный конверт и ревизия раз в неделю. Бюджет — это не запрет, а договорённость с собой.' },
+    { id: 'p5', date: '2026-11-17', time: '09:30', ch: 'vk-mp', status: 'published', edited: '1 нед назад', text: 'Семь дней — семь вопросов. Каждый вечер один вопрос про деньги и одна запись.\n\nВ воскресенье — итог: что удивило, что можно изменить. Чек-лист приложим в комментариях.' },
+    { id: 'p6', date: '2026-11-19', time: '11:00', ch: 'vk-soc', status: 'published', edited: '1 нед назад', text: 'Охват подписчиков, виральный и полный — три разные цифры. В отчёте Socstat они подписаны, но путаница остаётся.\n\nЧто смотреть: полный охват — для размера аудитории, охват подписчиков — для качества контента. Виральный — для постов, которые вышли за пределы сообщества.' },
+    { id: 'p7', date: '2026-11-23', time: '10:00', ch: 'vk-mp', status: 'published', edited: '3 дн назад', text: '5 слайдов: доход, обязательное, быт, радость, подушка.\n\nНа каждом — один шаг и один вопрос. Сохраняйте карусель, чтобы разложить зарплату без таблицы.' },
+    { id: 'p8', date: '2026-11-24', time: '11:00', ch: 'vk-mp', status: 'draft', edited: '2 ч назад', text: 'Черновик: разбор приложения вместо таблицы.\n\nНе хватает личного опыта и скриншота. Добавить: что не получилось, сколько времени заняло, что осталось в приложении.' },
+    { id: 'p9', date: TODAY, time: '18:00', ch: 'tg-mp', status: 'scheduled', edited: 'вчера', text: 'Три вопроса перед покупкой:\n\n1. Это нужно или хочется?\n2. Сколько часов работы это стоит?\n3. Что я не куплю вместо этого?\n\nПравило не про запрет, а про паузу. Каким вопросом пользуетесь вы?' },
+    { id: 'p10', date: '2026-11-27', time: '10:00', ch: 'vk-mp', status: 'scheduled', edited: 'вчера', text: 'Карусель из 4 слайдов: обязательное, бытовое, радость и подушка.\n\nНа каждом — один шаг. В конце — вопрос: какой конверт оказался самым сложным?\n\nСохраняйте, чтобы вернуться к разбору.' },
+    { id: 'p11', date: '2026-11-28', time: '12:00', ch: 'vk-mp', status: 'draft', edited: 'сегодня', text: '7 пунктов, которые стоит сделать до декабря.\n\nЧерновик: добавить ссылку на шаблон и короткий чек-лист в конце. Проверить, нет ли обещаний про доход.' },
+    { id: 'p12', date: '2026-11-30', time: '10:00', ch: 'vk-mp', status: 'scheduled', edited: '2 дн назад', text: 'Итоги ноября: три темы, которые дали больше всего подписок, и один пост, который не зашёл.\n\nБез выводов «надо больше стараться» — только цифры и что переносим в декабрь.' },
+    { id: 'p13', date: '2026-12-02', time: '11:00', ch: 'vk-soc', status: 'draft', edited: 'вчера', text: 'Просмотры отвечают на вопрос «увидели ли», подписки — «остались ли».\n\nЧерновик: добавить пример из ВК, где подписки по посту видны напрямую. Проверить формулировки про Telegram.' },
+    { id: 'p14', date: '2026-12-03', time: '12:00', ch: 'tg-mp', status: 'scheduled', edited: '3 дн назад', text: 'Обратный отсчёт: 6 недель до праздников. Сколько стоит подарок, сколько — стол, сколько — «просто декабрь».\n\nПредложите свой бюджет на праздники в комментариях.' },
+    { id: 'p15', date: '', time: '18:30', ch: 'tg-mp', status: 'draft', edited: 'вчера', text: 'Опрос на два варианта: «не хватает дохода» или «не хватает привычки».\n\nЧерновик: после опроса — пост с разбором ответов. Добавить вопрос «что мешает больше всего?».' },
+    { id: 'p16', date: '', time: '11:00', ch: 'vk-soc', status: 'draft', edited: '3 дн назад', text: 'Разбор: где в Socstat смотреть подписки по постам.\n\nЧерновик: скриншот отчёта, три шага, ограничение по Telegram. Проверить, что скриншот не устарел.' }
+  ];
+
+  const INITIAL_IDEAS = [
+    { id: 'i1', kind: 'competitor', source: 'Конкурент «Бюджет без стресса»', metric: '×4,3 к медиане', title: 'Конверты против таблицы', why: 'Личная история и практика: сработало у конкурента', text: 'Таблица — это про контроль. Конверты — про решение, принятое заранее.\n\nМы перестали вести бюджет в таблице и попробовали 4 конверта: обязательное, бытовое, радость и подушка. Через 30 дней оказалось, что дело не в приложении, а в том, что деньги разложены до того, как вы их потратите.\n\nПопробуйте неделю и напишите, что оказалось сложнее всего.' },
+    { id: 'i2', kind: 'competitor', source: 'Конкурент «Финансовая привычка»', metric: '×2,4', title: 'Правило 24 часов', why: 'Простое действие, которое можно повторить сегодня', text: 'Положите покупку в корзину и вернитесь через день. В 7 из 10 случаев желание пропадает.\n\nПравило простое: не запрещать себе, а давать паузу. Через 24 часа решение становится дешевле — в прямом смысле.\n\nПопробуйте на одной покупке на этой неделе.' },
+    { id: 'i3', kind: 'own', source: 'Ваш лучший пост за месяц', metric: 'ER 6,8%', title: 'Почему вечером тратим больше', why: 'Тема уже собрала комментарии и споры', text: 'Три вечерних триггера: усталость, голод и скука. Мозг выбирает быстрый дофамин, а не долгую выгоду.\n\nЧто помогает: список «можно» на вечер, лимит на импульсивные траты и пауза в 10 минут перед покупкой.\n\nКакой триггер ваш?' },
+    { id: 'i4', kind: 'seasonal', source: 'Сезонная идея', metric: 'декабрь', title: 'Новогодний бюджет: 6 недель', why: 'Спрос на планирование вырастет к праздникам', text: 'Обратный отсчёт: 6 недель до праздников. Подарки, стол, поездки и «просто декабрь» — четыре конверта на праздничный бюджет.\n\nНачните с суммы, которая не создаст долг. Остальное — как получится.\n\nСколько вы готовы потратить на Новый год?' },
+    { id: 'i5', kind: 'competitor', source: 'Конкурент «Кошелёк на каждый день»', metric: '×1,3', title: 'Разбор: 3 приложения для бюджета', why: 'Формат разбора хорошо смотрят в ВК', text: 'Три приложения, которые обещают порядок в деньгах. Что реально умеют, где ломаются и кому подойдут.\n\nБез рейтинга «лучшее»: покажите сценарии — одна карта, семья, фриланс.\n\nКаким пользуетесь вы?' },
+    { id: 'i6', kind: 'own', source: 'На основе ваших комментариев', metric: 'вовлечение', title: 'Что спросить у аудитории', why: 'Даёт темы на следующий месяц и вовлекает', text: 'Один вопрос, который стоит задать перед декабрём: «Какая трата в этом году была самой бесполезной — и чему она научила?»\n\nОтветы дадут темы на несколько постов и честный разговор вместо советов.' }
+  ];
+
+  const BEST_POSTS = [
+    { id: 'b1', comp: 'Бюджет без стресса', platform: 'tg', ago: '2 дня назад', views: '38 400', mult: '×4,3', text: 'Мы перестали вести бюджет в таблице и начали в конвертах. Через 30 дней поняли: дело не в приложении, а в том, что деньги разложены до траты.' },
+    { id: 'b2', comp: 'Финансовая привычка', platform: 'tg', ago: '3 дня назад', views: '11 200', mult: '×2,4', text: 'Правило 24 часов: положите покупку в корзину и вернитесь через день. В 7 из 10 случаев желание пропадает.' },
+    { id: 'b3', comp: 'Про деньги просто', platform: 'vk', ago: '4 дня назад', views: '9 800', mult: '×1,6', text: 'Почему вы тратите больше, когда устали. Мозг выбирает быстрый дофамин, а не долгую выгоду.' }
+  ];
+
+  const NAV = [
+    { id: 'dashboard', label: 'Дашборд', desc: 'Ваши источники за период', icon: 'home' },
+    { id: 'analytics', label: 'Аналитика', desc: 'Отчёты по сообществам и каналам', icon: 'chart' },
+    { id: 'plan', label: 'Контент-план', desc: 'План, идеи и проекты', icon: 'calendar', isNew: true, admin: true },
+    { id: 'placements', label: 'Площадки для рекламы', desc: 'AI подберёт площадки ВК', icon: 'pin' },
+    { id: 'compare', label: 'Сравнение', desc: 'Метрики до 10 сообществ рядом', icon: 'compare' },
+    { id: 'content', label: 'Контент', desc: 'Проекты, рубрики и правила', icon: 'spark', admin: true },
+    { id: 'adcheck', label: 'Проверка канала', desc: 'Перед рекламой', icon: 'clipboard', admin: true },
+    { id: 'account', label: 'Профиль и оплата', desc: 'Доступ и тариф', icon: 'card' }
+  ];
+
+  const TITLES = { dashboard: 'Дашборд', analytics: 'Аналитика', plan: 'Контент-план', placements: 'Площадки для рекламы', compare: 'Сравнение', content: 'Контент', adcheck: 'Проверка канала', account: 'Профиль и оплата' };
+  const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const DOW = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const WEEKDAYS = ['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];
+
+  const state = {
+    screen: 'plan',
+    month: new Date(2026, 10, 1),
+    filter: 'all',
+    drawer: null,
+    form: null,
+    tab: 'text',
+    planTab: 'calendar',
+    ideaFilter: 'all',
+    access: 'admins',
+    autoPublish: true,
+    ideas: INITIAL_IDEAS.slice(),
+    modal: null
+  };
+  const posts = INITIAL_POSTS.map(function (p) { return Object.assign({}, p); });
+
+  /* ---------- helpers ---------- */
+  function channel(id) { return CHANNELS.find(function (c) { return c.id === id; }) || CHANNELS[0]; }
+  function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  function pad(n) { return n < 10 ? '0' + n : String(n); }
+  function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parseIso(s) { const p = String(s || '').split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function plural(n, forms) {
+    const a = Math.abs(n) % 100, b = a % 10;
+    if (a > 10 && a < 20) return forms[2];
+    if (b > 1 && b < 5) return forms[1];
+    if (b === 1) return forms[0];
+    return forms[2];
+  }
+  function formatDay(dateStr) {
+    const d = parseIso(dateStr);
+    return d.getDate() + ' ' + MONTHS_GEN[d.getMonth()] + ', ' + WEEKDAYS[(d.getDay() + 6) % 7];
+  }
+  function formatShort(dateStr) {
+    if (!dateStr) return 'Без даты';
+    const d = parseIso(dateStr);
+    return d.getDate() + ' ' + MONTHS_GEN[d.getMonth()].slice(0, 3);
+  }
+  function initials(ch) { return ch.short.split(/\s+/).map(function (w) { return w.charAt(0); }).join('').slice(0, 2).toUpperCase(); }
+  function titleFrom(text) {
+    const first = String(text || '').split('\n').find(function (line) { return line.trim(); }) || 'Без названия';
+    return first.replace(/[*_`#>\[\]]/g, '').replace(/\|/g, ' ').trim().slice(0, 64);
+  }
+  function toast(message) {
+    const root = document.getElementById('toast-root');
+    root.innerHTML = '<div class="toast">' + esc(message) + '</div>';
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { root.innerHTML = ''; }, 2600);
+  }
+  function filteredPosts() {
+    return posts.filter(function (p) { return state.filter === 'all' || p.ch === state.filter; });
+  }
+  function drafts() {
+    return filteredPosts().filter(function (p) { return p.status === 'draft'; }).sort(function (a, b) {
+      return (b.date || '').localeCompare(a.date || '');
+    });
+  }
+  function counts() {
+    return {
+      scheduled: posts.filter(function (p) { return p.status === 'scheduled'; }).length,
+      drafts: posts.filter(function (p) { return p.status === 'draft'; }).length,
+      published: posts.filter(function (p) { return p.status === 'published'; }).length
+    };
+  }
+  function defaultChannel() {
+    return state.filter !== 'all' ? state.filter : CHANNELS[0].id;
+  }
+
+  /* ---------- markdown ---------- */
+  function inlineMd(s, platform) {
+    let h = esc(s);
+    h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+    h = h.replace(/\[(https?:\/\/[^\]|]+)\|([^\]]+)\]/g, '<a href="$1" target="_blank" rel="noreferrer">$2</a>');
+    h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    h = h.replace(/__([^_]+)__/g, platform === 'vk' ? '<u>$1</u>' : '<em>$1</em>');
+    h = h.replace(/~~([^~]+)~~/g, '<s>$1</s>');
+    h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+    h = h.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+    return h;
+  }
+  function mdToHtml(text, platform) {
+    const lines = String(text || '').split('\n');
+    let out = '', inList = false;
+    function closeList() { if (inList) { out += '</ul>'; inList = false; } }
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (/^\s*[-—•]\s+/.test(line)) {
+        if (!inList) { out += '<ul>'; inList = true; }
+        out += '<li>' + inlineMd(line.replace(/^\s*[-—•]\s+/, ''), platform) + '</li>';
+        continue;
+      }
+      closeList();
+      if (/^\s*>\s?/.test(line)) {
+        out += '<blockquote>' + inlineMd(line.replace(/^\s*>\s?/, ''), platform) + '</blockquote>';
+        continue;
+      }
+      if (!line.trim()) { out += '<div class="empty-line"></div>'; continue; }
+      out += '<div>' + inlineMd(line, platform) + '</div>';
+    }
+    closeList();
+    return out;
+  }
+
+  /* ---------- render shell ---------- */
+  function renderSidebar() {
+    document.getElementById('nav').innerHTML = NAV.map(function (item) {
+      const active = state.screen === item.id ? ' active' : '';
+      const badge = item.isNew ? '<span class="nav-new">new</span>' : '';
+      const adminOnly = item.id === 'plan' ? state.access === 'admins' : item.admin;
+      const shield = adminOnly ? '<span class="nav-shield" title="Только для администратора">' + icon('shield', 15) + '</span>' : '';
+      return '<button class="' + active.trim() + '" data-nav="' + item.id + '"><span class="nav-icon">' + icon(item.icon, 18) + '</span>' +
+        '<span class="nav-text"><span>' + esc(item.label) + '</span><small>' + esc(item.desc) + '</small></span>' + badge + shield + '</button>';
+    }).join('');
+  }
+
+  function pageHead(title, sub, stats, actions) {
+    return '<div class="page-head"><div><h2>' + title + '</h2><p class="sub">' + sub + '</p>' +
+      (stats ? '<div class="stats">' + stats + '</div>' : '') +
+      '</div><div class="head-actions">' + actions + '</div></div>';
+  }
+
+  function accessPill() {
+    const labels = { off: 'Выключен', admins: 'Только для админов', all: 'Доступен всем' };
+    return '<button class="access-pill ' + state.access + '" data-action="access" title="Настроить доступ к разделу">' +
+      icon('shield', 14) + ' ' + labels[state.access] + '</button>';
+  }
+
+  function sectionTabs() {
+    const tabs = [['calendar', 'Календарь'], ['ideas', 'Идеи']];
+    return '<div class="section-tabs"><div class="tabs-left">' + tabs.map(function (t) {
+      return '<button class="' + (state.planTab === t[0] ? 'active' : '') + '" data-plan-tab="' + t[0] + '">' + t[1] + '</button>';
+    }).join('') + '</div>' + accessPill() + '</div>';
+  }
+
+  function planPage() {
+    const body = state.planTab === 'ideas' ? ideasPage() : calendarPage();
+    return sectionTabs() + body;
+  }
+
+  function calendarPage() {
+    const c = counts();
+    const stats = '<span><i style="background:#5b8def"></i><b>' + c.scheduled + '</b> в плане</span>' +
+      '<span><i style="background:#d9a441"></i><b>' + c.drafts + '</b> ' + plural(c.drafts, ['черновик','черновика','черновиков']) + '</span>' +
+      '<span><i style="background:#3fa87b"></i><b>' + c.published + '</b> опубликовано</span><span>' + CHANNELS.length + ' канала</span>';
+    return pageHead('План публикаций', 'Планируйте посты в ВК и Telegram: выберите день, канал и время. Внутри — текст с разметкой под площадку и предпросмотр.', stats,
+      '<button class="btn primary" data-action="new">' + icon('plus', 15) + ' Новый пост</button>') +
+      toolbar() +
+      '<div class="plan-grid"><div><section class="calendar card">' + calendar() + '</section>' +
+      '<p class="cal-hint">Нажмите на день, чтобы добавить публикацию, или на карточку поста, чтобы отредактировать. Серым — дни другого месяца.</p></div>' +
+      '<aside class="plan-rail">' + channelsCard() + autopublishCard() + draftsCard() + '</aside></div>';
+  }
+
+  function toolbar() {
+    const chips = '<button class="chip ' + (state.filter === 'all' ? 'active' : '') + '" data-filter="all">Все каналы</button>' +
+      CHANNELS.map(function (c) {
+        return '<button class="chip ' + (state.filter === c.id ? 'active' : '') + '" data-filter="' + c.id + '"><i class="' + c.platform + '"></i>' + esc(c.name) + '</button>';
+      }).join('');
+    return '<div class="toolbar"><div class="filters">' + chips + '</div><div class="month-nav">' +
+      '<button class="icon-btn" data-month="prev" aria-label="Предыдущий месяц">' + icon('chevL', 16) + '</button>' +
+      '<span class="month-title">' + MONTHS[state.month.getMonth()] + ' ' + state.month.getFullYear() + '</span>' +
+      '<button class="icon-btn" data-month="next" aria-label="Следующий месяц">' + icon('chevR', 16) + '</button>' +
+      '<button class="btn small ghost" data-action="today">Сегодня</button>' +
+      '</div></div>';
+  }
+
+  function calendar() {
+    const y = state.month.getFullYear(), m = state.month.getMonth();
+    const first = new Date(y, m, 1);
+    const offset = (first.getDay() + 6) % 7;
+    const days = new Date(y, m + 1, 0).getDate();
+    const rows = Math.max(5, Math.ceil((offset + days) / 7));
+    let cells = '';
+    for (let i = 0; i < rows * 7; i++) {
+      const dayNum = i - offset + 1;
+      const d = new Date(y, m, dayNum);
+      const inMonth = dayNum >= 1 && dayNum <= days;
+      const dIso = iso(d);
+      const wd = (d.getDay() + 6) % 7;
+      const items = filteredPosts().filter(function (p) { return p.date === dIso; }).sort(function (a, b) { return a.time.localeCompare(b.time); });
+      const shown = items.slice(0, 2);
+      cells += '<div class="cal-day ' + (inMonth ? '' : 'other') + ' ' + (wd >= 5 ? 'weekend' : '') + ' ' + (dIso === TODAY ? 'today' : '') + '" data-day="' + dIso + '">' +
+        '<span class="cal-num">' + d.getDate() + '</span>' +
+        shown.map(function (p) {
+          const ch = channel(p.ch);
+          return '<button class="cal-chip st-' + p.status + '" data-post="' + p.id + '" title="' + esc(ch.name + ' · ' + p.time + ' · ' + titleFrom(p.text)) + '">' +
+            '<span class="dot ' + ch.platform + '"></span><span class="title">' + esc(titleFrom(p.text)) + '</span></button>';
+        }).join('') +
+        (items.length > 2 ? '<button class="cal-more" data-day="' + dIso + '">+ ещё ' + (items.length - 2) + '</button>' : '') +
+        '</div>';
+    }
+    return '<div class="cal-dow-row">' + DOW.map(function (x) { return '<div class="cal-dow">' + x + '</div>'; }).join('') + '</div>' +
+      '<div class="cal-grid">' + cells + '</div>';
+  }
+
+  function channelsCard() {
+    const vk = CHANNELS.filter(function (c) { return c.platform === 'vk'; });
+    const tg = CHANNELS.filter(function (c) { return c.platform === 'tg'; });
+    function row(c) {
+      return '<div class="pub-row"><span class="dot ' + c.platform + '"></span><span class="pub-main"><strong>' + esc(c.short) + '</strong><small>' + fmt(c.subs) + ' подписчиков</small></span>' +
+        '<span class="pub-status">' + icon('check', 10) + ' подключён</span></div>';
+    }
+    return '<section class="card pub-channels"><div class="card-head"><h3>Каналы для публикации</h3><span class="hint">' + CHANNELS.length + ' из ' + CHANNELS.length + '</span></div>' +
+      '<div class="pub-group">ВКонтакте</div>' + vk.map(row).join('') +
+      '<div class="pub-group">Telegram</div>' + tg.map(row).join('') +
+      '<button class="btn small ghost" style="width:100%;margin-top:9px" data-action="connect-channel">' + icon('plus', 13) + ' Подключить группу или канал</button></section>';
+  }
+
+  function draftsCard() {
+    const ds = drafts();
+    return '<section class="card drafts"><div class="card-head"><h3>Черновики <span class="count">' + ds.length + '</span></h3><span class="hint">недавно</span></div>' +
+      '<div class="draft-list">' + (ds.length ? ds.map(function (p) {
+        const ch = channel(p.ch);
+        return '<button class="draft-row" data-draft="' + p.id + '"><span class="draft-dot ' + ch.platform + '"></span>' +
+          '<span class="draft-main"><span class="draft-title">' + esc(titleFrom(p.text)) + '</span>' +
+          '<span class="draft-meta">' + esc(ch.name) + ' · ' + formatShort(p.date) + ' · ' + esc(p.edited || 'недавно') + '</span></span>' +
+          '</button>';
+      }).join('') : '<p class="hint">Черновиков нет. Сохраните пост как черновик — он появится здесь.</p>') + '</div></section>';
+  }
+
+  function autopublishCard() {
+    const scheduled = posts.filter(function (p) { return p.status === 'scheduled'; }).sort(function (a, b) {
+      return (a.date + ' ' + a.time).localeCompare(b.date + ' ' + b.time);
+    });
+    const upcoming = scheduled.filter(function (p) { return p.date > TODAY || (p.date === TODAY && p.time >= '12:00'); });
+    const next = upcoming[0] || scheduled[0];
+    const on = state.autoPublish;
+    return '<section class="card autopub"><div class="card-head"><h3>Автопубликация</h3>' +
+      '<label class="switch" title="Включить автопубликацию"><input type="checkbox" id="auto-toggle" ' + (on ? 'checked' : '') + '><span class="slider"></span></label></div>' +
+      '<p class="auto-line">' + (on
+        ? '<span><b>' + scheduled.length + '</b> ' + plural(scheduled.length, ['пост выйдет','поста выйдут','постов выйдут']) + ' автоматически</span>'
+        : '<span>Выключена: посты будут ждать подтверждения</span>') + '</p>' +
+      (next ? '<div class="auto-next"><span>' + formatShort(next.date) + ', ' + next.time + ' · ' + esc(channel(next.ch).name) + '</span><strong>' + esc(titleFrom(next.text)) + '</strong></div>' : '<p class="hint">Нет запланированных постов.</p>') +
+      '<button class="btn small ghost" style="width:100%;margin-top:2px" data-action="auto-settings">Настройки публикации</button></section>';
+  }
+
+  function ideasPage() {
+    const filters = [['all', 'Все'], ['competitor', 'Конкуренты'], ['own', 'Мои посты'], ['seasonal', 'Сезонные']];
+    const list = state.ideas.filter(function (i) { return state.ideaFilter === 'all' || i.kind === state.ideaFilter; });
+    const stats = '<span><b>' + state.ideas.length + '</b> идей</span><span>без ограничений</span><span>обновление вручную</span>';
+    return pageHead('Идеи для контента', 'Идеи собраны из постов конкурентов, ваших лучших публикаций и сезонных поводов. У каждой виден источник и причина.', stats,
+      '<button class="btn ghost" data-action="refresh-ideas">' + icon('refresh', 14) + ' Обновить</button>') +
+      '<div class="filters source-filters">' + filters.map(function (f) {
+        return '<button class="chip ' + (state.ideaFilter === f[0] ? 'active' : '') + '" data-idea-filter="' + f[0] + '">' + f[1] + '</button>';
+      }).join('') + '</div>' +
+      (list.length ? '<div class="ideas-page-grid">' + list.map(function (i) { return ideaCard(i, true); }).join('') + '</div>' : '<div class="placeholder card"><p>Идей этого типа пока нет.</p></div>') +
+      bestPostsBlock();
+  }
+
+  function bestPostsBlock() {
+    return '<section class="card best"><div class="card-head"><h3>Лучшие посты в нише</h3><span class="hint">бывший раздел «Идеи для постов»</span></div><div class="best-list">' +
+      BEST_POSTS.map(function (b) {
+        return '<div class="best-row"><span class="dot ' + b.platform + '"></span><div class="best-main"><strong>' + esc(b.comp) + '</strong><p>' + esc(b.text) + '</p></div>' +
+          '<span class="best-metric">' + esc(b.mult) + ' · ' + esc(b.views) + '</span>' +
+          '<button class="btn small primary" data-best-plan="' + b.id + '">' + icon('plus', 12) + ' В план</button></div>';
+      }).join('') + '</div></section>';
+  }
+
+  function ideaCard(i, full) {
+    return '<div class="idea' + (full ? ' idea-full' : '') + '"><div class="idea-src">' + esc(i.source) + ' · <b>' + esc(i.metric) + '</b></div>' +
+      '<h4>' + esc(i.title) + '</h4>' +
+      '<p>' + esc(i.why) + '</p>' +
+      (full ? '<p class="idea-text">' + esc(i.text.split('\n')[0]).slice(0, 150) + '…</p>' : '') +
+      '<div class="idea-actions"><button class="btn small primary" data-idea-plan="' + i.id + '">' + icon('plus', 12) + ' В план</button>' +
+      '<button class="btn small ghost" data-idea-hide="' + i.id + '">Скрыть</button></div></div>';
+  }
+
+  function placeholderPage() {
+    const item = NAV.find(function (n) { return n.id === state.screen; }) || NAV[0];
+    return '<div class="placeholder card"><span class="eyebrow">Демо-макет</span><h2>' + esc(item.label) + '</h2>' +
+      '<p>В этом макете показан только новый раздел «Контент-план». Остальные экраны Socstat не менялись — здесь они заменены заглушкой.</p>' +
+      '<button class="btn primary" data-nav="plan">Открыть контент-план</button></div>';
+  }
+
+  function renderView() {
+    document.getElementById('topbar-title').textContent = TITLES[state.screen] || 'Контент-план';
+    document.getElementById('view').innerHTML = state.screen === 'plan' ? planPage() : placeholderPage();
+  }
+
+  /* ---------- drawer ---------- */
+  function openDay(date) {
+    state.drawer = { mode: 'new', date: date };
+    state.form = { postId: null, date: date, time: '10:00', ch: defaultChannel(), text: '' };
+    state.tab = 'text';
+    renderDrawer();
+  }
+  function openPost(id) {
+    const post = posts.find(function (p) { return p.id === id; });
+    if (!post) return;
+    state.drawer = { mode: post.status === 'published' ? 'view' : 'edit', postId: id, date: post.date };
+    state.form = { postId: id, date: post.date, time: post.time, ch: post.ch, text: post.text };
+    state.tab = 'text';
+    renderDrawer();
+  }
+  function openIdea(id) {
+    const idea = state.ideas.find(function (i) { return i.id === id; });
+    if (!idea) return;
+    state.modal = null;
+    state.drawer = { mode: 'new', date: TODAY, idea: id };
+    state.form = { postId: null, date: TODAY, time: '10:00', ch: defaultChannel(), text: idea.text };
+    state.tab = 'text';
+    renderDrawer();
+    renderModal();
+  }
+  function openBest(id) {
+    const b = BEST_POSTS.find(function (x) { return x.id === id; });
+    if (!b) return;
+    state.modal = null;
+    state.drawer = { mode: 'new', date: TODAY, best: id };
+    state.form = { postId: null, date: TODAY, time: '10:00', ch: defaultChannel(), text: b.text };
+    state.tab = 'text';
+    renderDrawer();
+    renderModal();
+  }
+  function closeDrawer() {
+    state.drawer = null;
+    state.form = null;
+    renderDrawer();
+  }
+  function drawerHeader() {
+    const f = state.form;
+    const dateLabel = f.date ? formatDay(f.date) : 'Без даты';
+    const label = state.drawer.mode === 'view' ? 'Опубликованный пост' : (state.drawer.mode === 'edit' ? 'Редактировать пост' : 'Новый пост');
+    return '<div class="drawer-head"><div><span class="eyebrow">' + label + '</span><h2>' + esc(dateLabel) + '</h2></div>' +
+      '<button class="icon-btn" data-action="close-drawer" aria-label="Закрыть">' + icon('x', 16) + '</button></div>';
+  }
+  function dayPosts(date) {
+    return posts.filter(function (p) { return p.date === date; }).sort(function (a, b) { return a.time.localeCompare(b.time); });
+  }
+  function renderDrawer() {
+    const root = document.getElementById('drawer-root');
+    if (!state.drawer) { root.innerHTML = ''; return; }
+    const f = state.form;
+    const ch = channel(f.ch);
+    const dayItems = state.drawer.mode !== 'view' && f.date ? dayPosts(f.date) : [];
+    const dayList = dayItems.length ? '<div class="day-list"><h4>В этот день</h4>' + dayItems.map(function (p) {
+      const c = channel(p.ch);
+      return '<button class="day-row ' + (p.id === f.postId ? 'active' : '') + '" data-edit="' + p.id + '"><span class="dot ' + c.platform + '"></span><span class="time">' + p.time + '</span><span class="name">' + esc(titleFrom(p.text)) + '</span><span class="pill st-' + p.status + '">' + (p.status === 'draft' ? 'Черновик' : p.status === 'scheduled' ? 'В плане' : 'Вышло') + '</span></button>';
+    }).join('') + '</div>' : '';
+    const idea = state.drawer.idea ? state.ideas.find(function (i) { return i.id === state.drawer.idea; }) : null;
+    const ideaNote = idea ? '<div class="idea-note"><b>Идея ИИ:</b> ' + esc(idea.source) + ' · ' + esc(idea.metric) + '. Проверьте факты и добавьте личный опыт.</div>' : '';
+    const best = state.drawer.best ? BEST_POSTS.find(function (x) { return x.id === state.drawer.best; }) : null;
+    const bestNote = best ? '<div class="idea-note"><b>Лучший пост в нише:</b> ' + esc(best.comp) + ' · ' + esc(best.views) + ' просмотров · ' + esc(best.mult) + '. Перепишите под свой канал и проверьте факты.</div>' : '';
+
+    if (state.drawer.mode === 'view') {
+      const post = posts.find(function (p) { return p.id === f.postId; });
+      root.innerHTML = '<div class="overlay" data-action="close-drawer"></div><aside class="drawer">' + drawerHeader() +
+        '<div class="drawer-body">' +
+        '<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><span class="pill st-published">Опубликовано</span><span class="hint">' + esc(channel(post.ch).name) + ' · ' + post.time + ' · ' + formatShort(post.date) + '</span></div>' +
+        '<div class="preview-wrap"><div class="social-card ' + ch.platform + '"><div class="sc-head"><span class="sc-ava ' + ch.platform + '">' + esc(initials(ch)) + '</span><div><strong>' + esc(ch.short) + '</strong><small>' + (ch.platform === 'vk' ? 'ВКонтакте' : 'Telegram') + ' · ' + post.time + '</small></div></div>' +
+        '<div class="sc-text">' + mdToHtml(post.text, ch.platform) + '</div></div></div>' +
+        '<p class="preview-note">Опубликованные посты приходят из аналитики. В плане их можно только посмотреть.</p>' +
+        '</div><div class="drawer-foot"><button class="btn ghost" data-action="close-drawer">Закрыть</button></div></aside>';
+      return;
+    }
+
+    const limit = ch.platform === 'vk' ? 16000 : 4096;
+    const linkHint = ch.platform === 'vk'
+      ? 'ВК: **жирный**, *курсив*, __подчёркнутый__, [ссылка|текст], списки с «—». Заголовки и таблицы не поддерживаются.'
+      : 'Telegram: **жирный**, __курсив__, `код`, [текст](ссылка), цитаты `>`. Лимит 4 096 символов.';
+    root.innerHTML = '<div class="overlay" data-action="close-drawer"></div><aside class="drawer">' + drawerHeader() +
+      '<div class="drawer-body">' + bestNote + ideaNote + dayList +
+      '<div class="field"><label>Канал публикации</label><select class="input" id="post-ch">' +
+      '<optgroup label="ВКонтакте">' + CHANNELS.filter(function (c) { return c.platform === 'vk'; }).map(function (c) {
+        return '<option value="' + c.id + '" ' + (c.id === f.ch ? 'selected' : '') + '>' + esc(c.name) + '</option>';
+      }).join('') + '</optgroup><optgroup label="Telegram">' + CHANNELS.filter(function (c) { return c.platform === 'tg'; }).map(function (c) {
+        return '<option value="' + c.id + '" ' + (c.id === f.ch ? 'selected' : '') + '>' + esc(c.name) + '</option>';
+      }).join('') + '</optgroup></select><p class="field-note"><span class="ok-dot"></span> ' + esc(ch.name) + ' подключён · один пост — один канал</p></div>' +
+      '<div class="row"><div class="field"><label>Дата</label><input class="input" type="date" id="post-date" value="' + esc(f.date) + '"></div>' +
+      '<div class="field"><label>Время</label><input class="input" type="time" id="post-time" value="' + esc(f.time) + '"></div></div>' +
+      '<div class="auto-note' + (state.autoPublish ? '' : ' off') + '">' + (state.autoPublish ? icon('check', 13) : icon('clock', 13)) + ' ' + (state.autoPublish ? 'Автопубликация включена: пост выйдет по расписанию' : 'Автопубликация выключена: пост будет ждать подтверждения') + '</div>' +
+      '<div class="editor-head"><div class="tabs"><button class="' + (state.tab === 'text' ? 'active' : '') + '" data-tab="text">Текст</button><button class="' + (state.tab === 'preview' ? 'active' : '') + '" data-tab="preview">Предпросмотр</button></div><span class="counter" id="post-counter"></span></div>' +
+      '<div id="pane-text" class="' + (state.tab === 'preview' ? 'hidden' : '') + '">' +
+      '<div class="toolbar-md"><button data-md="bold" title="Жирный (**текст**)"><b>B</b></button><button data-md="italic" title="Курсив (*текст*)"><i>I</i></button>' +
+      '<button data-md="link" title="Ссылка">' + icon('share', 13) + '</button><span class="sep"></span>' +
+      '<button data-md="list" title="Список">•</button><button data-md="quote" title="Цитата"' + (ch.platform === 'vk' ? ' disabled' : '') + '>❝</button>' +
+      '<button data-md="code" title="Код"' + (ch.platform === 'vk' ? ' disabled' : '') + '>{ }</button></div>' +
+      '<textarea class="input post-text" id="post-text" placeholder="Напишите пост…">' + esc(f.text) + '</textarea>' +
+      '<p class="md-hint" id="md-hint">' + linkHint + '</p>' +
+      '<button class="attach" data-action="attach">' + icon('image', 14) + ' Прикрепить изображение</button></div>' +
+      '<div id="pane-preview" class="' + (state.tab === 'text' ? 'hidden' : '') + '"><div class="preview-wrap" id="preview-body"></div>' +
+      '<p class="preview-note">Так пост будет выглядеть в ' + (ch.platform === 'vk' ? 'ВКонтакте' : 'Telegram') + '. Форматирование зависит от площадки.</p></div>' +
+      '</div>' +
+      '<div class="drawer-foot"><div style="display:flex;gap:6px;align-items:center">' +
+      (f.postId ? '<button class="icon-btn" data-action="delete-post" title="Удалить">' + icon('trash', 15) + '</button>' : '') +
+      '<button class="btn ghost" data-save="draft">Сохранить черновик</button></div>' +
+      '<div class="right"><button class="btn ghost" data-action="publish-now">Опубликовать сейчас</button>' +
+      '<button class="btn primary" data-save="scheduled">' + (state.drawer.mode === 'edit' && posts.find(function (p) { return p.id === f.postId; }).status === 'scheduled' ? 'Сохранить' : 'Запланировать') + '</button></div></div></aside>';
+    updateLive();
+  }
+
+  function updateLive() {
+    if (!state.form) return;
+    const ch = channel(state.form.ch);
+    const len = (state.form.text || '').length;
+    const limit = ch.platform === 'vk' ? 16000 : 4096;
+    const counter = document.getElementById('post-counter');
+    if (counter) {
+      counter.textContent = fmt(len) + ' / ' + fmt(limit);
+      counter.classList.toggle('over', len > limit);
+    }
+    const preview = document.getElementById('preview-body');
+    if (preview) {
+      const html = (state.form.text || '').trim() ? mdToHtml(state.form.text, ch.platform) : '<span class="hint">Текст поста появится здесь</span>';
+      preview.innerHTML = '<div class="social-card ' + ch.platform + '"><div class="sc-head"><span class="sc-ava ' + ch.platform + '">' + esc(initials(ch)) + '</span><div><strong>' + esc(ch.short) + '</strong><small>' + (ch.platform === 'vk' ? 'ВКонтакте' : 'Telegram') + ' · только что</small></div></div>' +
+        '<div class="sc-text">' + html + '</div>' +
+        (ch.platform === 'vk' ? '<div class="sc-media">' + icon('image', 14) + ' Изображение</div>' : '') +
+        '<div class="sc-actions"><span>' + icon('heart', 12) + ' 24</span><span>' + icon('comment', 12) + ' 6</span><span>' + icon('share', 12) + ' 4</span><span>' + icon('eye', 12) + ' 1 240</span></div></div>';
+    }
+    const sched = document.querySelector('[data-save="scheduled"]');
+    if (sched) sched.disabled = !(state.form.text || '').trim() || len > limit || !state.form.date;
+    const draft = document.querySelector('[data-save="draft"]');
+    if (draft) draft.disabled = !(state.form.text || '').trim();
+    const pub = document.querySelector('[data-action="publish-now"]');
+    if (pub) pub.disabled = !(state.form.text || '').trim() || len > limit;
+  }
+
+  function switchTab(tab) {
+    state.tab = tab;
+    document.querySelectorAll('[data-tab]').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-tab') === tab); });
+    const text = document.getElementById('pane-text');
+    const preview = document.getElementById('pane-preview');
+    if (text) text.classList.toggle('hidden', tab !== 'text');
+    if (preview) preview.classList.toggle('hidden', tab !== 'preview');
+    if (tab === 'preview') updateLive();
+  }
+
+  function savePost(status) {
+    const f = state.form;
+    if (!f) return;
+    const ch = channel(f.ch);
+    const limit = ch.platform === 'vk' ? 16000 : 4096;
+    if (!(f.text || '').trim()) { toast('Добавьте текст поста'); return; }
+    if ((f.text || '').length > limit) { toast('Текст длиннее лимита ' + (ch.platform === 'vk' ? 'ВК' : 'Telegram')); return; }
+    if (status === 'scheduled' && !f.date) { toast('Выберите дату публикации'); return; }
+    if (f.postId) {
+      const post = posts.find(function (p) { return p.id === f.postId; });
+      if (post) { post.date = f.date; post.time = f.time; post.ch = f.ch; post.text = f.text; post.status = status; post.edited = 'только что'; }
+    } else {
+      posts.push({ id: 'p' + Date.now(), date: f.date, time: f.time, ch: f.ch, text: f.text, status: status, edited: 'только что' });
+    }
+    if (f.date) {
+      const d = parseIso(f.date);
+      state.month = new Date(d.getFullYear(), d.getMonth(), 1);
+    }
+    state.drawer = null;
+    state.form = null;
+    renderDrawer();
+    renderView();
+    toast(status === 'draft' ? 'Черновик сохранён' : 'Запланировано на ' + formatShort(f.date));
+  }
+
+  function publishNow() {
+    const f = state.form;
+    if (!f) return;
+    const ch = channel(f.ch);
+    const limit = ch.platform === 'vk' ? 16000 : 4096;
+    if (!(f.text || '').trim()) { toast('Добавьте текст поста'); return; }
+    if ((f.text || '').length > limit) { toast('Текст длиннее лимита ' + (ch.platform === 'vk' ? 'ВК' : 'Telegram')); return; }
+    const time = f.time || '12:00';
+    if (f.postId) {
+      const post = posts.find(function (p) { return p.id === f.postId; });
+      if (post) { post.date = TODAY; post.time = time; post.ch = f.ch; post.text = f.text; post.status = 'published'; post.edited = 'только что'; }
+    } else {
+      posts.push({ id: 'p' + Date.now(), date: TODAY, time: time, ch: f.ch, text: f.text, status: 'published', edited: 'только что' });
+    }
+    state.month = new Date(2026, 10, 1);
+    closeDrawer();
+    renderView();
+    toast('Опубликовано в ' + (ch.platform === 'vk' ? 'ВК' : 'Telegram') + ' (демо)');
+  }
+
+  function applyMd(kind) {
+    const f = state.form;
+    if (!f) return;
+    const ta = document.getElementById('post-text');
+    if (!ta) return;
+    const ch = channel(f.ch);
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    let selected = ta.value.slice(start, end);
+    let before = '', after = '';
+    if (kind === 'bold') { if (!selected) selected = 'текст'; before = '**'; after = '**'; }
+    if (kind === 'italic') { if (!selected) selected = 'текст'; before = '*'; after = '*'; }
+    if (kind === 'link') {
+      if (!selected) selected = 'текст';
+      if (ch.platform === 'vk') { before = '[https://vk.com|'; after = ']'; }
+      else { before = '['; after = '](https://)'; }
+    }
+    if (kind === 'list') {
+      const text = selected || 'пункт';
+      const lines = text.split('\n').map(function (line) { return (ch.platform === 'vk' ? '— ' : '- ') + line; }).join('\n');
+      ta.setRangeText(lines, start, end, 'end');
+      f.text = ta.value; updateLive(); ta.focus(); return;
+    }
+    if (kind === 'quote') {
+      const text = selected || 'цитата';
+      ta.setRangeText('> ' + text, start, end, 'end');
+      f.text = ta.value; updateLive(); ta.focus(); return;
+    }
+    if (kind === 'code') {
+      const text = selected || 'код';
+      ta.setRangeText('`' + text + '`', start, end, 'end');
+      f.text = ta.value; updateLive(); ta.focus(); return;
+    }
+    ta.setRangeText(before + selected + after, start, end, 'end');
+    ta.selectionStart = start + before.length;
+    ta.selectionEnd = start + before.length + selected.length;
+    f.text = ta.value;
+    updateLive();
+    ta.focus();
+  }
+
+  /* ---------- modal ---------- */
+  function openAccess() {
+    state.modal = 'access';
+    renderModal();
+  }
+  function closeModal() {
+    state.modal = null;
+    renderModal();
+  }
+  function renderModal() {
+    const root = document.getElementById('modal-root');
+    if (state.modal !== 'access') { root.innerHTML = ''; return; }
+    const opts = [
+      ['off', 'Выключено', 'Раздел скрыт для всех'],
+      ['admins', 'Только администраторам', 'Как сейчас'],
+      ['all', 'Всем пользователям', 'Раздел увидят все']
+    ];
+    root.innerHTML = '<div class="overlay" data-action="close-modal"></div><div class="modal access-modal">' +
+      '<div class="modal-head"><div><h2>Доступ к разделу</h2><p>Сейчас раздел видят только администраторы. Включите его для всех, когда будете готовы.</p></div>' +
+      '<button class="icon-btn" data-action="close-modal" aria-label="Закрыть">' + icon('x', 16) + '</button></div>' +
+      '<div class="modal-body"><div class="access-options">' + opts.map(function (o) {
+        return '<button class="access-option ' + (state.access === o[0] ? 'active' : '') + '" data-access-option="' + o[0] + '"><span class="radio"></span><span class="text"><strong>' + o[1] + '</strong><small>' + o[2] + '</small></span></button>';
+      }).join('') + '</div><p class="hint">Настройка хранится в Админке → Настройки. В демо видимость страницы не меняется.</p></div>' +
+      '<div class="modal-foot"><button class="btn ghost" data-action="open-admin">Админка → Настройки</button><button class="btn ghost" data-action="close-modal">Отмена</button><button class="btn primary" data-action="save-access">Сохранить</button></div></div>';
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener('click', function (e) {
+    const nav = e.target.closest('[data-nav]');
+    if (nav) {
+      state.screen = nav.getAttribute('data-nav');
+      state.drawer = null; state.form = null; state.modal = null;
+      renderDrawer(); renderModal(); renderSidebar(); renderView();
+      window.scrollTo(0, 0);
+      return;
+    }
+    const planTab = e.target.closest('[data-plan-tab]');
+    if (planTab) { state.planTab = planTab.getAttribute('data-plan-tab'); renderView(); return; }
+    const ideaFilter = e.target.closest('[data-idea-filter]');
+    if (ideaFilter) { state.ideaFilter = ideaFilter.getAttribute('data-idea-filter'); renderView(); return; }
+    const month = e.target.closest('[data-month]');
+    if (month) {
+      const dir = month.getAttribute('data-month');
+      if (dir === 'prev') state.month = new Date(state.month.getFullYear(), state.month.getMonth() - 1, 1);
+      if (dir === 'next') state.month = new Date(state.month.getFullYear(), state.month.getMonth() + 1, 1);
+      renderView(); return;
+    }
+    const filter = e.target.closest('[data-filter]');
+    if (filter) { state.filter = filter.getAttribute('data-filter'); renderView(); return; }
+    if (e.target.closest('[data-action="today"]')) {
+      state.month = new Date(2026, 10, 1);
+      renderView(); return;
+    }
+    if (e.target.closest('[data-action="new"]')) { openDay(TODAY); return; }
+
+    const postEl = e.target.closest('[data-post]');
+    if (postEl) { openPost(postEl.getAttribute('data-post')); return; }
+    const edit = e.target.closest('[data-edit]');
+    if (edit) { openPost(edit.getAttribute('data-edit')); return; }
+    const day = e.target.closest('[data-day]');
+    if (day) { openDay(day.getAttribute('data-day')); return; }
+    const draft = e.target.closest('[data-draft]');
+    if (draft) { openPost(draft.getAttribute('data-draft')); return; }
+
+    const planIdea = e.target.closest('[data-idea-plan]');
+    if (planIdea) { openIdea(planIdea.getAttribute('data-idea-plan')); return; }
+    const hideIdea = e.target.closest('[data-idea-hide]');
+    if (hideIdea) {
+      const id = hideIdea.getAttribute('data-idea-hide');
+      state.ideas = state.ideas.filter(function (i) { return i.id !== id; });
+      renderView(); renderModal(); toast('Идея скрыта'); return;
+    }
+    const bestPlan = e.target.closest('[data-best-plan]');
+    if (bestPlan) { openBest(bestPlan.getAttribute('data-best-plan')); return; }
+    if (e.target.closest('[data-action="refresh-ideas"]')) { toast('Идеи обновлены — без ограничений'); return; }
+    if (e.target.closest('[data-action="attach"]')) { toast('В демо изображение не прикрепляется'); return; }
+    if (e.target.closest('[data-action="publish-now"]')) { publishNow(); return; }
+    if (e.target.closest('[data-action="auto-settings"]')) { toast('Настройки публикации (в демо недоступны)'); return; }
+    if (e.target.closest('[data-action="connect-channel"]')) { toast('Подключение группы или канала (в демо недоступно)'); return; }
+    if (e.target.closest('[data-action="open-admin"]')) { toast('Админка → Настройки (в демо недоступно)'); return; }
+
+    if (e.target.closest('[data-action="access"]')) { openAccess(); return; }
+    const accessOption = e.target.closest('[data-access-option]');
+    if (accessOption) { state.access = accessOption.getAttribute('data-access-option'); renderModal(); return; }
+    if (e.target.closest('[data-action="save-access"]')) {
+      const labels = { off: 'выключен', admins: 'только для администраторов', all: 'доступен всем' };
+      state.modal = null; renderModal(); renderView(); renderSidebar();
+      toast('Доступ к разделу: ' + labels[state.access] + ' (демо)'); return;
+    }
+    if (e.target.closest('[data-action="close-drawer"]')) { closeDrawer(); return; }
+    if (e.target.closest('[data-action="close-modal"]')) { closeModal(); return; }
+    if (e.target.closest('[data-action="delete-post"]')) {
+      if (state.form && state.form.postId) {
+        const id = state.form.postId;
+        const idx = posts.findIndex(function (p) { return p.id === id; });
+        if (idx >= 0) posts.splice(idx, 1);
+        closeDrawer(); renderView(); toast('Пост удалён из плана');
+      }
+      return;
+    }
+    const save = e.target.closest('[data-save]');
+    if (save) { savePost(save.getAttribute('data-save')); return; }
+    const tab = e.target.closest('[data-tab]');
+    if (tab) { switchTab(tab.getAttribute('data-tab')); return; }
+    const md = e.target.closest('[data-md]');
+    if (md && !md.disabled) { applyMd(md.getAttribute('data-md')); return; }
+  });
+
+  document.addEventListener('input', function (e) {
+    if (e.target.id === 'post-text') {
+      state.form.text = e.target.value;
+      updateLive();
+    }
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target.id === 'auto-toggle') {
+      state.autoPublish = e.target.checked;
+      renderView();
+      toast(state.autoPublish ? 'Автопубликация включена' : 'Автопубликация выключена: посты будут ждать подтверждения');
+      return;
+    }
+    if (e.target.id === 'post-ch') {
+      state.form.ch = e.target.value;
+      renderDrawer();
+    }
+    if (e.target.id === 'post-date') {
+      state.form.date = e.target.value;
+      renderDrawer();
+    }
+    if (e.target.id === 'post-time') {
+      state.form.time = e.target.value;
+      updateLive();
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      if (state.modal) closeModal();
+      else if (state.drawer) closeDrawer();
+    }
+  });
+
+  /* ---------- init ---------- */
+  (function init() {
+    const qp = new URLSearchParams(location.search);
+    const tab = qp.get('tab');
+    if (tab === 'ideas') state.planTab = tab;
+    if (qp.get('ideas') === '1') state.planTab = 'ideas';
+    if (qp.get('post') || qp.get('day')) state.planTab = 'calendar';
+    renderSidebar();
+    renderView();
+    setTimeout(function () {
+      if (qp.get('post')) openPost(qp.get('post'));
+      else if (qp.get('day')) openDay(qp.get('day'));
+      if (qp.get('access') === '1') openAccess();
+      if (qp.get('preview') === '1' && state.drawer) switchTab('preview');
+    }, 80);
+  })();
+</script>
+</body>
+</html>

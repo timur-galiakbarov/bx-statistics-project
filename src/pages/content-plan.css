@@ -1,0 +1,19 @@
+.content-plan-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.content-plan-next span {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #dce4df;
+  border-radius: 999px;
+  color: #315547;
+  display: inline-flex;
+  font-size: 11px;
+  gap: 5px;
+  padding: 5px 9px;
+}

@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  CalendarClock,
   ChevronRight,
   ClipboardCheck,
   CreditCard,
@@ -34,18 +35,20 @@ import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PostsPage } from './pages/PostsPage';
 import { ContentPage } from './pages/ContentPage';
+import { ContentPlanPage } from './pages/ContentPlanPage';
 import { VkImplicitCallbackPage } from './pages/VkImplicitCallbackPage';
 import { getAfterLoginPath, takeAfterLogin } from './utils/afterLogin';
 import { formatAccessEnd } from './utils/date';
 import { startVisitHeartbeat, trackPageView } from './utils/visit';
 
-type NavItem = { to: string; label: string; icon: typeof Home; description?: string; adminOnly?: boolean; feature?: 'placements' };
+type NavItem = { to: string; label: string; icon: typeof Home; description?: string; adminOnly?: boolean; feature?: 'placements' | 'contentPlan' };
 
 // Подпись под пунктом объясняет, зачем он нужен. feature — пункт показывается, только когда переключатель фичи
 // включён этому пользователю.
 const navItems: NavItem[] = [
   { to: '/dashboard', label: 'Дашборд', icon: Home, description: 'Ваши источники за период' },
   { to: '/analytics', label: 'Аналитика', icon: BarChart3, description: 'Отчёты по сообществам и каналам' },
+  { to: '/content-plan', label: 'Контент-план', icon: CalendarClock, description: 'Календарь публикаций и автопостинг', feature: 'contentPlan' },
   { to: '/placements', label: 'Площадки для рекламы', icon: MapPin, description: 'AI подберёт площадки ВК', feature: 'placements' },
   { to: '/compare', label: 'Сравнение', icon: GitCompare, description: 'Метрики до 10 сообществ рядом' },
   { to: '/posts', label: 'Идеи для постов', icon: Newspaper, description: 'Лучшие посты в вашей нише' },
@@ -243,7 +246,11 @@ export function App() {
   const title = useMemo(() => {
     return [...navItems, adminNavItem].find((item) => location.pathname.startsWith(item.to))?.label ?? 'Socstat';
   }, [location.pathname]);
-  const visibleNavItems = [...navItems, adminNavItem].filter((item) => (!item.adminOnly || user?.isAdmin) && (!item.feature || user?.placementsEnabled));
+  const featureEnabled: Record<NonNullable<NavItem['feature']>, boolean> = {
+    placements: Boolean(user?.placementsEnabled),
+    contentPlan: Boolean(user?.contentPlanEnabled)
+  };
+  const visibleNavItems = [...navItems, adminNavItem].filter((item) => (!item.adminOnly || user?.isAdmin) && (!item.feature || featureEnabled[item.feature]));
   const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions)
     || ((!user?.activeToExact || user.activeToExact !== expiredAccessEnd)
       && isAccessActive(user?.activeTo, user?.activeToExact));
@@ -364,6 +371,7 @@ export function App() {
           />
           <Route path="/ad-check" element={user?.isAdmin ? <AdCheckPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/placements" element={user?.placementsEnabled ? <PlacementsPage groups={groups} /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/content-plan" element={user?.contentPlanEnabled ? <ContentPlanPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/compare" element={hasPaidAccess ? <ComparePage groups={groups} user={user} /> : <CompareShowcase />} />
           <Route path="/posts" element={hasPaidAccess ? <PostsPage groups={groups} /> : <PostsShowcase />} />
           <Route path="/content" element={user?.isAdmin ? <ContentPage /> : <Navigate to="/dashboard" replace />} />

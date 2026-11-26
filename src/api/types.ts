@@ -16,6 +16,8 @@ export type User = {
   vkReports?: VkReportSettings;
   /** Подбор площадок включён этому пользователю переключателем фичи. */
   placementsEnabled?: boolean;
+  /** Контент-план включён этому пользователю переключателем фичи. */
+  contentPlanEnabled?: boolean;
 };
 
 /** Один полный отчёт VK или YouTube на 24 часа раз в 30 дней для пользователя без доступа. */
@@ -33,7 +35,7 @@ export type VkReportSettings = {
 };
 
 export type FeatureMode = 'off' | 'admins' | 'all';
-export type FeatureFlag = { key: 'vkReports' | 'placements' | 'survey' | 'dayPlan'; mode: FeatureMode; updatedAt: string | null };
+export type FeatureFlag = { key: 'vkReports' | 'placements' | 'contentPlan' | 'survey' | 'dayPlan'; mode: FeatureMode; updatedAt: string | null };
 
 export type SocialPlatform = 'vk' | 'youtube' | 'telegram';
 

@@ -18,6 +18,7 @@ import { paymentsRouter } from './routes/payments.js';
 import { placementsRouter } from './routes/placements.js';
 import { postsRouter } from './routes/posts.js';
 import { contentRouter } from './routes/content.js';
+import { contentPlanRouter } from './routes/contentPlan.js';
 import { pushRouter } from './routes/push.js';
 import { vkRouter } from './routes/vk.js';
 import { youtubeRouter } from './routes/youtube.js';
@@ -53,6 +54,7 @@ export function createApp() {
   app.use('/api/placements', placementsRouter);
   app.use('/api/posts', postsRouter);
   app.use('/api/content', contentRouter);
+  app.use('/api/content-plan', contentPlanRouter);
   app.use('/api/push', pushRouter);
   app.use('/api/notifications', notificationsRouter);
   app.use('/api/vk', vkRouter);

@@ -1,6 +1,6 @@
 # Контент-план
 
-Раздел для планирования и публикации постов. Сейчас — **этап 2**: календарь, подключение Telegram-каналов, редактор с markdown и сохранение черновиков/расписания. Отправки в Telegram ещё нет.
+Раздел для планирования и публикации постов. Сейчас — **этап 3**: календарь, Telegram-каналы, редактор с markdown, отправка в Telegram и автопубликация по расписанию.
 
 ## Доступ
 
@@ -8,7 +8,6 @@
 - По умолчанию `off`. Для проверки поставьте «Только администраторам»: пункт меню и маршрут появятся только у администраторов.
 - В `/api/account/me` приходит `contentPlanEnabled`; по нему показывается пункт меню «Контент-план» (сразу под «Аналитикой») и открывается `/content-plan`.
 - API `/api/content-plan` отвечает `403 FEATURE_OFF`, если фича выключена или недоступна пользователю.
-- Идеи для постов пока остаются отдельным разделом.
 
 ## Что работает
 
@@ -18,12 +17,12 @@
   2. Добавьте `TELEGRAM_BOT_TOKEN` в `api/.env` и перезапустите API.
   3. Добавьте бота в канал администратором с правом «Публиковать сообщения».
   4. В разделе нажмите «Подключить канал» и вставьте `@username` или ссылку `t.me/…`.
-- Сервер проверяет через Bot API, что бот админ канала и может писать (`getChat`, `getChatMember`). Ошибки показываются в модалке.
-- Редактор поста: канал, дата, время, markdown, лимит и предпросмотр.
-- «Черновик» сохраняет пост без даты или с датой; «Запланировать» требует дату и время в будущем.
-- Посты появляются в календаре; черновики — в правой колонке.
+- Сервер проверяет через Bot API, что бот админ канала и может писать (`getChat`, `getChatMember`).
+- Редактор: канал, дата, время, markdown, лимит 4 096, предпросмотр.
+- «Черновик» сохраняет пост; «Запланировать» ставит дату и время в будущем; «Опубликовать сейчас» отправляет сразу.
+- Автопубликация включена: планировщик раз в 30 секунд забирает созревшие посты и отправляет их в Telegram.
+- Статусы: `draft`, `scheduled`, `publishing`, `published`, `failed`. У опубликованного сохраняется ссылка на сообщение; у упавшего — текст ошибки.
 - Отключение канала; удаление поста.
-- Автопубликация показана как включённая, но фактической отправки нет: она появится на этапе 3.
 
 ## Время
 
@@ -31,43 +30,56 @@
 - На странице подписан текущий часовой пояс; календарь и карточки показывают местное время.
 - Сервер хранит `scheduledAt` в UTC, поэтому переход на летнее время не меняет уже сохранённое время.
 
-## Markdown
+## Markdown и отправка
 
 - В редакторе: `**жирный**`, `_курсив_`, `` `код` ``, `[текст](ссылка)`, списки `- `, цитаты `>`.
 - Предпросмотр экранирует HTML и показывает безопасный результат.
-- Лимиты: 4 096 символов для Telegram, 16 000 для ВК.
-- Для отправки в Telegram на этапе 3 текст будет преобразован в HTML (`parse_mode: 'HTML'`), чтобы не ломаться на спецсимволах MarkdownV2.
+- При отправке markdown преобразуется в HTML (`parse_mode: 'HTML'`): жирный, курсив, подчёркивание, зачёркивание, код, ссылки, цитаты; списки — строки с «•».
+- Лимит текста: 4 096 символов для Telegram, 16 000 для ВК.
+
+## Автопубликация и ошибки
+
+- Планировщик `api/src/services/contentPlanScheduler.ts` запускается вместе с API, тик — 30 секунд, блокировка в Redis на 2 минуты.
+- `CONTENT_PLAN_SCHEDULER_ENABLED=0` выключает планировщик.
+- Пост забирается атомарно: `scheduled → publishing`; повторный тик его уже не возьмёт.
+- Успех: `published`, `publishedAt`, `externalPostId`, `externalUrl`.
+- Ошибка: `failed` с текстом; при 429 Telegram пост повторится через минуту, но не больше трёх попыток. Остальные ошибки автоматически не повторяются — их видно в интерфейсе, можно исправить и опубликовать вручную.
+- Ошибки прав бота (`403`) помечают канал как проблемный; недействительный токен — `needs_reauth`.
+- При сетевой ошибке неизвестно, дошло ли сообщение: пост помечается `failed` с просьбой проверить канал, автоматического повтора нет — это защита от дублей.
 
 ## API
 
 - `GET /api/content-plan` — каналы, посты, данные бота.
 - `GET /api/content-plan/channels` — список каналов.
-- `POST /api/content-plan/channels/telegram` — `{ ref }`, подключение канала.
-- `DELETE /api/content-plan/channels/:id` — отключение.
-- `POST /api/content-plan/posts` — создать пост: `{ channelId, text, status, scheduledAt, timeZone }`.
+- `POST /api/content-plan/channels/telegram` — `{ ref }`.
+- `DELETE /api/content-plan/channels/:id`.
+- `POST /api/content-plan/posts` — создать пост.
 - `PATCH /api/content-plan/posts/:id` — изменить.
-- `DELETE /api/content-plan/posts/:id` — удалить.
+- `DELETE /api/content-plan/posts/:id`.
+- `POST /api/content-plan/posts/:id/publish` — опубликовать сейчас.
 - Все маршруты закрыты фичей `contentPlan`.
 
 ## Модели
 
-- `ContentPlanChannel` — группа ВК или Telegram-канал: платформа, внешний id, название, handle, статус доступа, права публикации, ошибка.
-- `ContentPlanPost` — пост: канал, текст, статус (`draft/scheduled/publishing/published/failed`), `scheduledAt` в UTC, `timeZone`, `autoPublish` по умолчанию `true`, внешний id/ссылка, попытки, ошибка.
+- `ContentPlanChannel` — группа ВК или Telegram-канал.
+- `ContentPlanPost` — пост: канал, текст, статус, `scheduledAt` в UTC, `timeZone`, `autoPublish`, внешний id/ссылка, попытки, ошибка.
 
 ## Код
 
-- `api/src/services/telegramBotClient.ts` — Bot API: `getMe`, `getChat`, `getChatMember`.
-- `api/src/services/contentPlanService.ts` — каналы, посты, валидация, метаданные.
-- `api/src/services/contentPlanUtils.ts` — нормализация ссылки на канал.
+- `api/src/services/telegramBotClient.ts` — Bot API: `getMe`, `getChat`, `getChatMember`, `sendMessage`.
+- `api/src/services/contentPlanPublisher.ts` — отправка, статусы, ошибки, ручная публикация.
+- `api/src/services/contentPlanScheduler.ts` — автопубликация.
+- `api/src/services/contentPlanService.ts` — каналы, посты, валидация.
+- `api/src/services/contentPlanUtils.ts` — нормализация ссылки и markdown → HTML.
 - `api/src/routes/contentPlan.ts`, подключение — `api/src/app.ts`.
 - Модели — `api/src/models/ContentPlanChannel.ts`, `ContentPlanPost.ts`.
 - Страница — `src/pages/ContentPlanPage.tsx`, `src/pages/content-plan.css`.
-- Markdown — `src/utils/contentPlanMarkdown.ts`.
+- Markdown предпросмотра — `src/utils/contentPlanMarkdown.ts`.
 - Меню и маршрут — `src/App.tsx`; переключатель — `src/components/AdminFeatureFlags.tsx`.
 
-## Ограничения этапа 2
+## Ограничения этапа 3
 
-- Отправки в Telegram и настоящей автопубликации нет; карточка автопубликации только показывает состояние.
 - Поддерживается только Telegram; ВК — следующий этап.
+- Картинок и вложений нет.
 - Идеи ИИ в разделе не используются.
 - Лимитов на количество постов нет по решению продукта.

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireUser } from '../middleware/auth.js';
 import { isFeatureEnabledFor } from '../services/featureFlags.js';
 import { connectTelegramChannel, createPost, deleteChannel, deletePost, getPlanMeta, listChannels, updatePost } from '../services/contentPlanService.js';
+import { publishNow } from '../services/contentPlanPublisher.js';
 
 /**
  * Контент-план: календарь публикаций. Этап 1 — подключение Telegram-каналов
@@ -78,6 +79,14 @@ contentPlanRouter.delete('/posts/:id', async (req, res, next) => {
   try {
     await deletePost(req.user!.id, req.params.id);
     res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.post('/posts/:id/publish', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await publishNow(req.user!.id, req.params.id) });
   } catch (error) {
     next(error);
   }

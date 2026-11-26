@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DomainError } from '../errors/domainError.js';
-import { normalizeTelegramChannelRef } from './contentPlanUtils.js';
+import { markdownToTelegramHtml, normalizeTelegramChannelRef } from './contentPlanUtils.js';
 
 test('normalizeTelegramChannelRef принимает @username и ссылки', () => {
   assert.equal(normalizeTelegramChannelRef('@money_planner'), '@money_planner');
@@ -21,4 +21,11 @@ test('normalizeTelegramChannelRef отклоняет пустую строку �
 
 test('normalizeTelegramChannelRef отклоняет мусор', () => {
   assert.throws(() => normalizeTelegramChannelRef('ab'), (error) => error instanceof DomainError && error.code === 'TELEGRAM_CHANNEL_REF_INVALID');
+});
+
+
+test('markdownToTelegramHtml экранирует HTML и форматирует текст', () => {
+  assert.equal(markdownToTelegramHtml('**жирный** и <b>'), '<b>жирный</b> и &lt;b&gt;');
+  assert.equal(markdownToTelegramHtml('[ссылка](https://example.com)'), '<a href="https://example.com">ссылка</a>');
+  assert.equal(markdownToTelegramHtml('- один\n> цитата'), '• один\n<blockquote>цитата</blockquote>');
 });

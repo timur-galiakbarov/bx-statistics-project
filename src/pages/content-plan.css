@@ -950,3 +950,37 @@
     justify-content: flex-end;
   }
 }
+
+.cp-auto-row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cp-auto-row .cp-editor-note {
+  flex: 1;
+  margin: 0;
+}
+
+.cp-publish-now {
+  background: none;
+  border: 0;
+  color: #21815f;
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 0;
+  white-space: nowrap;
+}
+
+.cp-publish-now:hover {
+  text-decoration: underline;
+}
+
+.cp-publish-now:disabled {
+  color: #a9b3ac;
+  cursor: default;
+  text-decoration: none;
+}

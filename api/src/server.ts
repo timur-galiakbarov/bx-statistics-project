@@ -4,6 +4,7 @@ import { connectDatabase } from './db/database.js';
 import { backfillPaymentPaidAt, backfillTelegramSnapshotSources, migrateTelegramPeerAccounts } from './db/migrations.js';
 import { seedDevelopmentData } from './db/seed.js';
 import { connectRedis } from './services/redis.js';
+import { startContentPlanScheduler } from './services/contentPlanScheduler.js';
 import { startPushReminderScheduler } from './services/pushReminders.js';
 import { startSnapshotScheduler } from './services/snapshotService.js';
 import { startWeeklyReportScheduler } from './services/vkReports.js';
@@ -31,6 +32,7 @@ async function bootstrap() {
   startSnapshotScheduler();
   startPushReminderScheduler();
   startWeeklyReportScheduler();
+  startContentPlanScheduler();
 }
 
 bootstrap().catch((error) => {

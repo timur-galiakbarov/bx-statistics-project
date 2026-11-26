@@ -25,11 +25,13 @@ type PlanPost = {
   scheduledAt: string | null;
   timeZone: string;
   autoPublish: boolean;
+  externalUrl: string;
+  error: string;
 };
 
 type TelegramBot = { configured: boolean; username: string; url: string; name: string; error: string };
 type Meta = { channels: PlanChannel[]; posts: PlanPost[]; telegramBot: TelegramBot };
-type EditorState = { postId: string | null; channelId: string; date: string; time: string; text: string };
+type EditorState = { postId: string | null; channelId: string; date: string; time: string; text: string; failure: string };
 
 const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 const DOW = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -137,6 +139,18 @@ export function ContentPlanPage() {
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), []);
 
+  useEffect(() => {
+    const refresh = () => {
+      apiGet<Meta>('/api/content-plan').then(setMeta).catch(() => undefined);
+    };
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+    };
+  }, []);
+
   const showToast = (message: string) => {
     setToast(message);
     window.clearTimeout(toastTimer.current);
@@ -159,7 +173,7 @@ export function ContentPlanPage() {
       : meta.channels[0].id;
     const slot = dateKey && dateKey !== todayKey ? { date: dateKey, time: '10:00' } : nextSlot();
     if (dateKey && dateKey !== todayKey) setMonth(startOfMonth(new Date(dateKey + 'T00:00:00')));
-    setEditor({ postId: null, channelId, date: slot.date, time: slot.time, text: '' });
+    setEditor({ postId: null, channelId, date: slot.date, time: slot.time, text: '', failure: '' });
     setEditorTab('text');
     setEditorError('');
   };
@@ -180,7 +194,8 @@ export function ContentPlanPage() {
       channelId: post.channelId,
       date: localDate(post.scheduledAt),
       time: localTime(post.scheduledAt),
-      text: post.text
+      text: post.text,
+      failure: post.error || ''
     });
     setEditorTab('text');
     setEditorError('');
@@ -222,6 +237,7 @@ export function ContentPlanPage() {
 
     setSaving(true);
     setEditorError('');
+    setEditor((current) => current ? { ...current, failure: '' } : current);
     try {
       const payload = {
         channelId: editor.channelId,
@@ -247,6 +263,55 @@ export function ContentPlanPage() {
       showToast(status === 'draft' ? 'Черновик сохранён' : 'Пост запланирован');
     } catch (reason) {
       setEditorError(reason instanceof Error ? reason.message : 'Не удалось сохранить пост.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const publishNowAction = async () => {
+    if (!editor || !meta || saving) return;
+    const channel = meta.channels.find((item) => item.id === editor.channelId);
+    const text = editor.text.trim();
+    if (!channel) {
+      setEditorError('Выберите подключённый канал.');
+      return;
+    }
+    if (!text) {
+      setEditorError('Добавьте текст поста.');
+      return;
+    }
+    if (text.length > limit) {
+      setEditorError(`Текст длиннее лимита ${limit.toLocaleString('ru-RU')} символов.`);
+      return;
+    }
+
+    setSaving(true);
+    setEditorError('');
+    setEditor((current) => current ? { ...current, failure: '' } : current);
+    let postId = editor.postId;
+    try {
+      if (!postId) {
+        const created = await apiPost<PlanPost>('/api/content-plan/posts', {
+          channelId: editor.channelId,
+          text: editor.text,
+          status: 'draft',
+          scheduledAt: null,
+          timeZone
+        });
+        postId = created.id;
+        setMeta((current) => current ? { ...current, posts: [...current.posts, created] } : current);
+        setEditor((current) => current ? { ...current, postId: created.id } : current);
+      }
+      const post = await apiPost<PlanPost>(`/api/content-plan/posts/${postId}/publish`);
+      setMeta((current) => current ? {
+        ...current,
+        posts: current.posts.map((item) => item.id === post.id ? post : item)
+      } : current);
+      setEditor(null);
+      setEditorTab('text');
+      showToast('Опубликовано в Telegram');
+    } catch (reason) {
+      setEditorError(reason instanceof Error ? reason.message : 'Не удалось опубликовать пост.');
     } finally {
       setSaving(false);
     }
@@ -364,7 +429,7 @@ export function ContentPlanPage() {
         <div>
           <div className="cp-eyebrow"><CalendarClock size={14} /> Контент-план</div>
           <h2>План публикаций</h2>
-          <p>Календарь и автопубликация. Время — в вашем часовом поясе: {timeZone}. Отправка постов — следующий этап.</p>
+          <p>Календарь и автопубликация. Время — в вашем часовом поясе: {timeZone}.</p>
           <div className="cp-stats">
             <span><i className="cp-dot blue" /><b>{scheduled.length}</b> в плане</span>
             <span><i className="cp-dot amber" /><b>{drafts.length}</b> черновиков</span>
@@ -471,7 +536,7 @@ export function ContentPlanPage() {
               <h3>Автопубликация</h3>
               <span className="cp-on"><Check size={12} /> Включена</span>
             </div>
-            <p className="cp-auto-text">Расписание сохраняется. Отправка постов — следующий этап.</p>
+            <p className="cp-auto-text">Посты выходят по расписанию в вашем часовом поясе.</p>
             {nextPost ? (
               <div className="cp-next">
                 <span>{nextPost.scheduledAt ? formatDateTime(nextPost.scheduledAt) : 'Без даты'}</span>
@@ -520,6 +585,7 @@ export function ContentPlanPage() {
               <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={() => { if (!saving) setEditor(null); }}><X size={16} /></button>
             </div>
             <div className="cp-editor-body">
+              {editor.failure && <div className="cp-error">Прошлая публикация не удалась: {editor.failure}</div>}
               <label className="cp-field">
                 <span>Канал</span>
                 <select value={editor.channelId} onChange={(event) => setEditor({ ...editor, channelId: event.target.value })}>
@@ -538,7 +604,10 @@ export function ContentPlanPage() {
                   <input type="time" value={editor.time} onChange={(event) => setEditor({ ...editor, time: event.target.value })} />
                 </label>
               </div>
-              <div className="cp-editor-note"><Check size={13} /> Автопубликация включена · отправка на следующем этапе · {timeZone}</div>
+              <div className="cp-auto-row">
+                <div className="cp-editor-note"><Check size={13} /> Автопубликация включена · время: {timeZone}</div>
+                <button className="cp-publish-now" type="button" disabled={saving || !editor.text.trim()} onClick={() => void publishNowAction()}>Опубликовать сейчас</button>
+              </div>
               <div className="cp-editor-tabs">
                 <button className={editorTab === 'text' ? 'active' : ''} type="button" onClick={() => setEditorTab('text')}>Текст</button>
                 <button className={editorTab === 'preview' ? 'active' : ''} type="button" onClick={() => setEditorTab('preview')}>Предпросмотр</button>

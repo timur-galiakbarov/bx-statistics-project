@@ -33,6 +33,8 @@ export const env = {
   telegramSession: process.env.TELEGRAM_SESSION ?? '',
   // Токен бота из BotFather: публикация в каналы из контент-плана. Пусто — подключение каналов выключено.
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN?.trim() ?? '',
+  // Планировщик автопубликации контент-плана; выключить можно CONTENT_PLAN_SCHEDULER_ENABLED=0.
+  contentPlanSchedulerEnabled: process.env.CONTENT_PLAN_SCHEDULER_ENABLED !== '0',
   telegramProxyHost: process.env.TELEGRAM_PROXY_HOST?.trim() ?? '',
   telegramProxyPort: Number(process.env.TELEGRAM_PROXY_PORT ?? 0),
   telegramProxyUsername: process.env.TELEGRAM_PROXY_USERNAME ?? '',

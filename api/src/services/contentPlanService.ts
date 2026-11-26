@@ -31,6 +31,7 @@ export type ContentPlanPostDto = {
   scheduledAt: string | null;
   timeZone: string;
   autoPublish: boolean;
+  externalUrl: string;
   error: string;
 };
 
@@ -52,7 +53,7 @@ export type ContentPlanChannelDto = {
   error: string;
 };
 
-function toPostDto(doc: any): ContentPlanPostDto {
+export function toPostDto(doc: any): ContentPlanPostDto {
   return {
     id: String(doc._id),
     channelId: String(doc.channelId),
@@ -63,6 +64,7 @@ function toPostDto(doc: any): ContentPlanPostDto {
     scheduledAt: doc.scheduledAt ? new Date(doc.scheduledAt).toISOString() : null,
     timeZone: doc.timeZone ?? 'UTC',
     autoPublish: Boolean(doc.autoPublish),
+    externalUrl: doc.externalUrl ?? '',
     error: doc.error ?? ''
   };
 }

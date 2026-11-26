@@ -14,6 +14,7 @@ type BotApiResponse<T> = {
 export type TelegramBotInfo = { id: number; username: string; name: string; url: string };
 export type TelegramBotStatus = { configured: boolean; username: string; url: string; name: string; error: string };
 export type ResolvedTelegramChannel = { externalId: string; title: string; handle: string; canPost: true };
+export type SentTelegramMessage = { messageId: number; url: string };
 
 class BotApiError extends Error {
   constructor(message: string, public readonly code?: number) {
@@ -155,4 +156,38 @@ export async function resolveTelegramChannel(input: unknown): Promise<ResolvedTe
     handle: chat.username ? '@' + chat.username : '',
     canPost: true
   };
+}
+
+
+/** Отправляет пост в канал. Текст уже должен быть HTML для parse_mode=HTML. */
+export async function sendTelegramMessage(externalId: string, handle: string, html: string): Promise<SentTelegramMessage> {
+  try {
+    const result = await botCall<{ message_id: number }>('sendMessage', {
+      chat_id: externalId,
+      text: html,
+      parse_mode: 'HTML'
+    });
+    const url = handle.startsWith('@') ? `https://t.me/${handle.slice(1)}/${result.message_id}` : '';
+    return { messageId: result.message_id, url };
+  } catch (error) {
+    if (error instanceof DomainError) throw error;
+    if (error instanceof BotApiError) {
+      if (error.code === 400) {
+        throw new DomainError('Telegram отклонил текст поста. Проверьте разметку и длину.', {
+          status: 422,
+          code: 'TELEGRAM_MESSAGE_INVALID'
+        });
+      }
+      if (error.code === 403) {
+        throw new DomainError('Бот больше не администратор канала или канал недоступен.', {
+          status: 422,
+          code: 'TELEGRAM_BOT_NOT_ADMIN'
+        });
+      }
+    }
+    throw new DomainError('Telegram не подтвердил отправку. Проверьте канал перед повтором.', {
+      status: 502,
+      code: 'TELEGRAM_SEND_UNKNOWN'
+    });
+  }
 }

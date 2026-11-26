@@ -1,7 +1,13 @@
+import { request as httpsRequest } from 'node:https';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 import { DomainError } from '../errors/domainError.js';
 import { normalizeTelegramChannelRef } from './contentPlanUtils.js';
+import { getTelegramProxy } from './telegramProxy.js';
 
 const BOT_INFO_TTL_MS = 10 * 60_000;
+
+type TelegramHttpResponse = { status: number; body: string };
+type SocksProxyConfig = { ip: string; port: number; socksType: 4 | 5; username?: string; password?: string };
 
 type BotApiResponse<T> = {
   ok: boolean;
@@ -23,27 +29,82 @@ class BotApiError extends Error {
 
 const botInfoCache = new Map<string, { value: TelegramBotInfo; expiresAt: number }>();
 
+/**
+ * Bot API идёт через тот же SOCKS5, что и MTProto: на проде прямой доступ
+ * к api.telegram.org закрыт, и обычный fetch падал с 502.
+ */
+function botApiAgent(): SocksProxyAgent | undefined {
+  const proxy = getTelegramProxy() as SocksProxyConfig | undefined;
+  if (!proxy) return undefined;
+  const protocol = proxy.socksType === 4 ? 'socks4a' : 'socks5h';
+  const auth = proxy.username
+    ? `${encodeURIComponent(proxy.username)}:${encodeURIComponent(proxy.password ?? '')}@`
+    : '';
+  return new SocksProxyAgent(`${protocol}://${auth}${proxy.ip}:${proxy.port}`);
+}
+
+function telegramRequest(url: string, body: string, agent: SocksProxyAgent | undefined): Promise<TelegramHttpResponse> {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const req = httpsRequest({
+      hostname: target.hostname,
+      port: target.port || 443,
+      path: target.pathname + target.search,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body)
+      },
+      agent,
+      timeout: 10_000
+    }, (response) => {
+      const chunks: Buffer[] = [];
+      response.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+      response.on('end', () => resolve({
+        status: response.statusCode ?? 0,
+        body: Buffer.concat(chunks).toString('utf8')
+      }));
+    });
+    req.on('timeout', () => req.destroy(new Error('Telegram Bot API timeout')));
+    req.on('error', reject);
+    req.end(body);
+  });
+}
+
 async function botCall<T>(token: string, method: string, payload: Record<string, unknown>): Promise<T> {
   if (!token) {
     throw new DomainError('Токен Telegram-бота не задан.', { status: 503, code: 'TELEGRAM_BOT_NOT_CONFIGURED' });
   }
 
-  let response: Response;
+  let result: TelegramHttpResponse;
+  let agent: SocksProxyAgent | undefined;
   try {
-    response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(10_000)
+    agent = botApiAgent();
+  } catch (error) {
+    console.error('Telegram Bot API proxy config failed', error instanceof Error ? error.message : error);
+    throw new DomainError('Прокси Telegram настроен неверно. Проверьте TELEGRAM_PROXY_*.', {
+      status: 503,
+      code: 'TELEGRAM_PROXY_INVALID'
     });
-  } catch {
-    throw new DomainError('Telegram сейчас недоступен. Повторите позже.', {
+  }
+  try {
+    result = await telegramRequest(`https://api.telegram.org/bot${token}/${method}`, JSON.stringify(payload), agent);
+  } catch (error) {
+    // URL содержит токен, поэтому в лог пишем только причину, без адреса.
+    console.error('Telegram Bot API request failed', error instanceof Error ? error.message : error);
+    if (error instanceof DomainError) throw error;
+    throw new DomainError('Telegram недоступен с сервера. Проверьте SOCKS-прокси (TELEGRAM_PROXY_*).', {
       status: 502,
       code: 'TELEGRAM_BOT_UNAVAILABLE'
     });
   }
 
-  const data = (await response.json().catch(() => null)) as BotApiResponse<T> | null;
+  let data: BotApiResponse<T> | null = null;
+  try {
+    data = JSON.parse(result.body) as BotApiResponse<T>;
+  } catch {
+    data = null;
+  }
   if (data?.error_code === 401) {
     botInfoCache.delete(token);
     throw new DomainError('Токен Telegram-бота недействителен. Замените его в настройках контент-плана.', {
@@ -57,8 +118,8 @@ async function botCall<T>(token: string, method: string, payload: Record<string,
       code: 'TELEGRAM_RATE_LIMITED'
     });
   }
-  if (!response.ok || !data?.ok) {
-    throw new BotApiError(data?.description || `Telegram API ${response.status}`, data?.error_code);
+  if (result.status < 200 || result.status >= 300 || !data?.ok) {
+    throw new BotApiError(data?.description || `Telegram API ${result.status}`, data?.error_code);
   }
   return data.result as T;
 }

@@ -29,6 +29,7 @@
     "morgan": "^1.10.0",
     "nanoid": "^5.0.7",
     "redis": "^4.7.1",
+    "socks-proxy-agent": "^10.1.0",
     "telegram": "^2.26.22",
     "web-push": "^3.6.7"
   },

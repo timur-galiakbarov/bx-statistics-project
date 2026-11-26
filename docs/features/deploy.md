@@ -19,7 +19,7 @@ Workflow `.github/workflows/deploy.yml`, окружение `production`:
 
 Сейчас проект лежит в `/home/socstat.ru` (`DEPLOY_PATH`), контейнеры называются `socstatru-*`.
 
-Напрямую Telegram с сервера недоступен, поэтому API ходит в него через SOCKS5 (`TELEGRAM_PROXY_HOST`/`TELEGRAM_PROXY_PORT` в `api/.env`). Это не контейнер, а systemd-сервис `socstat-socks.service` на хосте: SSH-туннель `ssh -N -D 172.18.0.1:1080` до внешнего сервера. При его перезапуске открытые соединения gramjs умирают молча, от зависания очереди защищает таймаут задач — см. [snapshots.md](snapshots.md#зависшие-запросы).
+Напрямую Telegram с сервера недоступен, поэтому API ходит в него через SOCKS5 (`TELEGRAM_PROXY_HOST`/`TELEGRAM_PROXY_PORT` в `api/.env`). Это касается и MTProto, и Bot API контент-плана. Это не контейнер, а systemd-сервис `socstat-socks.service` на хосте: SSH-туннель `ssh -N -D 172.18.0.1:1080` до внешнего сервера. При его перезапуске открытые соединения gramjs умирают молча, от зависания очереди защищает таймаут задач — см. [snapshots.md](snapshots.md#зависшие-запросы).
 
 ## Кэш сборок и место на диске
 

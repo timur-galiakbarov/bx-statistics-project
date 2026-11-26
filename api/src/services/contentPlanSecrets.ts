@@ -8,7 +8,7 @@ const IV_BYTES = 12;
 function keyFromBase64(value: string) {
   const key = Buffer.from(value, 'base64');
   if (key.length !== KEY_BYTES) {
-    throw new DomainError('Ключ шифрования токенов бота настроен неверно.', {
+    throw new DomainError('Ключ шифрования секретов контент-плана настроен неверно.', {
       status: 503,
       code: 'CONTENT_PLAN_BOT_KEY_INVALID'
     });
@@ -18,7 +18,7 @@ function keyFromBase64(value: string) {
 
 function requireKey() {
   if (!env.contentPlanBotTokenKey) {
-    throw new DomainError('Шифрование токенов бота не настроено. Добавьте CONTENT_PLAN_BOT_TOKEN_KEY в api/.env.', {
+    throw new DomainError('Шифрование секретов контент-плана не настроено. Добавьте CONTENT_PLAN_BOT_TOKEN_KEY в api/.env.', {
       status: 503,
       code: 'CONTENT_PLAN_BOT_KEY_MISSING'
     });
@@ -43,14 +43,14 @@ export function decryptBotTokenWithKey(payload: string, keyBase64: string) {
   const key = keyFromBase64(keyBase64);
   const [version, iv, tag, data] = String(payload || '').split('.');
   if (version !== 'v1' || !iv || !tag || !data) {
-    throw new DomainError('Токен бота не читается. Замените его.', { status: 409, code: 'CONTENT_PLAN_BOT_TOKEN_UNREADABLE' });
+    throw new DomainError('Секрет не читается. Замените токен или ключ доступа.', { status: 409, code: 'CONTENT_PLAN_BOT_TOKEN_UNREADABLE' });
   }
   try {
     const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'base64'));
     decipher.setAuthTag(Buffer.from(tag, 'base64'));
     return Buffer.concat([decipher.update(Buffer.from(data, 'base64')), decipher.final()]).toString('utf8');
   } catch {
-    throw new DomainError('Токен бота не читается. Замените его.', { status: 409, code: 'CONTENT_PLAN_BOT_TOKEN_UNREADABLE' });
+    throw new DomainError('Секрет не читается. Замените токен или ключ доступа.', { status: 409, code: 'CONTENT_PLAN_BOT_TOKEN_UNREADABLE' });
   }
 }
 
@@ -60,4 +60,14 @@ export function encryptBotToken(token: string) {
 
 export function decryptBotToken(payload: string) {
   return decryptBotTokenWithKey(payload, Buffer.from(requireKey()).toString('base64'));
+}
+
+
+/** Общий секрет контент-плана: сейчас это токены Telegram-ботов и ключи сообществ ВК. */
+export function encryptContentPlanSecret(value: string) {
+  return encryptBotToken(value);
+}
+
+export function decryptContentPlanSecret(value: string) {
+  return decryptBotToken(value);
 }

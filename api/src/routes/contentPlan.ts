@@ -61,7 +61,7 @@ contentPlanRouter.get('/vk/groups', async (req, res, next) => {
 
 contentPlanRouter.post('/channels/vk', async (req, res, next) => {
   try {
-    res.json({ success: true, data: await connectVkGroup(req.user!.id, req.body?.groupId) });
+    res.json({ success: true, data: await connectVkGroup(req.user!.id, req.body?.groupId, req.body?.token) });
   } catch (error) {
     next(error);
   }

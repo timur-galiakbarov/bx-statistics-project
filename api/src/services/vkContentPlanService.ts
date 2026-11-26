@@ -1,10 +1,8 @@
 import { DomainError } from '../errors/domainError.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { ContentPlanChannelModel } from '../models/ContentPlanChannel.js';
-import { VkTokenModel } from '../models/VkToken.js';
+import { decryptContentPlanSecret, encryptContentPlanSecret } from './contentPlanSecrets.js';
 import { VkApiError, vkApiRequest } from './vkClient.js';
-
-const WALL_PERMISSION_BIT = 8192;
 
 export type VkManagedGroup = {
   id: number;
@@ -14,12 +12,12 @@ export type VkManagedGroup = {
   photo: string;
 };
 
-export type VkGroupsResult = { items: VkManagedGroup[]; wallScope: boolean };
+export type VkGroupsResult = { items: VkManagedGroup[] };
 
 async function requireVkToken(userId: string) {
   const token = await getVkAccessToken(userId);
   if (!token) {
-    throw new DomainError('Подключите ВК в профиле, чтобы публиковать в группы.', {
+    throw new DomainError('Подключите ВК в профиле, чтобы выбрать сообщество.', {
       status: 409,
       code: 'VK_TOKEN_REQUIRED'
     });
@@ -27,38 +25,9 @@ async function requireVkToken(userId: string) {
   return token;
 }
 
-export async function hasVkWallScope(userId: string): Promise<boolean> {
-  const token = await requireVkToken(userId);
-  const stored = await VkTokenModel.findOne({ userId }).sort({ updatedAt: -1 }).lean<{ scopes?: string[] }>();
-  if (stored?.scopes?.includes('wall')) return true;
-  try {
-    const mask = await vkApiRequest<number>('account.getAppPermissions', token, {});
-    return Boolean(mask & WALL_PERMISSION_BIT);
-  } catch (error) {
-    if (error instanceof VkApiError) {
-      throw new DomainError('Не удалось проверить права ВК. Переподключите ВК и повторите.', {
-        status: 502,
-        code: 'VK_PERMISSIONS_UNAVAILABLE'
-      });
-    }
-    throw error;
-  }
-}
-
-async function requireVkPublishingToken(userId: string) {
-  const token = await requireVkToken(userId);
-  if (!(await hasVkWallScope(userId))) {
-    throw new DomainError('Чтобы публиковать в ВК, переподключите ВК и разрешите публикацию на стене.', {
-      status: 409,
-      code: 'VK_WALL_SCOPE_REQUIRED'
-    });
-  }
-  return token;
-}
-
 async function managedGroups(token: string) {
   const data = await vkApiRequest<{ items: Array<Record<string, unknown> & { id: number }> }>('groups.get', token, {
-    filter: 'moder',
+    filter: 'admin',
     extended: 1,
     fields: 'members_count,screen_name,photo_200',
     count: 1000
@@ -66,44 +35,75 @@ async function managedGroups(token: string) {
   return data.items;
 }
 
-export async function listVkGroups(userId: string): Promise<VkGroupsResult> {
-  const token = await requireVkToken(userId);
-  const [items, wallScope] = await Promise.all([managedGroups(token), hasVkWallScope(userId)]);
+function mapGroup(group: Record<string, unknown> & { id: number }): VkManagedGroup {
   return {
-    wallScope,
-    items: items.map((group) => ({
-      id: group.id,
-      name: String(group.name ?? ''),
-      screenName: String(group.screen_name ?? ''),
-      membersCount: Number(group.members_count ?? 0),
-      photo: String(group.photo_200 ?? '')
-    }))
+    id: group.id,
+    name: String(group.name ?? ''),
+    screenName: String(group.screen_name ?? ''),
+    membersCount: Number(group.members_count ?? 0),
+    photo: String(group.photo_200 ?? '')
   };
 }
 
-export async function connectVkGroup(userId: string, groupId: unknown) {
+export async function listVkGroups(userId: string): Promise<VkGroupsResult> {
+  const token = await requireVkToken(userId);
+  const items = await managedGroups(token);
+  return { items: items.map(mapGroup) };
+}
+
+export async function connectVkGroup(userId: string, groupId: unknown, communityToken: unknown) {
   const id = Number(groupId);
   if (!Number.isInteger(id) || id <= 0) {
     throw new DomainError('Не удалось определить группу ВК.', { status: 400, code: 'VK_GROUP_INVALID' });
   }
-  const token = await requireVkPublishingToken(userId);
-  const groups = await managedGroups(token);
+  const token = typeof communityToken === 'string' ? communityToken.trim() : '';
+  if (token.length < 20) {
+    throw new DomainError('Вставьте ключ доступа сообщества ВК.', { status: 400, code: 'VK_COMMUNITY_TOKEN_REQUIRED' });
+  }
+
+  const oauthToken = await requireVkToken(userId);
+  const groups = await managedGroups(oauthToken);
   const group = groups.find((item) => Number(item.id) === id);
   if (!group) {
     throw new DomainError('Вы не администратор этой группы ВК.', { status: 422, code: 'VK_GROUP_NOT_ADMIN' });
   }
+
+  // Проверяем, что ключ вообще рабочий. Для некоторых типов токенов
+  // groups.getById закрыт — тогда проверим доступ при первой публикации.
+  let verified = true;
+  try {
+    const info = await vkApiRequest<any>('groups.getById', token, { group_id: id, fields: 'screen_name' });
+    const resolved = Array.isArray(info) ? info[0] : info?.groups?.[0] ?? info;
+    if (resolved && Number(resolved.id) !== id) {
+      throw new DomainError('Ключ принадлежит другому сообществу.', { status: 422, code: 'VK_COMMUNITY_TOKEN_INVALID' });
+    }
+  } catch (error) {
+    if (error instanceof DomainError) throw error;
+    if (error instanceof VkApiError && [27, 28, 1051].includes(error.vkCode ?? -1)) {
+      verified = false;
+    } else if (error instanceof VkApiError) {
+      throw new DomainError('Ключ не подошёл. Создайте ключ в настройках этого сообщества.', {
+        status: 422,
+        code: 'VK_COMMUNITY_TOKEN_INVALID'
+      });
+    } else {
+      throw error;
+    }
+  }
+
   const screenName = String(group.screen_name ?? '');
   const doc = await ContentPlanChannelModel.findOneAndUpdate(
     { userId, platform: 'vk', externalId: String(id) },
     {
       $set: {
         botId: null,
+        accessTokenEncrypted: encryptContentPlanSecret(token),
         title: String(group.name ?? 'Группа ВК'),
         handle: screenName ? 'vk.com/' + screenName : '',
         status: 'connected',
         canPost: true,
         lastCheckedAt: new Date(),
-        error: ''
+        error: verified ? '' : 'ВК не подтвердил ключ при подключении; проверим при публикации.'
       }
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -119,8 +119,18 @@ export async function connectVkGroup(userId: string, groupId: unknown) {
   };
 }
 
-export async function getVkTokenForChannel(channel: { userId: any }): Promise<string> {
-  return requireVkPublishingToken(String(channel.userId));
+export async function getVkTokenForChannel(channel: { _id?: any; userId: any }): Promise<string> {
+  const doc = channel._id
+    ? await ContentPlanChannelModel.findById(channel._id).select('+accessTokenEncrypted').lean<{ accessTokenEncrypted?: string }>()
+    : null;
+  const encrypted = doc?.accessTokenEncrypted;
+  if (!encrypted) {
+    throw new DomainError('Ключ доступа сообщества не сохранён. Подключите группу заново.', {
+      status: 409,
+      code: 'VK_COMMUNITY_TOKEN_REQUIRED'
+    });
+  }
+  return decryptContentPlanSecret(encrypted);
 }
 
 export async function sendVkPost(token: string, groupId: string, text: string) {
@@ -142,13 +152,22 @@ export async function sendVkPost(token: string, groupId: string, text: string) {
   } catch (error) {
     if (error instanceof VkApiError) {
       if (error.vkCode === 5) {
-        throw new DomainError('ВК не принял токен. Переподключите ВК.', { status: 401, code: 'VK_TOKEN_INVALID' });
+        throw new DomainError('Ключ доступа сообщества недействителен. Создайте новый ключ в настройках сообщества.', {
+          status: 401,
+          code: 'VK_TOKEN_INVALID'
+        });
+      }
+      if ([27, 28, 1051].includes(error.vkCode ?? -1)) {
+        throw new DomainError('ВК не принимает этот ключ для публикации. Создайте ключ в настройках сообщества с правом управления.', {
+          status: 422,
+          code: 'VK_COMMUNITY_TOKEN_INVALID'
+        });
       }
       if (error.vkCode === 6) {
         throw new DomainError('ВК ограничил частоту запросов. Повторите через минуту.', { status: 429, code: 'VK_RATE_LIMITED' });
       }
       if ([7, 15, 214, 219].includes(error.vkCode ?? -1)) {
-        throw new DomainError('Нет прав на публикацию в этой группе. Проверьте, что вы админ и стена открыта.', {
+        throw new DomainError('Нет прав на публикацию в этой группе. Проверьте, что стена открыта и ключ создан администратором.', {
           status: 422,
           code: 'VK_PERMISSION_DENIED'
         });

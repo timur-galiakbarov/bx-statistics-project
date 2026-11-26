@@ -1564,3 +1564,47 @@
   margin: 0 auto;
   max-width: 260px;
 }
+
+.cp-vk-modal {
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.cp-vk-back {
+  background: none;
+  border: 0;
+  color: #21815f;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0 0 9px;
+}
+
+.cp-vk-back:hover {
+  text-decoration: underline;
+}
+
+.cp-vk-selected {
+  align-items: center;
+  background: #f8faf9;
+  border: 1px solid #edf1ee;
+  border-radius: 8px;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 9px;
+}
+
+.cp-vk-selected .cp-vk-main {
+  flex: 1;
+}
+
+.cp-vk-selected a {
+  color: #21815f;
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.cp-vk-selected a:hover {
+  text-decoration: underline;
+}

@@ -31,7 +31,7 @@ type PlanPost = {
 
 type TelegramBot = { configured: boolean; username: string; url: string; name: string; status: 'connected' | 'needs_reauth' | 'error' | null; error: string };
 type VkGroup = { id: number; name: string; screenName: string; membersCount: number; photo: string };
-type VkGroupsData = { items: VkGroup[]; wallScope: boolean };
+type VkGroupsData = { items: VkGroup[] };
 type Meta = { channels: PlanChannel[]; posts: PlanPost[]; telegramBot: TelegramBot };
 type EditorState = { postId: string | null; channelId: string; date: string; time: string; text: string; failure: string };
 
@@ -119,9 +119,11 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
   const [vkOpen, setVkOpen] = useState(false);
   const [vkLoading, setVkLoading] = useState(false);
   const [vkGroups, setVkGroups] = useState<VkGroup[]>([]);
-  const [vkWallScope, setVkWallScope] = useState(true);
+  const [vkSelectedGroup, setVkSelectedGroup] = useState<VkGroup | null>(null);
+  const [vkToken, setVkToken] = useState('');
+  const [showVkToken, setShowVkToken] = useState(false);
   const [vkError, setVkError] = useState('');
-  const [vkConnecting, setVkConnecting] = useState(0);
+  const [vkConnecting, setVkConnecting] = useState(false);
   const [channelRef, setChannelRef] = useState('');
   const [connectError, setConnectError] = useState('');
   const [connecting, setConnecting] = useState(false);
@@ -456,11 +458,12 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
     setVkLoading(true);
     setVkError('');
     setVkGroups([]);
-    setVkWallScope(true);
+    setVkSelectedGroup(null);
+    setVkToken('');
+    setShowVkToken(false);
     try {
       const data = await apiGet<VkGroupsData>('/api/content-plan/vk/groups');
       setVkGroups(data.items);
-      setVkWallScope(data.wallScope);
     } catch (reason) {
       setVkError(reason instanceof Error ? reason.message : 'Не удалось загрузить группы ВК.');
     } finally {
@@ -468,22 +471,37 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
     }
   };
 
-  const connectVk = async (group: VkGroup) => {
-    if (!vkWallScope || vkConnecting) return;
-    setVkConnecting(group.id);
+  const closeVk = () => {
+    if (vkConnecting) return;
+    setVkOpen(false);
+    setVkSelectedGroup(null);
+    setVkToken('');
+    setShowVkToken(false);
+    setVkError('');
+  };
+
+  const connectVk = async () => {
+    if (!vkSelectedGroup || !vkToken.trim() || vkConnecting) return;
+    setVkConnecting(true);
     setVkError('');
     try {
-      const channel = await apiPost<PlanChannel>('/api/content-plan/channels/vk', { groupId: group.id });
+      const channel = await apiPost<PlanChannel>('/api/content-plan/channels/vk', {
+        groupId: vkSelectedGroup.id,
+        token: vkToken
+      });
       setMeta((current) => current ? {
         ...current,
         channels: [...current.channels.filter((item) => item.id !== channel.id), channel]
       } : current);
       setVkOpen(false);
+      setVkSelectedGroup(null);
+      setVkToken('');
+      setShowVkToken(false);
       showToast('Группа подключена: ' + channel.title);
     } catch (reason) {
       setVkError(reason instanceof Error ? reason.message : 'Не удалось подключить группу.');
     } finally {
-      setVkConnecting(0);
+      setVkConnecting(false);
     }
   };
 
@@ -894,34 +912,113 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
       )}
 
       {vkOpen && (
-        <div className="cp-modal-overlay" onClick={() => { if (!vkConnecting) setVkOpen(false); }}>
+        <div className="cp-modal-overlay" onClick={closeVk}>
           <div className="cp-modal cp-vk-modal" onClick={(event) => event.stopPropagation()}>
             <div className="cp-modal-head">
               <div className="cp-modal-heading">
                 <span className="cp-modal-icon"><Send size={19} /></span>
                 <div>
                   <h3>Группа ВКонтакте</h3>
-                  <p className="cp-modal-subtitle">Публиковать можно только в группы, где вы администратор.</p>
+                  <p className="cp-modal-subtitle">
+                    {vkSelectedGroup
+                      ? 'Осталось добавить ключ доступа сообщества.'
+                      : 'Выберите сообщество, где вы администратор.'}
+                  </p>
                 </div>
               </div>
-              <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={() => { if (!vkConnecting) setVkOpen(false); }}><X size={16} /></button>
+              <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={closeVk}><X size={16} /></button>
             </div>
-            {!vkLoading && !vkWallScope && (
-              <div className="cp-vk-warning">
-                <span>ВК не разрешил публикацию на стене. Переподключите ВК и подтвердите доступ.</span>
-                <a className="primary-button cp-vk-reauth" href="/api/auth/vk/publishing-start">Переподключить ВК</a>
-              </div>
-            )}
             {vkLoading ? (
               <p className="cp-muted">Загружаем группы…</p>
+            ) : vkSelectedGroup ? (
+              <>
+                <button
+                  className="cp-vk-back"
+                  type="button"
+                  disabled={vkConnecting}
+                  onClick={() => { setVkSelectedGroup(null); setVkToken(''); setShowVkToken(false); setVkError(''); }}
+                >
+                  ← К списку групп
+                </button>
+                <div className="cp-vk-selected">
+                  <span className="cp-vk-ava">VK</span>
+                  <div className="cp-vk-main">
+                    <strong>{vkSelectedGroup.name}</strong>
+                    <small>vk.com/{vkSelectedGroup.screenName || vkSelectedGroup.id} · {vkSelectedGroup.membersCount.toLocaleString('ru-RU')} участников</small>
+                  </div>
+                  <a
+                    href={`https://vk.com/${vkSelectedGroup.screenName || 'club' + vkSelectedGroup.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Открыть
+                  </a>
+                </div>
+                <div className="cp-connect-steps">
+                  <div className="cp-connect-step">
+                    <span>1</span>
+                    <p>В сообществе откройте <b>Управление → Дополнительно → Работа с API</b>.</p>
+                  </div>
+                  <div className="cp-connect-step">
+                    <span>2</span>
+                    <p>Создайте ключ доступа с правом «Управление сообществом» (и «Стена», если есть).</p>
+                  </div>
+                  <div className="cp-connect-step">
+                    <span>3</span>
+                    <p>Скопируйте ключ и вставьте его сюда.</p>
+                  </div>
+                </div>
+                <label className="cp-field">
+                  <span>Ключ доступа сообщества</span>
+                  <div className="cp-token-wrap">
+                    <input
+                      type={showVkToken ? 'text' : 'password'}
+                      value={vkToken}
+                      onChange={(event) => setVkToken(event.target.value)}
+                      placeholder="vk1.a…"
+                      autoComplete="off"
+                      spellCheck={false}
+                      onKeyDown={(event) => { if (event.key === 'Enter') void connectVk(); }}
+                    />
+                    <button
+                      className="cp-token-toggle"
+                      type="button"
+                      aria-label={showVkToken ? 'Скрыть ключ' : 'Показать ключ'}
+                      aria-pressed={showVkToken}
+                      title={showVkToken ? 'Скрыть ключ' : 'Показать ключ'}
+                      onClick={() => setShowVkToken((value) => !value)}
+                    >
+                      {showVkToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </label>
+                <p className="cp-bot-note">
+                  Ключ хранится зашифрованным и не показывается после сохранения. Отозвать его можно в настройках сообщества.
+                  Фото через такой ключ ВК не принимает — только текст.
+                </p>
+                {vkError && <div className="cp-error">{vkError}</div>}
+                <div className="cp-modal-actions">
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    disabled={vkConnecting}
+                    onClick={() => { setVkSelectedGroup(null); setVkToken(''); setShowVkToken(false); setVkError(''); }}
+                  >
+                    Назад
+                  </button>
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={vkConnecting || !vkToken.trim()}
+                    onClick={() => void connectVk()}
+                  >
+                    {vkConnecting ? 'Подключаем…' : 'Подключить'}
+                  </button>
+                </div>
+              </>
             ) : (
               <>
-                {vkError && (
-                  <div className="cp-error">
-                    {vkError}
-                    <a className="cp-vk-error-link" href="/api/auth/vk/publishing-start">Переподключить ВК</a>
-                  </div>
-                )}
+                {vkError && <div className="cp-error">{vkError}</div>}
                 {vkGroups.length ? (
                   <div className="cp-vk-list">
                     {vkGroups.map((group) => (
@@ -934,10 +1031,14 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
                         <button
                           className="secondary-button cp-vk-connect"
                           type="button"
-                          disabled={!vkWallScope || Boolean(vkConnecting)}
-                          onClick={() => void connectVk(group)}
+                          onClick={() => {
+                            setVkSelectedGroup(group);
+                            setVkToken('');
+                            setShowVkToken(false);
+                            setVkError('');
+                          }}
                         >
-                          {vkConnecting === group.id ? 'Подключаем…' : 'Подключить'}
+                          Подключить
                         </button>
                       </div>
                     ))}
@@ -945,11 +1046,11 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
                 ) : (
                   !vkError && <p className="cp-muted">Вы не администратор ни одной группы ВК.</p>
                 )}
+                <div className="cp-modal-actions">
+                  <button className="secondary-button" type="button" onClick={closeVk}>Закрыть</button>
+                </div>
               </>
             )}
-            <div className="cp-modal-actions">
-              <button className="secondary-button" type="button" disabled={Boolean(vkConnecting)} onClick={() => setVkOpen(false)}>Закрыть</button>
-            </div>
           </div>
         </div>
       )}

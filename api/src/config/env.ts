@@ -31,7 +31,7 @@ export const env = {
   telegramApiId: Number(process.env.TELEGRAM_API_ID ?? 0),
   telegramApiHash: process.env.TELEGRAM_API_HASH ?? '',
   telegramSession: process.env.TELEGRAM_SESSION ?? '',
-  // Ключ шифрования токенов пользовательских ботов контент-плана (32 байта в base64).
+  // Ключ шифрования токенов ботов и ключей сообществ ВК контент-плана (32 байта в base64).
   contentPlanBotTokenKey: process.env.CONTENT_PLAN_BOT_TOKEN_KEY?.trim() ?? '',
   // Планировщик автопубликации контент-плана; выключить можно CONTENT_PLAN_SCHEDULER_ENABLED=0.
   contentPlanSchedulerEnabled: process.env.CONTENT_PLAN_SCHEDULER_ENABLED !== '0',

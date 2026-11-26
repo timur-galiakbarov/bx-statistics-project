@@ -127,7 +127,7 @@ cp api/.env.example api/.env
 - `TELEGRAM_API_ID` - ID MTProto-приложения из `my.telegram.org`
 - `TELEGRAM_API_HASH` - hash MTProto-приложения (только на сервере)
 - `TELEGRAM_SESSION` - строковая пользовательская сессия Telegram (только на сервере)
-- `CONTENT_PLAN_BOT_TOKEN_KEY` - ключ шифрования токенов пользовательских Telegram-ботов контент-плана (32 байта в base64); без него подключение ботов выключено
+- `CONTENT_PLAN_BOT_TOKEN_KEY` - ключ шифрования токенов Telegram-ботов и ключей сообществ ВК контент-плана (32 байта в base64); без него подключение ботов и ВК выключено
 - `CONTENT_PLAN_SCHEDULER_ENABLED` - планировщик автопубликации контент-плана; `0` выключает
 - `TELEGRAM_PROXY_HOST`, `TELEGRAM_PROXY_PORT`, `TELEGRAM_PROXY_USERNAME`, `TELEGRAM_PROXY_PASSWORD` - необязательный SOCKS-прокси для MTProto и Bot API контент-плана; по умолчанию используется SOCKS5, для SOCKS4 задайте `TELEGRAM_PROXY_TYPE=4`
 - `TELEGRAM_CACHE_TTL_MS` - TTL кэша Telegram, по умолчанию `300000`

@@ -36,7 +36,7 @@ async function markTelegramChannelError(channelId: any, error: DomainError) {
 }
 
 async function markVkChannelError(channelId: any, error: DomainError) {
-  if (['VK_TOKEN_INVALID', 'VK_WALL_SCOPE_REQUIRED', 'VK_TOKEN_REQUIRED'].includes(error.code)) {
+  if (['VK_TOKEN_INVALID', 'VK_COMMUNITY_TOKEN_REQUIRED', 'VK_COMMUNITY_TOKEN_INVALID'].includes(error.code)) {
     await ContentPlanChannelModel.updateOne(
       { _id: channelId },
       { $set: { status: 'needs_reauth', canPost: false, error: error.message, lastCheckedAt: new Date() } }

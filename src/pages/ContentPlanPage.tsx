@@ -1,4 +1,4 @@
-import { Bot, CalendarClock, Check, Plus, Send, ShieldCheck, Trash2, X } from 'lucide-react';
+import { Bot, CalendarClock, Check, Eye, EyeOff, Plus, Send, ShieldCheck, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
 import { renderContentPlanMarkdown } from '../utils/contentPlanMarkdown';
@@ -113,6 +113,7 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
   const [connectOpen, setConnectOpen] = useState(false);
   const [botOpen, setBotOpen] = useState(false);
   const [botToken, setBotToken] = useState('');
+  const [showBotToken, setShowBotToken] = useState(false);
   const [botError, setBotError] = useState('');
   const [botSaving, setBotSaving] = useState(false);
   const [vkOpen, setVkOpen] = useState(false);
@@ -385,6 +386,14 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
     setEditor({ ...editor, text: textarea.value });
   };
 
+  const closeBot = () => {
+    if (botSaving) return;
+    setBotOpen(false);
+    setBotToken('');
+    setShowBotToken(false);
+    setBotError('');
+  };
+
   const saveBot = async () => {
     if (!botToken.trim() || botSaving) return;
     setBotSaving(true);
@@ -394,6 +403,7 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
       setMeta((current) => current ? { ...current, telegramBot: bot } : current);
       setBotOpen(false);
       setBotToken('');
+      setShowBotToken(false);
       showToast('Бот подключён: @' + bot.username);
       refreshMeta();
     } catch (reason) {
@@ -412,6 +422,8 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
       await apiDelete('/api/content-plan/bot/telegram');
       setMeta((current) => current ? { ...current, telegramBot: { configured: false, username: '', url: '', name: '', status: null, error: '' } } : current);
       setBotOpen(false);
+      setBotToken('');
+      setShowBotToken(false);
       showToast('Бот отключён');
       refreshMeta();
     } catch (reason) {
@@ -911,7 +923,7 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
       )}
 
       {botOpen && (
-        <div className="cp-modal-overlay" onClick={() => { if (!botSaving) setBotOpen(false); }}>
+        <div className="cp-modal-overlay" onClick={closeBot}>
           <div className="cp-modal cp-bot-modal" onClick={(event) => event.stopPropagation()}>
             <div className="cp-modal-head">
               <div className="cp-modal-heading">
@@ -921,7 +933,7 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
                   <p className="cp-modal-subtitle">Публикует в ваши каналы. Вы контролируете доступ и можете отозвать токен.</p>
                 </div>
               </div>
-              <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={() => { if (!botSaving) setBotOpen(false); }}><X size={16} /></button>
+              <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={closeBot}><X size={16} /></button>
             </div>
             <ol className="cp-bot-steps">
               <li>Откройте <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">@BotFather</a> и отправьте <code>/newbot</code>.</li>
@@ -941,15 +953,27 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
             )}
             <label className="cp-field">
               <span>Токен бота</span>
-              <input
-                type="password"
-                value={botToken}
-                onChange={(event) => setBotToken(event.target.value)}
-                placeholder="123456:ABC…"
-                autoComplete="off"
-                spellCheck={false}
-                onKeyDown={(event) => { if (event.key === 'Enter') void saveBot(); }}
-              />
+              <div className="cp-token-wrap">
+                <input
+                  type={showBotToken ? 'text' : 'password'}
+                  value={botToken}
+                  onChange={(event) => setBotToken(event.target.value)}
+                  placeholder="123456:ABC…"
+                  autoComplete="off"
+                  spellCheck={false}
+                  onKeyDown={(event) => { if (event.key === 'Enter') void saveBot(); }}
+                />
+                <button
+                  className="cp-token-toggle"
+                  type="button"
+                  aria-label={showBotToken ? 'Скрыть токен' : 'Показать токен'}
+                  aria-pressed={showBotToken}
+                  title={showBotToken ? 'Скрыть токен' : 'Показать токен'}
+                  onClick={() => setShowBotToken((value) => !value)}
+                >
+                  {showBotToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </label>
             <p className="cp-bot-note">Токен хранится зашифрованным и не показывается после сохранения. Отозвать его можно в BotFather.</p>
             {botError && <div className="cp-error">{botError}</div>}
@@ -957,7 +981,7 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
               {meta.telegramBot.configured && (
                 <button className="cp-danger" type="button" disabled={botSaving} onClick={() => void disconnectBot()}>Отключить бота</button>
               )}
-              <button className="secondary-button" type="button" disabled={botSaving} onClick={() => setBotOpen(false)}>Отмена</button>
+              <button className="secondary-button" type="button" disabled={botSaving} onClick={closeBot}>Отмена</button>
               <button className="primary-button" type="button" disabled={botSaving || !botToken.trim()} onClick={() => void saveBot()}>
                 {botSaving ? 'Проверяем…' : meta.telegramBot.configured ? 'Сохранить' : 'Подключить'}
               </button>

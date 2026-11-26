@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import { DomainError } from '../errors/domainError.js';
+import { ContentPlanBotModel } from '../models/ContentPlanBot.js';
 import { ContentPlanChannelModel } from '../models/ContentPlanChannel.js';
 import { ContentPlanPostModel, type ContentPlanStatus } from '../models/ContentPlanPost.js';
-import { getTelegramBotStatus, resolveTelegramChannel } from './telegramBotClient.js';
+import { decryptBotToken, encryptBotToken, botTokenLooksValid } from './contentPlanSecrets.js';
+import { getTelegramBotInfo, resolveTelegramChannel } from './telegramBotClient.js';
 
 const TEXT_LIMITS: Record<'vk' | 'telegram', number> = { telegram: 4096, vk: 16000 };
 
@@ -53,6 +55,27 @@ export type ContentPlanChannelDto = {
   error: string;
 };
 
+export type ContentPlanBotDto = {
+  configured: boolean;
+  username: string;
+  name: string;
+  url: string;
+  status: 'connected' | 'needs_reauth' | 'error' | null;
+  error: string;
+};
+
+function toBotDto(doc: any): ContentPlanBotDto {
+  if (!doc) return { configured: false, username: '', name: '', url: '', status: null, error: '' };
+  return {
+    configured: true,
+    username: doc.username,
+    name: doc.name ?? '',
+    url: `https://t.me/${doc.username}`,
+    status: doc.status,
+    error: doc.error ?? ''
+  };
+}
+
 export function toPostDto(doc: any): ContentPlanPostDto {
   return {
     id: String(doc._id),
@@ -81,17 +104,85 @@ function toDto(doc: { _id: mongoose.Types.ObjectId; platform: 'vk' | 'telegram';
   };
 }
 
+export async function getBotStatus(userId: string): Promise<ContentPlanBotDto> {
+  return toBotDto(await ContentPlanBotModel.findOne({ userId }).lean());
+}
+
+export async function connectBot(userId: string, token: unknown): Promise<ContentPlanBotDto> {
+  const value = typeof token === 'string' ? token.trim() : '';
+  if (!botTokenLooksValid(value)) {
+    throw new DomainError('Токен не похож на токен Telegram-бота. Скопируйте его из BotFather целиком.', {
+      status: 400,
+      code: 'CONTENT_PLAN_BOT_TOKEN_INVALID'
+    });
+  }
+  const info = await getTelegramBotInfo(value);
+  const encrypted = encryptBotToken(value);
+  const existing = await ContentPlanBotModel.findOne({ userId }).lean();
+  if (existing && existing.botId !== info.id) {
+    await ContentPlanChannelModel.updateMany(
+      { userId, platform: 'telegram' },
+      { $set: { status: 'needs_reauth', canPost: false, error: 'Бот заменён, проверьте канал' } }
+    );
+  }
+  const doc = await ContentPlanBotModel.findOneAndUpdate(
+    { userId },
+    {
+      $set: {
+        tokenEncrypted: encrypted,
+        botId: info.id,
+        username: info.username,
+        name: info.name,
+        status: 'connected',
+        lastCheckedAt: new Date(),
+        error: ''
+      }
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).lean();
+  return toBotDto(doc);
+}
+
+export async function disconnectBot(userId: string): Promise<void> {
+  await ContentPlanBotModel.deleteOne({ userId });
+  await ContentPlanChannelModel.updateMany(
+    { userId, platform: 'telegram' },
+    { $set: { status: 'needs_reauth', canPost: false, error: 'Бот отключён' } }
+  );
+}
+
+async function requireBotToken(userId: string) {
+  const bot = await ContentPlanBotModel.findOne({ userId });
+  if (!bot) {
+    throw new DomainError('Сначала подключите своего Telegram-бота.', { status: 409, code: 'CONTENT_PLAN_BOT_REQUIRED' });
+  }
+  return { bot, token: decryptBotToken(bot.tokenEncrypted) };
+}
+
+/** Токен бота для отправки поста. Нужен и планировщику, и ручной публикации. */
+export async function getBotTokenForChannel(channel: any): Promise<{ token: string; botId: string }> {
+  const bot = channel.botId
+    ? await ContentPlanBotModel.findOne({ _id: channel.botId })
+    : await ContentPlanBotModel.findOne({ userId: channel.userId });
+  if (!bot) {
+    throw new DomainError('Бот отключён. Подключите его снова.', { status: 409, code: 'CONTENT_PLAN_BOT_REQUIRED' });
+  }
+  return { token: decryptBotToken(bot.tokenEncrypted), botId: String(bot._id) };
+}
+
 export async function listChannels(userId: string): Promise<ContentPlanChannelDto[]> {
   const docs = await ContentPlanChannelModel.find({ userId }).sort({ createdAt: 1 }).lean();
   return docs.map(toDto);
 }
 
 export async function connectTelegramChannel(userId: string, ref: unknown): Promise<ContentPlanChannelDto> {
-  const resolved = await resolveTelegramChannel(ref);
+  const { bot, token } = await requireBotToken(userId);
+  const resolved = await resolveTelegramChannel(token, ref);
   const doc = await ContentPlanChannelModel.findOneAndUpdate(
     { userId, platform: 'telegram', externalId: resolved.externalId },
     {
       $set: {
+        botId: bot._id,
         title: resolved.title,
         handle: resolved.handle,
         status: 'connected',
@@ -102,6 +193,7 @@ export async function connectTelegramChannel(userId: string, ref: unknown): Prom
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   ).lean();
+  await ContentPlanBotModel.updateOne({ _id: bot._id }, { $set: { status: 'connected', error: '' } });
   return toDto(doc);
 }
 
@@ -227,7 +319,7 @@ export async function deletePost(userId: string, id: string): Promise<void> {
 }
 
 export async function getPlanMeta(userId: string) {
-  const [channels, posts, telegramBot] = await Promise.all([listChannels(userId), listPosts(userId), getTelegramBotStatus()]);
+  const [channels, posts, telegramBot] = await Promise.all([listChannels(userId), listPosts(userId), getBotStatus(userId)]);
   return {
     channels,
     posts,

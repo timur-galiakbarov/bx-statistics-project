@@ -29,7 +29,7 @@ type PlanPost = {
   error: string;
 };
 
-type TelegramBot = { configured: boolean; username: string; url: string; name: string; error: string };
+type TelegramBot = { configured: boolean; username: string; url: string; name: string; status: 'connected' | 'needs_reauth' | 'error' | null; error: string };
 type Meta = { channels: PlanChannel[]; posts: PlanPost[]; telegramBot: TelegramBot };
 type EditorState = { postId: string | null; channelId: string; date: string; time: string; text: string; failure: string };
 
@@ -109,6 +109,10 @@ export function ContentPlanPage() {
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [filter, setFilter] = useState('all');
   const [connectOpen, setConnectOpen] = useState(false);
+  const [botOpen, setBotOpen] = useState(false);
+  const [botToken, setBotToken] = useState('');
+  const [botError, setBotError] = useState('');
+  const [botSaving, setBotSaving] = useState(false);
   const [channelRef, setChannelRef] = useState('');
   const [connectError, setConnectError] = useState('');
   const [connecting, setConnecting] = useState(false);
@@ -139,15 +143,16 @@ export function ContentPlanPage() {
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), []);
 
+  const refreshMeta = () => {
+    apiGet<Meta>('/api/content-plan').then(setMeta).catch(() => undefined);
+  };
+
   useEffect(() => {
-    const refresh = () => {
-      apiGet<Meta>('/api/content-plan').then(setMeta).catch(() => undefined);
-    };
-    const timer = window.setInterval(refresh, 30_000);
-    window.addEventListener('focus', refresh);
+    const timer = window.setInterval(refreshMeta, 30_000);
+    window.addEventListener('focus', refreshMeta);
     return () => {
       window.clearInterval(timer);
-      window.removeEventListener('focus', refresh);
+      window.removeEventListener('focus', refreshMeta);
     };
   }, []);
 
@@ -363,6 +368,42 @@ export function ContentPlanPage() {
     setEditor({ ...editor, text: textarea.value });
   };
 
+  const saveBot = async () => {
+    if (!botToken.trim() || botSaving) return;
+    setBotSaving(true);
+    setBotError('');
+    try {
+      const bot = await apiPost<TelegramBot>('/api/content-plan/bot/telegram', { token: botToken });
+      setMeta((current) => current ? { ...current, telegramBot: bot } : current);
+      setBotOpen(false);
+      setBotToken('');
+      showToast('Бот подключён: @' + bot.username);
+      refreshMeta();
+    } catch (reason) {
+      setBotError(reason instanceof Error ? reason.message : 'Не удалось подключить бота.');
+    } finally {
+      setBotSaving(false);
+    }
+  };
+
+  const disconnectBot = async () => {
+    if (!meta?.telegramBot.configured || botSaving) return;
+    if (!window.confirm('Отключить бота? Каналы нужно будет проверить заново.')) return;
+    setBotSaving(true);
+    setBotError('');
+    try {
+      await apiDelete('/api/content-plan/bot/telegram');
+      setMeta((current) => current ? { ...current, telegramBot: { configured: false, username: '', url: '', name: '', status: null, error: '' } } : current);
+      setBotOpen(false);
+      showToast('Бот отключён');
+      refreshMeta();
+    } catch (reason) {
+      setBotError(reason instanceof Error ? reason.message : 'Не удалось отключить бота.');
+    } finally {
+      setBotSaving(false);
+    }
+  };
+
   const connectChannel = async () => {
     if (!channelRef.trim() || connecting) return;
     setConnecting(true);
@@ -507,6 +548,18 @@ export function ContentPlanPage() {
               <h3>Каналы для публикации</h3>
               <span className="cp-count">{meta.channels.length}</span>
             </div>
+            <div className="cp-bot-row">
+              <div className="cp-bot-main">
+                <strong>Свой бот</strong>
+                <small>{meta.telegramBot.configured ? '@' + meta.telegramBot.username + ' · подключён' : 'не подключён'}</small>
+              </div>
+              <button className="cp-bot-action" type="button" onClick={() => { setBotError(''); setBotOpen(true); }}>
+                {meta.telegramBot.configured ? 'Заменить' : 'Подключить'}
+              </button>
+            </div>
+            {meta.telegramBot.configured && meta.telegramBot.status !== 'connected' && (
+              <div className="cp-bot-warning">{meta.telegramBot.error || 'Токен бота нужно проверить.'}</div>
+            )}
             {meta.channels.length ? (
               <div className="cp-channels">
                 {meta.channels.map((channel) => (
@@ -523,10 +576,23 @@ export function ContentPlanPage() {
               </div>
             ) : (
               <div className="cp-empty">
-                <p>Пока нет каналов. Добавьте бота в Telegram-канал и вставьте ссылку.</p>
+                <p>Пока нет каналов. {meta.telegramBot.configured ? 'Добавьте бота в Telegram-канал и вставьте ссылку.' : 'Сначала подключите своего бота.'}</p>
               </div>
             )}
-            <button className="secondary-button cp-full" type="button" onClick={() => { setConnectError(''); setConnectOpen(true); }}>
+            <button
+              className="secondary-button cp-full"
+              type="button"
+              onClick={() => {
+                if (!meta.telegramBot.configured) {
+                  setBotError('');
+                  setBotOpen(true);
+                  showToast('Сначала подключите своего бота.');
+                  return;
+                }
+                setConnectError('');
+                setConnectOpen(true);
+              }}
+            >
               <Plus size={15} /> Подключить канал
             </button>
           </section>
@@ -690,12 +756,59 @@ export function ContentPlanPage() {
               </>
             ) : (
               <>
-                <p className="cp-modal-text">Бот для публикации не настроен. Добавьте <code>TELEGRAM_BOT_TOKEN</code> в <code>api/.env</code> и перезапустите API.</p>
+                <p className="cp-modal-text">Сначала подключите своего Telegram-бота — он будет публиковать в канал.</p>
                 <div className="cp-modal-actions">
                   <button className="secondary-button" type="button" onClick={() => setConnectOpen(false)}>Закрыть</button>
+                  <button className="primary-button" type="button" onClick={() => { setConnectOpen(false); setBotError(''); setBotOpen(true); }}>Подключить бота</button>
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {botOpen && (
+        <div className="cp-modal-overlay" onClick={() => { if (!botSaving) setBotOpen(false); }}>
+          <div className="cp-modal cp-bot-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="cp-modal-head">
+              <div>
+                <h3>Свой Telegram-бот</h3>
+                <p className="cp-modal-text" style={{ margin: '4px 0 0' }}>Публиковать будет ваш бот: вы контролируете доступ и можете отозвать токен в BotFather.</p>
+              </div>
+              <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={() => { if (!botSaving) setBotOpen(false); }}><X size={16} /></button>
+            </div>
+            <ol className="cp-bot-steps">
+              <li>Откройте <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">@BotFather</a> и отправьте <code>/newbot</code>.</li>
+              <li>Придумайте имя и username бота.</li>
+              <li>Скопируйте токен вида <code>123456:ABC…</code>.</li>
+              <li>Вставьте сюда. Потом добавьте бота в канал администратором с правом «Публиковать сообщения».</li>
+            </ol>
+            {meta.telegramBot.configured && (
+              <p className="cp-muted">Сейчас подключён <a href={meta.telegramBot.url} target="_blank" rel="noreferrer">@{meta.telegramBot.username}</a>. Новый токен заменит его; каналы нужно будет проверить.</p>
+            )}
+            <label className="cp-field">
+              <span>Токен бота</span>
+              <input
+                type="password"
+                value={botToken}
+                onChange={(event) => setBotToken(event.target.value)}
+                placeholder="123456:ABC…"
+                autoComplete="off"
+                spellCheck={false}
+                onKeyDown={(event) => { if (event.key === 'Enter') void saveBot(); }}
+              />
+            </label>
+            <p className="cp-bot-note">Токен хранится зашифрованным и не показывается после сохранения. Отозвать его можно в BotFather.</p>
+            {botError && <div className="cp-error">{botError}</div>}
+            <div className="cp-modal-actions">
+              {meta.telegramBot.configured && (
+                <button className="cp-danger" type="button" disabled={botSaving} onClick={() => void disconnectBot()}>Отключить бота</button>
+              )}
+              <button className="secondary-button" type="button" disabled={botSaving} onClick={() => setBotOpen(false)}>Отмена</button>
+              <button className="primary-button" type="button" disabled={botSaving || !botToken.trim()} onClick={() => void saveBot()}>
+                {botSaving ? 'Проверяем…' : meta.telegramBot.configured ? 'Сохранить' : 'Подключить'}
+              </button>
+            </div>
           </div>
         </div>
       )}

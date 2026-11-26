@@ -1,4 +1,3 @@
-import { env } from '../config/env.js';
 import { DomainError } from '../errors/domainError.js';
 import { normalizeTelegramChannelRef } from './contentPlanUtils.js';
 
@@ -12,7 +11,6 @@ type BotApiResponse<T> = {
 };
 
 export type TelegramBotInfo = { id: number; username: string; name: string; url: string };
-export type TelegramBotStatus = { configured: boolean; username: string; url: string; name: string; error: string };
 export type ResolvedTelegramChannel = { externalId: string; title: string; handle: string; canPost: true };
 export type SentTelegramMessage = { messageId: number; url: string };
 
@@ -23,23 +21,16 @@ class BotApiError extends Error {
   }
 }
 
-let botInfoCache: { value: TelegramBotInfo; expiresAt: number } | null = null;
+const botInfoCache = new Map<string, { value: TelegramBotInfo; expiresAt: number }>();
 
-export function isTelegramBotConfigured() {
-  return Boolean(env.telegramBotToken);
-}
-
-async function botCall<T>(method: string, payload: Record<string, unknown>): Promise<T> {
-  if (!env.telegramBotToken) {
-    throw new DomainError('Бот для публикации не настроен. Добавьте TELEGRAM_BOT_TOKEN в api/.env.', {
-      status: 503,
-      code: 'TELEGRAM_BOT_NOT_CONFIGURED'
-    });
+async function botCall<T>(token: string, method: string, payload: Record<string, unknown>): Promise<T> {
+  if (!token) {
+    throw new DomainError('Токен Telegram-бота не задан.', { status: 503, code: 'TELEGRAM_BOT_NOT_CONFIGURED' });
   }
 
   let response: Response;
   try {
-    response = await fetch(`https://api.telegram.org/bot${env.telegramBotToken}/${method}`, {
+    response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -54,7 +45,8 @@ async function botCall<T>(method: string, payload: Record<string, unknown>): Pro
 
   const data = (await response.json().catch(() => null)) as BotApiResponse<T> | null;
   if (data?.error_code === 401) {
-    throw new DomainError('Токен Telegram-бота недействителен. Проверьте TELEGRAM_BOT_TOKEN.', {
+    botInfoCache.delete(token);
+    throw new DomainError('Токен Telegram-бота недействителен. Замените его в настройках контент-плана.', {
       status: 503,
       code: 'TELEGRAM_BOT_UNAUTHORIZED'
     });
@@ -71,44 +63,29 @@ async function botCall<T>(method: string, payload: Record<string, unknown>): Pro
   return data.result as T;
 }
 
-export async function getTelegramBotInfo(): Promise<TelegramBotInfo> {
-  if (botInfoCache && botInfoCache.expiresAt > Date.now()) return botInfoCache.value;
-  const me = await botCall<{ id: number; username: string; first_name: string }>('getMe', {});
+export async function getTelegramBotInfo(token: string): Promise<TelegramBotInfo> {
+  const cached = botInfoCache.get(token);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  const me = await botCall<{ id: number; username: string; first_name: string }>(token, 'getMe', {});
   if (!me.username) {
     throw new DomainError('У бота нет username. Задайте его в BotFather.', {
-      status: 503,
+      status: 422,
       code: 'TELEGRAM_BOT_USERNAME_MISSING'
     });
   }
   const value = { id: me.id, username: me.username, name: me.first_name, url: `https://t.me/${me.username}` };
-  botInfoCache = { value, expiresAt: Date.now() + BOT_INFO_TTL_MS };
+  botInfoCache.set(token, { value, expiresAt: Date.now() + BOT_INFO_TTL_MS });
   return value;
 }
 
-/** Для страницы: не роняем весь раздел, если Telegram или токен недоступны. */
-export async function getTelegramBotStatus(): Promise<TelegramBotStatus> {
-  if (!isTelegramBotConfigured()) return { configured: false, username: '', url: '', name: '', error: '' };
-  try {
-    const info = await getTelegramBotInfo();
-    return { configured: true, username: info.username, url: info.url, name: info.name, error: '' };
-  } catch (error) {
-    return {
-      configured: true,
-      username: '',
-      url: '',
-      name: '',
-      error: error instanceof Error ? error.message : 'Не удалось получить данные бота.'
-    };
-  }
-}
-
-export async function resolveTelegramChannel(input: unknown): Promise<ResolvedTelegramChannel> {
+export async function resolveTelegramChannel(token: string, input: unknown): Promise<ResolvedTelegramChannel> {
   const ref = normalizeTelegramChannelRef(input);
-  const bot = await getTelegramBotInfo();
+  const bot = await getTelegramBotInfo(token);
 
   let chat: { id: number; type: string; title?: string; username?: string };
   try {
-    chat = await botCall<{ id: number; type: string; title?: string; username?: string }>('getChat', { chat_id: ref });
+    chat = await botCall<{ id: number; type: string; title?: string; username?: string }>(token, 'getChat', { chat_id: ref });
   } catch (error) {
     if (error instanceof DomainError) throw error;
     if (error instanceof BotApiError && (error.code === 400 || error.code === 403)) {
@@ -128,7 +105,7 @@ export async function resolveTelegramChannel(input: unknown): Promise<ResolvedTe
   }
 
   try {
-    const member = await botCall<{ status: string; can_post_messages?: boolean }>('getChatMember', {
+    const member = await botCall<{ status: string; can_post_messages?: boolean }>(token, 'getChatMember', {
       chat_id: chat.id,
       user_id: bot.id
     });
@@ -158,11 +135,10 @@ export async function resolveTelegramChannel(input: unknown): Promise<ResolvedTe
   };
 }
 
-
 /** Отправляет пост в канал. Текст уже должен быть HTML для parse_mode=HTML. */
-export async function sendTelegramMessage(externalId: string, handle: string, html: string): Promise<SentTelegramMessage> {
+export async function sendTelegramMessage(token: string, externalId: string, handle: string, html: string): Promise<SentTelegramMessage> {
   try {
-    const result = await botCall<{ message_id: number }>('sendMessage', {
+    const result = await botCall<{ message_id: number }>(token, 'sendMessage', {
       chat_id: externalId,
       text: html,
       parse_mode: 'HTML'

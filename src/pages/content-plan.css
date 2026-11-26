@@ -984,3 +984,111 @@
   cursor: default;
   text-decoration: none;
 }
+
+.cp-bot-row {
+  align-items: center;
+  border-bottom: 1px solid #edf1ee;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding-bottom: 8px;
+}
+
+.cp-bot-main {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cp-bot-main strong {
+  color: #20332f;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.cp-bot-main small {
+  color: #8b978f;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cp-bot-action {
+  background: none;
+  border: 0;
+  color: #21815f;
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 0;
+}
+
+.cp-bot-action:hover {
+  text-decoration: underline;
+}
+
+.cp-bot-warning {
+  background: #fff7e8;
+  border: 1px solid #f0dcb6;
+  border-radius: 6px;
+  color: #8a5a00;
+  font-size: 10.5px;
+  line-height: 1.4;
+  margin-bottom: 7px;
+  padding: 6px 8px;
+}
+
+.cp-bot-modal {
+  width: 560px;
+}
+
+.cp-bot-steps {
+  color: #53645b;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 12px 0;
+  padding-left: 18px;
+}
+
+.cp-bot-steps li {
+  margin-bottom: 5px;
+}
+
+.cp-bot-steps a {
+  color: #21815f;
+}
+
+.cp-bot-steps code {
+  background: #f1f4f2;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  padding: 1px 4px;
+}
+
+.cp-bot-note {
+  color: #8b978f;
+  font-size: 10.5px;
+  line-height: 1.45;
+  margin: 0 0 4px;
+}
+
+.cp-danger {
+  background: none;
+  border: 0;
+  color: #a56b5b;
+  font-size: 11.5px;
+  margin-right: auto;
+  padding: 7px 0;
+}
+
+.cp-danger:hover {
+  color: #b42318;
+}
+
+.cp-danger:disabled {
+  color: #c3cac5;
+  cursor: default;
+}

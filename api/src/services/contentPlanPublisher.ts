@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
 import { DomainError } from '../errors/domainError.js';
+import { ContentPlanBotModel } from '../models/ContentPlanBot.js';
 import { ContentPlanChannelModel } from '../models/ContentPlanChannel.js';
 import { ContentPlanPostModel } from '../models/ContentPlanPost.js';
-import { toPostDto, type ContentPlanPostDto } from './contentPlanService.js';
+import { getBotTokenForChannel, toPostDto, type ContentPlanPostDto } from './contentPlanService.js';
 import { markdownToTelegramHtml } from './contentPlanUtils.js';
 import { sendTelegramMessage } from './telegramBotClient.js';
 
@@ -29,8 +30,11 @@ async function sendAndUpdate(post: any): Promise<ContentPlanPostDto> {
     throw error;
   }
 
+  let botId = '';
   try {
-    const sent = await sendTelegramMessage(channel.externalId, channel.handle, markdownToTelegramHtml(post.text));
+    const bot = await getBotTokenForChannel(channel);
+    botId = bot.botId;
+    const sent = await sendTelegramMessage(bot.token, channel.externalId, channel.handle, markdownToTelegramHtml(post.text));
     const updated = await ContentPlanPostModel.findByIdAndUpdate(
       post._id,
       {
@@ -68,6 +72,12 @@ async function sendAndUpdate(post: any): Promise<ContentPlanPostDto> {
       await ContentPlanChannelModel.updateOne(
         { _id: channel._id },
         { $set: { status: 'error', canPost: false, error: domain.message, lastCheckedAt: new Date() } }
+      );
+    }
+    if (botId && domain.code === 'TELEGRAM_BOT_UNAUTHORIZED') {
+      await ContentPlanBotModel.updateOne(
+        { _id: botId },
+        { $set: { status: 'needs_reauth', error: domain.message, lastCheckedAt: new Date() } }
       );
     }
     throw domain;

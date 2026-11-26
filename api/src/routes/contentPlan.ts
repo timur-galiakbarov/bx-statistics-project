@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireUser } from '../middleware/auth.js';
 import { isFeatureEnabledFor } from '../services/featureFlags.js';
-import { connectTelegramChannel, createPost, deleteChannel, deletePost, getPlanMeta, listChannels, updatePost } from '../services/contentPlanService.js';
+import { connectBot, connectTelegramChannel, createPost, deleteChannel, deletePost, disconnectBot, getPlanMeta, listChannels, updatePost } from '../services/contentPlanService.js';
 import { publishNow } from '../services/contentPlanPublisher.js';
 
 /**
@@ -28,6 +28,23 @@ contentPlanRouter.get('/', async (req, res, next) => {
   try {
     res.set('Cache-Control', 'no-store');
     res.json({ success: true, data: await getPlanMeta(req.user!.id) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.post('/bot/telegram', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await connectBot(req.user!.id, req.body?.token) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.delete('/bot/telegram', async (req, res, next) => {
+  try {
+    await disconnectBot(req.user!.id);
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }

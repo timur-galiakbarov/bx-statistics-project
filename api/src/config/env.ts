@@ -31,6 +31,8 @@ export const env = {
   telegramApiId: Number(process.env.TELEGRAM_API_ID ?? 0),
   telegramApiHash: process.env.TELEGRAM_API_HASH ?? '',
   telegramSession: process.env.TELEGRAM_SESSION ?? '',
+  // Токен бота из BotFather: публикация в каналы из контент-плана. Пусто — подключение каналов выключено.
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN?.trim() ?? '',
   telegramProxyHost: process.env.TELEGRAM_PROXY_HOST?.trim() ?? '',
   telegramProxyPort: Number(process.env.TELEGRAM_PROXY_PORT ?? 0),
   telegramProxyUsername: process.env.TELEGRAM_PROXY_USERNAME ?? '',

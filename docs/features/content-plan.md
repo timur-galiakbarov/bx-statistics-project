@@ -1,58 +1,60 @@
 # Контент-план
 
-Новый раздел для планирования и публикации постов. Сейчас — **этап 0**: флаг доступа, страница-каркас, API-заглушка и модели. Календаря, подключённых каналов и публикации ещё нет.
+Раздел для планирования и публикации постов. Сейчас — **этап 1**: календарь, подключение Telegram-каналов и каркас правой колонки. Редактора постов и публикации ещё нет.
 
 ## Доступ
 
 - Фича включается ключом `contentPlan` в «Админка → Настройки → Фичи»: `Выключено / Только администраторам / Всем пользователям`.
 - По умолчанию `off`. Для проверки поставьте «Только администраторам»: пункт меню и маршрут появятся только у администраторов.
-- В `/api/account/me` приходит `contentPlanEnabled`; по нему показывается пункт меню «Контент-план» (сразу под «Аналитикой») и открывается маршрут `/content-plan`.
+- В `/api/account/me` приходит `contentPlanEnabled`; по нему показывается пункт меню «Контент-план» (сразу под «Аналитикой») и открывается `/content-plan`.
 - API `/api/content-plan` отвечает `403 FEATURE_OFF`, если фича выключена или недоступна пользователю.
-- Идеи для постов пока остаются отдельным разделом и в контент-план не переезжают.
+- Идеи для постов пока остаются отдельным разделом.
 
-## Что уже работает
+## Что работает
 
-- Страница `/content-plan`: каркас с заголовком, статусом этапа и пустым состоянием.
-- `GET /api/content-plan` возвращает `{ channels: [], posts: [], serverTime }` — проверка доступа и связи с API.
-- Модели для следующего этапа:
-  - `ContentPlanChannel` — подключённая группа ВК или Telegram-канал;
-  - `ContentPlanPost` — черновик/запланированный/опубликованный пост.
-- Флаг фичи и переключатель в админке.
+- Страница `/content-plan`: месяц, фильтр по каналам, правая колонка с каналами, автопубликацией и черновиками.
+- Подключение Telegram-канала:
+  1. Создайте бота в BotFather.
+  2. Добавьте `TELEGRAM_BOT_TOKEN` в `api/.env` и перезапустите API.
+  3. Добавьте бота в канал администратором с правом «Публиковать сообщения».
+  4. В разделе нажмите «Подключить канал» и вставьте `@username` или ссылку `t.me/…`.
+- Сервер проверяет через Bot API, что бот админ канала и может писать (`getChat`, `getChatMember`). Ошибки показываются в модалке.
+- Каналы можно отключить (кнопка «×» в списке).
+- Автопубликация показана как включённая; переключателя пока нет.
+- Черновиков и постов нет: редактор появится на следующем этапе.
+
+## Время
+
+- Время хранится как `scheduledAt` в UTC и `timeZone` — IANA-зона пользователя на момент планирования.
+- В интерфейсе показывается время браузера: в шапке подписано, какая зона используется. На этапе редактора это же значение будет применяться к вводу даты и времени.
+
+## API
+
+- `GET /api/content-plan` — каналы, посты, данные бота.
+- `GET /api/content-plan/channels` — список каналов.
+- `POST /api/content-plan/channels/telegram` — `{ ref }`, подключение канала.
+- `DELETE /api/content-plan/channels/:id` — отключение.
+- Все маршруты закрыты фичей `contentPlan`.
 
 ## Модели
 
-`ContentPlanChannel` (`api/src/models/ContentPlanChannel.ts`):
-- `userId`, `platform` (`vk`/`telegram`), `externalId`, `title`, `handle`;
-- `status` (`connected`/`needs_reauth`/`error`), `canPost`, `lastCheckedAt`, `error`.
-
-`ContentPlanPost` (`api/src/models/ContentPlanPost.ts`):
-- `userId`, `channelId`, `platform`, `title`, `text`;
-- `status` (`draft`/`scheduled`/`publishing`/`published`/`failed`);
-- `scheduledAt` в UTC и `timeZone` — IANA-зона автора, чтобы показывать местное время и не ломаться на переходе на летнее время;
-- `autoPublish` по умолчанию `true`;
-- `publishedAt`, `externalPostId`, `externalUrl`, `error`, `attempts`, `nextAttemptAt`.
+- `ContentPlanChannel` — группа ВК или Telegram-канал: платформа, внешний id, название, handle, статус доступа, права публикации, ошибка.
+- `ContentPlanPost` — пост: канал, текст, статус (`draft/scheduled/publishing/published/failed`), `scheduledAt` в UTC, `timeZone`, `autoPublish` по умолчанию `true`, внешний id/ссылка, попытки, ошибка.
 
 ## Код
 
-- Флаг: `api/src/services/featureFlags.ts`.
-- `/me`: `api/src/routes/account.ts`.
-- Маршрут: `api/src/routes/contentPlan.ts`, подключение — `api/src/app.ts`.
-- Модели: `api/src/models/ContentPlanChannel.ts`, `ContentPlanPost.ts`.
-- Страница: `src/pages/ContentPlanPage.tsx`, `src/pages/content-plan.css`.
-- Меню и маршрут: `src/App.tsx`; текст переключателя — `src/components/AdminFeatureFlags.tsx`.
+- `api/src/services/telegramBotClient.ts` — Bot API: `getMe`, `getChat`, `getChatMember`.
+- `api/src/services/contentPlanService.ts` — каналы, метаданные.
+- `api/src/services/contentPlanUtils.ts` — нормализация ссылки на канал.
+- `api/src/routes/contentPlan.ts`, подключение — `api/src/app.ts`.
+- Модели — `api/src/models/ContentPlanChannel.ts`, `ContentPlanPost.ts`.
+- Страница — `src/pages/ContentPlanPage.tsx`, `src/pages/content-plan.css`.
+- Меню и маршрут — `src/App.tsx`; переключатель — `src/components/AdminFeatureFlags.tsx`.
 
-## Что дальше
+## Ограничения этапа 1
 
-1. Календарь, подключение Telegram-канала и черновики.
-2. Редактор с markdown и предпросмотром; время — в часовом поясе пользователя.
-3. Публикация в Telegram через бота и автопубликация по расписанию.
-4. Публикация в ВК: scope `wall`, переавторизация, `wall.post`.
-5. Открытие всем пользователям через тот же флаг.
-
-## Ограничения этапа 0
-
-- Публикации нет.
-- Каналы не подключаются.
-- Календаря и формы поста нет.
+- Редактора и создания постов нет.
+- Публикации и настоящей автопубликации нет: карточка только показывает состояние.
+- Поддерживается только Telegram; ВК — следующий этап.
 - Идеи ИИ в разделе не используются.
-- Лимитов на генерацию и публикацию нет — по решению продукта.
+- Лимитов нет по решению продукта.

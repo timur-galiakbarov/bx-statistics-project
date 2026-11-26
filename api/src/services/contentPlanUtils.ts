@@ -76,3 +76,20 @@ export function markdownToTelegramHtml(text: string) {
     return telegramInline(line);
   }).join('\n');
 }
+
+
+/**
+ * Markdown из редактора → текст ВК. ВК не понимает HTML, но поддерживает
+ * **жирный**, *курсив*, __подчёркнутый__, ~~зачёркнутый~~ и ссылки [url|текст].
+ */
+export function markdownToVkText(text: string) {
+  return String(text || '').split('\n').map((line) => {
+    let value = line;
+    if (/^\s*[-—•]\s+/.test(value)) value = '• ' + value.replace(/^\s*[-—•]\s+/, '');
+    else if (/^\s*>\s?/.test(value)) value = '— ' + value.replace(/^\s*>\s?/, '');
+    value = value.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '[$2|$1]');
+    value = value.replace(/(^|[^_])_([^_\n]+)_/g, '$1*$2*');
+    value = value.replace(/`([^`]+)`/g, '$1');
+    return value;
+  }).join('\n');
+}

@@ -1,6 +1,6 @@
 # Контент-план
 
-Раздел для планирования и публикации постов. Сейчас — **этап 3**: календарь, собственный Telegram-бот пользователя, редактор с markdown, отправка и автопубликация.
+Раздел для планирования и публикации постов. Сейчас — **этап 4**: календарь, собственный Telegram-бот пользователя, редактор с markdown, отправка в Telegram и ВК, автопубликация.
 
 ## Свой бот у каждого пользователя
 
@@ -28,9 +28,11 @@
   3. Вставьте токен в разделе — сервер проверит его через `getMe` и сохранит зашифрованным.
   4. Добавьте бота в канал администратором с правом «Публиковать сообщения».
 - Подключение канала: вставьте `@username` или ссылку `t.me/…`; сервер проверяет `getChat` и `getChatMember`.
+- Подключение группы ВК: кнопка «ВК» показывает группы, где пользователь администратор (`groups.get?filter=moder`). Публикация — от имени сообщества через `wall.post`.
+- Для ВК нужен scope `wall`: кнопка «Переподключить ВК» ведёт на `/api/auth/vk/publishing-start`, после согласия возвращает в `/app/content-plan`. Базовый `VK_AUTH_SCOPE` не меняется.
 - Редактор: канал, дата, время, markdown, лимит 4 096, предпросмотр.
 - «Черновик», «Запланировать», «Опубликовать сейчас».
-- Автопубликация: планировщик раз в 30 секунд отправляет созревшие посты.
+- Автопубликация: планировщик раз в 30 секунд отправляет созревшие посты в Telegram или ВК.
 - Статусы: `draft`, `scheduled`, `publishing`, `published`, `failed`; у опубликованного сохраняется ссылка на сообщение, у упавшего — ошибка.
 
 ## Время
@@ -43,7 +45,8 @@
 
 - В редакторе: `**жирный**`, `_курсив_`, `` `код` ``, `[текст](ссылка)`, списки `- `, цитаты `>`.
 - Предпросмотр экранирует HTML.
-- При отправке markdown преобразуется в HTML (`parse_mode: 'HTML'`): жирный, курсив, подчёркивание, зачёркивание, код, ссылки, цитаты; списки — строки с «•».
+- При отправке в Telegram markdown преобразуется в HTML (`parse_mode: 'HTML'`): жирный, курсив, подчёркивание, зачёркивание, код, ссылки, цитаты; списки — строки с «•».
+- Для ВК markdown преобразуется в формат стены: `**жирный**`, `*курсив*`, `__подчёркнутый__`, `~~зачёркнутый~~`, ссылки `[url|текст]`, списки с «•».
 - Лимит текста: 4 096 символов для Telegram, 16 000 для ВК.
 
 ## Автопубликация и ошибки
@@ -54,6 +57,7 @@
 - Успех: `published`, `publishedAt`, `externalPostId`, `externalUrl`.
 - Ошибка: `failed` с текстом. При 429 — повтор через минуту, не больше трёх попыток. Остальные ошибки автоматически не повторяются.
 - Ошибки прав бота помечают канал; недействительный токен помечает бота как `needs_reauth`.
+- Ошибки ВК: истёкший токен и отсутствие `wall` — канал `needs_reauth`; нет прав/стена закрыта — `error`; код 6 — повтор через минуту.
 - При сетевой ошибке неизвестно, дошло ли сообщение: пост помечается `failed` с просьбой проверить канал, автоповтора нет — защита от дублей.
 
 ## API
@@ -63,6 +67,8 @@
 - `DELETE /api/content-plan/bot/telegram` — отключить бота.
 - `GET /api/content-plan/channels`.
 - `POST /api/content-plan/channels/telegram` — `{ ref }`.
+- `GET /api/content-plan/vk/groups` — группы, где пользователь админ, и флаг `wallScope`.
+- `POST /api/content-plan/channels/vk` — `{ groupId }`.
 - `DELETE /api/content-plan/channels/:id`.
 - `POST /api/content-plan/posts`, `PATCH /api/content-plan/posts/:id`, `DELETE /api/content-plan/posts/:id`.
 - `POST /api/content-plan/posts/:id/publish`.
@@ -78,20 +84,23 @@
 
 - `api/src/services/contentPlanSecrets.ts` — шифрование токенов бота.
 - `api/src/services/telegramBotClient.ts` — Bot API: `getMe`, `getChat`, `getChatMember`, `sendMessage`.
-- `api/src/services/contentPlanPublisher.ts` — отправка, статусы, ошибки.
+- `api/src/services/contentPlanPublisher.ts` — отправка в Telegram и ВК, статусы, ошибки.
+- `api/src/services/vkContentPlanService.ts` — группы ВК, проверка `wall`, `wall.post`.
+- `api/src/routes/auth.ts` — `/api/auth/vk/publishing-start`, дозапрос `wall`.
 - `api/src/services/contentPlanScheduler.ts` — автопубликация.
 - `api/src/services/contentPlanService.ts` — бот, каналы, посты, валидация.
-- `api/src/services/contentPlanUtils.ts` — ссылка на канал и markdown → HTML.
+- `api/src/services/contentPlanUtils.ts` — ссылка на канал, markdown → HTML и markdown → ВК.
 - `api/src/routes/contentPlan.ts`, подключение — `api/src/app.ts`.
 - Модели — `api/src/models/ContentPlanBot.ts`, `ContentPlanChannel.ts`, `ContentPlanPost.ts`.
 - Страница — `src/pages/ContentPlanPage.tsx`, `src/pages/content-plan.css`.
 - Markdown предпросмотра — `src/utils/contentPlanMarkdown.ts`.
 - Меню и маршрут — `src/App.tsx`; переключатель — `src/components/AdminFeatureFlags.tsx`.
 
-## Ограничения этапа 3
+## Ограничения этапа 4
 
-- Один бот на пользователя; несколько ботов не поддерживаются.
-- Поддерживается только Telegram; ВК — следующий этап.
+- Один Telegram-бот на пользователя; несколько ботов не поддерживаются.
+- ВК: только группы, где пользователь администратор; личная стена не поддерживается.
 - Картинок и вложений нет.
 - Идеи ИИ в разделе не используются.
 - Лимитов на количество постов нет.
+- В настройках VK-приложения должен быть доступен scope `wall`; иначе ВК не покажет разрешение при переподключении.

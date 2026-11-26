@@ -4,17 +4,51 @@ import { ContentPlanBotModel } from '../models/ContentPlanBot.js';
 import { ContentPlanChannelModel } from '../models/ContentPlanChannel.js';
 import { ContentPlanPostModel } from '../models/ContentPlanPost.js';
 import { getBotTokenForChannel, toPostDto, type ContentPlanPostDto } from './contentPlanService.js';
-import { markdownToTelegramHtml } from './contentPlanUtils.js';
+import { markdownToTelegramHtml, markdownToVkText } from './contentPlanUtils.js';
 import { sendTelegramMessage } from './telegramBotClient.js';
+import { getVkTokenForChannel, sendVkPost } from './vkContentPlanService.js';
 
 const MAX_AUTO_ATTEMPTS = 3;
 
 async function failPost(post: any, error: DomainError) {
-  const retryAt = error.code === 'TELEGRAM_RATE_LIMITED' ? new Date(Date.now() + 60_000) : null;
+  const retryable = error.code === 'TELEGRAM_RATE_LIMITED' || error.code === 'VK_RATE_LIMITED';
+  const retryAt = retryable ? new Date(Date.now() + 60_000) : null;
   await ContentPlanPostModel.updateOne(
     { _id: post._id },
     { $set: { status: 'failed', error: error.message, nextAttemptAt: retryAt } }
   );
+}
+
+async function markTelegramChannelError(channelId: any, error: DomainError) {
+  if (error.code === 'TELEGRAM_BOT_UNAUTHORIZED') {
+    await ContentPlanChannelModel.updateOne(
+      { _id: channelId },
+      { $set: { status: 'needs_reauth', canPost: false, error: error.message, lastCheckedAt: new Date() } }
+    );
+    return;
+  }
+  if (error.code === 'TELEGRAM_BOT_NOT_ADMIN' || error.code === 'TELEGRAM_CHANNEL_NOT_FOUND') {
+    await ContentPlanChannelModel.updateOne(
+      { _id: channelId },
+      { $set: { status: 'error', canPost: false, error: error.message, lastCheckedAt: new Date() } }
+    );
+  }
+}
+
+async function markVkChannelError(channelId: any, error: DomainError) {
+  if (['VK_TOKEN_INVALID', 'VK_WALL_SCOPE_REQUIRED', 'VK_TOKEN_REQUIRED'].includes(error.code)) {
+    await ContentPlanChannelModel.updateOne(
+      { _id: channelId },
+      { $set: { status: 'needs_reauth', canPost: false, error: error.message, lastCheckedAt: new Date() } }
+    );
+    return;
+  }
+  if (error.code === 'VK_PERMISSION_DENIED') {
+    await ContentPlanChannelModel.updateOne(
+      { _id: channelId },
+      { $set: { status: 'error', canPost: false, error: error.message, lastCheckedAt: new Date() } }
+    );
+  }
 }
 
 async function sendAndUpdate(post: any): Promise<ContentPlanPostDto> {
@@ -25,24 +59,37 @@ async function sendAndUpdate(post: any): Promise<ContentPlanPostDto> {
     throw error;
   }
   if (channel.status !== 'connected' || !channel.canPost) {
-    const error = new DomainError('Канал не подключён к публикации. Проверьте права бота.', { status: 409, code: 'CONTENT_PLAN_CHANNEL_NOT_READY' });
+    const error = new DomainError('Канал не подключён к публикации. Проверьте доступ.', { status: 409, code: 'CONTENT_PLAN_CHANNEL_NOT_READY' });
     await failPost(post, error);
     throw error;
   }
 
   let botId = '';
   try {
-    const bot = await getBotTokenForChannel(channel);
-    botId = bot.botId;
-    const sent = await sendTelegramMessage(bot.token, channel.externalId, channel.handle, markdownToTelegramHtml(post.text));
+    let externalPostId = '';
+    let externalUrl = '';
+
+    if (post.platform === 'vk') {
+      const token = await getVkTokenForChannel(channel);
+      const sent = await sendVkPost(token, channel.externalId, markdownToVkText(post.text));
+      externalPostId = String(sent.postId);
+      externalUrl = sent.url;
+    } else {
+      const bot = await getBotTokenForChannel(channel);
+      botId = bot.botId;
+      const sent = await sendTelegramMessage(bot.token, channel.externalId, channel.handle, markdownToTelegramHtml(post.text));
+      externalPostId = String(sent.messageId);
+      externalUrl = sent.url;
+    }
+
     const updated = await ContentPlanPostModel.findByIdAndUpdate(
       post._id,
       {
         $set: {
           status: 'published',
           publishedAt: new Date(),
-          externalPostId: String(sent.messageId),
-          externalUrl: sent.url,
+          externalPostId,
+          externalUrl,
           error: '',
           nextAttemptAt: null
         }
@@ -57,28 +104,22 @@ async function sendAndUpdate(post: any): Promise<ContentPlanPostDto> {
   } catch (error) {
     const domain = error instanceof DomainError
       ? error
-      : new DomainError('Telegram не подтвердил отправку. Проверьте канал перед повтором.', {
+      : new DomainError('Публикация не подтверждена. Проверьте канал перед повтором.', {
         status: 502,
-        code: 'TELEGRAM_SEND_UNKNOWN'
+        code: 'CONTENT_PLAN_PUBLISH_UNKNOWN'
       });
     await failPost(post, domain);
 
-    if (domain.code === 'TELEGRAM_BOT_UNAUTHORIZED') {
-      await ContentPlanChannelModel.updateOne(
-        { _id: channel._id },
-        { $set: { status: 'needs_reauth', canPost: false, error: domain.message, lastCheckedAt: new Date() } }
-      );
-    } else if (domain.code === 'TELEGRAM_BOT_NOT_ADMIN' || domain.code === 'TELEGRAM_CHANNEL_NOT_FOUND') {
-      await ContentPlanChannelModel.updateOne(
-        { _id: channel._id },
-        { $set: { status: 'error', canPost: false, error: domain.message, lastCheckedAt: new Date() } }
-      );
-    }
-    if (botId && domain.code === 'TELEGRAM_BOT_UNAUTHORIZED') {
-      await ContentPlanBotModel.updateOne(
-        { _id: botId },
-        { $set: { status: 'needs_reauth', error: domain.message, lastCheckedAt: new Date() } }
-      );
+    if (post.platform === 'vk') {
+      await markVkChannelError(channel._id, domain);
+    } else {
+      await markTelegramChannelError(channel._id, domain);
+      if (botId && domain.code === 'TELEGRAM_BOT_UNAUTHORIZED') {
+        await ContentPlanBotModel.updateOne(
+          { _id: botId },
+          { $set: { status: 'needs_reauth', error: domain.message, lastCheckedAt: new Date() } }
+        );
+      }
     }
     throw domain;
   }

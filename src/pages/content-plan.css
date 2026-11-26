@@ -1092,3 +1092,110 @@
   color: #c3cac5;
   cursor: default;
 }
+
+.cp-connect-row {
+  display: flex;
+  gap: 6px;
+}
+
+.cp-connect-row .secondary-button {
+  flex: 1;
+  font-size: 11px;
+  justify-content: center;
+}
+
+.cp-preview-ava.vk {
+  background: #0077ff;
+}
+
+.cp-vk-modal {
+  width: 560px;
+}
+
+.cp-vk-warning {
+  align-items: flex-start;
+  background: #fff7e8;
+  border: 1px solid #f0dcb6;
+  border-radius: 8px;
+  color: #8a5a00;
+  display: flex;
+  flex-direction: column;
+  font-size: 11.5px;
+  gap: 7px;
+  line-height: 1.45;
+  margin: 10px 0;
+  padding: 9px 10px;
+}
+
+.cp-vk-reauth {
+  align-self: flex-start;
+  font-size: 11px;
+  padding: 6px 10px;
+}
+
+.cp-vk-error-link {
+  color: #21815f;
+  display: inline-block;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.cp-vk-list {
+  display: grid;
+  gap: 5px;
+  margin: 10px 0;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.cp-vk-group {
+  align-items: center;
+  border: 1px solid #edf1ee;
+  border-radius: 8px;
+  display: flex;
+  gap: 8px;
+  padding: 7px 8px;
+}
+
+.cp-vk-ava {
+  align-items: center;
+  background: #0077ff;
+  border-radius: 50%;
+  color: #fff;
+  display: grid;
+  flex: none;
+  font-size: 9px;
+  font-weight: 700;
+  height: 28px;
+  place-items: center;
+  width: 28px;
+}
+
+.cp-vk-main {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cp-vk-main strong {
+  color: #20332f;
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cp-vk-main small {
+  color: #8b978f;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cp-vk-connect {
+  flex: none;
+  font-size: 10.5px;
+  padding: 6px 9px;
+}

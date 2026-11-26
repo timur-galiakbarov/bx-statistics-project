@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DomainError } from '../errors/domainError.js';
-import { markdownToTelegramHtml, normalizeTelegramChannelRef } from './contentPlanUtils.js';
+import { markdownToTelegramHtml, markdownToVkText, normalizeTelegramChannelRef } from './contentPlanUtils.js';
 
 test('normalizeTelegramChannelRef принимает @username и ссылки', () => {
   assert.equal(normalizeTelegramChannelRef('@money_planner'), '@money_planner');
@@ -28,4 +28,11 @@ test('markdownToTelegramHtml экранирует HTML и форматирует
   assert.equal(markdownToTelegramHtml('**жирный** и <b>'), '<b>жирный</b> и &lt;b&gt;');
   assert.equal(markdownToTelegramHtml('[ссылка](https://example.com)'), '<a href="https://example.com">ссылка</a>');
   assert.equal(markdownToTelegramHtml('- один\n> цитата'), '• один\n<blockquote>цитата</blockquote>');
+});
+
+
+test('markdownToVkText переводит ссылки и курсив в формат ВК', () => {
+  assert.equal(markdownToVkText('[ссылка](https://example.com)'), '[https://example.com|ссылка]');
+  assert.equal(markdownToVkText('_курсив_ и **жирный**'), '*курсив* и **жирный**');
+  assert.equal(markdownToVkText('- один\n> цитата'), '• один\n— цитата');
 });

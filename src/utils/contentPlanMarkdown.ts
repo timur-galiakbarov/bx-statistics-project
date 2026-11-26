@@ -9,6 +9,7 @@ function escapeHtml(value: string) {
 function renderInline(value: string) {
   let html = escapeHtml(value);
   html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+  html = html.replace(/\[(https?:\/\/[^\]\s|]+)\|([^\]]+)\]/g, '<a href="$1" target="_blank" rel="noreferrer">$2</a>');
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/__([^_]+)__/g, '<u>$1</u>');
   html = html.replace(/~~([^~]+)~~/g, '<s>$1</s>');

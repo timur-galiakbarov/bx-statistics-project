@@ -30,6 +30,8 @@ type PlanPost = {
 };
 
 type TelegramBot = { configured: boolean; username: string; url: string; name: string; status: 'connected' | 'needs_reauth' | 'error' | null; error: string };
+type VkGroup = { id: number; name: string; screenName: string; membersCount: number; photo: string };
+type VkGroupsData = { items: VkGroup[]; wallScope: boolean };
 type Meta = { channels: PlanChannel[]; posts: PlanPost[]; telegramBot: TelegramBot };
 type EditorState = { postId: string | null; channelId: string; date: string; time: string; text: string; failure: string };
 
@@ -113,6 +115,12 @@ export function ContentPlanPage() {
   const [botToken, setBotToken] = useState('');
   const [botError, setBotError] = useState('');
   const [botSaving, setBotSaving] = useState(false);
+  const [vkOpen, setVkOpen] = useState(false);
+  const [vkLoading, setVkLoading] = useState(false);
+  const [vkGroups, setVkGroups] = useState<VkGroup[]>([]);
+  const [vkWallScope, setVkWallScope] = useState(true);
+  const [vkError, setVkError] = useState('');
+  const [vkConnecting, setVkConnecting] = useState(0);
   const [channelRef, setChannelRef] = useState('');
   const [connectError, setConnectError] = useState('');
   const [connecting, setConnecting] = useState(false);
@@ -164,6 +172,8 @@ export function ContentPlanPage() {
 
   const editorChannel = meta && editor ? meta.channels.find((channel) => channel.id === editor.channelId) : undefined;
   const limit = editorChannel?.platform === 'vk' ? 16000 : 4096;
+  const isVkEditor = editorChannel?.platform === 'vk';
+  const platformLabel = isVkEditor ? 'ВКонтакте' : 'Telegram';
   const textLength = editor?.text.length ?? 0;
 
   const openNew = (dateKey?: string) => {
@@ -404,6 +414,54 @@ export function ContentPlanPage() {
     }
   };
 
+  const openTelegramChannel = () => {
+    if (!meta) return;
+    if (!meta.telegramBot.configured) {
+      setBotError('');
+      setBotOpen(true);
+      showToast('Сначала подключите своего бота.');
+      return;
+    }
+    setConnectError('');
+    setConnectOpen(true);
+  };
+
+  const openVk = async () => {
+    setVkOpen(true);
+    setVkLoading(true);
+    setVkError('');
+    setVkGroups([]);
+    setVkWallScope(true);
+    try {
+      const data = await apiGet<VkGroupsData>('/api/content-plan/vk/groups');
+      setVkGroups(data.items);
+      setVkWallScope(data.wallScope);
+    } catch (reason) {
+      setVkError(reason instanceof Error ? reason.message : 'Не удалось загрузить группы ВК.');
+    } finally {
+      setVkLoading(false);
+    }
+  };
+
+  const connectVk = async (group: VkGroup) => {
+    if (!vkWallScope || vkConnecting) return;
+    setVkConnecting(group.id);
+    setVkError('');
+    try {
+      const channel = await apiPost<PlanChannel>('/api/content-plan/channels/vk', { groupId: group.id });
+      setMeta((current) => current ? {
+        ...current,
+        channels: [...current.channels.filter((item) => item.id !== channel.id), channel]
+      } : current);
+      setVkOpen(false);
+      showToast('Группа подключена: ' + channel.title);
+    } catch (reason) {
+      setVkError(reason instanceof Error ? reason.message : 'Не удалось подключить группу.');
+    } finally {
+      setVkConnecting(0);
+    }
+  };
+
   const connectChannel = async () => {
     if (!channelRef.trim() || connecting) return;
     setConnecting(true);
@@ -550,7 +608,7 @@ export function ContentPlanPage() {
             </div>
             <div className="cp-bot-row">
               <div className="cp-bot-main">
-                <strong>Свой бот</strong>
+                <strong>Telegram-бот</strong>
                 <small>{meta.telegramBot.configured ? '@' + meta.telegramBot.username + ' · подключён' : 'не подключён'}</small>
               </div>
               <button className="cp-bot-action" type="button" onClick={() => { setBotError(''); setBotOpen(true); }}>
@@ -576,25 +634,17 @@ export function ContentPlanPage() {
               </div>
             ) : (
               <div className="cp-empty">
-                <p>Пока нет каналов. {meta.telegramBot.configured ? 'Добавьте бота в Telegram-канал и вставьте ссылку.' : 'Сначала подключите своего бота.'}</p>
+                <p>Пока нет каналов. Подключите Telegram-бота и канал или группу ВК.</p>
               </div>
             )}
-            <button
-              className="secondary-button cp-full"
-              type="button"
-              onClick={() => {
-                if (!meta.telegramBot.configured) {
-                  setBotError('');
-                  setBotOpen(true);
-                  showToast('Сначала подключите своего бота.');
-                  return;
-                }
-                setConnectError('');
-                setConnectOpen(true);
-              }}
-            >
-              <Plus size={15} /> Подключить канал
-            </button>
+            <div className="cp-connect-row">
+              <button className="secondary-button" type="button" onClick={openTelegramChannel}>
+                <Plus size={14} /> Telegram
+              </button>
+              <button className="secondary-button" type="button" onClick={() => void openVk()}>
+                <Plus size={14} /> ВК
+              </button>
+            </div>
           </section>
 
           <section className="cp-card">
@@ -656,7 +706,7 @@ export function ContentPlanPage() {
                 <span>Канал</span>
                 <select value={editor.channelId} onChange={(event) => setEditor({ ...editor, channelId: event.target.value })}>
                   {meta.channels.map((channel) => (
-                    <option key={channel.id} value={channel.id}>{channel.title}</option>
+                    <option key={channel.id} value={channel.id}>{channel.title} · {channel.platform === 'vk' ? 'ВК' : 'TG'}</option>
                   ))}
                 </select>
               </label>
@@ -696,13 +746,17 @@ export function ContentPlanPage() {
                     onChange={(event) => setEditor({ ...editor, text: event.target.value })}
                     placeholder="Напишите пост…"
                   />
-                  <p className="cp-md-hint">Markdown: **жирный**, _курсив_, `код`, [текст](ссылка), списки `- `, цитаты `&gt;`. Для Telegram при отправке преобразуем в HTML.</p>
+                  <p className="cp-md-hint">
+                    {isVkEditor
+                      ? 'Markdown: **жирный**, _курсив_, [текст](ссылка), списки. Для ВК преобразуем в формат стены; код и цитаты могут остаться текстом.'
+                      : 'Markdown: **жирный**, _курсив_, `код`, [текст](ссылка), списки `- `, цитаты `&gt;`. Для Telegram при отправке преобразуем в HTML.'}
+                  </p>
                 </>
               ) : (
                 <div className="cp-preview">
                   <div className="cp-preview-head">
-                    <span className="cp-preview-ava">TG</span>
-                    <div><strong>{editorChannel?.title || 'Канал'}</strong><small>Telegram · предпросмотр</small></div>
+                    <span className={'cp-preview-ava' + (isVkEditor ? ' vk' : '')}>{isVkEditor ? 'VK' : 'TG'}</span>
+                    <div><strong>{editorChannel?.title || 'Канал'}</strong><small>{platformLabel} · предпросмотр</small></div>
                   </div>
                   <div className="cp-preview-text" dangerouslySetInnerHTML={{ __html: previewHtml || '<span class="cp-muted">Текст поста появится здесь.</span>' }} />
                   <div className="cp-preview-foot">{editor.date ? formatDayKey(editor.date) : 'Без даты'} · {editor.time || '—'} · {timeZone}</div>
@@ -763,6 +817,64 @@ export function ContentPlanPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {vkOpen && (
+        <div className="cp-modal-overlay" onClick={() => { if (!vkConnecting) setVkOpen(false); }}>
+          <div className="cp-modal cp-vk-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="cp-modal-head">
+              <div>
+                <h3>Группа ВКонтакте</h3>
+                <p className="cp-modal-text" style={{ margin: '4px 0 0' }}>Публиковать можно только в группы, где вы администратор.</p>
+              </div>
+              <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={() => { if (!vkConnecting) setVkOpen(false); }}><X size={16} /></button>
+            </div>
+            {!vkLoading && !vkWallScope && (
+              <div className="cp-vk-warning">
+                <span>ВК не разрешил публикацию на стене. Переподключите ВК и подтвердите доступ.</span>
+                <a className="primary-button cp-vk-reauth" href="/api/auth/vk/publishing-start">Переподключить ВК</a>
+              </div>
+            )}
+            {vkLoading ? (
+              <p className="cp-muted">Загружаем группы…</p>
+            ) : (
+              <>
+                {vkError && (
+                  <div className="cp-error">
+                    {vkError}
+                    <a className="cp-vk-error-link" href="/api/auth/vk/publishing-start">Переподключить ВК</a>
+                  </div>
+                )}
+                {vkGroups.length ? (
+                  <div className="cp-vk-list">
+                    {vkGroups.map((group) => (
+                      <div className="cp-vk-group" key={group.id}>
+                        <span className="cp-vk-ava">VK</span>
+                        <div className="cp-vk-main">
+                          <strong>{group.name}</strong>
+                          <small>vk.com/{group.screenName || group.id} · {group.membersCount.toLocaleString('ru-RU')} участников</small>
+                        </div>
+                        <button
+                          className="secondary-button cp-vk-connect"
+                          type="button"
+                          disabled={!vkWallScope || Boolean(vkConnecting)}
+                          onClick={() => void connectVk(group)}
+                        >
+                          {vkConnecting === group.id ? 'Подключаем…' : 'Подключить'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  !vkError && <p className="cp-muted">Вы не администратор ни одной группы ВК.</p>
+                )}
+              </>
+            )}
+            <div className="cp-modal-actions">
+              <button className="secondary-button" type="button" disabled={Boolean(vkConnecting)} onClick={() => setVkOpen(false)}>Закрыть</button>
+            </div>
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@ import { requireUser } from '../middleware/auth.js';
 import { isFeatureEnabledFor } from '../services/featureFlags.js';
 import { connectBot, connectTelegramChannel, createPost, deleteChannel, deletePost, disconnectBot, getPlanMeta, listChannels, updatePost } from '../services/contentPlanService.js';
 import { publishNow } from '../services/contentPlanPublisher.js';
+import { connectVkGroup, listVkGroups } from '../services/vkContentPlanService.js';
 
 /**
  * Контент-план: календарь публикаций. Этап 1 — подключение Telegram-каналов
@@ -45,6 +46,22 @@ contentPlanRouter.delete('/bot/telegram', async (req, res, next) => {
   try {
     await disconnectBot(req.user!.id);
     res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.get('/vk/groups', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await listVkGroups(req.user!.id) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.post('/channels/vk', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await connectVkGroup(req.user!.id, req.body?.groupId) });
   } catch (error) {
     next(error);
   }

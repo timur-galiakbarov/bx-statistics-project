@@ -73,6 +73,7 @@ const sessionCookieOptions = {
 };
 
 const acquisitionCookie = acquisitionCookieName;
+const vkPublishingCookie = 'socstat_vk_publishing';
 
 export const authRouter = Router();
 
@@ -87,6 +88,7 @@ function redirectToLoginWithError(res: Parameters<Parameters<typeof authRouter.g
   }
 
   res.clearCookie(env.oauthStateCookie, { path: '/' });
+  res.clearCookie(vkPublishingCookie, { path: '/' });
   res.redirect(redirectUrl.toString());
 }
 
@@ -122,21 +124,36 @@ export function buildVkAuthorizeUrl(options: {
   responseType: 'code' | 'token';
   redirectUrl: string;
   state: string;
+  scope?: string;
+  revoke?: boolean;
 }) {
   const params = new URLSearchParams({
     client_id: env.vkClientId,
     redirect_uri: options.redirectUrl,
     response_type: options.responseType,
-    scope: env.vkAuthScope,
+    scope: options.scope ?? env.vkAuthScope,
     state: options.state,
     v: '5.131'
   });
 
-  if (env.vkForceRevoke) {
+  if (options.revoke ?? env.vkForceRevoke) {
     params.set('revoke', '1');
   }
 
   return `https://oauth.vk.com/authorize?${params.toString()}`;
+}
+
+function vkPublishingScope() {
+  const scopes = env.vkAuthScope.split(',').map((item) => item.trim()).filter(Boolean);
+  if (!scopes.includes('wall')) scopes.push('wall');
+  return scopes.join(',');
+}
+
+function afterVkPublishingRedirect() {
+  const url = new URL(env.authSuccessRedirectUrl);
+  url.pathname = '/app/content-plan';
+  url.search = '';
+  return url.toString();
 }
 
 async function fetchVkUser(accessToken: string, userId: number) {
@@ -193,6 +210,7 @@ async function createVkSession(options: {
 authRouter.get('/vk/start', (_req, res) => {
   const state = randomBytes(24).toString('hex');
 
+  res.clearCookie(vkPublishingCookie, { path: '/' });
   res.cookie(env.oauthStateCookie, state, {
     ...sessionCookieOptions,
     maxAge: 10 * 60 * 1000
@@ -208,11 +226,26 @@ authRouter.get('/vk/implicit-start', (_req, res) => {
 
   const state = randomBytes(24).toString('hex');
 
+  res.clearCookie(vkPublishingCookie, { path: '/' });
   res.cookie(env.oauthStateCookie, state, {
     ...sessionCookieOptions,
     maxAge: 10 * 60 * 1000
   });
   res.redirect(buildVkAuthorizeUrl({ responseType: 'token', redirectUrl: env.vkImplicitRedirectUrl, state }));
+});
+
+authRouter.get('/vk/publishing-start', (_req, res) => {
+  const state = randomBytes(24).toString('hex');
+  const options = { ...sessionCookieOptions, maxAge: 10 * 60 * 1000 };
+  res.cookie(env.oauthStateCookie, state, options);
+  res.cookie(vkPublishingCookie, '1', options);
+  res.redirect(buildVkAuthorizeUrl({
+    responseType: 'code',
+    redirectUrl: env.vkPublicRedirectUrl,
+    state,
+    scope: vkPublishingScope(),
+    revoke: true
+  }));
 });
 
 authRouter.get('/vk/callback', async (req, res, next) => {
@@ -271,13 +304,15 @@ authRouter.get('/vk/callback', async (req, res, next) => {
       acquisitionCookie: req.cookies?.[acquisitionCookie]
     });
 
+    const isPublishing = req.cookies?.[vkPublishingCookie] === '1';
     res.clearCookie(env.oauthStateCookie, { path: '/' });
     res.clearCookie(acquisitionCookie, { path: '/' });
+    res.clearCookie(vkPublishingCookie, { path: '/' });
     res.cookie(env.sessionCookie, session.token, {
       ...sessionCookieOptions,
       expires: session.expiresAt
     });
-    res.redirect(env.authSuccessRedirectUrl);
+    res.redirect(isPublishing ? afterVkPublishingRedirect() : env.authSuccessRedirectUrl);
   } catch (error) {
     next(error);
   }

@@ -18,3 +18,11 @@ test('content plan markdown renders lists and quotes', () => {
   assert.equal(renderContentPlanMarkdown('- один\n- два'), '<ul><li>один</li><li>два</li></ul>');
   assert.equal(renderContentPlanMarkdown('> цитата'), '<blockquote>цитата</blockquote>');
 });
+
+
+test('content plan markdown renders VK links', () => {
+  assert.equal(
+    renderContentPlanMarkdown('[https://example.com|ссылка]'),
+    '<div><a href="https://example.com" target="_blank" rel="noreferrer">ссылка</a></div>'
+  );
+});

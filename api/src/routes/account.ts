@@ -18,7 +18,7 @@ import {
 } from '../repositories/accountRepository.js';
 import { requireAdmin, requireUser } from '../middleware/auth.js';
 import { getUserReportPassState } from '../middleware/access.js';
-import { getFeatureModes, isFeatureEnabledFor, isFeatureKey, isFeatureMode, setFeatureMode } from '../services/featureFlags.js';
+import { getFeatureMode, getFeatureModes, isFeatureEnabledFor, isFeatureKey, isFeatureMode, isFeatureOnFor, setFeatureMode } from '../services/featureFlags.js';
 import { getNotificationSettings } from './notifications.js';
 import { env } from '../config/env.js';
 import { subscribeToAccountEvents } from '../services/accountEvents.js';
@@ -70,6 +70,7 @@ accountRouter.get('/auth/status', (req, res) => {
 accountRouter.get('/me', requireUser, async (req, res, next) => {
   const user = req.user!;
   try {
+    const contentPlanMode = await getFeatureMode('contentPlan');
     res.json({
       success: true,
       data: {
@@ -89,7 +90,8 @@ accountRouter.get('/me', requireUser, async (req, res, next) => {
           reportPass: getUserReportPassState(user),
           vkReports: await getNotificationSettings(user),
           placementsEnabled: await isFeatureEnabledFor('placements', user),
-          contentPlanEnabled: await isFeatureEnabledFor('contentPlan', user)
+          contentPlanEnabled: isFeatureOnFor(contentPlanMode, user),
+          contentPlanMode
         }
       }
     });

@@ -105,7 +105,7 @@ function postsOnDay(posts: PlanPost[], key: string, filter: string) {
     .sort((a, b) => (a.scheduledAt || '').localeCompare(b.scheduledAt || ''));
 }
 
-export function ContentPlanPage() {
+export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [error, setError] = useState('');
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
@@ -537,7 +537,7 @@ export function ContentPlanPage() {
           </div>
         </div>
         <div className="cp-actions">
-          <span className="content-tag"><ShieldCheck size={13} /> Только для админов</span>
+          {adminOnly && <span className="content-tag"><ShieldCheck size={13} /> Только для админов</span>}
           <button className="primary-button" type="button" onClick={() => openNew(todayKey)}>
             <Plus size={16} /> Новый пост
           </button>

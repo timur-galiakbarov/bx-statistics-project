@@ -18,6 +18,8 @@ export type User = {
   placementsEnabled?: boolean;
   /** Контент-план включён этому пользователю переключателем фичи. */
   contentPlanEnabled?: boolean;
+  /** Режим фичи contentPlan: по нему показываем плашку «только для админов». */
+  contentPlanMode?: FeatureMode;
 };
 
 /** Один полный отчёт VK или YouTube на 24 часа раз в 30 дней для пользователя без доступа. */

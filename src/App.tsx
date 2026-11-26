@@ -251,6 +251,8 @@ export function App() {
     contentPlan: Boolean(user?.contentPlanEnabled)
   };
   const visibleNavItems = [...navItems, adminNavItem].filter((item) => (!item.adminOnly || user?.isAdmin) && (!item.feature || featureEnabled[item.feature]));
+  // «Только для админов» показываем и у фич, которые сейчас включены в режиме admins.
+  const showAdminBadge = (item: NavItem) => Boolean(item.adminOnly || (item.feature === 'contentPlan' && user?.contentPlanMode === 'admins'));
   const hasPaidAccess = (user?.isAdmin && !user.enforceAccessRestrictions)
     || ((!user?.activeToExact || user.activeToExact !== expiredAccessEnd)
       && isAccessActive(user?.activeTo, user?.activeToExact));
@@ -291,7 +293,7 @@ export function App() {
                 <span>{item.label}</span>
                 {item.description && <small>{item.description}</small>}
               </span>
-              {item.adminOnly && <span className="nav-admin-badge" title="Только для администратора" aria-label="Только для администратора"><ShieldCheck size={15} aria-hidden="true" /></span>}
+              {showAdminBadge(item) && <span className="nav-admin-badge" title="Только для администратора" aria-label="Только для администратора"><ShieldCheck size={15} aria-hidden="true" /></span>}
             </NavLink>
           ))}
         </nav>
@@ -371,7 +373,7 @@ export function App() {
           />
           <Route path="/ad-check" element={user?.isAdmin ? <AdCheckPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/placements" element={user?.placementsEnabled ? <PlacementsPage groups={groups} /> : <Navigate to="/dashboard" replace />} />
-          <Route path="/content-plan" element={user?.contentPlanEnabled ? <ContentPlanPage /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/content-plan" element={user?.contentPlanEnabled ? <ContentPlanPage adminOnly={user.contentPlanMode === 'admins'} /> : <Navigate to="/dashboard" replace />} />
           <Route path="/compare" element={hasPaidAccess ? <ComparePage groups={groups} user={user} /> : <CompareShowcase />} />
           <Route path="/posts" element={hasPaidAccess ? <PostsPage groups={groups} /> : <PostsShowcase />} />
           <Route path="/content" element={user?.isAdmin ? <ContentPage /> : <Navigate to="/dashboard" replace />} />

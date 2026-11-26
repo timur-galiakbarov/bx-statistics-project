@@ -1,6 +1,7 @@
-import { CalendarClock, Check, Plus, Send, ShieldCheck, X } from 'lucide-react';
+import { CalendarClock, Check, Plus, Send, ShieldCheck, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { ApiError, apiDelete, apiGet, apiPost } from '../api/client';
+import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
+import { renderContentPlanMarkdown } from '../utils/contentPlanMarkdown';
 import './content.css';
 import './content-plan.css';
 
@@ -28,19 +29,32 @@ type PlanPost = {
 
 type TelegramBot = { configured: boolean; username: string; url: string; name: string; error: string };
 type Meta = { channels: PlanChannel[]; posts: PlanPost[]; telegramBot: TelegramBot };
-type Notice = { title: string; text: string };
+type EditorState = { postId: string | null; channelId: string; date: string; time: string; text: string };
 
 const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 const DOW = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const WEEKDAYS = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'];
+
+function pad(value: number) {
+  return value < 10 ? '0' + value : String(value);
+}
 
 function startOfMonth(value: Date) {
   return new Date(value.getFullYear(), value.getMonth(), 1);
 }
 
 function isoLocal(value: Date) {
-  const pad = (n: number) => (n < 10 ? '0' + n : String(n));
   return value.getFullYear() + '-' + pad(value.getMonth() + 1) + '-' + pad(value.getDate());
+}
+
+function localDate(iso: string | null) {
+  return iso ? isoLocal(new Date(iso)) : '';
+}
+
+function localTime(iso: string | null) {
+  if (!iso) return '10:00';
+  const date = new Date(iso);
+  return pad(date.getHours()) + ':' + pad(date.getMinutes());
 }
 
 function formatDayKey(key: string) {
@@ -54,8 +68,7 @@ function formatTime(iso: string) {
 }
 
 function formatDateTime(iso: string) {
-  const date = new Date(iso);
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ', ' + formatTime(iso);
+  return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ', ' + formatTime(iso);
 }
 
 function titleFrom(text: string) {
@@ -63,11 +76,10 @@ function titleFrom(text: string) {
   return first.replace(/[*_`#>\[\]]/g, '').replace(/\|/g, ' ').trim().slice(0, 80);
 }
 
-function postsOnDay(posts: PlanPost[], key: string, filter: string) {
-  return posts
-    .filter((post) => post.scheduledAt && (filter === 'all' || post.channelId === filter))
-    .filter((post) => isoLocal(new Date(post.scheduledAt as string)) === key)
-    .sort((a, b) => (a.scheduledAt || '').localeCompare(b.scheduledAt || ''));
+function nextSlot() {
+  const date = new Date(Date.now() + 3_600_000);
+  date.setMinutes(0, 0, 0);
+  return { date: isoLocal(date), time: pad(date.getHours()) + ':00' };
 }
 
 function calendarCells(month: Date) {
@@ -82,12 +94,11 @@ function calendarCells(month: Date) {
   });
 }
 
-function statusLabel(status: PlanPost['status']) {
-  if (status === 'draft') return 'Черновик';
-  if (status === 'scheduled') return 'Запланирован';
-  if (status === 'published') return 'Опубликован';
-  if (status === 'failed') return 'Ошибка';
-  return 'Публикуется';
+function postsOnDay(posts: PlanPost[], key: string, filter: string) {
+  return posts
+    .filter((post) => post.scheduledAt && (filter === 'all' || post.channelId === filter))
+    .filter((post) => isoLocal(new Date(post.scheduledAt as string)) === key)
+    .sort((a, b) => (a.scheduledAt || '').localeCompare(b.scheduledAt || ''));
 }
 
 export function ContentPlanPage() {
@@ -99,9 +110,13 @@ export function ContentPlanPage() {
   const [channelRef, setChannelRef] = useState('');
   const [connectError, setConnectError] = useState('');
   const [connecting, setConnecting] = useState(false);
-  const [notice, setNotice] = useState<Notice | null>(null);
+  const [editor, setEditor] = useState<EditorState | null>(null);
+  const [editorTab, setEditorTab] = useState<'text' | 'preview'>('text');
+  const [editorError, setEditorError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
   const toastTimer = useRef<number | undefined>(undefined);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   const todayKey = isoLocal(new Date());
@@ -128,18 +143,159 @@ export function ContentPlanPage() {
     toastTimer.current = window.setTimeout(() => setToast(''), 2800);
   };
 
-  const openDay = (key: string) => {
-    setNotice({
-      title: formatDayKey(key),
-      text: 'Редактор поста появится на следующем этапе. Сейчас можно посмотреть план и подключить Telegram-канал.'
-    });
+  const editorChannel = meta && editor ? meta.channels.find((channel) => channel.id === editor.channelId) : undefined;
+  const limit = editorChannel?.platform === 'vk' ? 16000 : 4096;
+  const textLength = editor?.text.length ?? 0;
+
+  const openNew = (dateKey?: string) => {
+    if (!meta) return;
+    if (!meta.channels.length) {
+      setConnectOpen(true);
+      showToast('Сначала подключите канал.');
+      return;
+    }
+    const channelId = filter !== 'all' && meta.channels.some((channel) => channel.id === filter)
+      ? filter
+      : meta.channels[0].id;
+    const slot = dateKey && dateKey !== todayKey ? { date: dateKey, time: '10:00' } : nextSlot();
+    if (dateKey && dateKey !== todayKey) setMonth(startOfMonth(new Date(dateKey + 'T00:00:00')));
+    setEditor({ postId: null, channelId, date: slot.date, time: slot.time, text: '' });
+    setEditorTab('text');
+    setEditorError('');
   };
 
-  const openPost = (post: PlanPost) => {
-    setNotice({
-      title: titleFrom(post.title || post.text),
-      text: `${statusLabel(post.status)}. ${post.scheduledAt ? formatDateTime(post.scheduledAt) : 'Без даты'}. Редактирование — следующий этап.`
+  const openEdit = (post: PlanPost) => {
+    if (!meta) return;
+    if (post.status === 'published' || post.status === 'publishing') {
+      showToast('Опубликованный пост нельзя редактировать.');
+      return;
+    }
+    const channel = meta.channels.find((item) => item.id === post.channelId);
+    if (!channel) {
+      showToast('Канал отключён. Подключите его снова.');
+      return;
+    }
+    setEditor({
+      postId: post.id,
+      channelId: post.channelId,
+      date: localDate(post.scheduledAt),
+      time: localTime(post.scheduledAt),
+      text: post.text
     });
+    setEditorTab('text');
+    setEditorError('');
+  };
+
+  const save = async (status: 'draft' | 'scheduled') => {
+    if (!editor || !meta || saving) return;
+    const channel = meta.channels.find((item) => item.id === editor.channelId);
+    const text = editor.text.trim();
+    if (!channel) {
+      setEditorError('Выберите подключённый канал.');
+      return;
+    }
+    if (!text) {
+      setEditorError('Добавьте текст поста.');
+      return;
+    }
+    if (text.length > limit) {
+      setEditorError(`Текст длиннее лимита ${limit.toLocaleString('ru-RU')} символов.`);
+      return;
+    }
+    let scheduledAt: string | null = null;
+    if (editor.date && editor.time) {
+      const local = new Date(`${editor.date}T${editor.time}:00`);
+      if (Number.isNaN(local.getTime())) {
+        setEditorError('Дата или время указаны неверно.');
+        return;
+      }
+      scheduledAt = local.toISOString();
+      if (status === 'scheduled' && local.getTime() < Date.now() - 60_000) {
+        setEditorError('Дата публикации уже прошла.');
+        return;
+      }
+    }
+    if (status === 'scheduled' && !scheduledAt) {
+      setEditorError('Выберите дату и время публикации.');
+      return;
+    }
+
+    setSaving(true);
+    setEditorError('');
+    try {
+      const payload = {
+        channelId: editor.channelId,
+        text: editor.text,
+        status,
+        scheduledAt,
+        timeZone
+      };
+      const post = editor.postId
+        ? await apiPatch<PlanPost>(`/api/content-plan/posts/${editor.postId}`, payload)
+        : await apiPost<PlanPost>('/api/content-plan/posts', payload);
+      setMeta((current) => {
+        if (!current) return current;
+        const exists = current.posts.some((item) => item.id === post.id);
+        return {
+          ...current,
+          posts: exists ? current.posts.map((item) => item.id === post.id ? post : item) : [...current.posts, post]
+        };
+      });
+      if (post.scheduledAt) setMonth(startOfMonth(new Date(post.scheduledAt)));
+      setEditor(null);
+      setEditorTab('text');
+      showToast(status === 'draft' ? 'Черновик сохранён' : 'Пост запланирован');
+    } catch (reason) {
+      setEditorError(reason instanceof Error ? reason.message : 'Не удалось сохранить пост.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removePost = async () => {
+    if (!editor?.postId || saving) return;
+    if (!window.confirm('Удалить этот пост?')) return;
+    setSaving(true);
+    setEditorError('');
+    try {
+      await apiDelete('/api/content-plan/posts/' + editor.postId);
+      setMeta((current) => current ? { ...current, posts: current.posts.filter((post) => post.id !== editor.postId) } : current);
+      setEditor(null);
+      showToast('Пост удалён');
+    } catch (reason) {
+      setEditorError(reason instanceof Error ? reason.message : 'Не удалось удалить пост.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const applyMarkdown = (kind: 'bold' | 'italic' | 'link' | 'list' | 'quote' | 'code') => {
+    const textarea = textareaRef.current;
+    if (!textarea || !editor) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.slice(start, end);
+    if (kind === 'list' || kind === 'quote') {
+      const prefix = kind === 'list' ? '- ' : '> ';
+      const lines = (selected || 'текст').split('\n').map((line) => prefix + line).join('\n');
+      textarea.setRangeText(lines, start, end, 'end');
+      textarea.focus();
+      setEditor({ ...editor, text: textarea.value });
+      return;
+    }
+    const [before, after, fallback] = kind === 'bold'
+      ? ['**', '**', 'текст']
+      : kind === 'italic'
+        ? ['_', '_', 'текст']
+        : kind === 'code'
+          ? ['`', '`', 'код']
+          : ['[', '](https://)', 'текст'];
+    const value = selected || fallback;
+    textarea.setRangeText(before + value + after, start, end, 'end');
+    textarea.focus();
+    textarea.selectionStart = start + before.length;
+    textarea.selectionEnd = start + before.length + value.length;
+    setEditor({ ...editor, text: textarea.value });
   };
 
   const connectChannel = async () => {
@@ -167,6 +323,8 @@ export function ContentPlanPage() {
     try {
       await apiDelete('/api/content-plan/channels/' + channel.id);
       setMeta((current) => current ? { ...current, channels: current.channels.filter((item) => item.id !== channel.id) } : current);
+      if (filter === channel.id) setFilter('all');
+      if (editor?.channelId === channel.id) setEditor(null);
       showToast('Канал отключён');
     } catch (reason) {
       showToast(reason instanceof Error ? reason.message : 'Не удалось отключить канал.');
@@ -198,6 +356,7 @@ export function ContentPlanPage() {
     .find((post) => post.scheduledAt && new Date(post.scheduledAt).getTime() >= Date.now()) || scheduled[0];
   const cells = calendarCells(month);
   const filteredDrafts = drafts.filter((post) => filter === 'all' || post.channelId === filter);
+  const previewHtml = editor ? renderContentPlanMarkdown(editor.text) : '';
 
   return (
     <div className="content-page cp-page">
@@ -205,7 +364,7 @@ export function ContentPlanPage() {
         <div>
           <div className="cp-eyebrow"><CalendarClock size={14} /> Контент-план</div>
           <h2>План публикаций</h2>
-          <p>Календарь и автопубликация. Время — в вашем часовом поясе: {timeZone}. Редактор постов — следующий этап.</p>
+          <p>Календарь и автопубликация. Время — в вашем часовом поясе: {timeZone}. Отправка постов — следующий этап.</p>
           <div className="cp-stats">
             <span><i className="cp-dot blue" /><b>{scheduled.length}</b> в плане</span>
             <span><i className="cp-dot amber" /><b>{drafts.length}</b> черновиков</span>
@@ -215,7 +374,7 @@ export function ContentPlanPage() {
         </div>
         <div className="cp-actions">
           <span className="content-tag"><ShieldCheck size={13} /> Только для админов</span>
-          <button className="primary-button" type="button" onClick={() => setNotice({ title: 'Новый пост', text: 'Редактор поста появится на следующем этапе. Сейчас можно подключить канал и посмотреть календарь.' })}>
+          <button className="primary-button" type="button" onClick={() => openNew(todayKey)}>
             <Plus size={16} /> Новый пост
           </button>
         </div>
@@ -248,10 +407,10 @@ export function ContentPlanPage() {
                 <div
                   key={cell.key}
                   className={'cp-day' + (cell.inMonth ? '' : ' other') + (cell.key === todayKey ? ' today' : '')}
-                  onClick={() => openDay(cell.key)}
+                  onClick={() => openNew(cell.key)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openDay(cell.key); }}
+                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openNew(cell.key); }}
                 >
                   <span className="cp-day-num">{cell.date.getDate()}</span>
                   {posts.slice(0, 2).map((post) => {
@@ -262,7 +421,7 @@ export function ContentPlanPage() {
                         className={'cp-post ' + post.status}
                         type="button"
                         title={`${channel?.title || 'Канал'} · ${post.scheduledAt ? formatTime(post.scheduledAt) : ''} · ${titleFrom(post.title || post.text)}`}
-                        onClick={(event) => { event.stopPropagation(); openPost(post); }}
+                        onClick={(event) => { event.stopPropagation(); openEdit(post); }}
                       >
                         <i className={'cp-dot ' + post.platform} />
                         <span className="cp-post-time">{post.scheduledAt ? formatTime(post.scheduledAt) : ''}</span>
@@ -312,10 +471,10 @@ export function ContentPlanPage() {
               <h3>Автопубликация</h3>
               <span className="cp-on"><Check size={12} /> Включена</span>
             </div>
-            <p className="cp-auto-text">Посты выходят по расписанию в вашем часовом поясе.</p>
+            <p className="cp-auto-text">Расписание сохраняется. Отправка постов — следующий этап.</p>
             {nextPost ? (
               <div className="cp-next">
-                <span>{formatDateTime(nextPost.scheduledAt as string)}</span>
+                <span>{nextPost.scheduledAt ? formatDateTime(nextPost.scheduledAt) : 'Без даты'}</span>
                 <strong>{titleFrom(nextPost.title || nextPost.text)}</strong>
               </div>
             ) : (
@@ -334,7 +493,7 @@ export function ContentPlanPage() {
                 {filteredDrafts.slice(0, 5).map((post) => {
                   const channel = meta.channels.find((item) => item.id === post.channelId);
                   return (
-                    <button className="cp-draft" type="button" key={post.id} onClick={() => openPost(post)}>
+                    <button className="cp-draft" type="button" key={post.id} onClick={() => openEdit(post)}>
                       <span>{titleFrom(post.title || post.text)}</span>
                       <small>{channel?.title || 'Канал'} · {post.scheduledAt ? formatDateTime(post.scheduledAt) : 'Без даты'}</small>
                     </button>
@@ -343,12 +502,91 @@ export function ContentPlanPage() {
               </div>
             ) : (
               <div className="cp-empty">
-                <p>Черновиков нет. Редактор постов — следующий этап.</p>
+                <p>Черновиков нет. Напишите пост и сохраните как черновик.</p>
               </div>
             )}
           </section>
         </aside>
       </div>
+
+      {editor && (
+        <div className="cp-editor-overlay" onClick={() => { if (!saving) setEditor(null); }}>
+          <aside className="cp-editor" onClick={(event) => event.stopPropagation()}>
+            <div className="cp-editor-head">
+              <div>
+                <span className="cp-eyebrow">{editor.postId ? 'Редактировать пост' : 'Новый пост'}</span>
+                <h3>{editor.date ? formatDayKey(editor.date) : 'Без даты'}</h3>
+              </div>
+              <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={() => { if (!saving) setEditor(null); }}><X size={16} /></button>
+            </div>
+            <div className="cp-editor-body">
+              <label className="cp-field">
+                <span>Канал</span>
+                <select value={editor.channelId} onChange={(event) => setEditor({ ...editor, channelId: event.target.value })}>
+                  {meta.channels.map((channel) => (
+                    <option key={channel.id} value={channel.id}>{channel.title}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="cp-editor-row">
+                <label className="cp-field">
+                  <span>Дата</span>
+                  <input type="date" value={editor.date} onChange={(event) => setEditor({ ...editor, date: event.target.value })} />
+                </label>
+                <label className="cp-field">
+                  <span>Время</span>
+                  <input type="time" value={editor.time} onChange={(event) => setEditor({ ...editor, time: event.target.value })} />
+                </label>
+              </div>
+              <div className="cp-editor-note"><Check size={13} /> Автопубликация включена · отправка на следующем этапе · {timeZone}</div>
+              <div className="cp-editor-tabs">
+                <button className={editorTab === 'text' ? 'active' : ''} type="button" onClick={() => setEditorTab('text')}>Текст</button>
+                <button className={editorTab === 'preview' ? 'active' : ''} type="button" onClick={() => setEditorTab('preview')}>Предпросмотр</button>
+                <span className={textLength > limit ? 'over' : ''}>{textLength.toLocaleString('ru-RU')} / {limit.toLocaleString('ru-RU')}</span>
+              </div>
+              {editorTab === 'text' ? (
+                <>
+                  <div className="cp-md-toolbar">
+                    <button type="button" title="Жирный" onClick={() => applyMarkdown('bold')}><b>B</b></button>
+                    <button type="button" title="Курсив" onClick={() => applyMarkdown('italic')}><i>I</i></button>
+                    <button type="button" title="Ссылка" onClick={() => applyMarkdown('link')}>↗</button>
+                    <button type="button" title="Список" onClick={() => applyMarkdown('list')}>•</button>
+                    <button type="button" title="Цитата" onClick={() => applyMarkdown('quote')}>❝</button>
+                    <button type="button" title="Код" onClick={() => applyMarkdown('code')}>`</button>
+                  </div>
+                  <textarea
+                    ref={textareaRef}
+                    className="cp-md-textarea"
+                    value={editor.text}
+                    onChange={(event) => setEditor({ ...editor, text: event.target.value })}
+                    placeholder="Напишите пост…"
+                  />
+                  <p className="cp-md-hint">Markdown: **жирный**, _курсив_, `код`, [текст](ссылка), списки `- `, цитаты `&gt;`. Для Telegram при отправке преобразуем в HTML.</p>
+                </>
+              ) : (
+                <div className="cp-preview">
+                  <div className="cp-preview-head">
+                    <span className="cp-preview-ava">TG</span>
+                    <div><strong>{editorChannel?.title || 'Канал'}</strong><small>Telegram · предпросмотр</small></div>
+                  </div>
+                  <div className="cp-preview-text" dangerouslySetInnerHTML={{ __html: previewHtml || '<span class="cp-muted">Текст поста появится здесь.</span>' }} />
+                  <div className="cp-preview-foot">{editor.date ? formatDayKey(editor.date) : 'Без даты'} · {editor.time || '—'} · {timeZone}</div>
+                </div>
+              )}
+              {editorError && <div className="cp-error">{editorError}</div>}
+            </div>
+            <div className="cp-editor-foot">
+              <div>{editor.postId && <button className="cp-editor-delete" type="button" onClick={() => void removePost()} disabled={saving}><Trash2 size={15} /> Удалить</button>}</div>
+              <div className="cp-editor-actions">
+                <button className="secondary-button" type="button" disabled={saving || !editor.text.trim()} onClick={() => void save('draft')}>Черновик</button>
+                <button className="primary-button" type="button" disabled={saving || !editor.text.trim() || !editor.date || !editor.time} onClick={() => void save('scheduled')}>
+                  {saving ? 'Сохраняем…' : 'Запланировать'}
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {connectOpen && (
         <div className="cp-modal-overlay" onClick={() => setConnectOpen(false)}>
@@ -389,21 +627,6 @@ export function ContentPlanPage() {
                 </div>
               </>
             )}
-          </div>
-        </div>
-      )}
-
-      {notice && (
-        <div className="cp-modal-overlay" onClick={() => setNotice(null)}>
-          <div className="cp-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="cp-modal-head">
-              <h3>{notice.title}</h3>
-              <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={() => setNotice(null)}><X size={16} /></button>
-            </div>
-            <p className="cp-modal-text">{notice.text}</p>
-            <div className="cp-modal-actions">
-              <button className="primary-button" type="button" onClick={() => setNotice(null)}>Понятно</button>
-            </div>
           </div>
         </div>
       )}

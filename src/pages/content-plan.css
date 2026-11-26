@@ -1484,3 +1484,83 @@
     width: auto;
   }
 }
+
+/* Явное состояние своего Telegram-бота */
+.cp-bot-pill {
+  align-items: center;
+  background: #eef2ef;
+  border-radius: 999px;
+  color: #7b8a82;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+}
+
+.cp-bot-pill.connected {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.cp-bot-status {
+  align-items: center;
+  background: #f5faf7;
+  border: 1px solid #d8e9df;
+  border-radius: 8px;
+  display: flex;
+  gap: 8px;
+  padding: 8px 9px;
+}
+
+.cp-bot-status-icon {
+  align-items: center;
+  background: #e3efe8;
+  border-radius: 50%;
+  color: #21815f;
+  display: grid;
+  flex: none;
+  height: 24px;
+  place-items: center;
+  width: 24px;
+}
+
+.cp-bot-status .cp-bot-main {
+  flex: 1;
+}
+
+.cp-bot-status .cp-bot-main strong {
+  color: #20332f;
+  font-size: 11.5px;
+}
+
+.cp-bot-status .cp-bot-main small {
+  color: #6b8a79;
+  font-size: 10px;
+}
+
+.cp-empty-success {
+  background: #f5faf7;
+  border: 1px solid #d8e9df;
+  border-radius: 8px;
+  padding: 14px 12px;
+}
+
+.cp-empty-check {
+  align-items: center;
+  background: #e8f5e9;
+  border-radius: 50%;
+  color: #2e7d32;
+  display: grid;
+  height: 28px;
+  margin: 0 auto 6px;
+  place-items: center;
+  width: 28px;
+}
+
+.cp-empty-success p {
+  color: #3d5248;
+  font-size: 11.5px;
+  line-height: 1.45;
+  margin: 0 auto;
+  max-width: 260px;
+}

@@ -396,6 +396,7 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
 
   const saveBot = async () => {
     if (!botToken.trim() || botSaving) return;
+    const firstBot = !meta?.telegramBot.configured;
     setBotSaving(true);
     setBotError('');
     try {
@@ -404,7 +405,12 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
       setBotOpen(false);
       setBotToken('');
       setShowBotToken(false);
-      showToast('Бот подключён: @' + bot.username);
+      showToast(firstBot ? 'Бот подключён. Теперь добавьте канал.' : 'Бот обновлён: @' + bot.username);
+      if (firstBot) {
+        setChannelRef('');
+        setConnectError('');
+        setConnectOpen(true);
+      }
       refreshMeta();
     } catch (reason) {
       setBotError(reason instanceof Error ? reason.message : 'Не удалось подключить бота.');
@@ -622,21 +628,42 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
         <aside className="cp-rail">
           <section className="cp-card">
             <div className="cp-card-head">
+              <h3>Свой Telegram-бот</h3>
+              <span className={'cp-bot-pill' + (meta.telegramBot.configured ? ' connected' : '')}>
+                {meta.telegramBot.configured ? 'Подключён' : 'Не подключён'}
+              </span>
+            </div>
+            {meta.telegramBot.configured ? (
+              <>
+                <div className="cp-bot-status">
+                  <span className="cp-bot-status-icon"><Check size={13} /></span>
+                  <div className="cp-bot-main">
+                    <strong>@{meta.telegramBot.username}</strong>
+                    <small>готов публиковать</small>
+                  </div>
+                  <button className="cp-bot-action" type="button" onClick={() => { setBotError(''); setBotOpen(true); }}>
+                    Заменить
+                  </button>
+                </div>
+                {meta.telegramBot.status !== 'connected' && (
+                  <div className="cp-bot-warning">{meta.telegramBot.error || 'Токен бота нужно проверить.'}</div>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="cp-muted">Создайте бота в BotFather — он будет публиковать в ваши каналы.</p>
+                <button className="secondary-button cp-full" type="button" onClick={() => { setBotError(''); setBotOpen(true); }}>
+                  <Bot size={15} /> Подключить бота
+                </button>
+              </>
+            )}
+          </section>
+
+          <section className="cp-card">
+            <div className="cp-card-head">
               <h3>Каналы для публикации</h3>
               <span className="cp-count">{meta.channels.length}</span>
             </div>
-            <div className="cp-bot-row">
-              <div className="cp-bot-main">
-                <strong>Telegram-бот</strong>
-                <small>{meta.telegramBot.configured ? '@' + meta.telegramBot.username + ' · подключён' : 'не подключён'}</small>
-              </div>
-              <button className="cp-bot-action" type="button" onClick={() => { setBotError(''); setBotOpen(true); }}>
-                {meta.telegramBot.configured ? 'Заменить' : 'Подключить'}
-              </button>
-            </div>
-            {meta.telegramBot.configured && meta.telegramBot.status !== 'connected' && (
-              <div className="cp-bot-warning">{meta.telegramBot.error || 'Токен бота нужно проверить.'}</div>
-            )}
             {meta.channels.length ? (
               <div className="cp-channels">
                 {meta.channels.map((channel) => (
@@ -652,8 +679,13 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
                 ))}
               </div>
             ) : (
-              <div className="cp-empty">
-                <p>Пока нет каналов. Подключите Telegram-бота и канал или группу ВК.</p>
+              <div className={'cp-empty' + (meta.telegramBot.configured ? ' cp-empty-success' : '')}>
+                {meta.telegramBot.configured && <span className="cp-empty-check"><Check size={15} /></span>}
+                <p>
+                  {meta.telegramBot.configured
+                    ? 'Бот подключён. Осталось добавить канал или группу ВК.'
+                    : 'Пока нет каналов. Подключите Telegram-бота или группу ВК.'}
+                </p>
               </div>
             )}
             <div className="cp-connect-row">

@@ -1,4 +1,4 @@
-import { CalendarClock, Check, Plus, Send, ShieldCheck, Trash2, X } from 'lucide-react';
+import { Bot, CalendarClock, Check, Plus, Send, ShieldCheck, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
 import { renderContentPlanMarkdown } from '../utils/contentPlanMarkdown';
@@ -179,8 +179,15 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
   const openNew = (dateKey?: string) => {
     if (!meta) return;
     if (!meta.channels.length) {
-      setConnectOpen(true);
-      showToast('Сначала подключите канал.');
+      if (!meta.telegramBot.configured) {
+        setBotError('');
+        setBotOpen(true);
+        showToast('Сначала подключите своего бота.');
+      } else {
+        setConnectError('');
+        setConnectOpen(true);
+        showToast('Сначала подключите канал.');
+      }
       return;
     }
     const channelId = filter !== 'all' && meta.channels.some((channel) => channel.id === filter)
@@ -781,15 +788,32 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
         <div className="cp-modal-overlay" onClick={() => setConnectOpen(false)}>
           <div className="cp-modal" onClick={(event) => event.stopPropagation()}>
             <div className="cp-modal-head">
-              <h3>Подключить Telegram-канал</h3>
+              <div className="cp-modal-heading">
+                <span className="cp-modal-icon"><Send size={19} /></span>
+                <div>
+                  <h3>Подключить Telegram-канал</h3>
+                  <p className="cp-modal-subtitle">Свой бот публикует посты в этот канал.</p>
+                </div>
+              </div>
               <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={() => setConnectOpen(false)}><X size={16} /></button>
             </div>
             {meta.telegramBot.configured ? (
               <>
-                <p className="cp-modal-text">
-                  1. Добавьте {meta.telegramBot.username ? <a href={meta.telegramBot.url} target="_blank" rel="noreferrer">@{meta.telegramBot.username}</a> : 'бота'} в канал администратором с правом «Публиковать сообщения».
-                </p>
-                <p className="cp-modal-text">2. Вставьте <b>@username</b> канала или ссылку <b>t.me/…</b>.</p>
+                <div className="cp-current-bot">
+                  <i className="cp-dot telegram" />
+                  <span>Публикует <a href={meta.telegramBot.url} target="_blank" rel="noreferrer">@{meta.telegramBot.username}</a></span>
+                  <button type="button" onClick={() => { setConnectOpen(false); setBotError(''); setBotOpen(true); }}>Заменить</button>
+                </div>
+                <div className="cp-connect-steps">
+                  <div className="cp-connect-step">
+                    <span>1</span>
+                    <p>Добавьте <a href={meta.telegramBot.url} target="_blank" rel="noreferrer">@{meta.telegramBot.username}</a> в канал администратором с правом «Публиковать сообщения».</p>
+                  </div>
+                  <div className="cp-connect-step">
+                    <span>2</span>
+                    <p>Вставьте <b>@username</b> канала или ссылку <b>t.me/…</b>.</p>
+                  </div>
+                </div>
                 {meta.telegramBot.error && <div className="cp-error">{meta.telegramBot.error}</div>}
                 <label className="cp-field">
                   <span>Канал</span>
@@ -810,7 +834,11 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
               </>
             ) : (
               <>
-                <p className="cp-modal-text">Сначала подключите своего Telegram-бота — он будет публиковать в канал.</p>
+                <div className="cp-modal-empty">
+                  <span className="cp-modal-icon"><Bot size={22} /></span>
+                  <h4>Сначала подключите бота</h4>
+                  <p>Он будет публиковать посты в канал. Создать бота можно за минуту в BotFather.</p>
+                </div>
                 <div className="cp-modal-actions">
                   <button className="secondary-button" type="button" onClick={() => setConnectOpen(false)}>Закрыть</button>
                   <button className="primary-button" type="button" onClick={() => { setConnectOpen(false); setBotError(''); setBotOpen(true); }}>Подключить бота</button>
@@ -825,9 +853,12 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
         <div className="cp-modal-overlay" onClick={() => { if (!vkConnecting) setVkOpen(false); }}>
           <div className="cp-modal cp-vk-modal" onClick={(event) => event.stopPropagation()}>
             <div className="cp-modal-head">
-              <div>
-                <h3>Группа ВКонтакте</h3>
-                <p className="cp-modal-text" style={{ margin: '4px 0 0' }}>Публиковать можно только в группы, где вы администратор.</p>
+              <div className="cp-modal-heading">
+                <span className="cp-modal-icon"><Send size={19} /></span>
+                <div>
+                  <h3>Группа ВКонтакте</h3>
+                  <p className="cp-modal-subtitle">Публиковать можно только в группы, где вы администратор.</p>
+                </div>
               </div>
               <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={() => { if (!vkConnecting) setVkOpen(false); }}><X size={16} /></button>
             </div>
@@ -883,9 +914,12 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
         <div className="cp-modal-overlay" onClick={() => { if (!botSaving) setBotOpen(false); }}>
           <div className="cp-modal cp-bot-modal" onClick={(event) => event.stopPropagation()}>
             <div className="cp-modal-head">
-              <div>
-                <h3>Свой Telegram-бот</h3>
-                <p className="cp-modal-text" style={{ margin: '4px 0 0' }}>Публиковать будет ваш бот: вы контролируете доступ и можете отозвать токен в BotFather.</p>
+              <div className="cp-modal-heading">
+                <span className="cp-modal-icon"><Bot size={20} /></span>
+                <div>
+                  <h3>Свой Telegram-бот</h3>
+                  <p className="cp-modal-subtitle">Публикует в ваши каналы. Вы контролируете доступ и можете отозвать токен.</p>
+                </div>
               </div>
               <button className="cp-icon-button" type="button" aria-label="Закрыть" onClick={() => { if (!botSaving) setBotOpen(false); }}><X size={16} /></button>
             </div>
@@ -896,7 +930,14 @@ export function ContentPlanPage({ adminOnly = false }: { adminOnly?: boolean }) 
               <li>Вставьте сюда. Потом добавьте бота в канал администратором с правом «Публиковать сообщения».</li>
             </ol>
             {meta.telegramBot.configured && (
-              <p className="cp-muted">Сейчас подключён <a href={meta.telegramBot.url} target="_blank" rel="noreferrer">@{meta.telegramBot.username}</a>. Новый токен заменит его; каналы нужно будет проверить.</p>
+              <div className="cp-current-bot">
+                <i className="cp-dot telegram" />
+                <span>Сейчас подключён <a href={meta.telegramBot.url} target="_blank" rel="noreferrer">@{meta.telegramBot.username}</a></span>
+                <a href={meta.telegramBot.url} target="_blank" rel="noreferrer">Открыть</a>
+              </div>
+            )}
+            {meta.telegramBot.configured && (
+              <p className="cp-bot-note">Новый токен заменит текущего бота; каналы нужно будет проверить.</p>
             )}
             <label className="cp-field">
               <span>Токен бота</span>

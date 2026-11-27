@@ -15,14 +15,249 @@ import {
   Send,
   Settings2,
   ShieldCheck,
+  Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
 import { renderContentPlanMarkdown } from '../utils/contentPlanMarkdown';
 import './content.css';
 import './content-plan.css';
+
+type TextQuota = { remaining: number; period: 'day' | 'month' };
+
+function PostTextGenerator({ platform, caption, disabled, hasText, onInsert }: {
+  platform: 'vk' | 'telegram';
+  caption: boolean;
+  disabled: boolean;
+  hasText: boolean;
+  onInsert: (text: string) => void;
+}) {
+  const id = useId();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [topic, setTopic] = useState('');
+  const [result, setResult] = useState('');
+  const [quota, setQuota] = useState<TextQuota>();
+  const [checking, setChecking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [confirmReplace, setConfirmReplace] = useState(false);
+  const endpoint = '/api/content-plan/ai/text';
+
+  async function refreshQuota() {
+    setChecking(true);
+    try {
+      setQuota(await apiGet<TextQuota>(endpoint));
+    } catch (reason) {
+      setQuota(undefined);
+      setError(reason instanceof ApiError ? reason.message : 'Не удалось проверить лимит.');
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  async function generate() {
+    if (busy || disabled || checking || !topic.trim() || !quota?.remaining) return;
+    setBusy(true);
+    setError('');
+    setConfirmReplace(false);
+    try {
+      const response = await apiPost<TextQuota & { text: string }>(endpoint, { topic, platform, caption });
+      setResult(response.text);
+      setQuota(response);
+    } catch (reason) {
+      setError(reason instanceof ApiError ? reason.message : 'Не удалось сгенерировать текст. Попробуйте снова.');
+      await refreshQuota();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function close() {
+    setOpen(false);
+    setConfirmReplace(false);
+    trigger.current?.focus();
+  }
+
+  function insert() {
+    if (hasText && !confirmReplace) {
+      setConfirmReplace(true);
+      return;
+    }
+    onInsert(result);
+    close();
+  }
+
+  return <div className="cp-ai">
+    <button className="secondary-button" type="button" ref={trigger} aria-expanded={open}
+      aria-controls={open ? id : undefined} disabled={disabled} onClick={() => {
+        if (open) close();
+        else {
+          setOpen(true);
+          setError('');
+          if (!busy) void refreshQuota();
+        }
+      }}><Sparkles size={16} aria-hidden="true" /> Сгенерировать текст</button>
+    {open && <div className="cp-ai-panel" id={id}>
+      <label htmlFor={id + '-topic'}>О чём пост?</label>
+      <textarea id={id + '-topic'} autoFocus rows={3} maxLength={1000} value={topic}
+        disabled={disabled || busy} placeholder="Например, анонс мастер-класса по керамике. Укажи, что можно прийти без опыта."
+        onChange={(event) => setTopic(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            void generate();
+          }
+        }} />
+      <small role="status">{busy ? 'Генерируем текст…' : checking ? 'Проверяем лимит…' : quota
+        ? 'Осталось ' + quota.remaining + (quota.period === 'day' ? ' сегодня' : ' из 30 за последние 30 дней') : ''}</small>
+      {error && <p className="cp-ai-error" role="alert">{error}</p>}
+      <div className="cp-ai-actions">
+        <button className="secondary-button" type="button"
+          disabled={disabled || busy || checking || !topic.trim() || !quota?.remaining}
+          onClick={() => void generate()}>{result ? 'Попробовать ещё раз' : 'Сгенерировать'}</button>
+        {!quota && error && <button className="secondary-button" type="button" disabled={busy || checking}
+          onClick={() => { setError(''); void refreshQuota(); }}>Проверить доступ</button>}
+        <button className="secondary-button" type="button" onClick={close}>Закрыть</button>
+      </div>
+      {result && <div className="cp-ai-result">
+        <strong>Предложенный текст</strong>
+        <p>{result}</p>
+        {confirmReplace && <small role="status">Текущий текст поста будет заменён.</small>}
+        <div className="cp-ai-actions">
+          <button className="primary-button" type="button" disabled={disabled || busy} onClick={insert}>
+            {confirmReplace ? 'Заменить текст' : 'Вставить текст'}
+          </button>
+          {confirmReplace && <button className="secondary-button" type="button"
+            onClick={() => setConfirmReplace(false)}>Отмена</button>}
+        </div>
+      </div>}
+    </div>}
+  </div>;
+}
+
+type ImageQuota = { remaining: number | null; period: 'trial' | 'day' | 'unlimited' };
+
+function PostImageGenerator({ disabled, hasPhoto, onAttach }: {
+  disabled: boolean;
+  hasPhoto: boolean;
+  onAttach: (file: File) => Promise<boolean | undefined>;
+}) {
+  const id = useId();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [prompt, setPrompt] = useState('');
+  const [quota, setQuota] = useState<ImageQuota>();
+  const [file, setFile] = useState<File>();
+  const [preview, setPreview] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState('');
+  const [confirmReplace, setConfirmReplace] = useState(false);
+  const endpoint = '/api/content-plan/ai/image';
+  const canGenerate = quota && (quota.remaining === null || quota.remaining > 0);
+
+  useEffect(() => {
+    if (!file) {
+      setPreview('');
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  async function refreshQuota() {
+    setChecking(true);
+    try {
+      setQuota(await apiGet<ImageQuota>(endpoint));
+    } catch (reason) {
+      setQuota(undefined);
+      setError(reason instanceof ApiError ? reason.message : 'Не удалось проверить лимит.');
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  async function generate() {
+    if (disabled || busy || checking || !canGenerate || !prompt.trim()) return;
+    setBusy(true);
+    setError('');
+    setConfirmReplace(false);
+    try {
+      const result = await apiPost<ImageQuota & { image: string }>(endpoint, { prompt });
+      const bytes = Uint8Array.from(atob(result.image), (character) => character.charCodeAt(0));
+      setFile(new File([bytes], 'generated-post.jpg', { type: 'image/jpeg' }));
+      setQuota({ remaining: result.remaining, period: result.period });
+    } catch (reason) {
+      setError(reason instanceof ApiError ? reason.message : 'Не удалось сгенерировать изображение.');
+      await refreshQuota();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function close() {
+    setOpen(false);
+    setConfirmReplace(false);
+    trigger.current?.focus();
+  }
+
+  async function attach() {
+    if (!file || disabled || busy) return;
+    if (hasPhoto && !confirmReplace) {
+      setConfirmReplace(true);
+      return;
+    }
+    if (await onAttach(file)) {
+      setFile(undefined);
+      close();
+    }
+  }
+
+  return <div className="cp-ai">
+    <button type="button" className="secondary-button" ref={trigger} disabled={disabled}
+      aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => {
+        if (open) close();
+        else {
+          setOpen(true);
+          setError('');
+          if (!busy && !checking) void refreshQuota();
+        }
+      }}><Sparkles size={16} aria-hidden="true" /> Сгенерировать изображение</button>
+    {open && <div className="cp-ai-panel" id={id}>
+      <label htmlFor={id + '-prompt'}>Что должно быть на изображении?</label>
+      <textarea autoFocus id={id + '-prompt'} rows={3} maxLength={1000} disabled={busy || disabled}
+        placeholder="Например, чашка на столе у окна, мягкий утренний свет, без надписей"
+        value={prompt} onChange={(event) => setPrompt(event.target.value)} />
+      <small role="status">{busy ? 'Генерируем изображение…' : checking ? 'Проверяем лимит…' : quota
+        ? quota.remaining === null ? 'Без лимита' : `Осталось ${quota.remaining} ${quota.period === 'trial' ? 'на весь триал' : 'сегодня'}`
+        : ''}</small>
+      {error && <p className="cp-ai-error" role="alert">{error}</p>}
+      <div className="cp-ai-actions">
+        <button className="secondary-button" type="button"
+          disabled={disabled || busy || checking || !canGenerate || !prompt.trim()}
+          onClick={() => void generate()}>{file ? 'Попробовать ещё раз' : 'Сгенерировать'}</button>
+        {!quota && error && <button className="secondary-button" type="button" disabled={busy || checking}
+          onClick={() => { setError(''); void refreshQuota(); }}>Проверить доступ</button>}
+        <button className="secondary-button" type="button" onClick={close}>Закрыть</button>
+      </div>
+      {file && <div className="cp-ai-result">
+        {preview && <img className="cp-ai-image" src={preview} alt="Сгенерированный вариант изображения" />}
+        {confirmReplace && <small role="status">Текущее фото поста будет заменено.</small>}
+        <div className="cp-ai-actions">
+          <button className="primary-button" type="button" disabled={disabled || busy} onClick={() => void attach()}>
+            {disabled ? 'Загружаем фото…' : confirmReplace ? 'Заменить фото' : 'Прикрепить изображение'}
+          </button>
+          {confirmReplace && <button className="secondary-button" type="button"
+            onClick={() => setConfirmReplace(false)}>Отмена</button>}
+        </div>
+      </div>}
+    </div>}
+  </div>;
+}
 
 type PlanChannel = {
   id: string;
@@ -505,6 +740,7 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
       if (!result.ok) throw new Error('Облако не приняло изображение.');
       const photo = await apiPost<{ id: string; previewUrl: string }>('/api/content-plan/media/confirm', { id: upload.id });
       setEditor((current) => current ? { ...current, mediaId: photo.id, mediaPreviewUrl: photo.previewUrl } : current);
+      return true;
     } catch (error) {
       setEditorError(error instanceof Error ? error.message : 'Не удалось загрузить изображение.');
     } finally {
@@ -1652,6 +1888,17 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                       placeholder="Напишите пост…"
                     />
                   </>}
+                  <PostTextGenerator
+                    key={`${editor.postId || 'new'}:${isVkEditor}:${Boolean(editor.mediaId)}`}
+                    platform={isVkEditor ? 'vk' : 'telegram'} caption={Boolean(editor.mediaId)}
+                    disabled={saving} hasText={Boolean(editor.text.trim())}
+                    onInsert={(text) => setEditor((current) => current ? {
+                      ...current,
+                      text,
+                      telegramHtml: isVkEditor ? undefined : text.replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+                    } : current)}
+                  />
                   <div className="cp-photo-panel cp-attachment-row">
                     {editor.mediaPreviewUrl ? <img src={editor.mediaPreviewUrl} alt="Фото для поста" referrerPolicy="no-referrer" /> : <ImagePlus size={20} aria-hidden="true" />}
                     <div>
@@ -1672,6 +1919,10 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                         onClick={() => setEditor({ ...editor, mediaId: undefined, mediaPreviewUrl: undefined })}><Trash2 size={16} /></button>
                     )}
                   </div>
+                  {canAttachPhoto && <PostImageGenerator
+                    key={`${editor.postId || 'new'}:${editor.channelId}`}
+                    disabled={saving} hasPhoto={Boolean(editor.mediaId)} onAttach={uploadPhoto}
+                  />}
                 </div>
                 <div className={editorTab === 'preview' ? 'cp-compose-preview active' : 'cp-compose-preview'}>
                   <h3>Предпросмотр</h3>

@@ -1,3 +1,5 @@
+import { generateContentPlanImage } from '../services/contentPlanImageGeneration.js';
+import { generateContentPlanText, getContentPlanTextAvailability } from '../services/contentPlanTextGeneration.js';
 import { confirmMedia, createMediaUpload } from '../services/contentPlanMedia.js';
 import { Router } from 'express';
 import { requireUser } from '../middleware/auth.js';
@@ -30,6 +32,41 @@ contentPlanRouter.get('/', async (req, res, next) => {
   try {
     res.set('Cache-Control', 'no-store');
     res.json({ success: true, data: await getPlanMeta(req.user!.id) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.get('/ai/text', async (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: await getContentPlanTextAvailability(req.user!.id) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.post('/ai/text', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await generateContentPlanText(req.user!.id, req.body) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.get('/ai/image', async (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: await getContentPlanTextAvailability(req.user!.id, 'image') });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.post('/ai/image', async (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: await generateContentPlanImage(req.user!.id, req.body?.prompt) });
   } catch (error) {
     next(error);
   }

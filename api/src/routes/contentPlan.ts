@@ -1,10 +1,10 @@
 import { generateContentPlanImage } from '../services/contentPlanImageGeneration.js';
-import { generateContentPlanText, getContentPlanTextAvailability } from '../services/contentPlanTextGeneration.js';
+import { generateContentPlanText, getContentPlanTextAvailability, suggestContentPlanWritingRule } from '../services/contentPlanTextGeneration.js';
 import { confirmMedia, createMediaUpload } from '../services/contentPlanMedia.js';
 import { Router } from 'express';
 import { requireUser } from '../middleware/auth.js';
 import { isFeatureEnabledFor } from '../services/featureFlags.js';
-import { connectBot, connectTelegramChannel, createPost, deleteChannel, deletePost, disconnectBot, getPlanMeta, listChannels, updatePost } from '../services/contentPlanService.js';
+import { connectBot, connectTelegramChannel, createPost, deleteChannel, deletePost, disconnectBot, getPlanMeta, getOwnedChannel, listChannels, saveWritingRules, updatePost } from '../services/contentPlanService.js';
 import { publishNow } from '../services/contentPlanPublisher.js';
 import { connectVkGroup, listVkGroups } from '../services/vkContentPlanService.js';
 
@@ -49,6 +49,23 @@ contentPlanRouter.get('/ai/text', async (req, res, next) => {
 contentPlanRouter.post('/ai/text', async (req, res, next) => {
   try {
     res.json({ success: true, data: await generateContentPlanText(req.user!.id, req.body) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.post('/ai/writing-rule', async (req, res, next) => {
+  try {
+    const { text, ...quota } = await suggestContentPlanWritingRule(req.user!.id, req.body ?? {});
+    res.json({ success: true, data: { rule: text === 'NONE' ? '' : text, ...quota } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.patch('/writing-rules', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await saveWritingRules(req.user!.id, req.body ?? {}) });
   } catch (error) {
     next(error);
   }
@@ -115,7 +132,9 @@ contentPlanRouter.get('/vk/groups', async (req, res, next) => {
 
 contentPlanRouter.post('/channels/vk', async (req, res, next) => {
   try {
-    res.json({ success: true, data: await connectVkGroup(req.user!.id, req.body?.groupId, req.body?.token) });
+    const channel = await connectVkGroup(req.user!.id, req.body?.groupId, req.body?.token);
+    const { writingRules } = await getOwnedChannel(req.user!.id, channel.id);
+    res.json({ success: true, data: { ...channel, writingRules: writingRules ?? '' } });
   } catch (error) {
     next(error);
   }

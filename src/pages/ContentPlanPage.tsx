@@ -26,24 +26,37 @@ import './content.css';
 import './content-plan.css';
 
 type TextQuota = { remaining: number; period: 'day' | 'month' };
+type SaveRules = (channelId: string, rules: string, previousRules: string) => Promise<void>;
 
-function PostTextGenerator({ platform, caption, disabled, hasText, onInsert }: {
+function PostTextGenerator({ platform, caption, disabled, text, channel, commonRules, onInsert, onSaveRules }: {
   platform: 'vk' | 'telegram';
   caption: boolean;
   disabled: boolean;
-  hasText: boolean;
+  text: string;
+  channel?: PlanChannel;
+  commonRules: string;
   onInsert: (text: string) => void;
+  onSaveRules: SaveRules;
 }) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [topic, setTopic] = useState('');
-  const [result, setResult] = useState('');
+  const [postNote, setPostNote] = useState('');
+  const [proposal, setProposal] = useState<{ text: string; caption: boolean }>();
   const [quota, setQuota] = useState<TextQuota>();
   const [checking, setChecking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [confirmReplace, setConfirmReplace] = useState(false);
+  const [inserted, setInserted] = useState('');
+  const [learning, setLearning] = useState(false);
+  const [rule, setRule] = useState('');
+  const [scope, setScope] = useState(channel?.id ?? '');
+  const [ruleBusy, setRuleBusy] = useState(false);
+  const [ruleError, setRuleError] = useState('');
+  const result = proposal?.caption === caption ? proposal.text : '';
+  const canLearn = inserted.trim() && text.trim() && inserted.trim() !== text.trim();
   const endpoint = '/api/content-plan/ai/text';
 
   async function refreshQuota() {
@@ -59,13 +72,13 @@ function PostTextGenerator({ platform, caption, disabled, hasText, onInsert }: {
   }
 
   async function generate() {
-    if (busy || disabled || checking || !topic.trim() || !quota?.remaining) return;
+    if (busy || disabled || checking || ruleBusy || !topic.trim() || !quota?.remaining) return;
     setBusy(true);
     setError('');
     setConfirmReplace(false);
     try {
-      const response = await apiPost<TextQuota & { text: string }>(endpoint, { topic, platform, caption });
-      setResult(response.text);
+      const response = await apiPost<TextQuota & { text: string }>(endpoint, { topic, platform, caption, channelId: channel?.id, postNote });
+      setProposal({ text: response.text, caption });
       setQuota(response);
     } catch (reason) {
       setError(reason instanceof ApiError ? reason.message : 'Не удалось сгенерировать текст. Попробуйте снова.');
@@ -82,12 +95,49 @@ function PostTextGenerator({ platform, caption, disabled, hasText, onInsert }: {
   }
 
   function insert() {
-    if (hasText && !confirmReplace) {
+    if (text.trim() && !confirmReplace) {
       setConfirmReplace(true);
       return;
     }
+    setInserted(result);
+    setLearning(false);
+    setRule('');
     onInsert(result);
     close();
+  }
+
+  async function suggestRule() {
+    if (ruleBusy || disabled) return;
+    setLearning(true);
+    setRuleBusy(true);
+    setRule('');
+    setRuleError('');
+    try {
+      const response = await apiPost<TextQuota & { rule: string }>('/api/content-plan/ai/writing-rule', { original: inserted, edited: text });
+      setQuota(response);
+      setRule(response.rule);
+      if (!response.rule) setRuleError('Подходящего правила не нашлось. Сформулируйте его своими словами.');
+    } catch (reason) {
+      setRuleError(reason instanceof ApiError ? reason.message : 'Не удалось предложить правило.');
+      void refreshQuota();
+    } finally {
+      setRuleBusy(false);
+    }
+  }
+
+  async function rememberRule() {
+    const previousRules = scope ? channel?.writingRules ?? '' : commonRules;
+    setRuleBusy(true);
+    setRuleError('');
+    try {
+      await onSaveRules(scope, [previousRules, rule.trim()].filter(Boolean).join('\n'), previousRules);
+      setInserted(text);
+      setLearning(false);
+    } catch (reason) {
+      setRuleError(reason instanceof ApiError ? reason.message : 'Не удалось сохранить правило.');
+    } finally {
+      setRuleBusy(false);
+    }
   }
 
   return <div className="cp-ai">
@@ -111,12 +161,24 @@ function PostTextGenerator({ platform, caption, disabled, hasText, onInsert }: {
             void generate();
           }
         }} />
+      {(commonRules || channel?.writingRules) && <details className="cp-writing-preview">
+        <summary>{commonRules && channel?.writingRules ? 'Применяются общие правила и правила канала' :
+          commonRules ? 'Применяются общие правила' : 'Применяются правила канала'}</summary>
+        {commonRules && <><strong>Общие правила</strong><p>{commonRules}</p></>}
+        {channel?.writingRules && <><strong>{channel.title}</strong><p>{channel.writingRules}</p></>}
+      </details>}
+      <details className="cp-writing-preview">
+        <summary>Пожелание к этому посту</summary>
+        <textarea aria-label="Пожелание к этому посту" rows={2} maxLength={1000} value={postNote}
+          disabled={disabled || busy} placeholder="Например, сделай текст короче."
+          onChange={(event) => setPostNote(event.target.value)} />
+      </details>
       <small role="status">{busy ? 'Генерируем текст…' : checking ? 'Проверяем лимит…' : quota
         ? 'Осталось ' + quota.remaining + (quota.period === 'day' ? ' сегодня' : ' из 30 за последние 30 дней') : ''}</small>
       {error && <p className="cp-ai-error" role="alert">{error}</p>}
       <div className="cp-ai-actions">
         <button className="secondary-button" type="button"
-          disabled={disabled || busy || checking || !topic.trim() || !quota?.remaining}
+          disabled={disabled || busy || checking || ruleBusy || !topic.trim() || !quota?.remaining}
           onClick={() => void generate()}>{result ? 'Попробовать ещё раз' : 'Сгенерировать'}</button>
         {!quota && error && <button className="secondary-button" type="button" disabled={busy || checking}
           onClick={() => { setError(''); void refreshQuota(); }}>Проверить доступ</button>}
@@ -127,13 +189,33 @@ function PostTextGenerator({ platform, caption, disabled, hasText, onInsert }: {
         <p>{result}</p>
         {confirmReplace && <small role="status">Текущий текст поста будет заменён.</small>}
         <div className="cp-ai-actions">
-          <button className="primary-button" type="button" disabled={disabled || busy} onClick={insert}>
+          <button className="primary-button" type="button" disabled={disabled || busy || ruleBusy} onClick={insert}>
             {confirmReplace ? 'Заменить текст' : 'Вставить текст'}
           </button>
           {confirmReplace && <button className="secondary-button" type="button"
             onClick={() => setConfirmReplace(false)}>Отмена</button>}
         </div>
       </div>}
+    </div>}
+    {canLearn && !learning && <button className="secondary-button cp-remember-rule" type="button"
+      title="Подбор правила расходует одну попытку генерации текста"
+      disabled={disabled || busy} onClick={() => void suggestRule()}>Запомнить на будущее</button>}
+    {learning && <div className="cp-ai-panel">
+      <label htmlFor={id + '-rule'}>Правило для будущих постов</label>
+      <textarea id={id + '-rule'} rows={2} maxLength={300} value={rule} disabled={ruleBusy}
+        onChange={(event) => setRule(event.target.value)} />
+      <label htmlFor={id + '-scope'}>Где применять</label>
+      <select id={id + '-scope'} value={scope} disabled={ruleBusy} onChange={(event) => setScope(event.target.value)}>
+        {channel && <option value={channel.id}>{channel.title}</option>}
+        <option value="">Все каналы</option>
+      </select>
+      {ruleBusy && <small role="status">Подождите…</small>}
+      {ruleError && <p className="cp-ai-error" role="alert">{ruleError}</p>}
+      <div className="cp-ai-actions">
+        <button className="primary-button" type="button" disabled={disabled || ruleBusy || !rule.trim()}
+          onClick={() => void rememberRule()}>Сохранить правило</button>
+        <button className="secondary-button" type="button" disabled={ruleBusy} onClick={() => setLearning(false)}>Отмена</button>
+      </div>
     </div>}
   </div>;
 }
@@ -267,7 +349,83 @@ type PlanChannel = {
   status: 'connected' | 'needs_reauth' | 'error';
   canPost: boolean;
   error: string;
+  writingRules: string;
 };
+
+function WritingRulesSettings({ commonRules, channels, onSave }: {
+  commonRules: string;
+  channels: PlanChannel[];
+  onSave: SaveRules;
+}) {
+  const id = useId();
+  const [scope, setScope] = useState('');
+  const [draft, setDraft] = useState<{ rules: string; previousRules: string }>();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const channel = channels.find((item) => item.id === scope);
+  const savedRules = scope ? channel?.writingRules ?? '' : commonRules;
+  const rules = draft?.rules ?? savedRules;
+  const changed = Boolean(draft && rules.trim() !== savedRules);
+  const sources = channels.filter((item) => item.id !== scope && item.writingRules);
+
+  function edit(rules: string) {
+    setDraft({ rules, previousRules: draft?.previousRules ?? savedRules });
+  }
+
+  async function save() {
+    if (!draft || !changed || busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      await onSave(scope, draft.rules, draft.previousRules);
+      setDraft(undefined);
+    } catch (reason) {
+      setError(reason instanceof ApiError ? reason.message : 'Не удалось сохранить правила.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return <section className="cp-card">
+    <div className="cp-card-head"><h3>Как писать</h3></div>
+    <div className="cp-ai-panel cp-writing-settings">
+      <label htmlFor={id + '-channel'}>Для каких каналов</label>
+      <select id={id + '-channel'} value={scope} disabled={busy || changed} onChange={(event) => {
+        setScope(event.target.value);
+        setDraft(undefined);
+        setError('');
+      }}>
+        <option value="">Все каналы</option>
+        {channels.map((item) => <option key={item.id} value={item.id}>
+          {item.title} · {item.platform === 'vk' ? 'ВК' : 'Telegram'}
+        </option>)}
+      </select>
+      {scope && commonRules && <details className="cp-writing-preview">
+        <summary>Общие правила</summary><p>{commonRules}</p>
+      </details>}
+      <label htmlFor={id + '-rules'}>{scope ? 'Правила этого канала' : 'Общие правила'}</label>
+      <textarea id={id + '-rules'} rows={4} maxLength={3000} value={rules} disabled={busy}
+        placeholder={scope ? 'Например, обращайся на «ты» и добавляй лёгкий юмор.' : 'Например, пиши простыми словами и избегай канцелярита.'}
+        onChange={(event) => edit(event.target.value)} />
+      {scope && !rules.trim() && sources.length > 0 && <select aria-label="Скопировать правила из другого канала"
+        value="" disabled={busy} onChange={(event) => {
+          const source = sources.find((item) => item.id === event.target.value);
+          if (source) edit(source.writingRules);
+        }}>
+        <option value="" disabled>Скопировать правила из другого канала</option>
+        {sources.map((item) => <option key={item.id} value={item.id}>{item.title} · {item.platform === 'vk' ? 'ВК' : 'Telegram'}</option>)}
+      </select>}
+      <small>Правила канала уточняют общие. Сохранённые правила применяются при новой генерации текста.</small>
+      {error && <p className="cp-ai-error" role="alert">{error}</p>}
+      <div className="cp-ai-actions">
+        <button className="primary-button" type="button" disabled={busy || !changed || Boolean(scope && !channel)}
+          onClick={() => void save()}>{busy ? 'Сохраняем…' : 'Сохранить правила'}</button>
+        {changed && <button className="secondary-button" type="button" disabled={busy}
+          onClick={() => { setDraft(undefined); setError(''); }}>Отменить правки</button>}
+      </div>
+    </div>
+  </section>;
+}
 
 type PlanPost = {
   id: string;
@@ -306,6 +464,7 @@ type Meta = {
   channels: PlanChannel[];
   posts: PlanPost[];
   telegramBot: TelegramBot;
+  writingRules: string;
   mediaEnabled?: boolean;
   vkPhotoEnabled?: boolean;
 };
@@ -718,6 +877,17 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
   const limit = editorChannel?.platform === 'vk' ? 16000 : editor?.mediaId ? 1024 : 4096;
   const canAttachPhoto = editorChannel?.status === 'connected' && editorChannel.canPost && (editorChannel.platform === 'vk' ? meta?.vkPhotoEnabled : meta?.mediaEnabled);
   const isVkEditor = editorChannel?.platform === 'vk';
+  const saveRules: SaveRules = async (channelId, rules, previousRules) => {
+    const saved = await apiPatch<{ rules: string }>('/api/content-plan/writing-rules', { channelId: channelId || null, rules, previousRules });
+    setMeta((current) => {
+      if (!current) return current;
+      if (!channelId) return { ...current, writingRules: saved.rules };
+      return { ...current, channels: current.channels.map((channel) => channel.id === channelId
+        ? { ...channel, writingRules: saved.rules }
+        : channel) };
+    });
+    showToast('Правила сохранены');
+  };
   const platformLabel = isVkEditor ? 'ВКонтакте' : 'Telegram';
   const textLength = editor?.text.length ?? 0;
 
@@ -1627,6 +1797,7 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                 <X size={18} />
               </button>
             </div>
+            <WritingRulesSettings commonRules={meta.writingRules} channels={meta.channels} onSave={saveRules} />
             <section className="cp-card">
               <div className="cp-card-head">
                 <h3>Свой Telegram-бот</h3>
@@ -1889,9 +2060,10 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                     />
                   </>}
                   <PostTextGenerator
-                    key={`${editor.postId || 'new'}:${isVkEditor}:${Boolean(editor.mediaId)}`}
+                    key={`${editor.postId || 'new'}:${editor.channelId}`}
                     platform={isVkEditor ? 'vk' : 'telegram'} caption={Boolean(editor.mediaId)}
-                    disabled={saving} hasText={Boolean(editor.text.trim())}
+                    disabled={saving} text={editor.text} channel={editorChannel} commonRules={meta.writingRules}
+                    onSaveRules={saveRules}
                     onInsert={(text) => setEditor((current) => current ? {
                       ...current,
                       text,

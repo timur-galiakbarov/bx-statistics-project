@@ -2029,6 +2029,19 @@
   resize: vertical;
 }
 .cp-ai-panel small { color: #56645d; }
+.cp-ai-panel select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #aebbb4;
+  border-radius: 8px;
+  font: inherit;
+}
+.cp-writing-settings { border: 0; padding: 0; }
+.cp-writing-preview summary { cursor: pointer; }
+.cp-writing-preview[open] summary { margin-bottom: 8px; }
+.cp-writing-preview p { margin: 4px 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cp-remember-rule { margin: 8px 0 0 8px; }
 .cp-ai-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .cp-ai-error { color: #b42318; margin: 0; }
 .cp-ai-result { border-top: 1px solid #dce3df; padding-top: 10px; }

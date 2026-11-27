@@ -14,6 +14,7 @@ const schema = new Schema(
     // Ключ доступа сообщества ВК. Только зашифрованным и только на сервере.
     accessTokenEncrypted: { type: String, default: '', select: false },
     title: { type: String, required: true },
+    writingRules: { type: String, default: '' },
     handle: { type: String, default: '' },
     status: { type: String, enum: ['connected', 'needs_reauth', 'error'], default: 'connected' },
     canPost: { type: Boolean, default: true },

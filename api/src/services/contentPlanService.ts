@@ -6,6 +6,7 @@ import { DomainError } from '../errors/domainError.js';
 import { ContentPlanBotModel } from '../models/ContentPlanBot.js';
 import { ContentPlanChannelModel } from '../models/ContentPlanChannel.js';
 import { ContentPlanPostModel, type ContentPlanStatus } from '../models/ContentPlanPost.js';
+import { UserModel } from '../models/User.js';
 import { decryptBotToken, encryptBotToken, botTokenLooksValid } from './contentPlanSecrets.js';
 import { getTelegramBotInfo, resolveTelegramChannel } from './telegramBotClient.js';
 
@@ -61,6 +62,7 @@ export type ContentPlanChannelDto = {
   status: 'connected' | 'needs_reauth' | 'error';
   canPost: boolean;
   error: string;
+  writingRules: string;
 };
 
 export type ContentPlanBotDto = {
@@ -102,7 +104,7 @@ export function toPostDto(doc: any): ContentPlanPostDto {
   };
 }
 
-function toDto(doc: { _id: mongoose.Types.ObjectId; platform: 'vk' | 'telegram'; title: string; handle?: string; status: 'connected' | 'needs_reauth' | 'error'; canPost: boolean; error?: string }): ContentPlanChannelDto {
+function toDto(doc: { _id: mongoose.Types.ObjectId; platform: 'vk' | 'telegram'; title: string; handle?: string; status: 'connected' | 'needs_reauth' | 'error'; canPost: boolean; error?: string; writingRules?: string }): ContentPlanChannelDto {
   return {
     id: String(doc._id),
     platform: doc.platform,
@@ -110,8 +112,39 @@ function toDto(doc: { _id: mongoose.Types.ObjectId; platform: 'vk' | 'telegram';
     handle: doc.handle ?? '',
     status: doc.status,
     canPost: doc.canPost,
-    error: doc.error ?? ''
+    error: doc.error ?? '',
+    writingRules: doc.writingRules ?? ''
   };
+}
+
+const WRITING_RULES_LIMIT = 3000;
+
+export async function getCommonWritingRules(userId: string) {
+  const user = await UserModel.findById(userId).select({ contentPlanWritingRules: 1, _id: 0 }).lean();
+  return user?.contentPlanWritingRules ?? '';
+}
+
+export async function saveWritingRules(userId: string, body: { channelId?: unknown; rules?: unknown; previousRules?: unknown }) {
+  if (typeof body.rules !== 'string' || typeof body.previousRules !== 'string') {
+    throw new DomainError('Укажите текст правил.', { status: 400, code: 'CONTENT_PLAN_RULES_INVALID' });
+  }
+  const rules = body.rules.trim();
+  if (rules.length > WRITING_RULES_LIMIT) {
+    throw new DomainError('Правила должны быть не длиннее 3 000 символов.', { status: 400, code: 'CONTENT_PLAN_RULES_INVALID' });
+  }
+  const field = body.channelId == null ? 'contentPlanWritingRules' : 'writingRules';
+  const previous = body.previousRules ? { [field]: body.previousRules } : { $or: [{ [field]: '' }, { [field]: { $exists: false } }] };
+  let matchedCount: number;
+  if (body.channelId == null) {
+    ({ matchedCount } = await UserModel.updateOne({ _id: userId, ...previous }, { $set: { contentPlanWritingRules: rules } }));
+  } else {
+    const channel = await getOwnedChannel(userId, body.channelId);
+    ({ matchedCount } = await ContentPlanChannelModel.updateOne({ _id: channel._id, userId, ...previous }, { $set: { writingRules: rules } }));
+  }
+  if (!matchedCount) {
+    throw new DomainError('Правила уже изменились. Обновите страницу и повторите попытку.', { status: 409, code: 'CONTENT_PLAN_RULES_CHANGED' });
+  }
+  return { rules };
 }
 
 export async function getBotStatus(userId: string): Promise<ContentPlanBotDto> {
@@ -217,7 +250,7 @@ export async function deleteChannel(userId: string, id: string): Promise<void> {
   }
 }
 
-async function ownedChannel(userId: string, channelId: unknown) {
+export async function getOwnedChannel(userId: string, channelId: unknown) {
   if (typeof channelId !== 'string' || !mongoose.isValidObjectId(channelId)) {
     throw new DomainError('Выберите канал публикации.', { status: 400, code: 'CONTENT_PLAN_CHANNEL_REQUIRED' });
   }
@@ -225,6 +258,11 @@ async function ownedChannel(userId: string, channelId: unknown) {
   if (!channel) {
     throw new DomainError('Канал не найден.', { status: 404, code: 'CONTENT_PLAN_CHANNEL_NOT_FOUND' });
   }
+  return channel;
+}
+
+async function ownedChannel(userId: string, channelId: unknown) {
+  const channel = await getOwnedChannel(userId, channelId);
   if (channel.status !== 'connected' || !channel.canPost) {
     throw new DomainError('Канал не подключён к публикации.', { status: 409, code: 'CONTENT_PLAN_CHANNEL_NOT_READY' });
   }
@@ -343,11 +381,14 @@ export async function deletePost(userId: string, id: string): Promise<void> {
 }
 
 export async function getPlanMeta(userId: string) {
-  const [channels, posts, telegramBot] = await Promise.all([listChannels(userId), listPosts(userId), getBotStatus(userId)]);
+  const [channels, posts, telegramBot, writingRules] = await Promise.all([
+    listChannels(userId), listPosts(userId), getBotStatus(userId), getCommonWritingRules(userId)
+  ]);
   return {
     channels,
     posts,
     telegramBot,
+    writingRules,
     mediaEnabled: mediaEnabled(),
     vkPhotoEnabled: mediaEnabled() && vkPhotoEnabled()
   };

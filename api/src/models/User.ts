@@ -14,6 +14,7 @@ const userSchema = new Schema(
     firstName: { type: String, default: '' },
     lastName: { type: String, default: '' },
     photo: { type: String },
+    contentPlanWritingRules: { type: String, default: '', select: false },
     activeTo: { type: Date, required: true },
     hasExactAccessEnd: { type: Boolean },
     appliedPayments: [{ _id: Schema.Types.ObjectId, paidAt: Date }],

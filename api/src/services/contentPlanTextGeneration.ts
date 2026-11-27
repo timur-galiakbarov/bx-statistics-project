@@ -5,6 +5,7 @@ import { DomainError } from '../errors/domainError.js';
 import { PaymentModel } from '../models/Payment.js';
 import { UserModel } from '../models/User.js';
 import { redis } from './redis.js';
+import { requestOpenAi } from './openAiClient.js';
 
 const DAY = 86_400_000;
 const TRIAL_LIMIT = 5;
@@ -110,19 +111,14 @@ export async function generateContentPlanText(userId: string, body: {
   const quota = await reserveContentPlanGeneration(userId, 'text');
   const maxLength = platform === 'telegram' && body?.caption === true ? 1024 : 4096;
   try {
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(25_000),
-      body: JSON.stringify({
-        model: MODEL,
-        store: false,
-        reasoning: { effort: 'low' },
-        max_output_tokens: 1600,
-        instructions: `Напиши готовый текст для ${platform === 'vk' ? 'ВКонтакте' : 'Telegram'} на языке запроса. Верни только текст публикации, без Markdown и пояснений. Не выдумывай факты, цены, даты или ссылки. Длина — до ${maxLength === 1024 ? 900 : 2500} символов.`,
-        input: topic
-      })
-    });
+    const response = await requestOpenAi('/v1/responses', apiKey, {
+      model: MODEL,
+      store: false,
+      reasoning: { effort: 'low' },
+      max_output_tokens: 1600,
+      instructions: `Напиши готовый текст для ${platform === 'vk' ? 'ВКонтакте' : 'Telegram'} на языке запроса. Верни только текст публикации, без Markdown и пояснений. Не выдумывай факты, цены, даты или ссылки. Длина — до ${maxLength === 1024 ? 900 : 2500} символов.`,
+      input: topic
+    }, 25_000);
     if (!response.ok) throw unavailable();
     const result = await response.json() as {
       status?: string;

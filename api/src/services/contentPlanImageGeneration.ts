@@ -1,5 +1,6 @@
 import { DomainError } from '../errors/domainError.js';
 import { getApiKey, reserveContentPlanGeneration, unavailable } from './contentPlanTextGeneration.js';
+import { requestOpenAi } from './openAiClient.js';
 
 export async function generateContentPlanImage(userId: string, input: unknown) {
   const prompt = typeof input === 'string' ? input.trim() : '';
@@ -12,19 +13,14 @@ export async function generateContentPlanImage(userId: string, input: unknown) {
   if (!apiKey) throw unavailable('image');
   const quota = await reserveContentPlanGeneration(userId, 'image');
   try {
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(120_000),
-      body: JSON.stringify({
-        model: 'gpt-image-2.6-flare',
-        prompt,
-        size: '1024x1024',
-        quality: 'medium',
-        output_format: 'jpeg',
-        n: 1
-      })
-    });
+    const response = await requestOpenAi('/v1/images/generations', apiKey, {
+      model: 'gpt-image-2.6-flare',
+      prompt,
+      size: '1024x1024',
+      quality: 'medium',
+      output_format: 'jpeg',
+      n: 1
+    }, 120_000);
     if (!response.ok) throw unavailable('image');
     const result = await response.json() as { data?: Array<{ b64_json?: string }> };
     const image = result.data?.[0]?.b64_json;

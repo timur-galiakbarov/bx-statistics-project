@@ -1,3 +1,4 @@
+import { discardMedia, mediaReadUrl } from './contentPlanMedia.js';
 import mongoose from 'mongoose';
 import { DomainError } from '../errors/domainError.js';
 import { ContentPlanBotModel } from '../models/ContentPlanBot.js';
@@ -6,7 +7,7 @@ import { ContentPlanPostModel } from '../models/ContentPlanPost.js';
 import { getBotTokenForChannel, toPostDto, type ContentPlanPostDto } from './contentPlanService.js';
 import { markdownToTelegramHtml, markdownToVkText } from './contentPlanUtils.js';
 import { sendTelegramMessage } from './telegramBotClient.js';
-import { getVkTokenForChannel, sendVkPost } from './vkContentPlanService.js';
+import { getVkTokenForChannel, sendVkPost, uploadVkWallPhoto } from './vkContentPlanService.js';
 
 const MAX_AUTO_ATTEMPTS = 3;
 
@@ -71,13 +72,14 @@ async function sendAndUpdate(post: any): Promise<ContentPlanPostDto> {
 
     if (post.platform === 'vk') {
       const token = await getVkTokenForChannel(channel);
-      const sent = await sendVkPost(token, channel.externalId, markdownToVkText(post.text));
+      const attachment = post.mediaId ? await uploadVkWallPhoto(String(post.userId), channel.externalId, post.mediaId) : undefined;
+      const sent = await sendVkPost(token, channel.externalId, markdownToVkText(post.text), attachment);
       externalPostId = String(sent.postId);
       externalUrl = sent.url;
     } else {
       const bot = await getBotTokenForChannel(channel);
       botId = bot.botId;
-      const sent = await sendTelegramMessage(bot.token, channel.externalId, channel.handle, markdownToTelegramHtml(post.text));
+      const sent = await sendTelegramMessage(bot.token, channel.externalId, channel.handle, (post.telegramHtml ?? markdownToTelegramHtml(post.text)), post.mediaId ? mediaReadUrl(post.mediaId) : undefined);
       externalPostId = String(sent.messageId);
       externalUrl = sent.url;
     }
@@ -96,10 +98,12 @@ async function sendAndUpdate(post: any): Promise<ContentPlanPostDto> {
       },
       { new: true }
     );
+    if (!updated) throw new Error('Published post not found');
+    if (post.mediaId) await discardMedia(post.mediaId).catch(() => undefined);
     await ContentPlanChannelModel.updateOne(
       { _id: channel._id },
       { $set: { status: 'connected', canPost: true, error: '', lastCheckedAt: new Date() } }
-    );
+    ).catch(() => undefined);
     return toPostDto(updated);
   } catch (error) {
     const domain = error instanceof DomainError

@@ -1,3 +1,4 @@
+import { cleanupMedia } from './contentPlanMedia.js';
 import { randomUUID } from 'node:crypto';
 import { env } from '../config/env.js';
 import { ContentPlanPostModel } from '../models/ContentPlanPost.js';
@@ -42,6 +43,7 @@ async function tick() {
         console.error('Content plan publish failed', error);
       }
     }
+    await cleanupMedia().catch(() => console.error('Content plan media cleanup failed'));
   } catch (error) {
     console.error('Content plan scheduler pass failed', error);
   } finally {

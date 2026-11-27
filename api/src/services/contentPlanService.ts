@@ -1,3 +1,6 @@
+import { normalizeTelegramRichText } from './telegramRichText.js';
+import { vkPhotoEnabled } from './vkContentPlanService.js';
+import { confirmMedia, mediaEnabled, mediaReadUrl } from './contentPlanMedia.js';
 import mongoose from 'mongoose';
 import { DomainError } from '../errors/domainError.js';
 import { ContentPlanBotModel } from '../models/ContentPlanBot.js';
@@ -26,6 +29,9 @@ function normalizeTimeZone(value: unknown) {
 export type ContentPlanPostDto = {
   id: string;
   channelId: string;
+  mediaId?: string;
+  telegramHtml?: string;
+  mediaPreviewUrl?: string;
   platform: 'vk' | 'telegram';
   title: string;
   text: string;
@@ -39,6 +45,8 @@ export type ContentPlanPostDto = {
 
 type PostInput = {
   channelId?: unknown;
+  mediaId?: unknown;
+  telegramHtml?: unknown;
   text?: unknown;
   status?: unknown;
   scheduledAt?: unknown;
@@ -83,6 +91,8 @@ export function toPostDto(doc: any): ContentPlanPostDto {
     platform: doc.platform,
     title: doc.title ?? '',
     text: doc.text,
+    telegramHtml: doc.telegramHtml,
+    ...(doc.mediaId && doc.status !== 'published' && mediaEnabled() ? { mediaId: doc.mediaId, mediaPreviewUrl: mediaReadUrl(doc.mediaId) } : {}),
     status: doc.status,
     scheduledAt: doc.scheduledAt ? new Date(doc.scheduledAt).toISOString() : null,
     timeZone: doc.timeZone ?? 'UTC',
@@ -221,14 +231,17 @@ async function ownedChannel(userId: string, channelId: unknown) {
   return channel;
 }
 
-function postFields(input: PostInput, channel: { platform: 'vk' | 'telegram' }): { text: string; title: string; status: ContentPlanStatus; scheduledAt: Date | null; timeZone: string; autoPublish: boolean } {
-  const text = typeof input.text === 'string' ? input.text.trim() : '';
+function postFields(input: PostInput, channel: { platform: 'vk' | 'telegram' }, mediaId?: string): { text: string; title: string; status: ContentPlanStatus; scheduledAt: Date | null; timeZone: string; autoPublish: boolean; telegramHtml?: string } {
+  const rich = channel.platform === 'telegram' && typeof input.telegramHtml === 'string' && input.telegramHtml.length <= 100_000
+    ? normalizeTelegramRichText(input.telegramHtml) : undefined;
+  const text = rich?.text ?? (typeof input.text === 'string' ? input.text.trim() : '');
   if (!text) {
     throw new DomainError('Добавьте текст поста.', { status: 400, code: 'CONTENT_PLAN_TEXT_REQUIRED' });
   }
-  if (text.length > TEXT_LIMITS[channel.platform]) {
+  const limit = mediaId && channel.platform === 'telegram' ? 1024 : TEXT_LIMITS[channel.platform];
+  if (text.length > limit) {
     throw new DomainError(
-      `Текст длиннее лимита ${TEXT_LIMITS[channel.platform].toLocaleString('ru-RU')} символов.`,
+      `Текст длиннее лимита ${limit.toLocaleString('ru-RU')} символов.`,
       { status: 422, code: 'CONTENT_PLAN_TEXT_TOO_LONG' }
     );
   }
@@ -253,6 +266,7 @@ function postFields(input: PostInput, channel: { platform: 'vk' | 'telegram' }):
 
   return {
     text,
+    ...(rich ? { telegramHtml: rich.html } : {}),
     title: titleFrom(text),
     status,
     scheduledAt,
@@ -266,13 +280,25 @@ export async function listPosts(userId: string): Promise<ContentPlanPostDto[]> {
   return docs.map(toPostDto);
 }
 
+async function validatePostMedia(userId: string, platform: string, id: unknown, postId?: string) {
+  if (id === undefined || id === null) return undefined;
+  if (platform === 'vk' && !vkPhotoEnabled()) throw new DomainError('Загрузка фото в ВК не настроена.', { status: 503, code: 'VK_PHOTO_DISABLED' });
+  const media = await confirmMedia(userId, id);
+  if (await ContentPlanPostModel.exists({ mediaId: media.id, ...(postId ? { _id: { $ne: postId } } : {}) })) {
+    throw new DomainError('Фото уже прикреплено к другому посту.', { status: 409, code: 'MEDIA_ALREADY_ATTACHED' });
+  }
+  return media.id;
+}
+
 export async function createPost(userId: string, input: PostInput): Promise<ContentPlanPostDto> {
   const channel = await ownedChannel(userId, input.channelId);
-  const fields = postFields(input, channel);
+  const mediaId = await validatePostMedia(userId, channel.platform, input.mediaId);
+  const fields = postFields(input, channel, mediaId);
   const doc = await ContentPlanPostModel.create({
     userId,
     channelId: channel._id,
     platform: channel.platform,
+    mediaId,
     ...fields
   });
   return toPostDto(doc.toObject());
@@ -290,18 +316,15 @@ export async function updatePost(userId: string, id: string, input: PostInput): 
     throw new DomainError('Опубликованный пост нельзя редактировать.', { status: 409, code: 'CONTENT_PLAN_POST_LOCKED' });
   }
   const channel = await ownedChannel(userId, input.channelId ?? String(post.channelId));
-  const fields = postFields(input, channel);
-  post.channelId = channel._id as mongoose.Types.ObjectId;
-  post.platform = channel.platform;
-  post.text = fields.text;
-  post.title = fields.title;
-  post.status = fields.status;
-  post.scheduledAt = fields.scheduledAt;
-  post.timeZone = fields.timeZone;
-  post.autoPublish = true;
-  post.error = '';
-  await post.save();
-  return toPostDto(post.toObject());
+  const mediaId = await validatePostMedia(userId, channel.platform, input.mediaId === undefined ? post.mediaId : input.mediaId, id);
+  const fields = postFields(input, channel, mediaId);
+  const updated = await ContentPlanPostModel.findOneAndUpdate(
+    { _id: id, userId, status: { $nin: ['published', 'publishing'] } },
+    { $set: { ...fields, channelId: channel._id, platform: channel.platform, error: '', nextAttemptAt: null, ...(mediaId ? { mediaId } : {}) }, $unset: { ...(mediaId ? {} : { mediaId: 1 }), ...(fields.telegramHtml === undefined ? { telegramHtml: 1 } : {}) } },
+    { new: true }
+  );
+  if (!updated) throw new DomainError('Пост уже отправляется или опубликован.', { status: 409, code: 'CONTENT_PLAN_POST_LOCKED' });
+  return toPostDto(updated);
 }
 
 export async function deletePost(userId: string, id: string): Promise<void> {
@@ -315,7 +338,8 @@ export async function deletePost(userId: string, id: string): Promise<void> {
   if (post.status === 'published' || post.status === 'publishing') {
     throw new DomainError('Опубликованный пост нельзя удалить.', { status: 409, code: 'CONTENT_PLAN_POST_LOCKED' });
   }
-  await post.deleteOne();
+  const removed = await ContentPlanPostModel.deleteOne({ _id: id, userId, status: { $nin: ['published', 'publishing'] } });
+  if (!removed.deletedCount) throw new DomainError('Пост уже отправляется или опубликован.', { status: 409, code: 'CONTENT_PLAN_POST_LOCKED' });
 }
 
 export async function getPlanMeta(userId: string) {
@@ -323,6 +347,8 @@ export async function getPlanMeta(userId: string) {
   return {
     channels,
     posts,
-    telegramBot
+    telegramBot,
+    mediaEnabled: mediaEnabled(),
+    vkPhotoEnabled: mediaEnabled() && vkPhotoEnabled()
   };
 }

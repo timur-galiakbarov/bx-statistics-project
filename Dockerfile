@@ -8,6 +8,7 @@ RUN npm ci
 
 COPY index.html tsconfig.json tsconfig.node.json vite.config.ts ./
 COPY src ./src
+COPY api/src/services/telegramRichText.ts ./api/src/services/telegramRichText.ts
 COPY public ./public
 COPY legacy/local/templates/site ./legacy-site
 RUN npm run build:frontend

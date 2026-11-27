@@ -24,7 +24,25 @@ function renderInline(value: string) {
  * текста не исполняется. Поддерживает жирный, курсив, подчёркивание,
  * зачёркивание, код, ссылки, списки и цитаты.
  */
-export function renderContentPlanMarkdown(text: string) {
+export function renderContentPlanMarkdown(text: string, platform: 'telegram' | 'vk' = 'telegram') {
+  if (platform === 'vk') {
+    // Повторяет markdownToVkText на сервере: предпросмотр показывает текст,
+    // который уйдёт на стену, без оформления, доступного только в Telegram.
+    const wallText = String(text || '').split('\n').map((line) => {
+      let value = line;
+      if (/^\s*[-—•]\s+/.test(value)) value = '• ' + value.replace(/^\s*[-—•]\s+/, '');
+      else if (/^\s*>\s?/.test(value)) value = '— ' + value.replace(/^\s*>\s?/, '');
+      value = value.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '[$2|$1]');
+      value = value.replace(/(^|[^_])_([^_\n]+)_/g, '$1*$2*');
+      value = value.replace(/`([^`]+)`/g, '$1');
+      return value;
+    }).join('\n');
+    const html = escapeHtml(wallText).replace(
+      /\[(https?:\/\/[^\]\s|]+)\|([^\]]+)\]/g,
+      '<a href="$1" target="_blank" rel="noreferrer">$2</a>'
+    );
+    return '<div style="white-space: pre-wrap">' + html + '</div>';
+  }
   const lines = String(text || '').split('\n');
   let html = '';
   let inList = false;

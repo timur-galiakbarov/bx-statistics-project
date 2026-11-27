@@ -197,11 +197,11 @@ export async function resolveTelegramChannel(token: string, input: unknown): Pro
 }
 
 /** Отправляет пост в канал. Текст уже должен быть HTML для parse_mode=HTML. */
-export async function sendTelegramMessage(token: string, externalId: string, handle: string, html: string): Promise<SentTelegramMessage> {
+export async function sendTelegramMessage(token: string, externalId: string, handle: string, html: string, photo?: string): Promise<SentTelegramMessage> {
   try {
-    const result = await botCall<{ message_id: number }>(token, 'sendMessage', {
+    const result = await botCall<{ message_id: number }>(token, photo ? 'sendPhoto' : 'sendMessage', {
       chat_id: externalId,
-      text: html,
+      ...(photo ? { photo, caption: html } : { text: html }),
       parse_mode: 'HTML'
     });
     const url = handle.startsWith('@') ? `https://t.me/${handle.slice(1)}/${result.message_id}` : '';
@@ -210,7 +210,7 @@ export async function sendTelegramMessage(token: string, externalId: string, han
     if (error instanceof DomainError) throw error;
     if (error instanceof BotApiError) {
       if (error.code === 400) {
-        throw new DomainError('Telegram отклонил текст поста. Проверьте разметку и длину.', {
+        throw new DomainError(photo ? 'Telegram отклонил фото или подпись. Проверьте изображение и текст.' : 'Telegram отклонил текст поста. Проверьте разметку и длину.', {
           status: 422,
           code: 'TELEGRAM_MESSAGE_INVALID'
         });

@@ -373,7 +373,7 @@ export function App() {
           />
           <Route path="/ad-check" element={user?.isAdmin ? <AdCheckPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/placements" element={user?.placementsEnabled ? <PlacementsPage groups={groups} /> : <Navigate to="/dashboard" replace />} />
-          <Route path="/content-plan" element={user?.contentPlanEnabled ? <ContentPlanPage adminOnly={user.contentPlanMode === 'admins'} /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/content-plan" element={user?.contentPlanEnabled ? <ContentPlanPage key={user.id || user.vkId} userId={user.id || user.vkId || ''} adminOnly={user.contentPlanMode === 'admins'} /> : <Navigate to="/dashboard" replace />} />
           <Route path="/compare" element={hasPaidAccess ? <ComparePage groups={groups} user={user} /> : <CompareShowcase />} />
           <Route path="/posts" element={hasPaidAccess ? <PostsPage groups={groups} /> : <PostsShowcase />} />
           <Route path="/content" element={user?.isAdmin ? <ContentPage /> : <Navigate to="/dashboard" replace />} />

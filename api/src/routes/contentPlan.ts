@@ -1,3 +1,4 @@
+import { confirmMedia, createMediaUpload } from '../services/contentPlanMedia.js';
 import { Router } from 'express';
 import { requireUser } from '../middleware/auth.js';
 import { isFeatureEnabledFor } from '../services/featureFlags.js';
@@ -29,6 +30,22 @@ contentPlanRouter.get('/', async (req, res, next) => {
   try {
     res.set('Cache-Control', 'no-store');
     res.json({ success: true, data: await getPlanMeta(req.user!.id) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.post('/media/upload', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await createMediaUpload(req.user!.id, req.body?.type) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+contentPlanRouter.post('/media/confirm', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await confirmMedia(req.user!.id, req.body?.id) });
   } catch (error) {
     next(error);
   }

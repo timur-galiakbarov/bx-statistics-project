@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto';
+import { mediaReadUrl } from './contentPlanMedia.js';
 import { DomainError } from '../errors/domainError.js';
 import { getVkAccessToken } from '../repositories/accountRepository.js';
 import { ContentPlanChannelModel } from '../models/ContentPlanChannel.js';
@@ -133,7 +135,51 @@ export async function getVkTokenForChannel(channel: { _id?: any; userId: any }):
   return decryptContentPlanSecret(encrypted);
 }
 
-export async function sendVkPost(token: string, groupId: string, text: string) {
+function relaySettings() {
+  const url = process.env.CONTENT_PLAN_VK_PHOTO_RELAY_URL;
+  const secret = process.env.CONTENT_PLAN_VK_PHOTO_RELAY_SECRET;
+  if (!url || !/^https:\/\/functions\.yandexcloud\.net\/[a-z0-9]+$/.test(url) || !secret || secret.length < 32) return null;
+  return { url, secret };
+}
+
+export const vkPhotoEnabled = () => Boolean(relaySettings());
+
+export async function uploadVkWallPhoto(userId: string, groupId: string, mediaId: string) {
+  const relay = relaySettings();
+  if (!relay) throw new DomainError('Загрузка фото в ВК не настроена.', { status: 503, code: 'VK_PHOTO_DISABLED' });
+  const token = await requireVkToken(userId);
+  try {
+    const { upload_url } = await vkApiRequest<{ upload_url: string }>('photos.getWallUploadServer', token, { group_id: groupId });
+    const body = JSON.stringify({ source: mediaReadUrl(mediaId), destination: upload_url, expiresAt: Date.now() + 60_000 });
+    const response = await fetch(relay.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Socstat-Signature': createHmac('sha256', relay.secret).update(body).digest('hex') },
+      body, redirect: 'error', signal: AbortSignal.timeout(25_000)
+    });
+    if (!response.ok) throw new Error('Photo transfer failed');
+    const { server, photo, hash } = await response.json() as { server?: number; photo?: string; hash?: string };
+    if (typeof server !== 'number' || !Number.isSafeInteger(server) || typeof photo !== 'string' || typeof hash !== 'string') {
+      throw new Error('Invalid VK upload metadata');
+    }
+    const [saved] = await vkApiRequest<Array<{ id: number; owner_id: number; access_key?: string }>>(
+      'photos.saveWallPhoto', token, { group_id: groupId, server, photo, hash }, 'POST'
+    );
+    if (!saved || !Number.isSafeInteger(saved.id) || !Number.isSafeInteger(saved.owner_id)) throw new Error('Missing VK attachment');
+    return `photo${saved.owner_id}_${saved.id}${saved.access_key ? '_' + saved.access_key : ''}`;
+  } catch (error) {
+    if (error instanceof VkApiError && error.vkCode === 6) {
+      throw new DomainError('ВК ограничил частоту запросов. Повторите через минуту.', { status: 429, code: 'VK_RATE_LIMITED' });
+    }
+    if (error instanceof VkApiError && [3, 5, 7, 15, 27, 28, 1051].includes(error.vkCode ?? -1)) {
+      throw new DomainError('ВК не разрешил загрузить фото с доступом профиля. Проверьте права приложения и переподключите профиль ВК.', {
+        status: 422, code: 'VK_PHOTO_PERMISSION_DENIED'
+      });
+    }
+    throw new DomainError('Не удалось прикрепить фото в ВК. Запись не отправлена.', { status: 502, code: 'VK_PHOTO_UPLOAD_FAILED' });
+  }
+}
+
+export async function sendVkPost(token: string, groupId: string, text: string, attachment?: string) {
   try {
     const result = await vkApiRequest<{ post_id: number }>(
       'wall.post',
@@ -141,7 +187,8 @@ export async function sendVkPost(token: string, groupId: string, text: string) {
       {
         owner_id: -Math.abs(Number(groupId)),
         from_group: 1,
-        message: text
+        message: text,
+        ...(attachment ? { attachments: attachment } : {})
       },
       'POST'
     );

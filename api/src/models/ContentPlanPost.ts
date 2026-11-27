@@ -12,6 +12,8 @@ const schema = new Schema(
     userId: { type: Schema.Types.ObjectId, required: true, index: true },
     channelId: { type: Schema.Types.ObjectId, ref: 'ContentPlanChannel', required: true, index: true },
     platform: { type: String, enum: ['vk', 'telegram'], required: true },
+    mediaId: { type: String },
+    telegramHtml: String,
     title: { type: String, default: '' },
     text: { type: String, required: true },
     status: { type: String, enum: contentPlanStatuses, default: 'draft', index: true },
@@ -29,6 +31,7 @@ const schema = new Schema(
   { timestamps: true }
 );
 
+schema.index({ mediaId: 1 }, { unique: true, sparse: true });
 schema.index({ userId: 1, scheduledAt: 1 });
 schema.index({ status: 1, nextAttemptAt: 1, scheduledAt: 1 });
 

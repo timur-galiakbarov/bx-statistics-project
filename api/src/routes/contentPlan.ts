@@ -71,6 +71,14 @@ contentPlanRouter.patch('/writing-rules', async (req, res, next) => {
   }
 });
 
+contentPlanRouter.patch('/image-rules', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await saveWritingRules(req.user!.id, req.body ?? {}, 'image') });
+  } catch (error) {
+    next(error);
+  }
+});
+
 contentPlanRouter.get('/ai/image', async (req, res, next) => {
   try {
     res.set('Cache-Control', 'no-store');
@@ -83,7 +91,7 @@ contentPlanRouter.get('/ai/image', async (req, res, next) => {
 contentPlanRouter.post('/ai/image', async (req, res, next) => {
   try {
     res.set('Cache-Control', 'no-store');
-    res.json({ success: true, data: await generateContentPlanImage(req.user!.id, req.body?.prompt) });
+    res.json({ success: true, data: await generateContentPlanImage(req.user!.id, req.body) });
   } catch (error) {
     next(error);
   }
@@ -133,8 +141,8 @@ contentPlanRouter.get('/vk/groups', async (req, res, next) => {
 contentPlanRouter.post('/channels/vk', async (req, res, next) => {
   try {
     const channel = await connectVkGroup(req.user!.id, req.body?.groupId, req.body?.token);
-    const { writingRules } = await getOwnedChannel(req.user!.id, channel.id);
-    res.json({ success: true, data: { ...channel, writingRules: writingRules ?? '' } });
+    const { writingRules, imageRules } = await getOwnedChannel(req.user!.id, channel.id);
+    res.json({ success: true, data: { ...channel, writingRules: writingRules ?? '', imageRules: imageRules ?? '' } });
   } catch (error) {
     next(error);
   }

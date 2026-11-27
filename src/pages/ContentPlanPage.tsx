@@ -12,6 +12,7 @@ import {
   List,
   ImagePlus,
   Plus,
+  Pencil,
   Send,
   Settings2,
   ShieldCheck,
@@ -22,28 +23,35 @@ import {
 import { useEffect, useId, useRef, useState } from 'react';
 import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
 import { renderContentPlanMarkdown } from '../utils/contentPlanMarkdown';
+import { GenerationRules, type RuleScope, type SaveRules } from '../components/contentPlan/GenerationRules';
+import { PostImageGenerator } from '../components/contentPlan/PostImageGenerator';
 import './content.css';
 import './content-plan.css';
 
 type TextQuota = { remaining: number | null; period: 'day' | 'month' | 'unlimited' };
-type SaveRules = (channelId: string, rules: string, previousRules: string) => Promise<void>;
+type EditorStep = 1 | 2 | 3;
 
-function PostTextGenerator({ platform, caption, disabled, text, channel, commonRules, onInsert, onSaveRules }: {
+function PostTextGenerator({ step, platform, caption, disabled, text, channel, commonRules, onStartManual, onInsert, onSaveRules }: {
+  step: EditorStep;
   platform: 'vk' | 'telegram';
   caption: boolean;
   disabled: boolean;
   text: string;
   channel?: PlanChannel;
   commonRules: string;
+  onStartManual: () => void;
   onInsert: (text: string) => void;
   onSaveRules: SaveRules;
 }) {
   const id = useId();
-  const trigger = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
+  const active = useRef(false);
+  const [tone, setTone] = useState('Тепло');
+  const [preferences, setPreferences] = useState<string[]>([]);
+  const [excluded, setExcluded] = useState<Record<RuleScope, string[]>>({ common: [], channel: [] });
   const [topic, setTopic] = useState('');
   const [postNote, setPostNote] = useState('');
-  const [proposal, setProposal] = useState<{ text: string; caption: boolean }>();
+  const [proposal, setProposal] = useState<{ text: string; caption: boolean; style: string[] }>();
+  const [appliedStyle, setAppliedStyle] = useState<string[]>([]);
   const [quota, setQuota] = useState<TextQuota>();
   const [checking, setChecking] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -59,6 +67,14 @@ function PostTextGenerator({ platform, caption, disabled, text, channel, commonR
   const canLearn = inserted.trim() && text.trim() && inserted.trim() !== text.trim();
   const endpoint = '/api/content-plan/ai/text';
   const canGenerate = quota && (quota.remaining === null || quota.remaining > 0);
+
+  useEffect(() => {
+    active.current = true;
+    return () => { active.current = false; };
+  }, []);
+  useEffect(() => {
+    if (step === 1) void refreshQuota();
+  }, [step]);
 
   async function refreshQuota() {
     setChecking(true);
@@ -78,8 +94,14 @@ function PostTextGenerator({ platform, caption, disabled, text, channel, commonR
     setError('');
     setConfirmReplace(false);
     try {
-      const response = await apiPost<TextQuota & { text: string }>(endpoint, { topic, platform, caption, channelId: channel?.id, postNote });
-      setProposal({ text: response.text, caption });
+      const response = await apiPost<TextQuota & { text: string }>(endpoint, {
+        topic, platform, caption, channelId: channel?.id, postNote,
+        tone, preferences, excludeCommonRules: excluded.common, excludeChannelRules: excluded.channel
+      });
+      if (!active.current) return;
+      const style = [tone, ...preferences];
+      if (text.trim()) setProposal({ text: response.text, caption, style });
+      else applyProposal(response.text, style);
       setQuota(response);
     } catch (reason) {
       setError(reason instanceof ApiError ? reason.message : 'Не удалось сгенерировать текст. Попробуйте снова.');
@@ -89,22 +111,23 @@ function PostTextGenerator({ platform, caption, disabled, text, channel, commonR
     }
   }
 
-  function close() {
-    setOpen(false);
+  function applyProposal(value: string, style: string[]) {
+    setAppliedStyle(style);
+    setInserted(value);
+    setLearning(false);
+    setRule('');
+    setProposal(undefined);
     setConfirmReplace(false);
-    trigger.current?.focus();
+    onInsert(value);
   }
 
   function insert() {
+    if (!result) return;
     if (text.trim() && !confirmReplace) {
       setConfirmReplace(true);
       return;
     }
-    setInserted(result);
-    setLearning(false);
-    setRule('');
-    onInsert(result);
-    close();
+    applyProposal(result, proposal?.style ?? []);
   }
 
   async function suggestRule() {
@@ -141,17 +164,8 @@ function PostTextGenerator({ platform, caption, disabled, text, channel, commonR
     }
   }
 
-  return <div className="cp-ai">
-    <button className="secondary-button" type="button" ref={trigger} aria-expanded={open}
-      aria-controls={open ? id : undefined} disabled={disabled} onClick={() => {
-        if (open) close();
-        else {
-          setOpen(true);
-          setError('');
-          if (!busy) void refreshQuota();
-        }
-      }}><Sparkles size={16} aria-hidden="true" /> Сгенерировать текст</button>
-    {open && <div className="cp-ai-panel" id={id}>
+  return <div className="cp-ai cp-wizard-text-generator" hidden={step === 3}>
+    {step === 1 && <div className="cp-wizard-idea" id={id}>
       <label htmlFor={id + '-topic'}>О чём пост?</label>
       <textarea id={id + '-topic'} autoFocus rows={3} maxLength={1000} value={topic}
         disabled={disabled || busy} placeholder="Например, анонс мастер-класса по керамике. Укажи, что можно прийти без опыта."
@@ -162,28 +176,47 @@ function PostTextGenerator({ platform, caption, disabled, text, channel, commonR
             void generate();
           }
         }} />
-      {(commonRules || channel?.writingRules) && <details className="cp-writing-preview">
-        <summary>{commonRules && channel?.writingRules ? 'Применяются общие правила и правила канала' :
-          commonRules ? 'Применяются общие правила' : 'Применяются правила канала'}</summary>
-        {commonRules && <><strong>Общие правила</strong><p>{commonRules}</p></>}
-        {channel?.writingRules && <><strong>{channel.title}</strong><p>{channel.writingRules}</p></>}
-      </details>}
       <details className="cp-writing-preview">
-        <summary>Пожелание к этому посту</summary>
-        <textarea aria-label="Пожелание к этому посту" rows={2} maxLength={1000} value={postNote}
-          disabled={disabled || busy} placeholder="Например, сделай текст короче."
-          onChange={(event) => setPostNote(event.target.value)} />
+        <summary>Как написать этот пост · {tone.toLowerCase()}</summary>
+        <fieldset className="cp-tone-options">
+          <legend>Тон</legend>
+          {['Тепло', 'Нейтрально', 'Бодро'].map(value => <button key={value} type="button"
+            className="secondary-button" aria-pressed={tone === value} disabled={busy || disabled}
+            onClick={() => setTone(value)}>{value}</button>)}
+        </fieldset>
+        {['Покороче, только по делу', 'Добавить эмодзи в заголовок', 'Закончить понятным действием'].map(value =>
+          <label className="cp-rule-check" key={value}>
+            <input type="checkbox" checked={preferences.includes(value)} disabled={busy || disabled}
+              onChange={() => setPreferences(current => current.includes(value) ? current.filter(item => item !== value) : [...current, value])} />{value}
+          </label>
+        )}
+        <GenerationRules common={commonRules} channel={channel?.writingRules ?? ''} channelId={channel?.id}
+          excluded={excluded} disabled={busy || disabled} onSave={onSaveRules}
+          onToggle={(scope, value) => setExcluded(current => ({
+            ...current, [scope]: current[scope].includes(value) ? current[scope].filter(item => item !== value) : [...current[scope], value]
+          }))}
+          onAddLocal={value => {
+            const next = [postNote.trim(), value].filter(Boolean).join('\n');
+            if (next.length > 1000) return false;
+            setPostNote(next);
+            return true;
+          }} />
+        <label className="cp-field"><span>Пожелание к этому посту</span>
+          <textarea rows={2} maxLength={1000} value={postNote} disabled={disabled || busy}
+            placeholder="Например, без восклицательных знаков" onChange={event => setPostNote(event.target.value)} />
+        </label>
       </details>
       <small role="status">{busy ? 'Генерируем текст…' : checking ? 'Проверяем лимит…' : quota
         ? quota.remaining === null ? 'Без лимита' : 'Осталось ' + quota.remaining + (quota.period === 'day' ? ' сегодня' : ' из 30 за последние 30 дней') : ''}</small>
       {error && <p className="cp-ai-error" role="alert">{error}</p>}
       <div className="cp-ai-actions">
-        <button className="secondary-button" type="button"
+        <button className="secondary-button cp-manual-writing" type="button" disabled={busy || disabled}
+          onClick={onStartManual}><Pencil size={16} aria-hidden="true" /> {text.trim() ? 'К тексту поста' : 'Написать без ИИ'}</button>
+        <button className="primary-button" type="button"
           disabled={disabled || busy || checking || ruleBusy || !topic.trim() || !canGenerate}
-          onClick={() => void generate()}>{result ? 'Попробовать ещё раз' : 'Сгенерировать'}</button>
+          onClick={() => void generate()}><Sparkles size={16} aria-hidden="true" /> {result ? 'Другой вариант' : 'Создать текст с ИИ'}</button>
         {!quota && error && <button className="secondary-button" type="button" disabled={busy || checking}
           onClick={() => { setError(''); void refreshQuota(); }}>Проверить доступ</button>}
-        <button className="secondary-button" type="button" onClick={close}>Закрыть</button>
       </div>
       {result && <div className="cp-ai-result">
         <strong>Предложенный текст</strong>
@@ -198,10 +231,11 @@ function PostTextGenerator({ platform, caption, disabled, text, channel, commonR
         </div>
       </div>}
     </div>}
-    {canLearn && !learning && <button className="secondary-button cp-remember-rule" type="button"
+    {step === 2 && appliedStyle.length > 0 && <small className="cp-applied-style">Стиль текста: {appliedStyle.join(' · ')}</small>}
+    {step === 2 && canLearn && !learning && <button className="secondary-button cp-remember-rule" type="button"
       title="Подбор правила расходует одну попытку генерации текста"
       disabled={disabled || busy} onClick={() => void suggestRule()}>Запомнить на будущее</button>}
-    {learning && <div className="cp-ai-panel">
+    {step === 2 && learning && <div className="cp-ai-panel">
       <label htmlFor={id + '-rule'}>Правило для будущих постов</label>
       <textarea id={id + '-rule'} rows={2} maxLength={300} value={rule} disabled={ruleBusy}
         onChange={(event) => setRule(event.target.value)} />
@@ -221,127 +255,6 @@ function PostTextGenerator({ platform, caption, disabled, text, channel, commonR
   </div>;
 }
 
-type ImageQuota = { remaining: number | null; period: 'trial' | 'day' | 'unlimited' };
-
-function PostImageGenerator({ disabled, hasPhoto, onAttach }: {
-  disabled: boolean;
-  hasPhoto: boolean;
-  onAttach: (file: File) => Promise<boolean | undefined>;
-}) {
-  const id = useId();
-  const trigger = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
-  const [prompt, setPrompt] = useState('');
-  const [quota, setQuota] = useState<ImageQuota>();
-  const [file, setFile] = useState<File>();
-  const [preview, setPreview] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [checking, setChecking] = useState(false);
-  const [error, setError] = useState('');
-  const [confirmReplace, setConfirmReplace] = useState(false);
-  const endpoint = '/api/content-plan/ai/image';
-  const canGenerate = quota && (quota.remaining === null || quota.remaining > 0);
-
-  useEffect(() => {
-    if (!file) {
-      setPreview('');
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-
-  async function refreshQuota() {
-    setChecking(true);
-    try {
-      setQuota(await apiGet<ImageQuota>(endpoint));
-    } catch (reason) {
-      setQuota(undefined);
-      setError(reason instanceof ApiError ? reason.message : 'Не удалось проверить лимит.');
-    } finally {
-      setChecking(false);
-    }
-  }
-
-  async function generate() {
-    if (disabled || busy || checking || !canGenerate || !prompt.trim()) return;
-    setBusy(true);
-    setError('');
-    setConfirmReplace(false);
-    try {
-      const result = await apiPost<ImageQuota & { image: string }>(endpoint, { prompt });
-      const bytes = Uint8Array.from(atob(result.image), (character) => character.charCodeAt(0));
-      setFile(new File([bytes], 'generated-post.jpg', { type: 'image/jpeg' }));
-      setQuota({ remaining: result.remaining, period: result.period });
-    } catch (reason) {
-      setError(reason instanceof ApiError ? reason.message : 'Не удалось сгенерировать изображение.');
-      await refreshQuota();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function close() {
-    setOpen(false);
-    setConfirmReplace(false);
-    trigger.current?.focus();
-  }
-
-  async function attach() {
-    if (!file || disabled || busy) return;
-    if (hasPhoto && !confirmReplace) {
-      setConfirmReplace(true);
-      return;
-    }
-    if (await onAttach(file)) {
-      setFile(undefined);
-      close();
-    }
-  }
-
-  return <div className="cp-ai">
-    <button type="button" className="secondary-button" ref={trigger} disabled={disabled}
-      aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => {
-        if (open) close();
-        else {
-          setOpen(true);
-          setError('');
-          if (!busy && !checking) void refreshQuota();
-        }
-      }}><Sparkles size={16} aria-hidden="true" /> Сгенерировать изображение</button>
-    {open && <div className="cp-ai-panel" id={id}>
-      <label htmlFor={id + '-prompt'}>Что должно быть на изображении?</label>
-      <textarea autoFocus id={id + '-prompt'} rows={3} maxLength={1000} disabled={busy || disabled}
-        placeholder="Например, чашка на столе у окна, мягкий утренний свет, без надписей"
-        value={prompt} onChange={(event) => setPrompt(event.target.value)} />
-      <small role="status">{busy ? 'Генерируем изображение…' : checking ? 'Проверяем лимит…' : quota
-        ? quota.remaining === null ? 'Без лимита' : `Осталось ${quota.remaining} ${quota.period === 'trial' ? 'на весь триал' : 'сегодня'}`
-        : ''}</small>
-      {error && <p className="cp-ai-error" role="alert">{error}</p>}
-      <div className="cp-ai-actions">
-        <button className="secondary-button" type="button"
-          disabled={disabled || busy || checking || !canGenerate || !prompt.trim()}
-          onClick={() => void generate()}>{file ? 'Попробовать ещё раз' : 'Сгенерировать'}</button>
-        {!quota && error && <button className="secondary-button" type="button" disabled={busy || checking}
-          onClick={() => { setError(''); void refreshQuota(); }}>Проверить доступ</button>}
-        <button className="secondary-button" type="button" onClick={close}>Закрыть</button>
-      </div>
-      {file && <div className="cp-ai-result">
-        {preview && <img className="cp-ai-image" src={preview} alt="Сгенерированный вариант изображения" />}
-        {confirmReplace && <small role="status">Текущее фото поста будет заменено.</small>}
-        <div className="cp-ai-actions">
-          <button className="primary-button" type="button" disabled={disabled || busy} onClick={() => void attach()}>
-            {disabled ? 'Загружаем фото…' : confirmReplace ? 'Заменить фото' : 'Прикрепить изображение'}
-          </button>
-          {confirmReplace && <button className="secondary-button" type="button"
-            onClick={() => setConfirmReplace(false)}>Отмена</button>}
-        </div>
-      </div>}
-    </div>}
-  </div>;
-}
-
 type PlanChannel = {
   id: string;
   platform: 'vk' | 'telegram';
@@ -351,6 +264,7 @@ type PlanChannel = {
   canPost: boolean;
   error: string;
   writingRules: string;
+  imageRules?: string;
 };
 
 function WritingRulesSettings({ commonRules, channels, onSave }: {
@@ -466,6 +380,7 @@ type Meta = {
   posts: PlanPost[];
   telegramBot: TelegramBot;
   writingRules: string;
+  imageRules?: string;
   mediaEnabled?: boolean;
   vkPhotoEnabled?: boolean;
 };
@@ -604,8 +519,6 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
   const [viewedPostId, setViewedPostId] = useState<string | null>(null);
   const viewedPost = meta?.posts.find((post) => post.id === viewedPostId);
   const [publishMode, setPublishMode] = useState<'scheduled' | 'now'>('scheduled');
-  const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [previewVisible, setPreviewVisible] = useState(true);
   const [publishConfirm, setPublishConfirm] = useState(false);
   const draftKey = 'socstat:content-plan:editor:' + userId;
   const [localDraft, setLocalDraft] = useState<EditorState | null>(() => {
@@ -644,7 +557,8 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
   const [connectError, setConnectError] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [editor, setEditor] = useState<EditorState | null>(null);
-  const [editorTab, setEditorTab] = useState<'text' | 'preview'>('text');
+  const [editorStep, setEditorStep] = useState<EditorStep>(1);
+  const editorContent = useRef<HTMLDivElement>(null);
   const [editorError, setEditorError] = useState('');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
@@ -745,10 +659,8 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
     }
     editorBaseline.current = JSON.stringify(value);
     setEditor(value);
-    setEditorTab('text');
+    setEditorStep(value.postId || value.text.trim() || value.mediaId ? 2 : 1);
     setPublishMode('scheduled');
-    setScheduleOpen(false);
-    setPreviewVisible(true);
     setEditorError('');
     setSelectedDay(null);
     setViewedPostId(null);
@@ -819,6 +731,7 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const keydown = (event: KeyboardEvent) => {
+      if (document.querySelector('.cp-image-studio[open]')) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         if (saving || connecting || botSaving || vkConnecting) return;
@@ -889,29 +802,54 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
     });
     showToast('Правила сохранены');
   };
+  const saveImageRules: SaveRules = async (channelId, rules, previousRules) => {
+    const saved = await apiPatch<{ rules: string }>('/api/content-plan/image-rules', { channelId: channelId || null, rules, previousRules });
+    setMeta(current => current && (channelId
+      ? { ...current, channels: current.channels.map(channel => channel.id === channelId ? { ...channel, imageRules: saved.rules } : channel) }
+      : { ...current, imageRules: saved.rules }));
+    showToast('Правила изображения сохранены');
+  };
+
+  function goToEditorStep(step: EditorStep, focusText = false) {
+    setEditorStep(step);
+    requestAnimationFrame(() => {
+      const body = editorContent.current;
+      if (!body) return;
+      body.scrollTop = 0;
+      (focusText ? body.querySelector<HTMLElement>('.cp-wizard-compose textarea.cp-md-textarea, .cp-wizard-compose [contenteditable="true"]')
+        : body.querySelector<HTMLElement>('[data-step-heading="' + step + '"]'))?.focus();
+    });
+  }
+
   const platformLabel = isVkEditor ? 'ВКонтакте' : 'Telegram';
   const textLength = editor?.text.length ?? 0;
 
+  async function stagePhoto(file: File) {
+    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size < 1 || file.size > 5 * 1024 * 1024) {
+      throw new Error('Выберите JPEG или PNG размером до 5 МБ.');
+    }
+    const upload = await apiPost<{ id: string; url: string; fields: Record<string, string> }>(
+      '/api/content-plan/media/upload', { type: file.type }
+    );
+    const form = new FormData();
+    for (const [name, value] of Object.entries(upload.fields)) form.append(name, value);
+    form.append('file', file);
+    const result = await fetch(upload.url, { method: 'POST', body: form, signal: AbortSignal.timeout(60_000) });
+    if (!result.ok) throw new Error('Облако не приняло изображение.');
+    return apiPost<{ id: string; previewUrl: string }>('/api/content-plan/media/confirm', { id: upload.id });
+  }
+
+  function attachPhoto(photo: { id: string; previewUrl: string }) {
+    setEditorError('');
+    setEditor(current => current ? { ...current, mediaId: photo.id, mediaPreviewUrl: photo.previewUrl } : current);
+  }
+
   const uploadPhoto = async (file: File) => {
     if (!editor || !canAttachPhoto || saving) return;
-    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size < 1 || file.size > 5 * 1024 * 1024) {
-      setEditorError('Выберите JPEG или PNG размером до 5 МБ.');
-      return;
-    }
     setSaving(true);
     setEditorError('');
     try {
-      const upload = await apiPost<{ id: string; url: string; fields: Record<string, string> }>(
-        '/api/content-plan/media/upload', { type: file.type }
-      );
-      const form = new FormData();
-      for (const [name, value] of Object.entries(upload.fields)) form.append(name, value);
-      form.append('file', file);
-      const result = await fetch(upload.url, { method: 'POST', body: form, signal: AbortSignal.timeout(60_000) });
-      if (!result.ok) throw new Error('Облако не приняло изображение.');
-      const photo = await apiPost<{ id: string; previewUrl: string }>('/api/content-plan/media/confirm', { id: upload.id });
-      setEditor((current) => current ? { ...current, mediaId: photo.id, mediaPreviewUrl: photo.previewUrl } : current);
-      return true;
+      attachPhoto(await stagePhoto(file));
     } catch (error) {
       setEditorError(error instanceof Error ? error.message : 'Не удалось загрузить изображение.');
     } finally {
@@ -940,7 +878,6 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
       text: '',
       failure: '',
     });
-    setEditorTab('text');
     setEditorError('');
   };
 
@@ -963,7 +900,6 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
       mediaPreviewUrl: post.mediaPreviewUrl,
       failure: post.error ? 'Прошлая публикация не удалась: ' + post.error : '',
     });
-    setEditorTab('text');
     setEditorError('');
   };
 
@@ -1035,7 +971,6 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
       if (post.scheduledAt) setMonth(startOfMonth(new Date(post.scheduledAt)));
       persistDraft(null);
       setEditor(null);
-      setEditorTab('text');
       showToast(status === 'draft' ? 'Черновик сохранён' : 'Пост запланирован');
     } catch (reason) {
       setEditorError(reason instanceof Error ? reason.message : 'Не удалось сохранить пост.');
@@ -1110,7 +1045,6 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
           : current,
       );
       setEditor(null);
-      setEditorTab('text');
       persistDraft(null);
       setPublishConfirm(false);
       showToast('Опубликовано в ' + (channel.platform === 'vk' ? 'ВКонтакте' : 'Telegram'));
@@ -1962,13 +1896,8 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
 
       {editor && (
         <div className="cp-editor-overlay" onClick={closeEditor}>
-          <aside
-            className={'cp-editor cp-editor-wide cp-post-editor' + (previewVisible ? '' : ' cp-focus-mode')}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Редактор поста"
-            onClick={(event) => event.stopPropagation()}
-          >
+          <aside className="cp-editor cp-editor-wide cp-post-editor cp-post-wizard" role="dialog"
+            aria-modal="true" aria-label="Редактор поста" onClick={event => event.stopPropagation()}>
             <div className="cp-editor-head">
               <div>
                 <h3>{editor.postId ? 'Редактировать пост' : 'Новый пост'}</h3>
@@ -1978,9 +1907,17 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                 <X size={16} />
               </button>
             </div>
-            <div className="cp-editor-body">
+            <ol className="cp-wizard-steps" aria-label="Шаги создания поста">
+              {(['Идея', 'Пост', 'Публикация'] as const).map((label, index) => (
+                <li key={label} aria-current={editorStep === index + 1 ? 'step' : undefined}>
+                  <span>{index + 1}</span>{label}
+                </li>
+              ))}
+            </ol>
+            <div className="cp-editor-body" ref={editorContent}>
               {editor.failure && <div className="cp-error">{editor.failure}</div>}
-              <div className="cp-compose-options">
+              <section hidden={editorStep !== 1} className="cp-wizard-idea">
+                <h3 data-step-heading="1" tabIndex={-1}>Что расскажем подписчикам?</h3>
               <label className="cp-field">
                 <span>Канал</span>
                 <select
@@ -1997,12 +1934,6 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                   ))}
                 </select>
               </label>
-                <button type="button" className="secondary-button cp-preview-toggle"
-                  onClick={() => setPreviewVisible((visible) => !visible)}>
-                  {previewVisible ? <EyeOff size={16} /> : <Eye size={16} />}
-                  {previewVisible ? 'Скрыть предпросмотр' : 'Показать предпросмотр'}
-                </button>
-              </div>
               {(!editorChannel || editorChannel.status !== 'connected' || !editorChannel.canPost) && (
                 <div className="cp-editor-note">
                   <AlertCircle size={16} />
@@ -2012,24 +1943,16 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                   </button>
                 </div>
               )}
-              <div className="cp-editor-tabs">
-                <button
-                  className={editorTab === 'text' ? 'active' : ''}
-                  type="button"
-                  onClick={() => setEditorTab('text')}
-                >
-                  Текст
-                </button>
-                <button
-                  className={editorTab === 'preview' ? 'active' : ''}
-                  type="button"
-                  onClick={() => setEditorTab('preview')}
-                >
-                  Предпросмотр
-                </button>
-              </div>
-              <div className="cp-editor-compose">
-                <div className={editorTab === 'text' ? 'cp-compose-text active' : 'cp-compose-text'}>
+              </section>
+              <section className="cp-wizard-compose" hidden={editorStep !== 2}>
+                <div className="cp-wizard-heading">
+                  <h3 data-step-heading="2" tabIndex={-1}>Соберите пост</h3>
+                  <button type="button" className="secondary-button" disabled={saving} onClick={() => goToEditorStep(1)}>
+                    {editorChannel ? 'Идея и канал' : 'Выбрать канал'}
+                  </button>
+                </div>
+                <div className="cp-wizard-columns">
+                  <div className="cp-wizard-copy">
                   <div className="cp-compose-label"><strong>{editor.mediaId ? 'Подпись к фото' : 'Текст поста'}</strong>
                     <span className={textLength > limit ? 'over' : ''}>{textLength.toLocaleString('ru-RU')} / {limit.toLocaleString('ru-RU')}</span>
                   </div>
@@ -2060,23 +1983,15 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                       placeholder="Напишите пост…"
                     />
                   </>}
-                  <PostTextGenerator
-                    key={`${editor.postId || 'new'}:${editor.channelId}`}
-                    platform={isVkEditor ? 'vk' : 'telegram'} caption={Boolean(editor.mediaId)}
-                    disabled={saving} text={editor.text} channel={editorChannel} commonRules={meta.writingRules}
-                    onSaveRules={saveRules}
-                    onInsert={(text) => setEditor((current) => current ? {
-                      ...current,
-                      text,
-                      telegramHtml: isVkEditor ? undefined : text.replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
-                    } : current)}
-                  />
-                  <div className="cp-photo-panel cp-attachment-row">
-                    {editor.mediaPreviewUrl ? <img src={editor.mediaPreviewUrl} alt="Фото для поста" referrerPolicy="no-referrer" /> : <ImagePlus size={20} aria-hidden="true" />}
-                    <div>
-                      <small>{canAttachPhoto ? (editor.mediaId ? 'Фото прикреплено' : 'JPEG или PNG до 5 МБ') : !editorChannel ? 'Выберите подключённый канал.' : editorChannel.status !== 'connected' || !editorChannel.canPost ? 'Восстановите доступ к каналу.' : 'Загрузка фото для этой площадки ещё не настроена.'}</small>
-                    </div>
+                  </div>
+                  <section className="cp-wizard-photo" aria-label="Фото к посту">
+                    <h4>Фото <small>необязательно</small></h4>
+                    {editor.mediaPreviewUrl
+                      ? <img src={editor.mediaPreviewUrl} alt="Фото для поста" referrerPolicy="no-referrer" />
+                      : <div className="cp-wizard-photo-empty"><ImagePlus size={24} aria-hidden="true" />
+                        <small>{canAttachPhoto ? 'JPEG или PNG до 5 МБ' : 'Фото доступно для подключённого канала с загрузкой изображений.'}</small>
+                      </div>}
+                    <div className="cp-wizard-photo-actions">
                     {canAttachPhoto && (
                       <label className="secondary-button cp-photo-picker">
                         <input type="file" aria-label={editor.mediaId ? 'Заменить фото' : 'Добавить фото'} accept="image/jpeg,image/png" disabled={saving} onChange={(event) => {
@@ -2084,51 +1999,49 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                           event.currentTarget.value = '';
                           if (file) void uploadPhoto(file);
                         }} />
-                        {editor.mediaId ? 'Заменить' : 'Добавить фото'}
+                        <ImagePlus size={16} aria-hidden="true" /> {editor.mediaId ? 'Заменить' : 'Загрузить'}
                       </label>
                     )}
                     {editor.mediaId && (
                       <button className="cp-icon-button" aria-label="Удалить фото" type="button" disabled={saving}
                         onClick={() => setEditor({ ...editor, mediaId: undefined, mediaPreviewUrl: undefined })}><Trash2 size={16} /></button>
                     )}
-                  </div>
-                  {canAttachPhoto && <PostImageGenerator
-                    key={`${editor.postId || 'new'}:${editor.channelId}`}
-                    disabled={saving} hasPhoto={Boolean(editor.mediaId)} onAttach={uploadPhoto}
-                  />}
-                </div>
-                <div className={editorTab === 'preview' ? 'cp-compose-preview active' : 'cp-compose-preview'}>
-                  <h3>Предпросмотр</h3>
-                  <div className="cp-preview">
-
-                    <div className="cp-preview-head">
-                      <span className={'cp-preview-ava' + (isVkEditor ? ' vk' : '')}>{isVkEditor ? 'VK' : 'TG'}</span>
-                      <div>
-                        <strong>{editorChannel?.title || 'Канал'}</strong>
-                        <small>{platformLabel} · предпросмотр</small>
-                      </div>
+                      {canAttachPhoto && <PostImageGenerator key={editor.channelId} channelId={editor.channelId}
+                        disabled={saving} hasPhoto={Boolean(editor.mediaId)} commonRules={meta.imageRules ?? ''}
+                        channelRules={editorChannel?.imageRules ?? ''} onSaveRules={saveImageRules} onStage={stagePhoto} onAttach={attachPhoto} />}
                     </div>
-                    {editor.mediaPreviewUrl && <img className="cp-preview-photo" src={editor.mediaPreviewUrl} alt="Фото в публикации" referrerPolicy="no-referrer" />}
-                    <div
-                      className="cp-preview-text"
-                      dangerouslySetInnerHTML={{
-                        __html: previewHtml || '<span class="cp-muted">Текст поста появится здесь.</span>',
-                      }}
-                    />
-
-                  </div>
+                  </section>
                 </div>
-              </div>
-              {storageError && <p className="cp-error" role="alert">Текст не сохранился на этом устройстве. Сохраните черновик.</p>}
-              {editorError && <div className="cp-error" role="alert">{editorError}</div>}
-            </div>
-            {scheduleOpen && (
-              <section className="cp-post-schedule cp-footer-schedule" id="cp-post-time" aria-label="Время публикации">
+              </section>
+                  <PostTextGenerator step={editorStep} onStartManual={() => goToEditorStep(2, true)}
+                    key={`${editor.postId || 'new'}:${editor.channelId}`}
+                    platform={isVkEditor ? 'vk' : 'telegram'} caption={Boolean(editor.mediaId)}
+                    disabled={saving} text={editor.text} channel={editorChannel} commonRules={meta.writingRules}
+                    onSaveRules={saveRules}
+                    onInsert={(text) => { setEditor((current) => current ? {
+                      ...current,
+                      text,
+                      telegramHtml: isVkEditor ? undefined : text.replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+                    } : current); goToEditorStep(2, true); }}
+                  />
+              <section className="cp-wizard-publish" hidden={editorStep !== 3}>
+                <div className="cp-wizard-publish-settings">
+                  <h3 data-step-heading="3" tabIndex={-1}>Предпросмотр и время</h3>
+              {(!editorChannel || editorChannel.status !== 'connected' || !editorChannel.canPost) && (
+                <div className="cp-editor-note">
+                  <AlertCircle size={16} />
+                  <span>Для публикации нужен подключённый канал.</span>
+                  <button type="button" className="cp-bot-action" onClick={() => setChannelsOpen(true)}>
+                    Подключить
+                  </button>
+                </div>
+              )}
                 <div className="cp-schedule-modes" role="group" aria-label="Способ публикации">
                   <button type="button" className="secondary-button" aria-pressed={publishMode === 'scheduled'}
                     disabled={saving} onClick={() => setPublishMode('scheduled')}>По расписанию</button>
                   <button type="button" className="secondary-button" aria-pressed={publishMode === 'now'}
-                    disabled={saving} onClick={() => { setPublishMode('now'); setScheduleOpen(false); }}>Сейчас</button>
+                    disabled={saving} onClick={() => setPublishMode('now')}>Сейчас</button>
                 </div>
                 {publishMode === 'scheduled' && <>
               <div className="cp-editor-row">
@@ -2153,9 +2066,29 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
               </div>
                   <p>{timeZoneLabel}</p>
                 </>}
-                <button type="button" className="secondary-button" onClick={() => setScheduleOpen(false)}>Готово</button>
+                </div>
+                  <div className="cp-preview">
+
+                    <div className="cp-preview-head">
+                      <span className={'cp-preview-ava' + (isVkEditor ? ' vk' : '')}>{isVkEditor ? 'VK' : 'TG'}</span>
+                      <div>
+                        <strong>{editorChannel?.title || 'Канал'}</strong>
+                        <small>{platformLabel} · предпросмотр</small>
+                      </div>
+                    </div>
+                    {editor.mediaPreviewUrl && <img className="cp-preview-photo" src={editor.mediaPreviewUrl} alt="Фото в публикации" referrerPolicy="no-referrer" />}
+                    <div
+                      className="cp-preview-text"
+                      dangerouslySetInnerHTML={{
+                        __html: previewHtml || '<span class="cp-muted">Текст поста появится здесь.</span>',
+                      }}
+                    />
+
+                  </div>
               </section>
-            )}
+              {storageError && <p className="cp-error" role="alert">Текст не сохранился на этом устройстве. Сохраните черновик.</p>}
+              {editorError && <div className="cp-error" role="alert">{editorError}</div>}
+            </div>
             <div className="cp-editor-foot cp-composer-footer">
               <div className="cp-draft-actions">
                 {(editor.postId || editor.text.trim() || editor.mediaId) && (
@@ -2166,14 +2099,11 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                   onClick={() => void save('draft')}>Сохранить черновик</button>
               </div>
               <div className="cp-editor-actions">
-                <button className="secondary-button cp-schedule-toggle" type="button" disabled={saving}
-                  aria-expanded={scheduleOpen} aria-controls={scheduleOpen ? 'cp-post-time' : undefined}
-                  onClick={() => setScheduleOpen((open) => !open)}>
-                  <CalendarClock size={16} aria-hidden="true" />
-                  {publishMode === 'now' ? 'Сейчас' : editor.date && editor.time
-                    ? new Date(editor.date + 'T' + editor.time).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-                    : 'Выбрать время'}
-                </button>
+                {editorStep > 1 && <button type="button" className="secondary-button" disabled={saving}
+                  onClick={() => goToEditorStep(editorStep === 3 ? 2 : 1)}>Назад</button>}
+                {editorStep === 2 && <button type="button" className="primary-button" disabled={saving || !editor.text.trim() || textLength > limit}
+                  onClick={() => goToEditorStep(3)}>К публикации <ChevronRight size={16} /></button>}
+                {editorStep === 3 && (
                 <button className="primary-button" type="button"
                   disabled={saving || !editor.text.trim() || textLength > limit || !editorChannel ||
                     editorChannel.status !== 'connected' || !editorChannel.canPost ||
@@ -2186,6 +2116,7 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                   {saving ? 'Подождите…' : publishMode === 'now' ? 'Опубликовать'
                     : currentPost?.status === 'scheduled' ? 'Сохранить изменения' : 'Запланировать'}
                 </button>
+                )}
               </div>
             </div>
           </aside>
@@ -2200,7 +2131,7 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
           }}
         >
           <section
-            className="cp-modal"
+            className="cp-modal cp-publish-confirm"
             role="dialog"
             aria-modal="true"
             aria-label="Подтверждение публикации"
@@ -2209,11 +2140,17 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
             <div className="cp-modal-head">
               <h3>Опубликовать сейчас?</h3>
             </div>
-            <p className="cp-modal-text">
-              {platformLabel} · {editorChannel?.title}. Будет отправлен текущий текст из редактора.
-            </p>
-            <div className="cp-preview-text cp-confirm-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
-            {editor.mediaPreviewUrl && <img className="cp-preview-photo" src={editor.mediaPreviewUrl} alt="Фото для отправки" referrerPolicy="no-referrer" />}
+            <div className="cp-publish-destination">
+              <span className={'cp-preview-ava' + (isVkEditor ? ' vk' : '')} aria-hidden="true">{isVkEditor ? 'VK' : 'TG'}</span>
+              <div><small>Канал публикации</small><strong>{editorChannel?.title}</strong></div>
+              <span>{platformLabel}</span>
+            </div>
+            <div className="cp-publish-scroll">
+              <article className="cp-publish-card">
+                {editor.mediaPreviewUrl && <img src={editor.mediaPreviewUrl} alt="Фото для отправки" referrerPolicy="no-referrer" />}
+                <div className="cp-preview-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+              </article>
+            </div>
             {editorError && (
               <div className="cp-error" role="alert">
                 {editorError}
@@ -2234,7 +2171,7 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                 disabled={saving}
                 onClick={() => void publishNowAction()}
               >
-                {saving ? 'Публикуем…' : 'Опубликовать'}
+                <Send size={16} aria-hidden="true" /> {saving ? 'Публикуем…' : 'Опубликовать сейчас'}
               </button>
             </div>
           </section>

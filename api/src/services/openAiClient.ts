@@ -4,7 +4,7 @@ import { getTelegramProxy } from './telegramProxy.js';
 
 // OpenAI использует тот же выход в сеть, что и Telegram, включая DNS через прокси.
 export async function requestOpenAi(
-  path: '/v1/responses' | '/v1/images/generations',
+  path: '/v1/responses' | '/v1/images/generations' | '/v1/images/edits',
   apiKey: string,
   payload: Record<string, unknown>,
   timeoutMs: number

@@ -63,6 +63,7 @@ export type ContentPlanChannelDto = {
   canPost: boolean;
   error: string;
   writingRules: string;
+  imageRules: string;
 };
 
 export type ContentPlanBotDto = {
@@ -104,7 +105,7 @@ export function toPostDto(doc: any): ContentPlanPostDto {
   };
 }
 
-function toDto(doc: { _id: mongoose.Types.ObjectId; platform: 'vk' | 'telegram'; title: string; handle?: string; status: 'connected' | 'needs_reauth' | 'error'; canPost: boolean; error?: string; writingRules?: string }): ContentPlanChannelDto {
+function toDto(doc: { _id: mongoose.Types.ObjectId; platform: 'vk' | 'telegram'; title: string; handle?: string; status: 'connected' | 'needs_reauth' | 'error'; canPost: boolean; error?: string; writingRules?: string; imageRules?: string }): ContentPlanChannelDto {
   return {
     id: String(doc._id),
     platform: doc.platform,
@@ -113,18 +114,20 @@ function toDto(doc: { _id: mongoose.Types.ObjectId; platform: 'vk' | 'telegram';
     status: doc.status,
     canPost: doc.canPost,
     error: doc.error ?? '',
-    writingRules: doc.writingRules ?? ''
+    writingRules: doc.writingRules ?? '',
+    imageRules: doc.imageRules ?? ''
   };
 }
 
 const WRITING_RULES_LIMIT = 3000;
 
-export async function getCommonWritingRules(userId: string) {
-  const user = await UserModel.findById(userId).select({ contentPlanWritingRules: 1, _id: 0 }).lean();
-  return user?.contentPlanWritingRules ?? '';
+export async function getCommonWritingRules(userId: string, kind: 'text' | 'image' = 'text') {
+  const field = kind === 'image' ? 'contentPlanImageRules' : 'contentPlanWritingRules';
+  const user = await UserModel.findById(userId).select({ [field]: 1, _id: 0 }).lean();
+  return user?.[field] ?? '';
 }
 
-export async function saveWritingRules(userId: string, body: { channelId?: unknown; rules?: unknown; previousRules?: unknown }) {
+export async function saveWritingRules(userId: string, body: { channelId?: unknown; rules?: unknown; previousRules?: unknown }, kind: 'text' | 'image' = 'text') {
   if (typeof body.rules !== 'string' || typeof body.previousRules !== 'string') {
     throw new DomainError('Укажите текст правил.', { status: 400, code: 'CONTENT_PLAN_RULES_INVALID' });
   }
@@ -132,19 +135,31 @@ export async function saveWritingRules(userId: string, body: { channelId?: unkno
   if (rules.length > WRITING_RULES_LIMIT) {
     throw new DomainError('Правила должны быть не длиннее 3 000 символов.', { status: 400, code: 'CONTENT_PLAN_RULES_INVALID' });
   }
-  const field = body.channelId == null ? 'contentPlanWritingRules' : 'writingRules';
+  const field = body.channelId == null
+    ? kind === 'image' ? 'contentPlanImageRules' : 'contentPlanWritingRules'
+    : kind === 'image' ? 'imageRules' : 'writingRules';
   const previous = body.previousRules ? { [field]: body.previousRules } : { $or: [{ [field]: '' }, { [field]: { $exists: false } }] };
   let matchedCount: number;
   if (body.channelId == null) {
-    ({ matchedCount } = await UserModel.updateOne({ _id: userId, ...previous }, { $set: { contentPlanWritingRules: rules } }));
+    ({ matchedCount } = await UserModel.updateOne({ _id: userId, ...previous }, { $set: { [field]: rules } }));
   } else {
     const channel = await getOwnedChannel(userId, body.channelId);
-    ({ matchedCount } = await ContentPlanChannelModel.updateOne({ _id: channel._id, userId, ...previous }, { $set: { writingRules: rules } }));
+    ({ matchedCount } = await ContentPlanChannelModel.updateOne({ _id: channel._id, userId, ...previous }, { $set: { [field]: rules } }));
   }
   if (!matchedCount) {
     throw new DomainError('Правила уже изменились. Обновите страницу и повторите попытку.', { status: 409, code: 'CONTENT_PLAN_RULES_CHANGED' });
   }
   return { rules };
+}
+
+export function activeWritingRules(text: string, excluded: unknown) {
+  if (excluded === undefined) return text;
+  if (!Array.isArray(excluded) || excluded.length > WRITING_RULES_LIMIT ||
+    excluded.some(rule => typeof rule !== 'string' || rule.length > WRITING_RULES_LIMIT)) {
+    throw new DomainError('Не удалось применить правила поста.', { status: 400, code: 'CONTENT_PLAN_RULES_INVALID' });
+  }
+  const disabled = new Set<string>(excluded);
+  return text.split(/\r?\n/).filter(rule => !disabled.has(rule.trim())).join('\n');
 }
 
 export async function getBotStatus(userId: string): Promise<ContentPlanBotDto> {
@@ -381,14 +396,15 @@ export async function deletePost(userId: string, id: string): Promise<void> {
 }
 
 export async function getPlanMeta(userId: string) {
-  const [channels, posts, telegramBot, writingRules] = await Promise.all([
-    listChannels(userId), listPosts(userId), getBotStatus(userId), getCommonWritingRules(userId)
+  const [channels, posts, telegramBot, writingRules, imageRules] = await Promise.all([
+    listChannels(userId), listPosts(userId), getBotStatus(userId), getCommonWritingRules(userId), getCommonWritingRules(userId, 'image')
   ]);
   return {
     channels,
     posts,
     telegramBot,
     writingRules,
+    imageRules,
     mediaEnabled: mediaEnabled(),
     vkPhotoEnabled: mediaEnabled() && vkPhotoEnabled()
   };

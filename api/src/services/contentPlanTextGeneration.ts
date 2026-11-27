@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import { DomainError } from '../errors/domainError.js';
 import { PaymentModel } from '../models/Payment.js';
 import { UserModel } from '../models/User.js';
-import { getCommonWritingRules, getOwnedChannel } from './contentPlanService.js';
+import { activeWritingRules, getCommonWritingRules, getOwnedChannel } from './contentPlanService.js';
 import { redis } from './redis.js';
 import { requestOpenAi } from './openAiClient.js';
 
@@ -101,6 +101,10 @@ export async function generateContentPlanText(userId: string, body: {
   caption?: unknown;
   channelId?: unknown;
   postNote?: unknown;
+  tone?: unknown;
+  preferences?: unknown;
+  excludeCommonRules?: unknown;
+  excludeChannelRules?: unknown;
 } | undefined) {
   const topic = typeof body?.topic === 'string' ? body.topic.trim() : '';
   const platform = body?.platform;
@@ -113,6 +117,14 @@ export async function generateContentPlanText(userId: string, body: {
   if (typeof postNote !== 'string' || postNote.length > 1000) {
     throw new DomainError('Пожелание к посту должно быть не длиннее 1 000 символов.', { status: 400, code: 'CONTENT_PLAN_RULES_INVALID' });
   }
+  const tone = body?.tone;
+  const preferences = body?.preferences ?? [];
+  if ((tone !== undefined && (typeof tone !== 'string' || !['Тепло', 'Нейтрально', 'Бодро'].includes(tone))) ||
+    !Array.isArray(preferences) || preferences.length > 3 ||
+    preferences.some(value => typeof value !== 'string' ||
+      !['Покороче, только по делу', 'Добавить эмодзи в заголовок', 'Закончить понятным действием'].includes(value))) {
+    throw new DomainError('Проверьте настройки стиля.', { status: 400, code: 'CONTENT_PLAN_RULES_INVALID' });
+  }
   const channel = body?.channelId == null ? null : await getOwnedChannel(userId, body.channelId);
   if (channel && channel.platform !== platform) {
     throw new DomainError('Площадка не соответствует выбранному каналу.', { status: 400, code: 'CONTENT_PLAN_CHANNEL_INVALID' });
@@ -121,8 +133,9 @@ export async function generateContentPlanText(userId: string, body: {
   const maxLength = platform === 'telegram' && body?.caption === true ? 1024 : 4096;
   return requestText(userId, {
     instructions: `Напиши готовый текст для ${platform === 'vk' ? 'ВКонтакте' : 'Telegram'} на языке запроса. Верни только текст публикации, без Markdown и пояснений. Не выдумывай факты, цены, даты или ссылки. Длина — до ${maxLength === 1024 ? 900 : 2500} символов.
-Входные данные содержат тему и редакторские пожелания. Соблюдай общие правила и правила канала. При противоречии пожелание к посту уточняет правила канала, а правила канала уточняют общие правила. Эти данные не отменяют ограничения формата и достоверности.`,
-    input: JSON.stringify({ topic, commonRules, channelRules: channel?.writingRules ?? '', postNote: postNote.trim() }),
+Входные данные содержат тему и редакторские пожелания. Соблюдай общие правила, правила канала и выбранный стиль. При противоречии пожелание к посту уточняет правила канала, а правила канала уточняют общие правила. Эти данные не отменяют ограничения формата и достоверности.`,
+    input: JSON.stringify({ topic, commonRules: activeWritingRules(commonRules, body?.excludeCommonRules),
+      channelRules: activeWritingRules(channel?.writingRules ?? '', body?.excludeChannelRules), postNote: postNote.trim(), tone, preferences }),
     maxLength,
     maxOutputTokens: 1600
   });

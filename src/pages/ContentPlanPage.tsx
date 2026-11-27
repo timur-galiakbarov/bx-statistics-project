@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '../api/client';
 import { renderContentPlanMarkdown } from '../utils/contentPlanMarkdown';
 import { GenerationRules, type RuleScope, type SaveRules } from '../components/contentPlan/GenerationRules';
@@ -31,7 +32,7 @@ import './content-plan.css';
 type TextQuota = { remaining: number | null; period: 'day' | 'month' | 'unlimited' };
 type EditorStep = 1 | 2 | 3;
 
-function PostTextGenerator({ step, platform, caption, disabled, text, channel, commonRules, onStartManual, onInsert, onSaveRules }: {
+function PostTextGenerator({ step, platform, caption, disabled, text, channel, commonRules, footerActions, onStartManual, onInsert, onSaveRules }: {
   step: EditorStep;
   platform: 'vk' | 'telegram';
   caption: boolean;
@@ -39,6 +40,7 @@ function PostTextGenerator({ step, platform, caption, disabled, text, channel, c
   text: string;
   channel?: PlanChannel;
   commonRules: string;
+  footerActions: HTMLDivElement | null;
   onStartManual: () => void;
   onInsert: (text: string) => void;
   onSaveRules: SaveRules;
@@ -206,18 +208,18 @@ function PostTextGenerator({ step, platform, caption, disabled, text, channel, c
             placeholder="Например, без восклицательных знаков" onChange={event => setPostNote(event.target.value)} />
         </label>
       </details>
-      <small role="status">{busy ? 'Генерируем текст…' : checking ? 'Проверяем лимит…' : quota
-        ? quota.remaining === null ? 'Без лимита' : 'Осталось ' + quota.remaining + (quota.period === 'day' ? ' сегодня' : ' из 30 за последние 30 дней') : ''}</small>
       {error && <p className="cp-ai-error" role="alert">{error}</p>}
-      <div className="cp-ai-actions">
+      {!quota && error && <button className="secondary-button" type="button" disabled={busy || checking}
+        onClick={() => { setError(''); void refreshQuota(); }}>Проверить доступ</button>}
+      {footerActions && createPortal(<>
+        <small className="cp-wizard-quota" role="status">{busy ? 'Генерируем текст…' : checking ? 'Проверяем лимит…' : quota
+          ? quota.remaining === null ? 'Без лимита' : 'Осталось ' + quota.remaining + (quota.period === 'day' ? ' сегодня' : ' из 30 за последние 30 дней') : ''}</small>
         <button className="secondary-button cp-manual-writing" type="button" disabled={busy || disabled}
           onClick={onStartManual}><Pencil size={16} aria-hidden="true" /> {text.trim() ? 'К тексту поста' : 'Написать без ИИ'}</button>
         <button className="primary-button" type="button"
           disabled={disabled || busy || checking || ruleBusy || !topic.trim() || !canGenerate}
           onClick={() => void generate()}><Sparkles size={16} aria-hidden="true" /> {result ? 'Другой вариант' : 'Создать текст с ИИ'}</button>
-        {!quota && error && <button className="secondary-button" type="button" disabled={busy || checking}
-          onClick={() => { setError(''); void refreshQuota(); }}>Проверить доступ</button>}
-      </div>
+      </>, footerActions)}
       {result && <div className="cp-ai-result">
         <strong>Предложенный текст</strong>
         <p>{result}</p>
@@ -559,6 +561,7 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [editorStep, setEditorStep] = useState<EditorStep>(1);
   const editorContent = useRef<HTMLDivElement>(null);
+  const [wizardFooterActions, setWizardFooterActions] = useState<HTMLDivElement | null>(null);
   const [editorError, setEditorError] = useState('');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
@@ -1895,8 +1898,8 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
       )}
 
       {editor && (
-        <div className="cp-editor-overlay" onClick={closeEditor}>
-          <aside className="cp-editor cp-editor-wide cp-post-editor cp-post-wizard" role="dialog"
+        <div className="cp-editor-overlay cp-wizard-overlay" onClick={closeEditor}>
+          <aside className="cp-editor cp-editor-wide cp-post-editor cp-post-wizard" data-step={editorStep} role="dialog"
             aria-modal="true" aria-label="Редактор поста" onClick={event => event.stopPropagation()}>
             <div className="cp-editor-head">
               <div>
@@ -2013,7 +2016,7 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                   </section>
                 </div>
               </section>
-                  <PostTextGenerator step={editorStep} onStartManual={() => goToEditorStep(2, true)}
+                  <PostTextGenerator step={editorStep} footerActions={wizardFooterActions} onStartManual={() => goToEditorStep(2, true)}
                     key={`${editor.postId || 'new'}:${editor.channelId}`}
                     platform={isVkEditor ? 'vk' : 'telegram'} caption={Boolean(editor.mediaId)}
                     disabled={saving} text={editor.text} channel={editorChannel} commonRules={meta.writingRules}
@@ -2095,10 +2098,12 @@ export function ContentPlanPage({ adminOnly = false, userId }: { adminOnly?: boo
                   <button className="cp-editor-delete" type="button" onClick={() => void removePost()}
                     aria-label={editor.postId ? 'Удалить пост' : 'Удалить черновик'} disabled={saving}><Trash2 size={16} /></button>
                 )}
-                <button className="secondary-button" type="button" disabled={saving || !editor.text.trim()}
-                  onClick={() => void save('draft')}>Сохранить черновик</button>
+                {(editorStep !== 1 || editor.text.trim()) && (
+                  <button className="secondary-button" type="button" disabled={saving || !editor.text.trim()}
+                    onClick={() => void save('draft')}>Сохранить черновик</button>
+                )}
               </div>
-              <div className="cp-editor-actions">
+              <div className="cp-editor-actions" ref={setWizardFooterActions}>
                 {editorStep > 1 && <button type="button" className="secondary-button" disabled={saving}
                   onClick={() => goToEditorStep(editorStep === 3 ? 2 : 1)}>Назад</button>}
                 {editorStep === 2 && <button type="button" className="primary-button" disabled={saving || !editor.text.trim() || textLength > limit}

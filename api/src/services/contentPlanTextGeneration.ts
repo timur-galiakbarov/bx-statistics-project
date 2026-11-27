@@ -32,8 +32,8 @@ export function unavailable(kind: 'text' | 'image' = 'text') {
 
 async function getQuota(userId: string, kind: 'text' | 'image') {
   const now = Date.now();
-  const user = await UserModel.findById(userId).select('activeTo trialEndsAt isAdmin').lean();
-  if (kind === 'image' && user?.isAdmin) return { unlimited: true } as const;
+  const user = await UserModel.findById(userId).select('activeTo trialEndsAt isAdmin enforceAccessRestrictions').lean();
+  if (user?.isAdmin && !user.enforceAccessRestrictions) return { unlimited: true } as const;
   if (!user || user.activeTo.getTime() <= now) return null;
   const paid = await PaymentModel.exists({ userId, status: 'paid', amount: { $gt: 0 } });
   if (kind === 'image') {

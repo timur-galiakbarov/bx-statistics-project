@@ -25,7 +25,7 @@ import { renderContentPlanMarkdown } from '../utils/contentPlanMarkdown';
 import './content.css';
 import './content-plan.css';
 
-type TextQuota = { remaining: number; period: 'day' | 'month' };
+type TextQuota = { remaining: number | null; period: 'day' | 'month' | 'unlimited' };
 type SaveRules = (channelId: string, rules: string, previousRules: string) => Promise<void>;
 
 function PostTextGenerator({ platform, caption, disabled, text, channel, commonRules, onInsert, onSaveRules }: {
@@ -58,6 +58,7 @@ function PostTextGenerator({ platform, caption, disabled, text, channel, commonR
   const result = proposal?.caption === caption ? proposal.text : '';
   const canLearn = inserted.trim() && text.trim() && inserted.trim() !== text.trim();
   const endpoint = '/api/content-plan/ai/text';
+  const canGenerate = quota && (quota.remaining === null || quota.remaining > 0);
 
   async function refreshQuota() {
     setChecking(true);
@@ -72,7 +73,7 @@ function PostTextGenerator({ platform, caption, disabled, text, channel, commonR
   }
 
   async function generate() {
-    if (busy || disabled || checking || ruleBusy || !topic.trim() || !quota?.remaining) return;
+    if (busy || disabled || checking || ruleBusy || !topic.trim() || !canGenerate) return;
     setBusy(true);
     setError('');
     setConfirmReplace(false);
@@ -174,11 +175,11 @@ function PostTextGenerator({ platform, caption, disabled, text, channel, commonR
           onChange={(event) => setPostNote(event.target.value)} />
       </details>
       <small role="status">{busy ? 'Генерируем текст…' : checking ? 'Проверяем лимит…' : quota
-        ? 'Осталось ' + quota.remaining + (quota.period === 'day' ? ' сегодня' : ' из 30 за последние 30 дней') : ''}</small>
+        ? quota.remaining === null ? 'Без лимита' : 'Осталось ' + quota.remaining + (quota.period === 'day' ? ' сегодня' : ' из 30 за последние 30 дней') : ''}</small>
       {error && <p className="cp-ai-error" role="alert">{error}</p>}
       <div className="cp-ai-actions">
         <button className="secondary-button" type="button"
-          disabled={disabled || busy || checking || ruleBusy || !topic.trim() || !quota?.remaining}
+          disabled={disabled || busy || checking || ruleBusy || !topic.trim() || !canGenerate}
           onClick={() => void generate()}>{result ? 'Попробовать ещё раз' : 'Сгенерировать'}</button>
         {!quota && error && <button className="secondary-button" type="button" disabled={busy || checking}
           onClick={() => { setError(''); void refreshQuota(); }}>Проверить доступ</button>}
